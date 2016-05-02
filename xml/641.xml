@@ -1,0 +1,220 @@
+<bug>
+          <bug_id>641</bug_id>
+          
+          <creation_ts>2007-09-18 11:15:00 +0200</creation_ts>
+          <short_desc>Error occurs in DateChooser.js after locale changing</short_desc>
+          <delta_ts>2014-03-03 15:23:29 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>0.7.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.7.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Denis">nomus</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2327</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2007-09-18 11:15:30 +0200</bug_when>
+            <thetext>The situation is the following. There is a DateChooserButton somewhere in the application and this button is disposed. The current locale is changed after disposing. It causes an error in DateChooser.js.
+Test the following code snippets. Click &quot;Remove&quot; button, next click &quot;Change locale&quot; button.
+
+Code snippet 1:
+
+var doc = qx.ui.core.ClientDocument.getInstance();
+var txtDate = new qx.ui.form.TextField();
+txtDate.set({
+    left : 10,
+    top : 10,
+    readOnly : true,
+    width : 200
+});
+txtDate.addToDocument();
+var btnDateChooser = new qx.ui.component.DateChooserButton();
+btnDateChooser.set({
+    left : 230,
+    top : 10,
+    width : 20,
+    targetWidget : txtDate,
+    dateFormatSize : &quot;short&quot;
+});
+btnDateChooser.addToDocument();
+var btnRemove = new qx.ui.form.Button(&quot;Remove&quot;);
+btnRemove.set({
+    left : 10,
+    top : 50
+});
+btnRemove.addToDocument();
+btnRemove.addEventListener(&quot;execute&quot;, function(oEvent) {
+    doc.remove(btnDateChooser, txtDate);
+    btnDateChooser.dispose();
+    btnDateChooser = null;
+    txtDate.dispose();
+    txtDate = null;
+}, this);
+var btnLocale = new qx.ui.form.Button(&quot;Change locale&quot;);
+btnLocale.set({
+    left : 100,
+    top : 50
+});
+btnLocale.addToDocument();
+btnLocale.addEventListener(&quot;execute&quot;, function(oEvent) {
+    var manager = qx.locale.Manager.getInstance();
+    if (manager.getLocale() === &quot;en&quot;) {
+        manager.setLocale(&quot;ru&quot;);
+    }
+    else {
+        manager.setLocale(&quot;en&quot;);
+    }
+}, this);
+
+
+Code snippet 2:
+
+var doc = qx.ui.core.ClientDocument.getInstance();
+var wnd = new qx.ui.window.Window(&quot;Test&quot;);
+wnd.set({
+    left : 10,
+    top : 10,
+    width : 400,
+    height : 300
+});
+wnd.addToDocument();
+wnd.show();
+var txtDate = new qx.ui.form.TextField();
+txtDate.set({
+    left : 10,
+    top : 10,
+    readOnly : true,
+    width : 200
+});
+wnd.add(txtDate);
+var btnDateChooser = new qx.ui.component.DateChooserButton();
+btnDateChooser.set({
+    left : 230,
+    top : 10,
+    width : 20,
+    targetWidget : txtDate,
+    dateFormatSize : &quot;short&quot;
+});
+wnd.add(btnDateChooser);
+var btnRemove = new qx.ui.form.Button(&quot;Remove&quot;);
+btnRemove.set({
+    left : 10,
+    top : 500
+});
+btnRemove.addToDocument();
+btnRemove.addEventListener(&quot;execute&quot;, function(oEvent) {
+    doc.remove(doc.getFirstChild());
+    wnd.close();
+    wnd.dispose();
+    wnd = null;
+}, this);
+var btnLocale = new qx.ui.form.Button(&quot;Change locale&quot;);
+btnLocale.set({
+    left : 100,
+    top : 500
+});
+btnLocale.addToDocument();
+btnLocale.addEventListener(&quot;execute&quot;, function(oEvent) {
+    var manager = qx.locale.Manager.getInstance();
+    if (manager.getLocale() === &quot;en&quot;) {
+        manager.setLocale(&quot;ru&quot;);
+    }
+    else {
+        manager.setLocale(&quot;en&quot;);
+    }
+}, this);
+
+
+Best regards,
+Dioc</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2339</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-09-18 17:31:48 +0200</bug_when>
+            <thetext>Targetted for 0.7.3</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2471</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2007-10-11 14:11:16 +0200</bug_when>
+            <thetext>To fix this bug it is necessary to modify destructors in DateChooser and DateChooserButton classes.
+The following line should be added in DateChooser&#39;s destructor:
+
+qx.locale.Manager.getInstance().removeEventListener(&quot;changeLocale&quot;, this._updateDatePane, this);
+
+The following line should be added in DateChooserButton&#39;s destructor:
+
+qx.locale.Manager.getInstance().removeEventListener(&quot;changeLocale&quot;, this._changeLocaleHandler, this);
+
+Patches can be applied to mentioned classes to avoid this problem before it is fixed in current trunk/legacy. To do this, the following code should be added somewhere in main function:
+
+qx.Class.patch(qx.ui.component.DateChooser,
+    qx.Mixin.define(&quot;lle5ui.patch.qx.ui.component.DateChooser&quot;,
+    {
+        destruct : function() {
+            qx.locale.Manager.getInstance().removeEventListener(&quot;changeLocale&quot;, this._updateDatePane, this);
+        }
+    })
+);
+qx.Class.patch(qx.ui.component.DateChooserButton,
+    qx.Mixin.define(&quot;lle5ui.patch.qx.ui.component.DateChooserButton&quot;,
+    {
+        destruct : function() {
+            qx.locale.Manager.getInstance().removeEventListener(&quot;changeLocale&quot;, this._changeLocaleHandler, this);
+        }
+    })
+);
+
+
+Best wishes,
+Denis aka Dioc
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2587</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2007-12-11 12:34:21 +0100</bug_when>
+            <thetext>Fixed in 0.7.2 (r10918)
+Thanks Dioc!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38030</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:29 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,225 @@
+<bug>
+          <bug_id>6184</bug_id>
+          
+          <creation_ts>2012-03-04 21:33:00 +0100</creation_ts>
+          <short_desc>Table row header/footer spanners feature (with patch)</short_desc>
+          <delta_ts>2014-03-03 08:46:57 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          <bug_file_loc>http://lee.fov120.com/table-hf.diff</bug_file_loc>
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Lee Salzman">lsalzman</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>lsalzman</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>28721</commentid>
+              <attachid>1132</attachid>
+            <who name="Lee Salzman">lsalzman</who>
+            <bug_when>2012-03-04 21:33:10 +0100</bug_when>
+            <thetext>Created attachment 1132
+Rough patch implementing table row header/footer spanners feature
+
+This is a rough patch outlining the idea for generalized spanner divs to be inserted in the header and footer of each row. It moves some control of generating the row div from the table.pane.Pane class into a new table.rowrenderer.Abstract class from which table.rowrenderer.Default now derives. Just as CellRenderers have control over creation of their divs, now RowRenderer has control over the creation of its own divs allowing for more sane overriding of row appearance.
+
+Either Abstract or Default can be subclassed and functions defined that specify the height of the header and/or footer for a row, and when non-zero, call a function the user can further override to specify the HTML content of the header and/or footer. The FocusIndicator is also modified to only highlight the cell body, and not the header/footer space of the row around it.
+
+The only drawback is it adds new functions to IRowRenderer, of which default implementations are now provided in table.rowrenderer.Abstract. So existing users who directly implement the IRowRenderer interface must insteaf extend the table.rowrenderer.Abstract instead. Otherwise, everything else remains compatible. The other benefit of this setup is that any further changes to IRowRenderer will be more insulated from users who subclass Abstract instead where suitable defaults can be provided.
+
+The overall benefit of this patch is it allows users to just extended the Default rowrenderer and add 2 functions to make a header or a footer, rather than existing emulations that are more klugey and less consistent with Table&#39;s internal hooks. 
+
+An example usage looks something like:
+
+qx.Class.define(&#39;my.RowRenderer&#39;, {
+ extend : qx.ui.table.rowrenderer.Default,
+ members : {
+   getRowFooterHeight : function(height) { return Math.floor(height*0.2); },
+   createDataRowFooterCellHtml : function(rowInfo, rowHtml) {
+       rowHtml.push(&#39;&lt;div style=&quot;width:100%;height:&#39; + rowInfo.footerHeight + &#39;px&quot;&gt;Hello, Footer!&lt;/div&gt;&#39;);
+  }
+ }
+});
+
+
+Derrell Lipman requested I include his response to my idea posting to the mailing list, so I include it here:
+Hi Lee,
+
+It looks like you&#39;re really delving into the internals. That&#39;s certainly the best way to learn!
+
+Regarding your patch, if I understand what you&#39;re trying to accomplish, you want each row to have some extra space allocated at the top and bottom, for a possible header or footer. I&#39;m not sure how you&#39;re using those headers and footers, since you seem to be allocating very little space for them, but I think you may be over-complicating this a bit. I don&#39;t believe that there needs to be support in Pane.js to accomplish what you want. You should be able to do this entirely within your row (and possibly cell) renderers. Your custom row renderer can allocate the extra space for header and footer, and draw in that extra space as required. Your cell renderers just need to provide a top and bottom margin of the amount of space your row renderer &quot;reserved&quot; for header and footer. You could access those header/footer size constants from your cell renderers by accessing static variables in your row renderer, or, if the header/footer sizes could vary with different tables, you could use the undocumented ability to add a member to the cellInfo map from within your row renderer, which will then be retained and passed to the cell renderers.
+
+An alternative is to use the &quot;stopLoop&quot; feature which allows a cell renderer to return true, instructing the cell renderer loop to stop rendering cells in that row. If your data model can include rows that mean &quot;this is a header&quot; and &quot;this is a footer&quot; you can have a header and/or footer cell renderer that renders, for column 0, the entire row as a single cell. An example of this is found in http://tinyurl.com/333hyhv where every gray row shows all columns 0-3, whereas the white rows show column 0 normally, and then column 1 spanning columns 1-3.
+
+A problem with incorporating your patch into the core code is that it adds interface requirements to a row renderer, which could prevent existing custom row renderers from operating properly. We need to be very careful with backwards compatibility. Hopefully, though, one of the above solutions simplifies your code so that you don&#39;t need custom patches to core qooxdoo code.
+
+Please let us know how things go!
+
+Cheers,
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28725</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-03-05 08:24:46 +0100</bug_when>
+            <thetext>Thanks for the report and the patch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35729</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:57 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>1132</attachid>
+            <date>2012-03-04 21:33:00 +0100</date>
+            <delta_ts>2012-03-04 21:33:10 +0100</delta_ts>
+            <desc>Rough patch implementing table row header/footer spanners feature</desc>
+            <filename>table-hf.diff</filename>
+            <type>text/plain</type>
+            <size>6106</size>
+            <attacher>lsalzman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtcnVOIHRhYmxlL0lSb3dSZW5kZXJlci5qcyB0YWJsZS1oZi9JUm93UmVuZGVyZXIuanMK
+LS0tIHRhYmxlL0lSb3dSZW5kZXJlci5qcwkyMDExLTEyLTA2IDA2OjMzOjMwLjAwMDAwMDAwMCAt
+MDgwMAorKysgdGFibGUtaGYvSVJvd1JlbmRlcmVyLmpzCTIwMTItMDMtMDQgMDk6MzY6NTMuMDAw
+MDAwMDAwIC0wODAwCkBAIC02OSw3ICs2OSwyNCBAQAogICAgICAqIEBwYXJhbSByb3dJbmZvIHtN
+YXB9IEEgbWFwIGNvbnRhaW5pbmcgdGhlIGluZm9ybWF0aW9uIGFib3V0IHRoZSByb3cgdG8KICAg
+ICAgKiAgICAgIHVwZGF0ZS4gU2VlIHtAbGluayAjdXBkYXRlRGF0YVJvd0VsZW1lbnR9IGZvciBt
+b3JlIGluZm9ybWF0aW9uLgogICAgICAqLwotICAgIGdldFJvd0NsYXNzIDogZnVuY3Rpb24ocm93
+SW5mbykge30KKyAgICBnZXRSb3dDbGFzcyA6IGZ1bmN0aW9uKHJvd0luZm8pIHt9LAogCisKKyAg
+ICBnZXRSb3dIZWFkZXJIZWlnaHQgOiBmdW5jdGlvbihoZWlnaHQpIAorICAgIHsKKyAgICAgICAg
+cmV0dXJuIDA7CisgICAgfSwKKworCisgICAgZ2V0Um93Rm9vdGVySGVpZ2h0IDogZnVuY3Rpb24o
+aGVpZ2h0KQorICAgIHsKKyAgICAgICAgcmV0dXJuIDA7CisgICAgfSwKKworCisgICAgY3JlYXRl
+RGF0YVJvd0hlYWRlckh0bWwgOiBmdW5jdGlvbihyb3dJbmZvLCByb3dIdG1sKSB7fSwKKworCisg
+ICAgY3JlYXRlRGF0YVJvd0Zvb3Rlckh0bWwgOiBmdW5jdGlvbihyb3dJbmZvLCByb3dIdG1sKSB7
+fQogICB9CiB9KTsKZGlmZiAtcnVOIHRhYmxlL3BhbmUvRm9jdXNJbmRpY2F0b3IuanMgdGFibGUt
+aGYvcGFuZS9Gb2N1c0luZGljYXRvci5qcwotLS0gdGFibGUvcGFuZS9Gb2N1c0luZGljYXRvci5q
+cwkyMDExLTEyLTA2IDA2OjMzOjMwLjAwMDAwMDAwMCAtMDgwMAorKysgdGFibGUtaGYvcGFuZS9G
+b2N1c0luZGljYXRvci5qcwkyMDEyLTAzLTA0IDA5OjM2OjUzLjAwMDAwMDAwMCAtMDgwMApAQCAt
+MTIyLDEyICsxMjIsMTUgQEAKIAogICAgICAgICAgIHZhciBmaXJzdFJvdyA9IHRoaXMuX19zY3Jv
+bGxlci5nZXRUYWJsZVBhbmUoKS5nZXRGaXJzdFZpc2libGVSb3coKTsKICAgICAgICAgICB2YXIg
+cm93SGVpZ2h0ID0gdGFibGUuZ2V0Um93SGVpZ2h0KCk7CisgICAgICAgICAgdmFyIHJvd1JlbmRl
+cmVyID0gdGFibGUuZ2V0RGF0YVJvd1JlbmRlcmVyKCk7CisgICAgICAgICAgdmFyIGhlYWRlckhl
+aWdodCA9IHJvd1JlbmRlcmVyLmdldFJvd0hlYWRlckhlaWdodChyb3dIZWlnaHQpOworICAgICAg
+ICAgIHZhciBmb290ZXJIZWlnaHQgPSByb3dSZW5kZXJlci5nZXRSb3dGb290ZXJIZWlnaHQocm93
+SGVpZ2h0KTsKIAogICAgICAgICAgIHRoaXMuc2V0VXNlckJvdW5kcygKICAgICAgICAgICAgICAg
+cGFuZU1vZGVsLmdldENvbHVtbkxlZnQoY29sKSAtIDIsCi0gICAgICAgICAgICAgIChyb3cgLSBm
+aXJzdFJvdykgKiByb3dIZWlnaHQgLSAyLAorICAgICAgICAgICAgICAocm93IC0gZmlyc3RSb3cp
+ICogcm93SGVpZ2h0IC0gMiArIGhlYWRlckhlaWdodCwKICAgICAgICAgICAgICAgY29sdW1uTW9k
+ZWwuZ2V0Q29sdW1uV2lkdGgoY29sKSArIDMsCi0gICAgICAgICAgICAgIHJvd0hlaWdodCArIDMK
+KyAgICAgICAgICAgICAgcm93SGVpZ2h0ICsgMyAtIChoZWFkZXJIZWlnaHQgKyBmb290ZXJIZWln
+aHQpCiAgICAgICAgICAgKTsKICAgICAgICAgICB0aGlzLnNob3coKTsKIApkaWZmIC1ydU4gdGFi
+bGUvcGFuZS9QYW5lLmpzIHRhYmxlLWhmL3BhbmUvUGFuZS5qcwotLS0gdGFibGUvcGFuZS9QYW5l
+LmpzCTIwMTEtMTItMDYgMDY6MzM6MzAuMDAwMDAwMDAwIC0wODAwCisrKyB0YWJsZS1oZi9wYW5l
+L1BhbmUuanMJMjAxMi0wMy0wNCAwOTozNjo1My4wMDAwMDAwMDAgLTA4MDAKQEAgLTQ4NCw2ICs0
+ODQsOCBAQAogICAgICAgdGFibGVNb2RlbC5wcmVmZXRjaFJvd3MoZmlyc3RSb3csIGZpcnN0Um93
+ICsgcm93Q291bnQgLSAxKTsKIAogICAgICAgdmFyIHJvd0hlaWdodCA9IHRhYmxlLmdldFJvd0hl
+aWdodCgpOworICAgICAgdmFyIGhlYWRlckhlaWdodCA9IHJvd1JlbmRlcmVyLmdldFJvd0hlYWRl
+ckhlaWdodChyb3dIZWlnaHQpOworICAgICAgdmFyIGZvb3RlckhlaWdodCA9IHJvd1JlbmRlcmVy
+LmdldFJvd0Zvb3RlckhlaWdodChyb3dIZWlnaHQpOwogICAgICAgdmFyIGNvbENvdW50ID0gcGFu
+ZU1vZGVsLmdldENvbHVtbkNvdW50KCk7CiAgICAgICB2YXIgbGVmdCA9IDA7CiAgICAgICB2YXIg
+Y29scyA9IFtdOwpAQCAtNTIxLDcgKzUyMywxMCBAQAogICAgICAgICB2YXIgcm93SHRtbCA9IFtd
+OwogCiAgICAgICAgIHZhciBjZWxsSW5mbyA9IHsgdGFibGUgOiB0YWJsZSB9OwotICAgICAgICBj
+ZWxsSW5mby5zdHlsZUhlaWdodCA9IHJvd0hlaWdodDsKKyAgICAgICAgY2VsbEluZm8ucm93SGVp
+Z2h0ID0gcm93SGVpZ2h0OworICAgICAgICBjZWxsSW5mby5oZWFkZXJIZWlnaHQgPSBoZWFkZXJI
+ZWlnaHQ7CisgICAgICAgIGNlbGxJbmZvLmZvb3RlckhlaWdodCA9IGZvb3RlckhlaWdodDsKKyAg
+ICAgICAgY2VsbEluZm8uc3R5bGVIZWlnaHQgPSByb3dIZWlnaHQgLSAoaGVhZGVySGVpZ2h0ICsg
+Zm9vdGVySGVpZ2h0KTsKIAogICAgICAgICBjZWxsSW5mby5yb3cgPSByb3c7CiAgICAgICAgIGNl
+bGxJbmZvLnNlbGVjdGVkID0gc2VsZWN0ZWQ7CkBAIC01MzIsMjQgKzUzNyw3IEBACiAgICAgICAg
+ICAgcGFuZVJlbG9hZHNEYXRhID0gdHJ1ZTsKICAgICAgICAgfQogCi0gICAgICAgIHJvd0h0bWwu
+cHVzaCgnPGRpdiAnKTsKLQotICAgICAgICB2YXIgcm93QXR0cmlidXRlcyA9IHJvd1JlbmRlcmVy
+LmdldFJvd0F0dHJpYnV0ZXMoY2VsbEluZm8pOwotICAgICAgICBpZiAocm93QXR0cmlidXRlcykg
+ewotICAgICAgICAgIHJvd0h0bWwucHVzaChyb3dBdHRyaWJ1dGVzKTsKLSAgICAgICAgfQotCi0g
+ICAgICAgIHZhciByb3dDbGFzcyA9IHJvd1JlbmRlcmVyLmdldFJvd0NsYXNzKGNlbGxJbmZvKTsK
+LSAgICAgICAgaWYgKHJvd0NsYXNzKSB7Ci0gICAgICAgICAgcm93SHRtbC5wdXNoKCdjbGFzcz0i
+Jywgcm93Q2xhc3MsICciICcpOwotICAgICAgICB9Ci0KLSAgICAgICAgdmFyIHJvd1N0eWxlID0g
+cm93UmVuZGVyZXIuY3JlYXRlUm93U3R5bGUoY2VsbEluZm8pOwotICAgICAgICByb3dTdHlsZSAr
+PSAiO3Bvc2l0aW9uOnJlbGF0aXZlOyIgKyByb3dSZW5kZXJlci5nZXRSb3dIZWlnaHRTdHlsZShy
+b3dIZWlnaHQpKyAid2lkdGg6MTAwJTsiOwotICAgICAgICBpZiAocm93U3R5bGUpIHsKLSAgICAg
+ICAgICByb3dIdG1sLnB1c2goJ3N0eWxlPSInLCByb3dTdHlsZSwgJyIgJyk7Ci0gICAgICAgIH0K
+LSAgICAgICAgcm93SHRtbC5wdXNoKCc+Jyk7CisgICAgICAgIHJvd1JlbmRlcmVyLmNyZWF0ZURh
+dGFSb3dIZWFkZXJIdG1sKGNlbGxJbmZvLCByb3dIdG1sKTsKIAogICAgICAgICB2YXIgc3RvcExv
+b3AgPSBmYWxzZTsKICAgICAgICAgZm9yICh4PTA7IHg8Y29sQ291bnQgJiYgIXN0b3BMb29wOyB4
+KyspCkBAIC01ODAsNyArNTY4LDggQEAKICAgICAgICAgICBzdG9wTG9vcCA9CiAgICAgICAgICAg
+ICBjZWxsUmVuZGVyZXIuY3JlYXRlRGF0YUNlbGxIdG1sKGNlbGxJbmZvLCByb3dIdG1sKSB8fCBm
+YWxzZTsKICAgICAgICAgfQotICAgICAgICByb3dIdG1sLnB1c2goJzwvZGl2PicpOworCisgICAg
+ICAgIHJvd1JlbmRlcmVyLmNyZWF0ZURhdGFSb3dGb290ZXJIdG1sKGNlbGxJbmZvLCByb3dIdG1s
+KTsKIAogICAgICAgICB2YXIgcm93U3RyaW5nID0gcm93SHRtbC5qb2luKCIiKTsKIApkaWZmIC1y
+dU4gdGFibGUvcm93cmVuZGVyZXIvQWJzdHJhY3QuanMgdGFibGUtaGYvcm93cmVuZGVyZXIvQWJz
+dHJhY3QuanMKLS0tIHRhYmxlL3Jvd3JlbmRlcmVyL0Fic3RyYWN0LmpzCTE5NjktMTItMzEgMTY6
+MDA6MDAuMDAwMDAwMDAwIC0wODAwCisrKyB0YWJsZS1oZi9yb3dyZW5kZXJlci9BYnN0cmFjdC5q
+cwkyMDEyLTAzLTA0IDA5OjM2OjUzLjAwMDAwMDAwMCAtMDgwMApAQCAtMCwwICsxLDcwIEBACitx
+eC5DbGFzcy5kZWZpbmUoInF4LnVpLnRhYmxlLnJvd3JlbmRlcmVyLkFic3RyYWN0IiwKK3sKKyAg
+dHlwZSA6ICJhYnN0cmFjdCIsCisgIGV4dGVuZCA6IHF4LmNvcmUuT2JqZWN0LAorICBpbXBsZW1l
+bnQgOiBxeC51aS50YWJsZS5JUm93UmVuZGVyZXIsCisKKyAgbWVtYmVycyA6CisgIHsKKyAgICBn
+ZXRSb3dIZWFkZXJIZWlnaHQgOiBmdW5jdGlvbihoZWlnaHQpIHsKKyAgICAgIHJldHVybiAwOwor
+ICAgIH0sCisKKworICAgIGNyZWF0ZURhdGFSb3dIZWFkZXJDZWxsSHRtbCA6IGZ1bmN0aW9uIChy
+b3dJbmZvLCByb3dIdG1sKSB7CisgICAgfSwKKworCisgICAgY3JlYXRlRGF0YVJvd0hlYWRlckh0
+bWwgOiBmdW5jdGlvbihyb3dJbmZvLCByb3dIdG1sKSB7CisgICAgICByb3dIdG1sLnB1c2goJzxk
+aXYgJyk7CisKKyAgICAgIHZhciByb3dBdHRyaWJ1dGVzID0gdGhpcy5nZXRSb3dBdHRyaWJ1dGVz
+KHJvd0luZm8pOworICAgICAgaWYgKHJvd0F0dHJpYnV0ZXMpIHsKKyAgICAgICAgcm93SHRtbC5w
+dXNoKHJvd0F0dHJpYnV0ZXMpOworICAgICAgfQorCisgICAgICB2YXIgcm93Q2xhc3MgPSB0aGlz
+LmdldFJvd0NsYXNzKHJvd0luZm8pOworICAgICAgaWYgKHJvd0NsYXNzKSB7CisgICAgICAgIHJv
+d0h0bWwucHVzaCgnY2xhc3M9IicsIHJvd0NsYXNzLCAnIiAnKTsKKyAgICAgIH0KKworICAgICAg
+dmFyIHJvd1N0eWxlID0gdGhpcy5jcmVhdGVSb3dTdHlsZShyb3dJbmZvKTsKKyAgICAgIHJvd1N0
+eWxlICs9ICI7cG9zaXRpb246cmVsYXRpdmU7IiArIHRoaXMuZ2V0Um93SGVpZ2h0U3R5bGUocm93
+SW5mby5yb3dIZWlnaHQpKyAid2lkdGg6MTAwJTsiOworICAgICAgaWYgKHJvd1N0eWxlKSB7Cisg
+ICAgICAgIHJvd0h0bWwucHVzaCgnc3R5bGU9IicsIHJvd1N0eWxlLCAnIiAnKTsKKyAgICAgIH0K
+KyAgICAgIHJvd0h0bWwucHVzaCgnPicpOworCisgICAgICBpZiAocm93SW5mby5oZWFkZXJIZWln
+aHQgPiAwKSB7CisgICAgICAgIHRoaXMuY3JlYXRlRGF0YVJvd0hlYWRlckNlbGxIdG1sKHJvd0lu
+Zm8sIHJvd0h0bWwpOworICAgICAgfQorCisgICAgICBpZiAocm93SW5mby5zdHlsZUhlaWdodCAh
+PSByb3dJbmZvLnJvd0hlaWdodCkgeworICAgICAgICByb3dIdG1sLnB1c2goJzxkaXYgc3R5bGU9
+IndpZHRoOjEwMCU7aGVpZ2h0OicgKyByb3dJbmZvLnN0eWxlSGVpZ2h0ICsgJ3B4Ijs+Jyk7Cisg
+ICAgICB9CisgICAgfSwKKworCisgICAgZ2V0Um93Rm9vdGVySGVpZ2h0IDogZnVuY3Rpb24oaGVp
+Z2h0KSB7CisgICAgICAgIHJldHVybiAwOworICAgIH0sCisKKworICAgIGNyZWF0ZURhdGFSb3dG
+b290ZXJDZWxsSHRtbCA6IGZ1bmN0aW9uKHJvd0luZm8sIHJvd0h0bWwpIHsKKyAgICB9LAorCisg
+CisgICAgY3JlYXRlRGF0YVJvd0Zvb3Rlckh0bWwgOiBmdW5jdGlvbihyb3dJbmZvLCByb3dIdG1s
+KSB7CisgICAgICAgIHJvd0h0bWwucHVzaCgnPC9kaXY+Jyk7CisKKyAgICAgICAgaWYgKHJvd0lu
+Zm8uZm9vdGVySGVpZ2h0ID4gMCkgeworICAgICAgICAgIHRoaXMuY3JlYXRlRGF0YVJvd0Zvb3Rl
+ckNlbGxIdG1sKHJvd0luZm8sIHJvd0h0bWwpOworICAgICAgICB9CisKKyAgICAgICAgaWYgKHJv
+d0luZm8uc3R5bGVIZWlnaHQgIT0gcm93SW5mby5yb3dIZWlnaHQpIHsKKyAgICAgICAgICByb3dI
+dG1sLnB1c2goJzwvZGl2PicpOworICAgICAgICB9CisgICAgfSAgCisgIH0KK30pOworCmRpZmYg
+LXJ1TiB0YWJsZS9yb3dyZW5kZXJlci9EZWZhdWx0LmpzIHRhYmxlLWhmL3Jvd3JlbmRlcmVyL0Rl
+ZmF1bHQuanMKLS0tIHRhYmxlL3Jvd3JlbmRlcmVyL0RlZmF1bHQuanMJMjAxMS0xMi0wNiAwNjoz
+MzozMC4wMDAwMDAwMDAgLTA4MDAKKysrIHRhYmxlLWhmL3Jvd3JlbmRlcmVyL0RlZmF1bHQuanMJ
+MjAxMi0wMy0wNCAwOTozNjo1My4wMDAwMDAwMDAgLTA4MDAKQEAgLTI0LDggKzI0LDcgQEAKICAq
+LwogcXguQ2xhc3MuZGVmaW5lKCJxeC51aS50YWJsZS5yb3dyZW5kZXJlci5EZWZhdWx0IiwKIHsK
+LSAgZXh0ZW5kIDogcXguY29yZS5PYmplY3QsCi0gIGltcGxlbWVudCA6IHF4LnVpLnRhYmxlLklS
+b3dSZW5kZXJlciwKKyAgZXh0ZW5kIDogcXgudWkudGFibGUucm93cmVuZGVyZXIuQWJzdHJhY3Qs
+CiAKIAogCg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

@@ -1,0 +1,190 @@
+<bug>
+          <bug_id>3803</bug_id>
+          
+          <creation_ts>2010-06-27 14:21:00 +0200</creation_ts>
+          <short_desc>qx.ui.table.pane.Pane._getRowsHtml cellInfo.style is not reseted between calls</short_desc>
+          <delta_ts>2010-06-29 08:04:05 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Henner Kollmann">Henner.Kollmann</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>18948</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2010-06-27 14:21:07 +0200</bug_when>
+            <thetext>the cellInfo.style property is not resetted between the calls to createDataCellHTml. If you change the property for one cell all cells behind this cell are affected with the changed cell style.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18950</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-06-27 23:00:32 +0200</bug_when>
+            <thetext>No, the cellinfo object should be considered read-only. There are many members of that object that are not reset between each call to createDataCellHtml. (Having to reset all of them on each iteration of the loop for every column of every row is a waste of time.) You can subclass the cellrenderer to use or not use the value of cellinfo.style* but you should not change that object.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18951</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2010-06-28 07:40:30 +0200</bug_when>
+            <thetext>Sorry, but the other attributes are resetted during the call! Only style is missing.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18964</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-06-28 14:19:08 +0200</bug_when>
+            <thetext>There are some column-specific properties (some that can change depending on which column is being rendered) that get reset during the loop. There are also many non-column-specific properties which do not get reset. 
+
+There is no property I can find called &#39;style&#39; in cellInfo, so I&#39;m not sure which property you&#39;re actually referring to. There is a styleLeft property, and a styleWidth property that do get reset prior to each call.
+
+In any case, the way to style a cell is to implement it in your cell renderer. The data model row for the data being rendered is available as cellInfo.rowData() so you can have any additional information you like that suggests the type of styling to use for cells or the row associated with your data model if you&#39;d like. Using the cellInfo object for this, though, particularly making changes to it, is asking for problems. 
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18969</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2010-06-28 15:42:05 +0200</bug_when>
+            <thetext>style is introduced in qx.ui.table.cellrenderer.Abstract._getCellStyle.
+In this case i think _getCellStyle should return an empty string like 
+_getCellAttributes do.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18973</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-06-28 20:58:01 +0200</bug_when>
+            <thetext>You&#39;re right. Since cellInfo.style is never set, neither Abstract.__getCellStyle() nor Conditional.__getCellStyle should reference it. I&#39;ve reopened the bug and will fix those to return an empty string where they are current returning cellInfo.style||&quot;&quot;.
+
+Thanks for pursuing this.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18974</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-06-28 21:31:51 +0200</bug_when>
+            <thetext>Uggh. cellInfo.style is actually defined in the interface Table.ICellRenderer so I can&#39;t delete it. Instead, I&#39;ll add it as a member of the column-specific fields, similar to what you originally suggested. I&#39;ll work on this.
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18975</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-06-28 21:35:45 +0200</bug_when>
+            <thetext>Fixed in r22529.
+
+Although cellInfo.style is documented as part of the interface for a cell
+renderer, it was not set anyplace. There is now a new property in
+Table.cellrenderer.Abstract called defaultCellStyle that defaults to null for
+backward compatibility. Users may set this property to provide a style to be
+used by the cell renderer each time the cell is rendered. The code in Pane
+which calls the cell renderer now resets cellInfo.style to the (current!)
+defaultCellStyle value on each iteration of the loop.
+
+This code snippet which can be applied in the appropriate place in the Table sample in the playground shows hot it works:
+
+var tcm = table.getTableColumnModel();
+
+// Display a checkbox in column 3
+var cellRenderer = new qx.ui.table.cellrenderer.Boolean();
+cellRenderer.setDefaultCellStyle(&quot;border:1px solid red&quot;);
+tcm.setDataCellRenderer(3, cellRenderer
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18976</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2010-06-28 22:48:05 +0200</bug_when>
+            <thetext>In my opinion you should call this.base(arguments, cellInfo) in Conditional._getCellStyle.
+
+Just for the OO freaks :-)
+
+
+By the way: Your changes are working quite well!
+
+Another question: What&#39;s about init value = &quot;&quot; for the defaultCellStyle instead of the comparison return cellInfo.style || &quot;&quot; in _getCellStyle. Would&#39;nt that be not faster?
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18979</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-06-28 22:57:51 +0200</bug_when>
+            <thetext>&gt; In my opinion you should call this.base(arguments, cellInfo) in
+&gt; Conditional._getCellStyle.
+
+&gt; Just for the OO freaks :-)
+
+Agreed, but that means unnecessary changes on something that works. If it works, don&#39;t f--- with it. :-)
+
+&gt; By the way: Your changes are working quite well!
+
+Great.
+
+&gt; Another question: What&#39;s about init value = &quot;&quot; for the defaultCellStyle instead
+&gt; of the comparison return cellInfo.style || &quot;&quot; in _getCellStyle. Would&#39;nt that
+&gt; be not faster?
+
+Yes, and I considered it, but that changes the semantics. I don&#39;t know what subclasses people have created, so I wanted to keep the same semantics to prevent this change from breaking peoples&#39; code.
+
+Since this is working well for you, would you please mark the bug as &quot;Verified&quot;.
+
+Thanks,
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18980</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2010-06-28 23:03:06 +0200</bug_when>
+            <thetext>Everything is working!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18982</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-06-29 08:04:05 +0200</bug_when>
+            <thetext>I love to see such a high quality bug report with all the conversation in the comments. Thanks Derrell for taking care of it!
+--&gt; Closed</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

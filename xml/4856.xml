@@ -1,0 +1,131 @@
+<bug>
+          <bug_id>4856</bug_id>
+          
+          <creation_ts>2011-03-24 17:19:00 +0100</creation_ts>
+          <short_desc>Add Optimization Support for qx.core.Environment.get() Calls in simple Logical Expressions</short_desc>
+          <delta_ts>2014-03-03 15:21:12 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>1.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>2.0</target_milestone>
+          <dependson>5000</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>23529</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-24 17:19:14 +0100</bug_when>
+            <thetext>This is a follow-up from bug#4734.
+
+Currently, the optimization for qx.core.Environment.get() is only applied if 
+the q.c.E.get() call is the only expression in the condition, or if it is 
+compared to a literal.
+
+Add optimization support for conditions where the head symbol is a logical 
+operator, so that multiple compares can be combined:
+
+! : like &quot;if(!qx.core.Environment.get(&quot;foo&quot;))&quot;
+
+&amp;&amp; : like &quot;if(qx.core.Environment.get(&quot;foo&quot;) == 1 &amp;&amp; 
+qx.core.Environment.get(&quot;bar&quot;) == 2)&quot;
+
+|| : like &quot;if(qx.core.Environment.get(&quot;foo&quot;) == 1 || 
+qx.core.Environment.get(&quot;bar&quot;) == 2)&quot;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23982</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-04-12 12:15:19 +0200</bug_when>
+            <thetext>Implemented. CAVEAT: You have to apply additional grouping, so the evaluation 
+works out correctly. So instead of
+
+  if ( qx.core.Environment.get(&quot;foo&quot;)==1 &amp;&amp; !qx.core.Environment.get(&quot;bar&quot;)&lt;2)
+
+you have to write
+
+  if ( (qx.core.Environment.get(&quot;foo&quot;)==1) &amp;&amp; 
+(!(qx.core.Environment.get(&quot;bar&quot;)&lt;2)))
+
+(mind the grouping around the negation, &quot;(! ...)&quot;).
+
+With r26708.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24052</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-04-14 16:26:17 +0200</bug_when>
+            <thetext>The problem is actually worse than initially thought.
+
+Not that some opportunities for optimization are missed if proper grouping has 
+not been applied. There are cases when the optimization is applied *and is 
+wrong*. Here is an example:
+
+  if (!qx.core.Environment.get(&quot;foo&quot;) &amp;&amp; qx.core.Environment.get(&quot;bar&quot;))
+
+(mind the missing parentheses around &quot;!qx.core...(&#39;foo&#39;)&quot;). The condition gets 
+actually parsed as 
+
+  (! (&amp;&amp; (qx.core.Environment.get(&quot;foo&quot;) qx.core.Environment.get(&quot;bar&quot;))))
+
+which has a different interpretation for some values of &quot;foo&quot; and &quot;bar&quot;. If 
+&quot;bar&quot; is false, the original condition returns *false*, while the parsed 
+expression returns *true*. So applying the optimization would actually change 
+the meaning of the code for certain settings.
+
+So logical operators cannot be safely optimized; the solution for this issue 
+hinges on bug#5000.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25053</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-06-10 11:48:29 +0200</bug_when>
+            <thetext>to unspec</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29539</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-05-23 18:27:46 +0200</bug_when>
+            <thetext>With the resolution of bug#5000 I enabled optimization of logical expressions 
+during variant optimization.
+
+master: 56cbb51</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37195</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:12 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

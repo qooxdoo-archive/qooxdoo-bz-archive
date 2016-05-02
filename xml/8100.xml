@@ -1,0 +1,178 @@
+<bug>
+          <bug_id>8100</bug_id>
+          
+          <creation_ts>2014-02-10 16:04:00 +0100</creation_ts>
+          <short_desc>addListenerOnce doesn&#39;t remove listener</short_desc>
+          <delta_ts>2014-12-16 11:44:21 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>3.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>4.0.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Dmitry Golubkov">master</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          <cc>andrepatsantos</cc>
+    
+    <cc>helder.magalhaes</cc>
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>35008</commentid>
+            <who name="Dmitry Golubkov">master</who>
+            <bug_when>2014-02-10 16:04:56 +0100</bug_when>
+            <thetext>Сlass - qx.core.MEvent, method - addListenerOnce:
+
+
+    addListenerOnce : function(type, listener, self, capture)
+    {
+      var callback = function(e)
+      {
+        this.removeListener(type, listener, this, capture);
+        listener.call(self||this, e);
+      };
+      listener.$$wrapped_callback = callback;
+
+      return this.addListener(type, callback, this, capture);
+    }
+
+As we see the second parameter in the methods addListener and removeListener is not the same.
+In fact removeListener does not remove the listener in this case.
+
+For example it crashes qx.ui.core.Blocker if blocked target widget appears and disappears some times.
+
+After patch:
+  this.removeListener(type, callback, this, capture);
+
+addListenerOnce works correctly and listener removes after first listener call.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35017</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-02-11 07:59:09 +0100</bug_when>
+            <thetext>Thanks for the report. We recently fixed a bug in this method. could you please supply a working playground sample in the latest playground [1] to verify that your bug still exists?
+
+[1] http://demo.qooxdoo.org/devel/playground/</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39975</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2014-04-16 09:47:08 +0200</bug_when>
+            <thetext>That code is correct from what I can see. removeListener checks for the $$wrapped_callback property on its second argument and removes that instead. This can be verified using hasListener, which returns false after the callback has been executed.
+So the Blocker problem must be caused by something else. Dmitry, please open a new report for that issue if you can narrow it down a bit or come up with a sample to reproduce it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40542</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2014-06-19 13:10:47 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Thanks for the report. We recently fixed a bug in this method. could you please
+&gt; supply a working playground sample in the latest playground [1] to verify that
+&gt; your bug still exists?
+
+Apparently most code usages were fixed but, if the same event type and callback is used more than one, then the current code breaks.
+
+Test case URL: http://tinyurl.com/q6e9t7n
+
+Problem 1 - Severe
+
+Steps to reproduce:
+1. Open test case
+2. Press &quot;First Button&quot;
+3. Press &quot;Second Button&quot;
+
+Expected result:
+In steps 2 and 3, check that an alert appears
+Afterwards, pressing &quot;First Button&quot; or &quot;Second Button&quot; no longer display alerts
+
+Actual result:
+Alert are always displayed regardless of &#39;addListenerOnce&#39; been used.
+
+
+Problem 2 - Medium
+
+Steps to reproduce:
+1. Open test case
+2. Press &quot;Second Button&quot;
+3. Press &quot;First Button&quot;
+
+Expected result:
+In steps 2 and 3, check that an alert appears
+Afterwards, pressing &quot;First Button&quot; or &quot;Second Button&quot; no longer display alerts
+
+Actual result:
+Alert are still displayed for &quot;First Button&quot;.
+
+
+Suggestion:
+Using the register object&#39;s hash code for the wrapped callback storage will likely help fixing the issue, although not yet properly tested. Adapted snipped from &quot;qx.core.MEvent&quot; (trunk):
+
+    addListenerOnce : function(type, listener, self, capture)
+    {
+      [...]
+      // store the call for each type in case the listener is
+      // used for more than one type [BUG #8038]
+      // also store the register object identification [BUG #8100]
+      listener.$$wrapped_callback[type + this.$$hash] = callback;
+      [...]
+
+The remove method also needs to be changed in order to fix the following scenario: the same component uses &#39;addListenerOnce&#39; more than once:
+
+    removeListener : function(type, listener, self, capture)
+    {
+        [...]
+        // special handling for wrapped once listener
+        if (listener.$$wrapped_callback &amp;&amp; listener.$$wrapped_callback[type + this.$$hash]) {
+          var callback = listener.$$wrapped_callback[type + this.$$hash];
+          delete listener.$$wrapped_callback[type + this.$$hash];
+          listener = callback;
+        }
+        [...]
+
+
+Thanks to André Santos for assistance with this issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40644</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-02 09:48:40 +0200</bug_when>
+            <thetext>Thanks for reopening and the good description!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40696</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2014-07-04 13:37:09 +0200</bug_when>
+            <thetext>Using the object hash works fine, good idea.
+
+Fixed with ecd63c40fa5cce53f34c9de2e4485b827f34d09d (master)
+b4aa05478bc1a46b33b3e21c27d0abfefac49f7f (branch_4_0_x)</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

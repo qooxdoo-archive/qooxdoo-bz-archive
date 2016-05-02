@@ -1,0 +1,332 @@
+<bug>
+          <bug_id>4066</bug_id>
+          
+          <creation_ts>2010-09-09 13:27:00 +0200</creation_ts>
+          <short_desc>Context menu of MTableContextMenu pops up on header-cells</short_desc>
+          <delta_ts>2014-03-03 15:27:43 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.3.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Peter Schneider">schnepe2</reporter>
+          <assigned_to name="Derrell Lipman">derrell.lipman</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20103</commentid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2010-09-09 13:27:25 +0200</bug_when>
+            <thetext>A context menu[1] pops up on the tables header cells as well.
+The context menu pops up on _every_ column header, independent of the columns
+that have an contextMenuHandler set.
+
+
+Workaround:
+-----------
+&lt;code&gt;
+  // ...somewhere in the contexMenuHandler method...
+  contextMenu.addListenerOnce(&quot;disappear&quot;, function () {
+    table.setContextMenu(null);
+  });
+&lt;/code&gt;
+
+
+Fix Proposal :
+--------------
+The above workaround should be included in the mixin.
+Maybe something like the following snippet should be added to the
+&quot;cellContextmenu&quot; event handler at the constructor of
+qx.ui.table.MTableContextMenu:
+
+&lt;code&gt;
+// [...]
+        // Create a context menu for this tree.
+        this._contextMenu = new qx.ui.menu.Menu();
+
+        // Don&#39;t display context menus from the context menu
+        this._contextMenu.addListener(&quot;contextmenu&quot;, function(e) {
+          e.preventDefault();
+        });
+
+// NEW +++ NEW +++ NEW +++ NEW +++ NEW +++ NEW +++
+        // This prevents the display of context menu on table header cells
+        this._contextMenu.addListenerOnce(&quot;disappear&quot;, function() {
+          this.setContextMenu(null);
+        }, this);
+// NEW --- NEW --- NEW --- NEW --- NEW --- NEW ---
+
+        // Call the context menu handler for this column.
+        var bShowContextMenu = contextMenuHandler(
+          col,
+          e.getRow(),
+          this,
+          tableModel,
+          this._contextMenu
+        );
+// [...]
+&lt;/code&gt;
+Note: This code is UNTESTED! ;)
+
+
+----
+[1] provided via qx.ui.table.MTableContextMenu#setContextMenuHandler</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20120</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-09-10 13:54:04 +0200</bug_when>
+            <thetext>Derrell, is ok for you to take care of that bug? If yes, could you set the
+importance and milestone of the bug as you thinks  it fits?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20131</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-09-10 14:35:34 +0200</bug_when>
+            <thetext>This will require some investigation. I don&#39;t see immediately why a disappear handler should solve this problem.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20409</commentid>
+              <attachid>805</attachid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2010-09-30 09:45:14 +0200</bug_when>
+            <thetext>Created attachment 805
+Context Menu Popup is removed from Table each time, to prevent display on header cells
+
+The Event listener is used to remove the context-menu popup each time
+_after_ it was shown.
+Another solution might be to limit the area for right-click reaction on the
+table itself, but this one works.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20410</commentid>
+              <attachid>806</attachid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2010-09-30 09:51:41 +0200</bug_when>
+            <thetext>Created attachment 806
+Complete changes for Bugs #4065, #4066 and #4067
+
+This is the Mixin after all the single patches have been applied.
+See also Bugs #4065 and #4067.
+
+Changeset:
+----------
+- API Description added
+- Useless code removed
+- [BUG #4067] Added check for disposal.
+- [BUG #4066] Context Menu Popup is removed from Table each time,
+              to prevent display on header cells.
+- [Bug #4065] Added &#39;context&#39; as optional parameter to
+              MTableContextMenu#setContextMenuHandler
+- &#39;lint&#39; warnings removed. Removed use of protected member variable
+         _contextMenu.
+
+Tested with these Browsers (all on Win32):
+----------
+- FireFox 3.6.10
+- IE 8
+- Google Chrome 5.0.375.126
+- Safari 5.0.2 (7533.18.5)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22321</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-01-17 19:27:17 +0100</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22322</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-01-17 19:28:00 +0100</bug_when>
+            <thetext>Applied the changes suggested by Peter Schneider. Tested in Chrome and Firefox
+on Linux.
+
+These changes apply to bugs #4065, #4066, and #4067.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22326</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-01-17 19:29:57 +0100</bug_when>
+            <thetext>commit was r24576</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39568</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:43 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>805</attachid>
+            <date>2010-09-30 09:45:00 +0200</date>
+            <delta_ts>2010-09-30 09:45:14 +0200</delta_ts>
+            <desc>Context Menu Popup is removed from Table each time, to prevent display on header cells</desc>
+            <filename>MTableContextMenu.js_step4.diff</filename>
+            <type>text/plain</type>
+            <size>606</size>
+            <attacher>schnepe2</attacher>
+            
+              <data encoding="base64">SW5kZXg6IEQ6L3BzdjMvaW5mb0Rlc2svdGVzdC9NVGFibGVDb250ZXh0TWVudS5qcw0KPT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PQ0KLS0tIE1UYWJsZUNvbnRleHRNZW51LmpzCShSZXZpc2lvbiA0KQ0KKysrIE1UYWJsZUNv
+bnRleHRNZW51LmpzCShSZXZpc2lvbiA1KQ0KQEAgLTY0LDYgKzY0LDExIEBADQogICAgICAgICAg
+IGUucHJldmVudERlZmF1bHQoKTsNCiAgICAgICAgIH0pOw0KIA0KKyAgICAgICAgLy8gVGhpcyBw
+cmV2ZW50cyB0aGUgZGlzcGxheSBvZiBjb250ZXh0IG1lbnUgb24gdGFibGUgaGVhZGVyIGNlbGxz
+DQorICAgICAgICB0aGlzLl9jb250ZXh0TWVudS5hZGRMaXN0ZW5lck9uY2UoImRpc2FwcGVhciIs
+IGZ1bmN0aW9uKCkgew0KKyAgICAgICAgICB0aGlzLnNldENvbnRleHRNZW51KG51bGwpOw0KKyAg
+ICAgICAgfSwgdGhpcyk7DQorDQogICAgICAgICAvLyBDYWxsIHRoZSBjb250ZXh0IG1lbnUgaGFu
+ZGxlciBmb3IgdGhpcyBjb2x1bW4uDQogICAgICAgICB2YXIgYlNob3dDb250ZXh0TWVudSA9IGNv
+bnRleHRNZW51SGFuZGxlcigNCiAgICAgICAgICAgY29sLA0K
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>806</attachid>
+            <date>2010-09-30 09:51:00 +0200</date>
+            <delta_ts>2010-09-30 09:51:41 +0200</delta_ts>
+            <desc>Complete changes for Bugs #4065, #4066 and #4067</desc>
+            <filename>MTableContextMenu.js</filename>
+            <type>text/x-c</type>
+            <size>5942</size>
+            <attacher>schnepe2</attacher>
+            
+              <data encoding="base64">LyogKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqDQoNCiAgIHFvb3hkb28gLSB0aGUgbmV3IGVyYSBvZiB3ZWIgZGV2
+ZWxvcG1lbnQNCg0KICAgaHR0cDovL3Fvb3hkb28ub3JnDQoNCiAgIENvcHlyaWdodDoNCiAgICAg
+MjAwNi0yMDA5IERlcnJlbGwgTGlwbWFuDQoNCiAgIExpY2Vuc2U6DQogICAgIExHUEw6IGh0dHA6
+Ly93d3cuZ251Lm9yZy9saWNlbnNlcy9sZ3BsLmh0bWwNCiAgICAgRVBMOiBodHRwOi8vd3d3LmVj
+bGlwc2Uub3JnL29yZy9kb2N1bWVudHMvZXBsLXYxMC5waHANCiAgICAgU2VlIHRoZSBMSUNFTlNF
+IGZpbGUgaW4gdGhlIHByb2plY3QncyB0b3AtbGV2ZWwgZGlyZWN0b3J5IGZvciBkZXRhaWxzLg0K
+DQogICBBdXRob3JzOg0KICAgICAqIERlcnJlbGwgTGlwbWFuIChkZXJyZWxsKQ0KDQoqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKiogKi8NCg0KLyoqDQogKiBUaGlzIG1peGluIGFsbG93cyBlYXNpbHkgYWRkaW5nIGhh
+bmRsZXJzIGZvciBjb250ZXh0IG1lbnVzIG9uIHRhYmxlIGNvbHVtbnMuDQogKi8NCnF4Lk1peGlu
+LmRlZmluZSgicXgudWkudGFibGUuTVRhYmxlQ29udGV4dE1lbnUiLA0Kew0KICBjb25zdHJ1Y3Qg
+OiBmdW5jdGlvbigpDQogIHsNCiAgICAvLyBBZGQgYW4gZXZlbnQgbGlzdGVuZXIgdG8gaGFuZGxl
+IGNvbnRleHQgbWVudSBldmVudHMuICBUaGUgYWN0dWFsIG1lbnUNCiAgICAvLyBpcyBidWlsdCBi
+eSBhIGZ1bmN0aW9uIHJlZ2lzdGVyZWQgd2l0aCBhIGNhbGwgdG8NCiAgICAvLyBzZXRDb250ZXh0
+TWVudUhhbmRsZXIoY29sLCBoYW5kbGVyKS4NCiAgICB0aGlzLmFkZExpc3RlbmVyKA0KICAgICAg
+ImNlbGxDb250ZXh0bWVudSIsDQogICAgICBmdW5jdGlvbihlKQ0KICAgICAgew0KICAgICAgICB2
+YXIgY29udGV4dE1lbnUgPSB0aGlzLmdldENvbnRleHRNZW51KCk7DQogICAgICAgIC8vIERpc3Bv
+c2Ugb2YgYW55IHByZXZpb3VzbHkgZXhpc3RpbmcgY29udGV4dCBtZW51DQogICAgICAgIGlmIChj
+b250ZXh0TWVudSAmJiAhY29udGV4dE1lbnUuaXNEaXNwb3NlZCgpKQ0KICAgICAgICB7DQogICAg
+ICAgICAgLy8gRGlzcG9zZSBvZiB0aGUgY29udGV4dCBtZW51Lg0KICAgICAgICAgIGNvbnRleHRN
+ZW51LmhpZGUoKTsNCiAgICAgICAgICB0aGlzLnNldENvbnRleHRNZW51KG51bGwpOw0KICAgICAg
+ICAgIHRoaXMuZ2V0QXBwbGljYXRpb25Sb290KCkucmVtb3ZlKGNvbnRleHRNZW51KTsNCiAgICAg
+ICAgICBjb250ZXh0TWVudS5kaXNwb3NlKCk7DQogICAgICAgICAgY29udGV4dE1lbnUgPSBudWxs
+Ow0KICAgICAgICB9DQoNCiAgICAgICAgLy8gR2V0IHRoZSBjb250ZXh0IG1lbnUgaGFuZGxlciBm
+b3IgdGhlIGNvbHVtbiBvbiB3aGljaCB0aGUgY29udGV4dA0KICAgICAgICAvLyBtZW51IHJlcXVl
+c3Qgd2FzIGlzc3VlZC4NCiAgICAgICAgdmFyIGNvbCA9IGUuZ2V0Q29sdW1uKCk7DQogICAgICAg
+IHZhciBjb250ZXh0TWVudUhhbmRsZXIgPSB0aGlzLmdldENvbnRleHRNZW51SGFuZGxlcihjb2wp
+Ow0KDQogICAgICAgIC8vIElmIHRoZXJlJ3Mgbm8gY29udGV4dCBtZW51IGhhbmRsZXIgZm9yIHRo
+aXMgY29sdW1uLCB3ZSBoYXZlIG5vdGhpbmcNCiAgICAgICAgLy8gdG8gZG8uDQogICAgICAgIGlm
+ICh0eXBlb2YgY29udGV4dE1lbnVIYW5kbGVyICE9PSAiZnVuY3Rpb24iKSB7DQogICAgICAgICAg
+cmV0dXJuOw0KICAgICAgICB9DQoNCiAgICAgICAgLy8gR2V0IHRoZSBjb250ZXh0IG9iamVjdCBm
+b3IgdGhlIGhhbmRsZXIgZnVuY3Rpb24NCiAgICAgICAgdmFyIGhhbmRsZXJDb250ZXh0ID0gdGhp
+cy5fX2NvbnRleHRNZW51SGFuZGxlckNvbnRleHRbY29sXTsNCg0KICAgICAgICAvLyBHZXQgdGhl
+IGRhdGEgbW9kZWwNCiAgICAgICAgdmFyIHRhYmxlTW9kZWwgPSB0aGlzLmdldFRhYmxlTW9kZWwo
+KTsNCg0KICAgICAgICAvLyBDcmVhdGUgYSBjb250ZXh0IG1lbnUgZm9yIHRoaXMgdHJlZS4NCiAg
+ICAgICAgY29udGV4dE1lbnUgPSBuZXcgcXgudWkubWVudS5NZW51KCk7DQoNCiAgICAgICAgLy8g
+RG9uJ3QgZGlzcGxheSBjb250ZXh0IG1lbnVzIGZyb20gdGhlIGNvbnRleHQgbWVudQ0KICAgICAg
+ICBjb250ZXh0TWVudS5hZGRMaXN0ZW5lcigiY29udGV4dG1lbnUiLCBmdW5jdGlvbihlKSB7DQog
+ICAgICAgICAgZS5wcmV2ZW50RGVmYXVsdCgpOw0KICAgICAgICB9KTsNCg0KICAgICAgICAvLyBU
+aGlzIHByZXZlbnRzIHRoZSBkaXNwbGF5IG9mIGNvbnRleHQgbWVudSBvbiB0YWJsZSBoZWFkZXIg
+Y2VsbHMNCiAgICAgICAgY29udGV4dE1lbnUuYWRkTGlzdGVuZXJPbmNlKCJkaXNhcHBlYXIiLCBm
+dW5jdGlvbigpIHsNCiAgICAgICAgICB0aGlzLnNldENvbnRleHRNZW51KG51bGwpOw0KICAgICAg
+ICB9LCB0aGlzKTsNCg0KICAgICAgICAvLyBDYWxsIHRoZSBjb250ZXh0IG1lbnUgaGFuZGxlciBm
+b3IgdGhpcyBjb2x1bW4uDQogICAgICAgIHZhciBiU2hvd0NvbnRleHRNZW51ID0gY29udGV4dE1l
+bnVIYW5kbGVyLmNhbGwoaGFuZGxlckNvbnRleHQsDQogICAgICAgICAgY29sLA0KICAgICAgICAg
+IGUuZ2V0Um93KCksDQogICAgICAgICAgdGhpcywNCiAgICAgICAgICB0YWJsZU1vZGVsLA0KICAg
+ICAgICAgIGNvbnRleHRNZW51DQogICAgICAgICk7DQoNCiAgICAgICAgLy8gSWYgd2Ugd2VyZSB0
+b2xkIG5vdCB0byBkaXNwbGF5IHRoZSBjb250ZXh0IG1lbnUuLi4NCiAgICAgICAgaWYgKCEgYlNo
+b3dDb250ZXh0TWVudSkNCiAgICAgICAgew0KICAgICAgICAgIC8vIC4uLiB0aGVuIHdlJ3JlIGFs
+bCBkb25lIGhlcmUuDQogICAgICAgICAgY29udGV4dE1lbnUuZGlzcG9zZSgpOw0KICAgICAgICAg
+IHJldHVybjsNCiAgICAgICAgfQ0KDQogICAgICAgIC8vIFNldCB0aGUgY29udGV4dCBtZW51DQog
+ICAgICAgIHRoaXMuc2V0Q29udGV4dE1lbnUoY29udGV4dE1lbnUpOw0KICAgICAgfSwNCiAgICAg
+IHRoaXMpOw0KDQogICAgLy8gUHJvdmlkZSBhbiBhcnJheSBpbiB3aGljaCBjb250ZXh0IG1lbnUg
+aGFuZGxlcnMgd2lsbCBiZSBzdG9yZWQuICBUaGUNCiAgICAvLyBhcnJheSBpcyBpbmRleGVkIGJ5
+IGNvbHVtbiBudW1iZXIuDQogICAgdGhpcy5fX2NvbnRleHRNZW51SGFuZGxlciA9IFsgXTsNCiAg
+ICB0aGlzLl9fY29udGV4dE1lbnVIYW5kbGVyQ29udGV4dCA9IFsgXTsNCiAgfSwNCg0KICBtZW1i
+ZXJzIDoNCiAgew0KICAgIF9fY29udGV4dE1lbnVIYW5kbGVyIDogbnVsbCwNCiAgICBfX2NvbnRl
+eHRNZW51SGFuZGxlckNvbnRleHQgOiBudWxsLA0KDQogICAgLyoqDQogICAgICogQWRkIGEgaGFu
+ZGxlciBmb3IgYSBjb250ZXh0IG1lbnUgd2hpY2ggaXMgaW5pdGlhdGVkIGluIGEgc3BlY2lmaWMN
+CiAgICAgKiBjb2x1bW4uDQogICAgICoNCiAgICAgKiBAcGFyYW0gY29sIHtJbnRlZ2VyfQ0KICAg
+ICAqICAgVGhlIGNvbHVtbiBudW1iZXIgaW4gd2hpY2ggdGhlIGNvbnRleHQgbWVudSByZXF1ZXN0
+IG9yaWdpbmF0ZWQNCiAgICAgKg0KICAgICAqIEBwYXJhbSBoYW5kbGVyIHtGdW5jdGlvbn0NCiAg
+ICAgKiAgIFRoZSBmdW5jdGlvbiB0byBjYWxsIHdoZW4gYSBjb250ZXh0IG1lbnUgcmVxdWVzdCBv
+cmlnaW5hdGVzIGluIHRoZQ0KICAgICAqICAgc3BlY2lmaWVkIGNvbHVtbi4gVGhlIGhhbmRsZXIg
+aXMgY2FsbGVkIHdpdGggdGhlIGZvbGxvd2luZyBhcmd1bWVudHM6DQogICAgICogICA8dWw+DQog
+ICAgICogICAgIDxsaT48Yj5jb2x1bW48L2I+OiAoSW50ZWdlcikgVGhlIG51bWJlciBvZiB0aGUg
+Y29sdW1uIGluIHdoaWNoIHRoZSByaWdodCBjbGljayB3YXMgaXNzdWVkPC9saT4NCiAgICAgKiAg
+ICAgPGxpPjxiPnJvdzwvYj46IChJbnRlZ2VyKSBUaGUgbnVtYmVyIG9mIHRoZSByb3cgaW4gd2hp
+Y2ggdGhlIHJpZ2h0IGNsaWNrIHdhcyBpc3N1ZWQ8L2xpPg0KICAgICAqICAgICA8bGk+PGI+dGFi
+bGU8L2I+OiB7QGxpbmsgcXgudWkudGFibGUuVGFibGV9IFRoZSB0YWJsZSBpbiB3aGljaCB0aGUg
+cmlnaHQgY2xpY2sgd2FzIGlzc3VlZDwvbGk+DQogICAgICogICAgIDxsaT48Yj5kYXRhTW9kZWw8
+L2I+OiB7QGxpbmsgcXgudWkudGFibGUubW9kZWwuQWJzdHJhY3R9IENvbXBsZXRlIGRhdGEgbW9k
+ZWwgb2YgdGhlIHRhYmxlPC9saT4NCiAgICAgKiAgICAgPGxpPjxiPmNvbnRleHRNZW51PC9iPjog
+e0BsaW5rIHF4LnVpLm1lbnUuTWVudX0gTWVudSBpbiB3aGljaCBidXR0b25zIGNhbiBiZSBhZGRl
+ZCB0byBpbXBsZW1lbnQgdGhpcyBjb250ZXh0IG1lbnU8L2xpPg0KICAgICAqICAgPC91bD4NCiAg
+ICAgKiAgIFRoZSBmdW5jdGlvbiBtdXN0IHJldHVybiBhIChCb29sZWFuKSwgaW5kaWNhdGluZyB3
+aGV0aGVyIHRoZSBjb250ZXh0DQogICAgICogICBtZW51IHNob3VsZCBiZSBzaG93biBvciBub3Qu
+IFRoZSBjb250ZXh0IG1lbnUgd2lsbCBiZSBzaG93biB3aGVuIHRoZQ0KICAgICAqICAgaGFuZGxl
+ciBmdW5jdGlvbiByZXR1cm5zIDxjb2RlPnRydWU8L2NvZGU+LiBXaGVuIHRoZSBoYW5kbGVyIGZ1
+bmN0aW9uDQogICAgICogICByZXR1cm5zIDxjb2RlPmZhbHNlPC9jb2RlPiB0aGUgY29udGV4dCBt
+ZW51IHdpbGwgPGI+bm90PC9iPiBiZSBzaG93bi4NCiAgICAgKg0KICAgICAqIEBwYXJhbSBjb250
+ZXh0IHtPYmplY3Q/dGhpc30NCiAgICAgKiAgIE9wdGlvbmFsIGV4ZWN1dGlvbiBjb250ZXh0IGZv
+ciB0aGUgY2FsbGJhY2sgKGkuZS4gInRoaXMiKS4NCiAgICAgKiAgIElmIG5vdCBwcm92aWRlZCwg
+dGhlIHtAbGluayBxeC51aS50YWJsZS5UYWJsZX0gb2JqZWN0IHRoaXMgbWl4aW4gaXMNCiAgICAg
+KiAgIGFwcGxpZWQgdG8gaXMgdXNlZC4NCiAgICAgKg0KICAgICAqIEByZXR1cm4ge3ZvaWR9DQog
+ICAgICovDQogICAgc2V0Q29udGV4dE1lbnVIYW5kbGVyIDogZnVuY3Rpb24oY29sLCBoYW5kbGVy
+LCBjb250ZXh0KQ0KICAgIHsNCiAgICAgIHRoaXMuX19jb250ZXh0TWVudUhhbmRsZXJbY29sXSA9
+IGhhbmRsZXI7DQogICAgICB0aGlzLl9fY29udGV4dE1lbnVIYW5kbGVyQ29udGV4dFtjb2xdID0g
+Y29udGV4dCB8fCB0aGlzOw0KICAgIH0sDQoNCiAgICAvKioNCiAgICAgKiBSZXR1cm4gdGhlIHJl
+Z2lzdGVyZWQgY29udGV4dCBtZW51IGhhbmRsZXIgZm9yIGEgY29sdW1uLg0KICAgICAqDQogICAg
+ICogQHBhcmFtIGNvbCB7SW50ZWdlcn0NCiAgICAgKiAgIFRoZSBjb2x1bW4gbnVtYmVyIGZvciB3
+aGljaCB0aGUgY29udGV4dCBtZW51IGhhbmRsZXIgaXMgcmVxdWVzdGVkDQogICAgICoNCiAgICAg
+KiBAcmV0dXJuIHtGdW5jdGlvbn0NCiAgICAgKiAgIFRoZSBoYW5kbGVyIGZ1bmN0aW9uIHdoaWNo
+IGhhcyBiZWVuIHJlZ2lzdGVyZWQgZm9yIHRoZSBzcGVjaWZpZWQNCiAgICAgKiAgIGNvbHVtbi4g
+VGhlIGFyZ3VtZW50cyBvZiB0aGUgaGFuZGxlciBpcyBkb2N1bWVudGVkIGluDQogICAgICogICB7
+QGxpbmsgI3NldENvbnRleHRNZW51SGFuZGxlcn0uDQogICAgICovDQogICAgZ2V0Q29udGV4dE1l
+bnVIYW5kbGVyIDogZnVuY3Rpb24oY29sKQ0KICAgIHsNCiAgICAgIHJldHVybiB0aGlzLl9fY29u
+dGV4dE1lbnVIYW5kbGVyW2NvbF07DQogICAgfQ0KICB9LA0KDQogIC8qDQogICoqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqDQogICAgIERFU1RSVUNUT1INCiAgKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioNCiAgKi8N
+Cg0KICBkZXN0cnVjdCA6IGZ1bmN0aW9uKCkNCiAgew0KICAgIHRoaXMuX19jb250ZXh0TWVudUhh
+bmRsZXIgPSBudWxsOw0KICAgIHRoaXMuX19jb250ZXh0TWVudUhhbmRsZXJDb250ZXh0ID0gbnVs
+bDsNCiAgfQ0KfSk7DQo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

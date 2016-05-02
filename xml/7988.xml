@@ -1,0 +1,237 @@
+<bug>
+          <bug_id>7988</bug_id>
+          
+          <creation_ts>2013-12-10 13:33:00 +0100</creation_ts>
+          <short_desc>Built qx.Mobile themes should not be commited to repository</short_desc>
+          <delta_ts>2014-05-09 15:41:12 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>mobile</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          <keywords>Cleanup</keywords>
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>4.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christopher Zuendorf">christopher.zuendorf</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          <cc>richard.sternagel</cc>
+          <qa_contact name="Christopher Zuendorf">christopher.zuendorf</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>34599</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-12-10 13:33:51 +0100</bug_when>
+            <thetext>The built mobile themes &quot;flat.css&quot; and &quot;indigo.css&quot; should not be commited to repository.
+
+Reasons:
+- This causes merge conflicts, if you are building the theme with ruby SASS or pySCSS.
+- The pre-built themes have to be copied by generator when a new app is created.
+- If app developers never build their theme by their own through &quot;watch-scss&quot;, they never get improvements.
+
+We should build the theme on mobile source and build jobs, for preventing these problems.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34623</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-12-12 08:38:35 +0100</bug_when>
+            <thetext>+1 for that. We should not commit build artifacts.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39941</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-04-11 09:30:27 +0200</bug_when>
+            <thetext>We should make sure that we still have the same out-of-the-box feeling for developers using the SDK. So building and shipping the css files with the SDK seems to be a good option.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40120</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-05-05 13:42:07 +0200</bug_when>
+            <thetext>Done. What has been changed:
+
+* rm {flat,indigo}.css
+* add .gitignore (with &#39;flat.css&#39; and &#39;indigo.css&#39;)
+* add 3 new make targets in &#39;Makefile.release&#39;
+   * resources-framework-check
+   * resources-framework-build-css
+   * resources-framework-build
+* add two new generator (config) jobs
+   * compile-scss (in &#39;config.tmpl.json&#39; for mobile)
+   * compile-framework-scss (in &#39;base.json&#39;)
+* add instructions to &#39;readme.txt&#39; if app was created without built &#39;indigo.css&#39;
+* support &#39;command-not-found&#39; subproperty (message string) for generator config key &#39;shell&#39; (which runs shell jobs)
+* run &#39;compile-scss&#39; job along with the following mobile jobs:
+   * source
+   * source-hybrid
+   * source-all
+   * build
+
+Note:
+&#39;clean&#39; and &#39;distclean&#39; won&#39;t remove the built css files, cause SCSS-compilation is still optional. If we require SCSS-compilation at some point for mobile, then we should also remove the build css files when running &#39;clean&#39; and &#39;distclean&#39;. 
+
+master: 11630035655b67804a035c7c43614a1da2d5ea90</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40125</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2014-05-05 15:45:12 +0200</bug_when>
+            <thetext>the qx.Mobile Showcase references the deleted CSS files.
+
+We should have a job inside the Mobile Showcase which creates the CSS files into the mobile showcase app.
+
+The app should reference the indigo.css and flat.css inside the &quot;Theming page&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40130</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2014-05-05 18:38:35 +0200</bug_when>
+            <thetext>Please make sure that compiled CSS of Mobile Skeleton are also ignored through .gitignore .
+
+Especially the &quot;custom.css&quot; inside source/resource/custom/css/</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40156</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-05-08 14:17:58 +0200</bug_when>
+            <thetext>Next round:
+
+mobile skeleton:
+----------------
+* remove minify jobs
+* add mock content for &quot;custom.css&quot; (&quot;Content unstyled. Install Sass ...&quot;) which is shown only when app is created from master and no source/build version is created once yet.
+* &quot;styles.css&quot; is gone (add own rules to &quot;_styles.scss&quot;)
+
+apps (mobileshowcase, playground):
+----------------------------------
+* remove minify jobs
+* mobileshowcase: &quot;styles.css&quot; is now &quot;_app.scss&quot;
+* add .gitignore (to not bother with recreated CSS files)
+* run &#39;compile-scss&#39; job along with the following jobs:
+   * source
+   * source-hybrid
+   * source-all
+   * build
+
+With regard to SCSS the mobile skeleton, the mobileshowcase and the playground are now self-contained. The SCSS files remaining in the framework dirs are solely used for the load paths when running Sass. This means there is now a cleaner separation of SCSS files (app vs. framework). Furthermore there is no runtime dependency to any CSS file residing in the framework/SDK like before.
+
+Note:
+The theme switch (on the &quot;Theming&quot; page) for the mobileshowcase app is now broken - it has to be adapted.
+
+master: be226fe94ef623b871bbcb8103432ecbe898363b</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40157</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-05-08 14:24:38 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Please make sure that compiled CSS of Mobile Skeleton are also ignored through
+&gt; .gitignore .
+&gt; 
+&gt; Especially the &quot;custom.css&quot; inside source/resource/custom/css/
+
+This makes sense for our apps but not for apps created on the basis of the mobile skeleton.
+
+If somebody decides to not use Sass (while using Git) he would be prevented from committing his changes to the CSS files. I think it&#39;s better if people create a &quot;.gitignore&quot; file on their own.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40162</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2014-05-08 17:15:19 +0200</bug_when>
+            <thetext>As we promote the way to use our SCSS theming, I would ignore the CSS file by default, through .gitignore .
+
+In context of a qx.Mobile app, the CSS is a build artifact. If the user decides to go his own way, he should delete the .gitignore file.
+
+As the bug title says &quot;Built qx.Mobile themes should not be commited to repository&quot;, ignoring the CSS file is mandatory.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40164</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-05-08 19:59:14 +0200</bug_when>
+            <thetext>More app support:
+
+feedreader:
+* run &#39;compile-scss&#39; job along with the following jobs:
+   * source-mobile
+   * build-mobile
+
+tutorial:
+* run &#39;compile-scss&#39; job along with the following jobs:
+   * source
+   * source-hybrid
+   * source-all
+   * build
+
+master: bf085a89a963d334382fdfc57df761c5b7186836</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40165</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-05-08 20:04:40 +0200</bug_when>
+            <thetext>(In reply to comment #8)
+&gt; As we promote the way to use our SCSS theming, I would ignore the CSS file by
+&gt; default, through .gitignore .
+&gt; 
+&gt; In context of a qx.Mobile app, the CSS is a build artifact. If the user decides
+&gt; to go his own way, he should delete the .gitignore file.
+
+Okay, convinced. It&#39;s better to think forwards than backwards.
+
+&gt; As the bug title says &quot;Built qx.Mobile themes should not be commited to
+&gt; repository&quot;, ignoring the CSS file is mandatory.
+
+Well, didn&#39;t you mean the qooxdoo repo? :p ;)
+
+master: d5c6f07ca9b81037bb3fd7a1a932c640120c2568</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40166</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-05-08 20:35:07 +0200</bug_when>
+            <thetext>Adapted Makefile.release to include the SCSS compilation during release creation and publishing of the SDK.
+
+Currently the following files are compiled (output from stdout):
+
+  * Compiling style sheets...
+     - mobile-skeleton: custom.scss...
+     - mobileshowcase: flat.scss...
+     - mobileshowcase: indigo.scss...
+     - playground: indigo.scss...
+     - feedreader: indigo.scss...
+     - tutorial: indigo.scss...
+
+master: 9b49b2be5328ea490ace687464083d8b2d19466e</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40174</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-05-09 15:41:12 +0200</bug_when>
+            <thetext>Adapted documentation and release notes:
+
+master: 6fb9b663aaa61cfcac299d9abf92bc9e00a38ebe</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

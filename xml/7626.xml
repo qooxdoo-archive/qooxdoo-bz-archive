@@ -1,0 +1,160 @@
+<bug>
+          <bug_id>7626</bug_id>
+          
+          <creation_ts>2013-08-05 14:01:00 +0200</creation_ts>
+          <short_desc>qx.data.Array.append method cause wrong data binding events</short_desc>
+          <delta_ts>2014-09-23 08:22:28 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>mobile.widget</component>
+          <version>3.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Leonardo Cecchi">leonardoce</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="Christopher Zuendorf">christopher.zuendorf</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>33549</commentid>
+              <attachid>1274</attachid>
+            <who name="Leonardo Cecchi">leonardoce</who>
+            <bug_when>2013-08-05 14:01:27 +0200</bug_when>
+            <thetext>Created attachment 1274
+This code, put in the playground, will reproduce the bug
+
+The &quot;append&quot; method says:
+
+    append : function(array)
+    {
+      // qooxdoo array support
+      if (array instanceof qx.data.Array) {
+        array = array.toArray();
+      }
+
+      // this check is important because opera throws an uncatchable error if
+      // apply is called without an array as argument.
+      if (qx.core.Environment.get(&quot;qx.debug&quot;)) {
+        qx.core.Assert.assertArray(array, &quot;The parameter must be an array.&quot;);
+      }
+
+      Array.prototype.push.apply(this.__array, array);
+
+      // add a listener to the new items
+      for (var i = 0; i &lt; array.length; i++) {
+        this._registerEventChaining(array[i], null, this.__array.length + i);
+      }
+
+      [....] // other code here
+
+
+The problem is in the call of the _registerEventChaining method. The name of
+the property, &quot;this.__array.length + i&quot;, must represent the index of the new
+items but the new items have already been appended to the &quot;__array&quot; array so
+the index &quot;this.__array.length + i&quot; is out of range. 
+
+This issue show up if you use a qx.data.Array instance as a model of a
+qx.ui.mobile.list.List widget with objects that supports event bubbling, as
+objects that use qx.data.marshal.MEventBubbling mixin. 
+
+You can see the bug here in the attached playground code.
+
+The configureItem method of the provider object for the qx.ui.mobile.list.List
+gets an undefined &quot;data&quot; parameter because I removed and appended the data
+in the model (starts at line 53). You can see this because I called &quot;setTitle&quot; on
+an object activating the event bubbling mechanism when you click on the
+Button.
+
+If you comment the lines 55-58 all works correctly.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33659</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-08-20 09:00:42 +0200</bug_when>
+            <thetext>Thanks for the report.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33728</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-08-26 15:19:14 +0200</bug_when>
+            <thetext>I tracked it down to the mobile list which tries to replace a DOM node which does not exist. So the events of the data array seem to be ok but the list does not handle the remove and append case the way it should.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41207</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-09-23 08:22:28 +0200</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1274</attachid>
+            <date>2013-08-05 14:01:00 +0200</date>
+            <delta_ts>2013-08-05 14:01:27 +0200</delta_ts>
+            <desc>This code, put in the playground, will reproduce the bug</desc>
+            <filename>array_append_bug_example.js</filename>
+            <type>application/x-javascript</type>
+            <size>1744</size>
+            <attacher>leonardoce</attacher>
+            
+              <data encoding="base64">cXguQ2xhc3MuZGVmaW5lKCJsZW9uYXJkby5UZXN0T2JqIiwgew0KICBleHRlbmQ6IHF4LmNvcmUu
+T2JqZWN0LA0KICBpbmNsdWRlOiBbcXguZGF0YS5tYXJzaGFsLk1FdmVudEJ1YmJsaW5nXSwNCiAg
+cHJvcGVydGllczogew0KICAgIHRpdGxlOiB7DQogICAgICBjaGVjazoiU3RyaW5nIiwNCiAgICAg
+IGV2ZW50OiJjaGFuZ2VUaXRsZSIsDQogICAgICBhcHBseTogIl9hcHBseUV2ZW50UHJvcGFnYXRp
+b24iLA0KICAgICAgaW5pdDogIiINCiAgICB9LA0KICAgIA0KICAgIHN1YlRpdGxlOiB7DQogICAg
+ICBjaGVjazoiU3RyaW5nIiwNCiAgICAgIGV2ZW50OiJjaGFuZ2VTdWJUaXRsZSIsDQogICAgICBh
+cHBseTogIl9hcHBseUV2ZW50UHJvcGFnYXRpb24iLA0KICAgICAgaW5pdDogIiINCiAgICB9DQog
+IH0gIA0KIH0NCik7DQoNCnZhciBwYWdlID0gbmV3IHF4LnVpLm1vYmlsZS5wYWdlLk5hdmlnYXRp
+b25QYWdlKCk7DQpwYWdlLnNldFRpdGxlKCJMaXN0Iik7DQpwYWdlLmFkZExpc3RlbmVyKCJpbml0
+aWFsaXplIiwgZnVuY3Rpb24oKSB7DQogIC8vIExpc3QgY3JlYXRpb24NCiAgdmFyIGxpc3QgPSBu
+ZXcgcXgudWkubW9iaWxlLmxpc3QuTGlzdCh7DQogICAgY29uZmlndXJlSXRlbSA6IGZ1bmN0aW9u
+KGl0ZW0sIGRhdGEsIHJvdykgew0KICAgICAgaWYgKGRhdGE9PT11bmRlZmluZWQpIHsNCiAgICAg
+ICAgYWxlcnQoInRoZSBidWcgaXMgc2hvd24gaGVyZSEgRGF0YSBpcyB1bmRlZmluZWQiKTsNCiAg
+ICAgIH0gZWxzZSB7DQogICAgICAgIGl0ZW0uc2V0VGl0bGUoZGF0YS5nZXRUaXRsZSgpKTsNCiAg
+ICAgICAgaXRlbS5zZXRTdWJ0aXRsZShkYXRhLmdldFN1YlRpdGxlKCkpOw0KICAgICAgfQ0KICAg
+IH0NCiAgfSk7DQoNCiAgLy8gQ3JlYXRlIHRoZSBkYXRhDQogIHZhciBkYXRhID0gW107DQogIGZv
+ciAodmFyIGk9MDsgaSA8IDU7IGkrKykgew0KICAgIHZhciBvYmogPSBuZXcgbGVvbmFyZG8uVGVz
+dE9iaigpOw0KICAgIG9iai5zZXRUaXRsZSgiSXRlbSIpOw0KICAgIG9iai5zZXRTdWJUaXRsZSgi
+U3VidGl0bGUgZm9yIEl0ZW0gIyIgKyBpKTsNCiAgICBkYXRhLnB1c2gob2JqKTsNCiAgfQ0KDQog
+IHZhciBtb2RlbCA9IG5ldyBxeC5kYXRhLkFycmF5KGRhdGEpDQoNCiAgbGlzdC5zZXRNb2RlbCht
+b2RlbCk7DQogIGxpc3QuYWRkTGlzdGVuZXIoImNoYW5nZVNlbGVjdGlvbiIsIGZ1bmN0aW9uKGV2
+dCkgew0KICAgIGFsZXJ0KCJJdGVtIFNlbGVjdGVkICMiICsgZXZ0LmdldERhdGEoKSk7DQogIH0s
+IHRoaXMpOw0KICANCiAgLyogaWYgeW91IGNvbW1lbnQgdGhlIGZvbGxvd2luZyBsaW5lcw0KICBh
+bGwgd29ya3MgY29ycmVjdGx5ICovDQogIG1vZGVsLnJlbW92ZUFsbCgpOw0KICBtb2RlbC5hcHBl
+bmQoZGF0YSk7DQogIG1vZGVsLnJlbW92ZUFsbCgpOw0KICBtb2RlbC5hcHBlbmQoZGF0YSk7DQoN
+CiAgdmFyIGNsaWNrQ291bnQgPSAwOw0KICB2YXIgYnQgPSBuZXcgcXgudWkubW9iaWxlLmZvcm0u
+QnV0dG9uKCJCdWcgaGVyZSIpOw0KICBidC5hZGRMaXN0ZW5lcigidGFwIiwgZnVuY3Rpb24oZXZ0
+KSB7DQogICAgY2xpY2tDb3VudCsrOw0KICAgIG1vZGVsLmdldEl0ZW0oMCkuc2V0VGl0bGUoIiIr
+Y2xpY2tDb3VudCk7DQogIH0pOw0KICBwYWdlLmFkZEFmdGVyTmF2aWdhdGlvbkJhcihidCk7DQog
+IHBhZ2UuZ2V0Q29udGVudCgpLmFkZChsaXN0KTsNCn0sdGhpcyk7DQoNCnRoaXMuZ2V0TWFuYWdl
+cigpLmFkZERldGFpbChwYWdlKTsNCnBhZ2Uuc2hvdygpOw==
+</data>
+
+          </attachment>
+      
+
+    </bug>

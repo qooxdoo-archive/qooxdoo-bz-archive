@@ -1,0 +1,156 @@
+<bug>
+          <bug_id>8142</bug_id>
+          
+          <creation_ts>2014-02-27 13:25:00 +0100</creation_ts>
+          <short_desc>qx.bom.client.Plugin does not recognize that Firefox is able to open PDF files</short_desc>
+          <delta_ts>2014-05-21 09:32:11 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>4.0</target_milestone>
+          <dependson>8158</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mustafa Sak">mustafa.sak</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          <cc>richard.sternagel</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>35240</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-02-27 13:25:17 +0100</bug_when>
+            <thetext>qx.core.Environment.get(&quot;plugin.pdf&quot;) returns false when called in Fire Fox.
+
+FF can open PDF&#39;s with his internal PDF.js viewer. The problem is that qx.bom.client.Plugin.__isAvailable checks only all plugins listed in navigator.plugins, but PDF.js is not listed there.
+
+We need a better way to check for the ability to open PDF&#39;s.
+
+Related links:
+https://bugzilla.mozilla.org/show_bug.cgi?id=840439
+http://www.pinlady.net/PluginDetect/PDFjs/</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39798</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-03-26 16:31:37 +0100</bug_when>
+            <thetext>As long as there is no official possibility to detect this, which seems to be worked on [1][2], we could use one of brittle detection methods from userland.
+However we should add a unit test for it to get fast feedback if it starts to break.
+
+[1] https://bugzilla.mozilla.org/show_bug.cgi?id=840439
+[2] https://bugzilla.mozilla.org/show_bug.cgi?id=558184</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39850</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-04-01 15:43:21 +0200</bug_when>
+            <thetext>Fixed by introducing a new class (&quot;qx.bom.client.Pdfjs&quot;) which wraps &quot;PluginDetect_PDFjs.js&quot; and adds its asynchronous check to the Environment class under the key &quot;plugin.pdfjs&quot;. It can be used like this:
+
+.---
+| ...
+| qx.core.Environment.getAsync(&quot;plugin.pdfjs&quot;, function(result) {
+|   console.log(&quot;my pdfjs check callback result (boolean):&quot;, result);
+| }, this);
+| ...
+
+Note that without fixing bug #8158, this will stop working in Firefox 30 and up.
+
+master: ef033e50189ed8e910131e59f22daa34088914df</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39952</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-04-14 12:43:48 +0200</bug_when>
+            <thetext>Callback does not be called if browser is not FF 19+
+
+If the check should be done by developer, why do you check twice then?
+If this check should do the browser check for you, why not calling the callback function asynchronous, however?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39954</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-04-14 13:10:44 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+
+&gt; Callback does not be called if browser is not FF 19+
+
+Yes, you&#39;re right - this is by design. PDF.js is built into Firefox 19+ and used as default viewer there. So the callback is only called when PDF.js is recognized.
+
+&gt; If the check should be done by developer, why do you check twice then?
+
+Because I don&#39;t have to test for PDF.js if it cannot be there and the browser/engine version test is cheaper (when performance is regarded) than to load an empty PDF in an Iframe and then test for PDF.js.
+
+&gt; If this check should do the browser check for you, why not calling the callback
+&gt; function asynchronous, however?
+
+I don&#39;t understand this. The callback function is called asynchronous.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39955</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-04-14 13:25:10 +0200</bug_when>
+            <thetext>Please notice, that independent from browser a callback of an asynchronous environment should always be called.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39956</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-04-14 13:42:37 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+
+&gt; Please notice, that independent from browser a callback of an asynchronous
+&gt; environment should always be called.
+
+That&#39;s right - will have another look into this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39971</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-04-15 16:20:48 +0200</bug_when>
+            <thetext>Callback is now always called so the developer can depend on getting an answer.
+
+master: d195df6025e647e0ef2216d94616188829295d50</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40000</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-04-17 09:55:59 +0200</bug_when>
+            <thetext>Thanks Richard.
+
+Could you please point the developer on the Documentation of the environment key &quot;plugin.pdf&quot; to the additional check of pdfjs?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40019</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-04-17 17:20:09 +0200</bug_when>
+            <thetext>Added note.
+
+master: ae43a86819438fce61f9a4a3c90de5b1ccfc1300</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

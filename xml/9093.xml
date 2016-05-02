@@ -1,0 +1,127 @@
+<bug>
+          <bug_id>9093</bug_id>
+          
+          <creation_ts>2015-04-16 15:32:00 +0200</creation_ts>
+          <short_desc>Qooxdoo OO and nw.js loader bug</short_desc>
+          <delta_ts>2015-04-17 09:00:51 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>other</component>
+          <version>4.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          
+          <reporter name="Deisss">tunelaurajamais</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>43110</commentid>
+            <who name="Deisss">tunelaurajamais</who>
+            <bug_when>2015-04-16 15:32:29 +0200</bug_when>
+            <thetext>I don&#39;t exactly know where to place it so I put it in other category...
+
+
+
+I&#39;m building an app with nw.js (previously named node-wekbkit) a webkit engine on top of a node.js program, making HTML page like a desktop app.
+
+On the qooxdoo side, I&#39;m using Qooxdoo server (named qx-oo): http://manual.qooxdoo.org/2.1/pages/server/overview.html
+
+
+I&#39;m doing &quot;npm install qooxdoo&quot; =&gt; fine
+Launching qooxdoo from node instance:
+
+$&gt; node
+&gt; var qx = require(&#39;qooxdoo&#39;);
+
+=&gt; fine too
+
+
+When loading qooxdoo from nw.js so, I got the following error:
+
+node_modules\qooxdoo\qx-oo.js:17 Uncaught ReferenceError: qx is not defined
+
+I guess (just guess) this error has to do with the fact that nw.js use require on HTML side like if it was a client side library.
+This is probably the error: behind the scene, it&#39;s still node.js used, yet the window object is defined. And according to qx-oo code, it looks like it matters...
+
+Maybe a workaround for this case would be needed. Actually nw.js define some property you may rely on it to make a special loader case when both node and windows exist at the same time, like:
+process._nw_app
+window.nwDispatcher
+
+
+Unfortunately I tried to correct it, without hope, the builder keep giving bad results... And qooxdoo oo is still unusable, which is quite bad :D</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43111</commentid>
+            <who name="Deisss">tunelaurajamais</who>
+            <bug_when>2015-04-16 16:27:49 +0200</bug_when>
+            <thetext>EDIT:
+
+Just found, in qx-oo (version 4.1) =&gt; http://demo.qooxdoo.org/4.1/framework/qx-oo-4.1.js
+
+Hardcoring it like this:
+
+if(!qx) var qx = window.qx = {};
+
+/** qooxdoo v4.1 | (c) 2013 1&amp;1 Internet AG, http://1und1.de | http://qooxdoo.org/license */
+
+
+Make the Qooxdoo bootstrap now working. So a workaround like this:
+
+// nw.js bootstrap repair
+if(process &amp;&amp; process._nw_app) {
+  if(!qx) var qx = window.qx = {};
+}
+
+/** qooxdoo v4.1 | (c) 2013 1&amp;1 Internet AG, http://1und1.de | http://qooxdoo.org/license */
+
+At the top of the file should correct the behavior for nw.js without affecting other loader configuration...
+
+Still need more test, but at least now the qooxdoo classes I&#39;ve register are appearing in webkit console as defined...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43112</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-04-17 07:27:54 +0200</bug_when>
+            <thetext>Thanks for the report. As the usage of nw.js is (at least for us) an edge case, I don&#39;t think we will put any fix into the framework. But you solution sound like you could prefix the code yourself and get it back to normal in no time.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43113</commentid>
+            <who name="Deisss">tunelaurajamais</who>
+            <bug_when>2015-04-17 09:00:51 +0200</bug_when>
+            <thetext>I can understand your point, except the fact it&#39;s not that much an edge case, at least it&#39;s a highly followed/used project now.
+
+And how about other project defining window also, I tried only node webkit but it may have many other projects conflicting because of this...
+
+
+But after all you decide so ok ;)</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

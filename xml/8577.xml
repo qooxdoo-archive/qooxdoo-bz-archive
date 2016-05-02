@@ -1,0 +1,157 @@
+<bug>
+          <bug_id>8577</bug_id>
+          
+          <creation_ts>2014-09-04 14:46:00 +0200</creation_ts>
+          <short_desc>&#39;execute&#39; not always fired for buttons</short_desc>
+          <delta_ts>2015-02-23 13:11:21 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>4.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>4.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mathieu Veurman">mveurman</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>mustafa.sak</cc>
+    
+    <cc>nikita.dyumin</cc>
+    
+    <cc>rvanvalen</cc>
+    
+    <cc>selverr</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>41120</commentid>
+            <who name="Mathieu Veurman">mveurman</who>
+            <bug_when>2014-09-04 14:46:12 +0200</bug_when>
+            <thetext>The &#39;execute&#39; event is not always fired for buttons anymore compared to version 3.5.
+
+The problem is when people move their mouse a little bit during the click. If the mousedown happens on the background of the button and ends up on the label of the button the new gesture code dismisses the gesture because the start target and end target are not the same:
+
+GestureCore.js, line 306:
+      if (gesture.isTap) {
+        if (target !== gesture.target) {
+          delete this.__gesture[domEvent.pointerId];
+          return;
+        }
+
+To reproduce I have created an example on the playground that does not fire longtap events, so you can easily reproduce the problem:
+1. Navigate to http://demo.qooxdoo.org/4.0.1/playground/#%7B%22code%22%3A%22%252F%252F%2520Create%2520a%2520button%250Avar%2520button1%2520%253D%2520new%2520qx.ui.form.Button(%2522First%2520Button%2522%252C%2520%2522icon%252F22%252Fapps%252Finternet-web-browser.png%2522)%253B%250A%250A%252F%252F%2520Document%2520is%2520the%2520application%2520root%250Avar%2520doc%2520%253D%2520this.getRoot()%253B%250A%250A%252F%252F%2520Needed%2520to%2520you%2520can%2520slowly%2520reproduce%2520the%2520problem%2520and%2520will%2520not%2520be%2520interfered%2520with%2520the%2520longtap%2520event%250Aqx.event.handler.GestureCore.LONGTAP_TIME%2520%253D%252010000%253B%250A%250A%252F%252F%2520Add%2520button%2520to%2520document%2520at%2520fixed%2520coordinates%250Adoc.add(button1%252C%250A%257B%250A%2520%2520left%2520%253A%2520100%252C%250A%2520%2520top%2520%2520%253A%252050%250A%257D)%253B%250A%250A%252F%252F%2520Add%2520an%2520event%2520listener%250Abutton1.addListener(%2522execute%2522%252C%2520function(e)%2520%257B%250A%2520%2520alert(%2522Hello%2520World!%2522)%253B%250A%257D)%253B%22%2C%20%22mode%22%3A%22ria%22%7D
+2. Start clicking on the &#39;First Button&#39;, in the bottom right part
+3. Now, while the left mouse button still pressed, move to the &#39;B&#39; of &#39;First Button&#39;
+4. See that nothing happens
+5. Now click again on the bottom right
+6. Now, while the left mouse button still pressed, move to the top/right of &#39;First Button&#39; (not on the text!!!) and see that the alert is shown.
+
+If I do the same in version 3.5 the move from bottom/right to the letter &#39;B&#39; will register as a click:
+http://demo.qooxdoo.org/3.5/playground/#%7B%22code%22%3A%22%252F%252F%2520Create%2520a%2520button%250Avar%2520button1%2520%253D%2520new%2520qx.ui.form.Button(%2522First%2520Button%2522%252C%2520%2522icon%252F22%252Fapps%252Finternet-web-browser.png%2522)%253B%250A%250A%252F%252F%2520Document%2520is%2520the%2520application%2520root%250Avar%2520doc%2520%253D%2520this.getRoot()%253B%250A%250A%252F%252F%2520Needed%2520to%2520you%2520can%2520slowly%2520reproduce%2520the%2520problem%2520and%2520will%2520not%2520be%2520interfered%2520with%2520the%2520longtap%2520event%250A%252F%252Fqx.event.handler.GestureCore.LONGTAP_TIME%2520%253D%252010000%253B%250A%250A%252F%252F%2520Add%2520button%2520to%2520document%2520at%2520fixed%2520coordinates%250Adoc.add(button1%252C%250A%257B%250A%2520%2520left%2520%253A%2520100%252C%250A%2520%2520top%2520%2520%253A%252050%250A%257D)%253B%250A%250A%252F%252F%2520Add%2520an%2520event%2520listener%250Abutton1.addListener(%2522execute%2522%252C%2520function(e)%2520%257B%250A%2520%2520alert(%2522Hello%2520World!%2522)%253B%250A%257D)%253B%22%2C%20%22mode%22%3A%22ria%22%7D
+
+So even though the Gesture code takes mouse moves into account, it seems to be too strict on checking the source/end target. 
+
+As it is right now, users are required to not move their mouse during clicking</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41123</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-09-05 08:08:33 +0200</bug_when>
+            <thetext>This is strange in deed because I see two factors why the event is not fired. One is by intention and the other not. First, a tap is defined as a pointerdown and up within a certain pointer move range. So moving the pointer too far is not considered as a tap. This range is for mouse 50px by default but can be configured in qx.event.handler.GestureCore.TAP_MAX_DISTANCE.mouse.
+
+The target check is also valid (native click works like this as well) but the button itself should have marked its children (label and icon) as anonymous which should give them the pointer-events: none; css style. With that, the target would always be the button and the desired behavior should be back in place.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41156</commentid>
+            <who name="">nikita.dyumin</who>
+            <bug_when>2014-09-10 11:28:52 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; The target check is also valid (native click works like this as well) but the
+&gt; button itself should have marked its children (label and icon) as anonymous
+&gt; which should give them the pointer-events: none; css style. With that, the
+&gt; target would always be the button and the desired behavior should be back in
+&gt; place.
+
+Hi, Martin, but the &quot;label&quot; and &quot;icon&quot; of Atom (Button) on the actual page end up with no &quot;pointerEvents&quot; css property, which means they have it set to &quot;auto&quot; (default) - That is seen on Mathieu&#39;s playground example.
+
+To be honest, I even haven&#39;t found a place where anonymous widgets get this style property.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41172</commentid>
+            <who name="Veronika Seliverstova">selverr</who>
+            <bug_when>2014-09-12 20:50:54 +0200</bug_when>
+            <thetext>Hi, Martin,
+
+To my knowledge, pointer-events property is supported in IE only since IE 11:
+
+http://caniuse.com/#feat=pointer-events
+
+So, setting it manually in our case did not help making it work in IE 10...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41226</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-09-23 13:31:35 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; Hi, Martin,
+&gt; 
+&gt; To my knowledge, pointer-events property is supported in IE only since IE 11:
+&gt; 
+&gt; http://caniuse.com/#feat=pointer-events
+&gt; 
+&gt; So, setting it manually in our case did not help making it work in IE 10...
+
+You are right, my bad. We do have a separate logic to handle that which seems to be broken.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41326</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-10-07 13:12:03 +0200</bug_when>
+            <thetext>This was something we seem to have missed in the initial implementation of the gesture layer introduced in 4.0. The layer works on DOM elements only so it did not consider any anonymous state of the widgets. Solved that by mapping the anonymous state of the widget to the DOM as attribute and check that attribute before deciding to discard a gesture.
+
+master: 6e015b491567761b12cc53f8b23d9b007241608c
+4.0.x: 8b2d1e3bdeb965314e12276e7ec9321b57fbc506</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41327</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-10-07 13:35:38 +0200</bug_when>
+            <thetext>Would you please re-test the widget browser?
+After your commit 6e015b491567761b12cc53f8b23d9b007241608c some widgets on the desktop widgetbrowser are not working properly. E.g. to a click on theme switch selectbox -&gt; it will not open the list anymore</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41333</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-10-08 09:34:11 +0200</bug_when>
+            <thetext>Thanks for the pointer, this was a good one! The first solution was not generic enough because I only considered anonymous widgets for the tap gesture. But of course, this is not enough because every pointer event should consider the anonymous state as well.
+
+master: 5b860721c90b134e2c73cc614d029937342e6427
+4.0.x: 88d4f6548a383fae4c5893a1aaa4bd2755ad1a8f</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

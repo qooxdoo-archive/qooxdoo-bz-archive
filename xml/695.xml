@@ -1,0 +1,79 @@
+<bug>
+          <bug_id>695</bug_id>
+          
+          <creation_ts>2007-10-14 19:26:00 +0200</creation_ts>
+          <short_desc>Tree element cannot be retrieved by pageX/pageY</short_desc>
+          <delta_ts>2007-10-17 15:28:28 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.tree</component>
+          <version>0.7.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          <blocked>688</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter>chase-r</reporter>
+          <assigned_to name="Derrell Lipman">derrell.lipman</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2477</commentid>
+            <who name="">chase-r</who>
+            <bug_when>2007-10-14 19:26:08 +0200</bug_when>
+            <thetext>As I was working on extended drag&amp;drop behaviour with a feedback widget below the cursor, I submitted a patch (Bug #688) for the DragAndDropHandler. In short: if the handler detects that the drop target is the feedback widget, it tries to find the real target widget through 
+qx.html.ElementFromPoint.getElementFromPoint(e.getPageX(), e.getPageY());
+
+Now, this works just fine for &quot;simple&quot; structures, but when it comes to the qx.ui.tree.Tree, this method won&#39;t work. The getElementFromPoint() method always returns the tree&#39;s DIV element instead of the hovered tree element.
+
+After hours of debugging, I found out why:
+
+1) getElementFromPoint descends into the body&#39;s children and recursively calls itself for every child container that has pageX and pageY within it&#39;s bounds.  When no child matching the coordinates can be found, it will return the last found child.
+
+2) The TreeFolder widget contains two child layouts, the first is a HorizontalBoxLayout  with indent, icon and label, the second one a VerticalBoxLayout containing all the folder&#39;s children (instances of AbstractTreeElement). The VerticalBoxLayout has no (or in numbers 0) height.
+
+3) These two facts combined, getElementFromPoint cannot detect the VerticalBoxLayout of the Root-Folder as an element below pageX/pageY because it is invisible.
+
+SOLUTION
+Add the following statement into line 350 of qx.ui.tree.TreeFolder:
+
+this._containerObject.setHeight(&quot;auto&quot;);
+
+
+Fabio
+
+PS: I added 688 to the &quot;blocked bugs&quot; as the detection of the real drop target fails for Trees.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2498</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2007-10-17 15:28:28 +0200</bug_when>
+            <thetext>Fixed by r10600 (trunk) and r10601 (0.7)</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,132 @@
+<bug>
+          <bug_id>6935</bug_id>
+          
+          <creation_ts>2012-10-29 12:46:00 +0100</creation_ts>
+          <short_desc>Remove artificial pause on flushing the queue for touch devices</short_desc>
+          <delta_ts>2014-03-03 08:47:52 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mustafa Sak">mustafa.sak</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>31100</commentid>
+              <attachid>1198</attachid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2012-10-29 12:46:29 +0100</bug_when>
+            <thetext>Created attachment 1198
+Please try on touch device or emulator
+
+As in [Bug #4033] described by Tino Butz, there is an pause for toochend events at flushing the queue manager. This cause in a wait state of 500ms since any queue proceeds. The reason for this is the fact that any call of native removeChild() function to an elemnt under the fingertip causes in a stop of the event chain.
+
+To get rid of this artificial pause we could map touch events to mouse event, like this:
+
+touchstart -&gt; mousedown
+touchmove -&gt; mousemove
+touchend -&gt; mouseup
+tap -&gt; click
+
+The major problem is that the appearance handler creates at least one DOM element for each used decorator for each widget. Christopher and me could verify that using of removeChild() function prevents the event chain but not appendChild(). So we (hope Christopher does) advice you to use style property &quot;display&quot; instead of removing the decorator.
+
+Sure we have to answer following questions:
+
+1. Does the memory increases if we dont remove the element from the DOM tree?
+2. Do we see any decreasing of speed on DOM manipulation?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31120</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-10-30 08:06:40 +0100</bug_when>
+            <thetext>There are quite more questions to answer about if that proposed fix is suitable:
+
+- Are the decorators the only place where we have that problem?
+- What if user code removes the DOM node?
+- Are you sure its only removeChild? What if it current target is moved away?
+- How can we detect that we need to fake the event chain and don&#39;t have to wait for the real event chain to continue?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36056</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:47:52 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1198</attachid>
+            <date>2012-10-29 12:46:00 +0100</date>
+            <delta_ts>2012-10-29 12:46:29 +0100</delta_ts>
+            <desc>Please try on touch device or emulator</desc>
+            <filename>index.html</filename>
+            <type>text/html</type>
+            <size>1800</size>
+            <attacher>mustafa.sak</attacher>
+            
+              <data encoding="base64">PGh0bWw+Cgk8aGVhZD4KCQk8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJCQkjbWFpbiB7CgkJCQkt
+d2Via2l0LXRhcC1oaWdobGlnaHQtY29sb3I6IHJnYmEoMCwwLDAsMCk7CgkJCX0KCQk8L3N0eWxl
+PgoJPC9oZWFkPgoJPGJvZHk+CgkJPGRpdiBpZD0ibWFpbiIgc3R5bGU9IndpZHRoOiAxMDAlOyBo
+ZWlnaHQ6IDEwMCU7IGJhY2tncm91bmQ6IHllbGxvdzsiPgoJCQk8ZGl2IGlkPSJldmVudCI+aW5p
+dC4uLjwvZGl2PgoJCQk8ZGl2IGlkPSJib3giIHN0eWxlPSJ3aWR0aDogMzAwcHg7IGhlaWdodDog
+MzAwcHg7IGJhY2tncm91bmQ6IGdyZWVuOyI+PC9kaXY+CgkJPC9kaXY+CgkJPHNjcmlwdCB0eXBl
+PSJ0ZXh0L2phdmFzY3JpcHQiPgoJCQl2YXIgbWFpbiA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlk
+KCJtYWluIik7CgkJCgkJCXZhciBub3cgPSAwOwoJCQltYWluLmFkZEV2ZW50TGlzdGVuZXIoJ3Rv
+dWNoc3RhcnQnLCBmdW5jdGlvbihldmVudCkgewoJCQkJbm93ID0gbmV3IERhdGUoKS5nZXRUaW1l
+KCk7CgkJCSAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgiZXZlbnQiKS5pbm5lclRleHQgKz0g
+IiB8IHRvdWNoc3RhcnQiOwoJCQkgICAgCgkJCSAgICAvL21haW4ucmVtb3ZlQ2hpbGQoZG9jdW1l
+bnQuZ2V0RWxlbWVudEJ5SWQoImJveCIpKTsgLy8gdG91Y2hlbmQgdG91Y2htb3ZlIHdvdWxkbid0
+IGJlIGZpcmVkCgkJCSAgICAvL2RvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJib3giKS5zdHlsZS5v
+cGFjaXR5ID0gMDsgLy8gd29ya3MgZmluZQoJCQkgICAgCgkJCSAgICBkb2N1bWVudC5nZXRFbGVt
+ZW50QnlJZCgiYm94Iikuc3R5bGUuZGlzcGxheSA9ICJub25lIjsgIC8vIHdvcmtzIGZpbmUKCgkJ
+CSAgICAvL2NyZWF0ZSBuZXcgb25lCgkJCSAgICB2YXIgbmV3ZGl2ID0gZG9jdW1lbnQuY3JlYXRl
+RWxlbWVudCgnZGl2Jyk7CgkJCQluZXdkaXYuc3R5bGUud2lkdGggPSAiMzAwcHgiOwoJCQkJbmV3
+ZGl2LnN0eWxlLmhlaWdodCA9ICIzMDBweCI7CgkJCQluZXdkaXYuc3R5bGUuYmFja2dyb3VuZCA9
+ICJyZWQiOwoJCQkJbWFpbi5hcHBlbmRDaGlsZChuZXdkaXYpOwoJCQl9LCBmYWxzZSk7CgoJCQlt
+YWluLmFkZEV2ZW50TGlzdGVuZXIoJ3RvdWNobW92ZScsIGZ1bmN0aW9uKGV2ZW50KSB7CgoJCQkg
+ICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImV2ZW50IikuaW5uZXJUZXh0ICs9ICIgfCB0b3Vj
+aG1vdmUiOwoJCQl9LCBmYWxzZSk7CgoJCQltYWluLmFkZEV2ZW50TGlzdGVuZXIoJ3RvdWNoZW5k
+JywgZnVuY3Rpb24oZXZlbnQpIHsKCQkJCXZhciB0ID0gbmV3IERhdGUoKS5nZXRUaW1lKCkgLSBu
+b3c7CgkJCSAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgiZXZlbnQiKS5pbm5lclRleHQgKz0g
+IiB8IHRvdWNoZW5kIDogIiArIHQ7CgkJCX0sIGZhbHNlKTsKCgkJCW1haW4uYWRkRXZlbnRMaXN0
+ZW5lcignbW91c2V1cCcsIGZ1bmN0aW9uKGV2ZW50KSB7CgkJCSAgICB2YXIgdCA9IG5ldyBEYXRl
+KCkuZ2V0VGltZSgpIC0gbm93OwoJCQkgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImV2ZW50
+IikuaW5uZXJUZXh0ICs9ICIgfCBtb3VzZXVwIDogIiArIHQ7CgkJCX0sIGZhbHNlKTsKCgkJCW1h
+aW4uYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCBmdW5jdGlvbihldmVudCkgewoJCQkgICAgdmFy
+IHQgPSBuZXcgRGF0ZSgpLmdldFRpbWUoKSAtIG5vdzsKCQkJICAgIGRvY3VtZW50LmdldEVsZW1l
+bnRCeUlkKCJldmVudCIpLmlubmVyVGV4dCArPSAiIHwgY2xpY2sgOiAiICsgdDsKCQkJfSwgZmFs
+c2UpOwoJCTwvc2NyaXB0PgoJPC9ib2R5Pgo8L2h0bWw+
+</data>
+
+          </attachment>
+      
+
+    </bug>

@@ -1,0 +1,209 @@
+<bug>
+          <bug_id>1816</bug_id>
+          
+          <creation_ts>2008-12-24 00:10:00 +0100</creation_ts>
+          <short_desc>Add auto-generated HTML id&#39;s for widgets</short_desc>
+          <delta_ts>2014-03-03 15:24:45 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>0.8.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Andreas Ecker">qooxdoo</assigned_to>
+          <cc>fabian.jakobs</cc>
+    
+    <cc>info</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>7234</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-12-24 00:10:42 +0100</bug_when>
+            <thetext>Add the option to supply a stable, auto-generated HTML id to every widget in a qooxdoo application, as it was in 0.7.x and is explained here: http://qooxdoo.org/contrib/project/simulator/qooxdoo-tests-with-selenium#using_auto-generated_ids</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8882</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-03-24 19:19:23 +0100</bug_when>
+            <thetext>Unlike explicitly setting the id of certain widgets to be tested, this auto-generation of ids doesn&#39;t seem to be favorable in a production environment (e.g. DOM blow-up). Thomas, lets discuss that taking into account the recent input from QA people.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8914</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-03-25 16:42:43 +0100</bug_when>
+            <thetext>1. Explicit Setting HTML &#39;id&#39;s:
+
+    This can be achieved in 0.8 through :
+
+        widget.getContainerElement().setAttribute(&#39;id&#39;, value, direct?)  
+
+    See http://demo.qooxdoo.org/current/apiviewer/#qx.html.Element~setAttribute.
+    There are no plans to add a convenience function to Widget that would 
+shortcut this invocation, so this is the canonical way.
+
+2. Auto-setting HTML &#39;id&#39;s:
+
+    I see these aspects:
+
+    - from the generation side: Are we capable of generating stable id&#39;s for 
+any given, unchanged qooxdoo application accross all generator runs accross all 
+platforms accross all invocations accross all usage paths through the 
+applicaiton (This will be particularly tricky for parts)? If not, there is not 
+much sense in offering them.
+
+    - from the browser side: AFAIK, there is no DOM blow-up, since additional 
+element attributes do *not* add additional nodes to the DOM.
+
+    - from the tester side: Is there an easy way to pick up a widget&#39;s &#39;id&#39; 
+from the running application? - According to our QA people this is convenient, 
+and supported by a variety of standard tools. So this seems to be a given.
+
+Summarizing: Explicitly setting &#39;id&#39;s is already working, DOM blow-up is not an 
+issue, and the auto-generation hinges on the stability of the generated id&#39;s.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8921</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-03-25 18:00:48 +0100</bug_when>
+            <thetext>Concerning Auto-generated Id&#39;s:
+
+- Requirements for those id&#39;s are:
+
+  (a) stable across source / build versions of the app
+  (b) stable across invocations / browser loads
+  (c) stable across browsers / engines
+  (d) stable across all usage paths of the application (ie. how the application 
+is used)
+  (e) stable across light code changes (a code change in a class should not 
+invalidate id&#39;s generated for unrelated classes)
+
+  These are very tough requirements.
+
+- ad (a): Tests developed for the source version of an app should run unchanged 
+for the build version. This is particularly tricky since the scope of involved 
+classes can change between source and build version, e.g. logger classes are 
+stripped from the build version.
+
+- ad (b): This is probably the easiest requirement. I don&#39;t see issues here.
+
+- ad (c): Shouldn&#39;t be a big problem either, since we do not intend to rely on 
+browser-specific features. (Or do we?)
+
+- ad (d): This could probably be relaxed if testers are willing to accept that 
+the same widget has different id&#39;s, depending on the usage path (dialogues, 
+menus, ...) you used to reach it. Tests could then be built reliably as long as 
+each test path uses the corresponding id&#39;s. But it&#39;s unnatural for a tester to 
+use different id&#39;s for, say, the same dialog button.
+
+- ad (e): I have no idea about the consequences, but this seems essential, 
+given the fact that there are massive applications to be tested (e.g. gmx.com) 
+with a corresponding amount of test code. Invalidating all id&#39;s in a large body 
+of test code would require substantial manual work to fix, basically a 
+re-creation of all tests. This might be unacceptable unless the whole 
+application is re-written.
+
+- Id&#39;s can only be generated at *runtime*, since only then widget instances are 
+created which receive the id&#39;s. The generator sees only classes but not 
+instances. It could &quot;instrument&quot; the generated code in the build version (by 
+inserting id setting JS code, in itself a delicate operation), but this would 
+break requirement (a), among other things.
+
+- It is especially complicated for applications that have *parts*. The boot 
+part might be easier to solve, but further parts are mostly loaded dynamically 
+depending on application state. Generating id&#39;s for those parts further 
+requires aid. One such aid could be the generator adding id &quot;seeds&quot; to each 
+package that are then used by the runtime to generate id&#39;s for the particular 
+package only. This could de-couple id generation from dynamic loading behaviour.
+
+- There is no clear *algorithm* to generate these id&#39;s. Here are some ideas:
+
+- One could try the exploit the context in form of the *call stack*  in which a 
+widget is created. But if widget creation code is executed in different call 
+stacks, the same widget would get different id&#39;s. [Bad]
+
+- Another form of context for the widget creation is the *widget hierarchy*, as 
+established by the parent-child relation when a widget is &#39;.add()&#39;-ed to 
+another. This could be exploited for the id.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8923</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-03-25 18:31:54 +0100</bug_when>
+            <thetext>Thanks Thomas for the exhaustive summary. 
+
+I also don&#39;t think that it is feasible to auto-generate such ids in a reliable way for a typical, highly dynamic and modular web app (this is IMHO not qooxdoo specific). You mentioned a number of valid scenarios (yes, I think also point (c)), that one cannot really image the tests won&#39;t fail regularly in real-life app development. BTW, was that ever supposed to be realizable at all?
+
+There&#39;s much more sense in either explicitly assigning IDs for chosen elements (of course, app devs and testers need to collaborate on creating valid test cases), or using locators (like hierarchical, XPATH-type ones) that allow to write tests that are (mostly) independent of code augmentation by the app devs (sure, if such a test fails, supposedly quite frequently for app parts in flux, it may have to be adjusted to account for the relevant changes in app structure or gui).
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8929</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-03-26 09:03:51 +0100</bug_when>
+            <thetext>I would suggest to port the Sizzle engine to the widgets. Might be quite a fun job, but it would be quite cool to have support for such things at widget level:
+
+$(&quot;toolbar/button[color=black]/label&quot;);
+
+I think this is by far better than dealing with some cryptic auto-generated labels.
+
+Maybe worth a separate bug though.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8931</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-03-26 10:11:47 +0100</bug_when>
+            <thetext>This bug was about having HTML &#39;id&#39; attributes automatically generated, which 
+was to support functional testing of qooxdoo apps, e.g. with Selenium. It had 
+nothing to do with code-level referencing of qooxdoo objects.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8932</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-03-26 10:16:14 +0100</bug_when>
+            <thetext>Yep, nothing wrong with this.
+
+But also with Selenium it would be far better having a selector engine based on structure than on unique IDs. Even in basic HTML nobody assigns IDs to every element of the document, so there is no reason IMHO to do these things in qooxdoo as well. Just my opinion, though ;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8933</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-03-26 10:21:33 +0100</bug_when>
+            <thetext>Oh, there seems to be a misunderstanding. Of course, qooxdoo already has Selenium support for various locators, e.g. XPATH-like hierarchical locators. See for instance &quot;qxh&quot; at http://qooxdoo.org/contrib/project/simulator/selenium-user-extension , I guess this answers your question?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38509</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:45 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

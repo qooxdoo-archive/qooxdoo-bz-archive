@@ -1,0 +1,171 @@
+<bug>
+          <bug_id>6406</bug_id>
+          
+          <creation_ts>2012-05-12 10:17:00 +0200</creation_ts>
+          <short_desc>changeBubble event data bug when setting a property</short_desc>
+          <delta_ts>2012-10-01 14:13:50 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>1.6</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>2.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christian Boulanger">info</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>29430</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2012-05-12 10:17:37 +0200</bug_when>
+            <thetext>There seems to be a bug with the index of items in a manipulated qx.data.Array when a property has changed. The behavior is demonstrated in this playground example:
+
+http://tinyurl.com/dxa2427 (1.6)
+http://tinyurl.com/chhcr98 (2.0pre)
+
+Here&#39;s the code:
+
+var model = qx.data.marshal.Json.createModel(
+  [{ foo : &quot;one&quot; }, { foo : &quot;two&quot; }, { foo : &quot;three&quot; }],
+  true
+);
+
+model.addListener(&quot;changeBubble&quot;,function(e){
+  this.debug(qx.util.Serializer.toJson(e.getData()));
+  this.debug(qx.util.Serializer.toJson(model));
+});
+
+model.shift();
+model.getItem(0).setFoo(&quot;first item&quot;);
+
+Expected behavior:
+==================
+
+After setting the &quot;foo&quot; property of the item at index 0, the &quot;changebubble&quot; event data should be 
+
+{&quot;value&quot;:&quot;first item&quot;,&quot;name&quot;:&quot;0.foo&quot;,&quot;old&quot;:&quot;two&quot;} (1.6) or
+{&quot;value&quot;:&quot;first item&quot;,&quot;name&quot;:&quot;[0].foo&quot;,&quot;old&quot;:&quot;two&quot;} (2.0pre)
+
+Actual behavior
+===============
+The &quot;name&quot; property of the event data is &quot;1.foo&quot; (1.6) or &quot;[1].foo&quot; (2.0).
+
+This occurs only after manipulating the qx.data.Array object, which is demonstrated when commenting out the &quot;model.shift()&quot; line in the playground example and re-running the test.
+
+This is a severe inconsistency and should be fixed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29431</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2012-05-12 10:24:14 +0200</bug_when>
+            <thetext>Correction: 
+
+&gt; Expected behavior:
+&gt; ==================
+&gt; 
+&gt; After setting the &quot;foo&quot; property of the item at index 0, the &quot;changebubble&quot;
+&gt; event data should be 
+&gt; 
+&gt; {&quot;value&quot;:&quot;first item&quot;,&quot;name&quot;:&quot;0.foo&quot;,&quot;old&quot;:&quot;two&quot;} (1.6) or
+&gt; {&quot;value&quot;:&quot;first item&quot;,&quot;name&quot;:&quot;[0].foo&quot;,&quot;old&quot;:&quot;two&quot;} (2.0pre)
+&gt; 
+
+The &quot;old&quot; property should of course be &quot;one&quot; in both cases. &quot;two&quot; is part of the buggy behavior.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30510</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-08-28 11:12:49 +0200</bug_when>
+            <thetext>We changed that with 2.0 as you can see in bug #5985. Arrays as first element are now also wrapped in [] as they are when they are not the first element in the chain. This was an inconsistency compared to having a property as first element.
+
+(In reply to comment #1)
+&gt; The &quot;old&quot; property should of course be &quot;one&quot; in both cases. &quot;two&quot; is part of
+&gt; the buggy behavior.
+
+If you have the shift in your sample, the first element has been removed which makes the second element containing the text &quot;two&quot; the first element. So the old value was &quot;two&quot; which is correct.
+
+In total, I don&#39;t get the bug right. The new behavior is on intension so the inconsistency between 1.6 and 2.0 is known and on intension. Could you be a bit mir specific whats wrong?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30521</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2012-08-28 21:34:20 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+
+I&#39;ll just deal with 2.x since I no longer use the 1.x branch.
+
+Again, the code:
+
+var model = qx.data.marshal.Json.createModel(
+  [{ foo : &quot;one&quot; }, { foo : &quot;two&quot; }, { foo : &quot;three&quot; }],
+  true
+);
+
+model.addListener(&quot;changeBubble&quot;,function(e){
+  this.debug(qx.util.Serializer.toJson(e.getData()));
+  this.debug(qx.util.Serializer.toJson(model));
+});
+
+this.debug(&quot;--- model.shift() ---&quot;);
+model.shift();
+this.debug(&quot;--- model.getItem(0).setFoo(&#39;first item&#39;);---&quot;);
+model.getItem(0).setFoo(&quot;first item&quot;);
+
+The log output is (slightly edited for readibility):
+
+qx.application.Standalone[523-0]: --- model.shift() ---
+qx.data.Array[684-0]: {&quot;value&quot;:[],&quot;name&quot;:&quot;0&quot;,&quot;old&quot;:[{&quot;foo&quot;:&quot;one&quot;}],&quot;item&quot;:[{&quot;foo&quot;:&quot;two&quot;},{&quot;foo&quot;:&quot;three&quot;}]}
+qx.data.Array[684-0]: [{&quot;foo&quot;:&quot;two&quot;},{&quot;foo&quot;:&quot;three&quot;}]
+
+qx.application.Standalone[523-0]: --- model.getItem(0).setFoo(&#39;first item&#39;);---
+qx.data.Array[684-0]: {&quot;value&quot;:&quot;first item&quot;,&quot;name&quot;:&quot;[1].foo&quot;,&quot;old&quot;:&quot;two&quot;,&quot;item&quot;:{&quot;foo&quot;:&quot;first item&quot;}}
+qx.data.Array[684-0]: [{&quot;foo&quot;:&quot;first item&quot;},{&quot;foo&quot;:&quot;three&quot;}]
+
+You&#39;re right about &quot;old&quot;:&quot;two&quot;, that&#39;s correct. But &quot;getItem(0).setFoo(...)&quot; should have a &#39;name&#39; of &quot;[0].foo&quot; and not &quot;[1].foo&quot;, because it the index is zero, not one! Do you see what I mean?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30523</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-08-29 08:39:19 +0200</bug_when>
+            <thetext>Ah, now I see. Must have overseen that... sorry! Will take care of that today.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30525</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-08-29 13:46:14 +0200</bug_when>
+            <thetext>That turned out to be a good one. The used function bind to make the available to the bubble listener. Unfortunately, the array did not update the listener in case of a index move. Like in the unshift case you described, every item in the array needs an update because the index for every item changed. This could also be true for reverse, shift, splice, sort and unshift. All these operation can change other item&#39;s position which menas, the bug was there with all the listed methods.
+Added unit tests for all 5 methods and fixed them.
+
+master: 6d7d4232b56d8191a36359505a2eb27f4b6f7fd4
+2.0.x: 7a40d1d7d3d46d2f1c9609e7e4a8b29e42e25a34</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

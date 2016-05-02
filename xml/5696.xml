@@ -1,0 +1,228 @@
+<bug>
+          <bug_id>5696</bug_id>
+          
+          <creation_ts>2011-10-10 09:02:00 +0200</creation_ts>
+          <short_desc>Changing text color in Appearance.js doesn&#39;t work any longer</short_desc>
+          <delta_ts>2014-03-03 15:18:56 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.theming</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tim Demann">tim.demann</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          
+          <qa_contact name="Alexander Steitz">alexander.steitz</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>27155</commentid>
+            <who name="Tim Demann">tim.demann</who>
+            <bug_when>2011-10-10 09:02:30 +0200</bug_when>
+            <thetext>When modifying the appearance of a button the text color property is ignored. 
+
+Here is an example from my custom Appearance.js file:
+...
+&quot;menubar-button/label&quot; : {
+  style : function(states) {
+    return {
+      textColor : &quot;menubar-button-text&quot;, // This does not work any longer
+    };
+  }
+},
+...
+
+This bug was introduced into the 1.5.x branch with a change in the class qx.bom.Font from aback at 05.10.11. 10:49:
+...
+   getStyles : function()
+    {
+      return {
+...      
+        color: this.__color // Before: textColor: this.__color
+      }
+    }
+
+
+This bug might spoil every custom theming so I put it to a major severity.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27156</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-10-10 09:14:45 +0200</bug_when>
+            <thetext>Thanks for the detailed report. I&#39;ll take a look.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27157</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-10-10 09:28:42 +0200</bug_when>
+            <thetext>Hi Tim,
+
+I&#39;ve checked the described behavior and could not find a bug.
+
+Here is the sample code:
+
+--snip--
+appearances :
+{
+  &quot;button-frame/label&quot; :
+  {
+    style : function(states)
+    {
+      return {
+        textColor : states.disabled ? &quot;text-disabled&quot; : &quot;my-own-color&quot;
+      };
+    }
+  }
+}
+--snip--
+
+--snip--
+colors :
+{
+  &quot;my-own-color&quot;: &quot;#F0CC00&quot;
+}
+--snip--
+
+It works both for the current trunk and the 1.5.x branch.
+
+Could me send over your code so we can take a look at it? Just attach it to this bug report.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27158</commentid>
+            <who name="Tim Demann">tim.demann</who>
+            <bug_when>2011-10-10 10:18:19 +0200</bug_when>
+            <thetext>Hi Alexander,
+
+thanks for your quick response :-)
+
+I had a closer look into the Qooxdoo code and I found out that the error occurs only when the font is changed along with the text color. That should trigger the error:
+
+--- Snip from custom Appearance.js ---
+&quot;menubar-button/label&quot; : {
+  style : function(states) {
+    return {
+      textColor : &quot;menubar-button-text&quot;, // This does not work any longer,
+      font : &quot;menubar-button-font&quot;
+    };
+  }
+},
+--- Snip end ---
+
+--- Snip from custom Font.js ---
+&quot;menubar-button-font&quot;: {
+  size: 13,
+  family: [&quot;Tahoma&quot;, &quot;Arial&quot; ],
+  bold: true
+},
+--- Snip end ----
+
+
+Can you check if these changes reproduces the error in your environment?
+
+Cheers, 
+Tim</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27160</commentid>
+            <who name="Tim Demann">tim.demann</who>
+            <bug_when>2011-10-10 10:49:48 +0200</bug_when>
+            <thetext>After further investigations I think that I understand the problem. Have a look in qx.ui.basic.Label:
+
+_applyFont : function(value, old)
+{
+  ...
+  var styles;
+  if (value)
+  {
+    ...
+    styles = this.__font.getStyles();
+  }
+
+  ...
+  this.getContentElement().setStyles(styles);
+...
+},
+
+The call of this.__font.getStyles() returns an object containing the attribute  
+&quot;color&quot; which is applied to the label even when it is empty. 
+
+Here is a collision with the attribute textColor from qx.ui.basic.Label which should configure the text color of the label. The property textColor is translated to the CSS style color in _applyTextColor().
+
+Maybe this help,
+
+Tim
+
+
+Afterwards the attribute &quot;color&quot; is applied to the content element which is a qx.html.Label.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27162</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-10-10 13:14:02 +0200</bug_when>
+            <thetext>Thanks for the detailed report of your findings.
+
+I managed to fix the issue with revision #28883 (1.5.x branch) and #28884 (trunk).
+
+Please verify the fix.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27163</commentid>
+            <who name="Tim Demann">tim.demann</who>
+            <bug_when>2011-10-10 13:56:14 +0200</bug_when>
+            <thetext>The fix works for me. Thanks a lot, I am really impressed about your response time :-)
+
+- Tim
+
+Just one note: In qx.bom.Font in the field __defaultStyles there is still a reference to textColor. I should better be &quot;color&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27164</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-10-10 16:24:09 +0200</bug_when>
+            <thetext>Re-open this one as the fix created a regression.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27165</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-10-10 16:46:57 +0200</bug_when>
+            <thetext>Now working without any regression.
+
+Revisions 28885-28888.
+
+Thanks for the detailed report, Tim!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36280</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:18:56 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

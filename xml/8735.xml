@@ -1,0 +1,254 @@
+<bug>
+          <bug_id>8735</bug_id>
+          
+          <creation_ts>2014-11-25 16:43:00 +0100</creation_ts>
+          <short_desc>cellDbltap can be triggered when clicking 2 different cells closely after each other.</short_desc>
+          <delta_ts>2015-01-23 15:01:19 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Rob Franken">qooxdoo</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>andreas.fink</cc>
+    
+    <cc>dietrich.streifert</cc>
+    
+    <cc>mustafa.sak</cc>
+    
+    <cc>tobias.oberrauch</cc>
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>41705</commentid>
+            <who name="Rob Franken">qooxdoo</who>
+            <bug_when>2014-11-25 16:43:16 +0100</bug_when>
+            <thetext>After upgrading to 4.0.1 I found out that clicking two rows in a grid quickly after each other triggers the cellDbltap. After git disecting I found the first bad revision was https://github.com/qooxdoo/qooxdoo/commit/57a3221855c052c2a7c7aff6e04b3bb3b89b8a55. While this is not really a change that introduced the bug, but the change enlarges the &#39;hot&#39; area where you can trigger it. 
+
+The problems is that the dbltap is registered on the entire &#39;Scroller&#39; and not on each cell separately and thus the different event target check doesn&#39;t work. Below i wrote a little patch to work around the issue, although i&#39;m not very proud on the name for the variable.
+
+==== qooxdoo-4.0.1-sdk/framework/source/class/qx/ui/table/pane/Scroller.js ====
+@@ -361,7 +361,8 @@
+     __lastResizePointerPageX : null,
+     __lastResizeWidth : null,
+
+     __lastPointerDownCell: null,
++    __secondToLastPointerDownCell: null,
+     __firedTapEvent : false,
+     __ignoreTap : null,
+     __lastPointerPageX : null,
+@@ -1195,6 +1196,8 @@
+         //  early or late (Firefox on Linux issues it early; Firefox on
+         //  Windows issues it late) so no one may clear these values.
+         //
++        this.__secondToLastPointerDownCell = this.__lastPointerDownCell;
++
+         this.__lastPointerDownCell = {
+           row : row,
+           col : col
+@@ -1558,12 +1561,20 @@
+       var pageX = e.getDocumentLeft();
+       var pageY = e.getDocumentTop();
+       var col = this._getColumnForPageX(pageX);
++      var row = this._getRowForPagePos(pageX, pageY);
+
+       if (col !== null) {
++          if (!this.__lastPointerDownCell
++              || !this.__secondToLastPointerDownCell
++              || col != this.__lastPointerDownCell.col
++              || col != this.__secondToLastPointerDownCell.col
++              || row != this.__lastPointerDownCell.row
++              || row != this.__secondToLastPointerDownCell.row) {
++              return;
++          }
+         this._focusCellAtPagePos(pageX, pageY);
+         this.startEditing();
+
+-        var row = this._getRowForPagePos(pageX, pageY);
+         if (row != -1 &amp;&amp; row != null) {
+           this.fireEvent(&quot;cellDbltap&quot;, qx.ui.table.pane.CellEvent, [this, e, row], true);
+         }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41707</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-11-26 08:00:35 +0100</bug_when>
+            <thetext>Thanks for the report and the proposed fix.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41723</commentid>
+            <who name="Rob Franken">qooxdoo</who>
+            <bug_when>2014-11-26 18:22:55 +0100</bug_when>
+            <thetext>After some more research i found out that a similar problem exists in the qx.ui.control.DateChooser execute event.
+
+Also after some more git bisecting I found out that the problem didn&#39;t exist before the introduction of the GestureCore class, that then a range of commits exists where the playground didn&#39;t function (i used the playground for quick checks if double click worked good. Then a few changes where the playground worked but double click/tap didn&#39;t and then after https://github.com/qooxdoo/qooxdoo/tree/22d74224a296ca80cecdb2fe475857fc53246a9a the current behaviour appeared.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41724</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-11-27 08:13:03 +0100</bug_when>
+            <thetext>I guess that the root of this issue is in the GestureCore as well. This is the class handling the dbltap feature so we start our search there.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41735</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2014-11-27 12:16:16 +0100</bug_when>
+            <thetext>One additional observation which may help:
+
+Setting the focus to a table line by clicking the LEFT mouse button and afterwards fast clicking the RIGHT mouse button (i.e. to open a context menu) also results in a cellDbltap event.
+
+This is the normal way our users used to work with the table based widgets: Left click focus, right click contextmenu.
+
+Dietrich</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41772</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2014-12-02 09:36:29 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; One additional observation which may help:
+&gt; 
+&gt; Setting the focus to a table line by clicking the LEFT mouse button and
+&gt; afterwards fast clicking the RIGHT mouse button (i.e. to open a context menu)
+&gt; also results in a cellDbltap event.
+&gt; 
+&gt; This is the normal way our users used to work with the table based widgets:
+&gt; Left click focus, right click contextmenu.
+&gt; 
+&gt; Dietrich
+
+This may be a different problem. I&#39;ve opened a dedicated bug for this:
+
+http://bugzilla.qooxdoo.org/show_bug.cgi?id=8755</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41783</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-12-02 12:39:54 +0100</bug_when>
+            <thetext>As expected, this has nothing to do with that table but more with the pointer / gesture handling itself. Here is a simple sample to reproduce based on two widgets.
+
+
+var w1 = new qx.ui.core.Widget();
+w1.set({
+  backgroundColor: &quot;red&quot;,
+  width: 100,
+  height: 100
+});
+this.getRoot().add(w1);
+
+var w2 = new qx.ui.core.Widget();
+w2.set({
+  backgroundColor: &quot;blue&quot;,
+  width: 100,
+  height: 100
+});
+this.getRoot().add(w2, {left: 100});
+
+
+w1.addListener(&quot;tap&quot;, function() {
+  console.log(&quot;tap1&quot;);
+});
+
+w2.addListener(&quot;tap&quot;, function() {
+  console.log(&quot;tap2&quot;);
+});
+
+w2.addListener(&quot;dbltap&quot;, function() {
+  console.log(&quot;dblTap&quot;);
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41784</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2014-12-02 12:55:36 +0100</bug_when>
+            <thetext>Applied the proposed patch created by Rob fixed the bug for our apps and use cases.
+
+Verified on Windows 7 SP1 x64 with Internet Explorer 11, Chrome 39 and Firefox.
+
+As Rob stated, the dbltap event is registered to the pane. I don&#39;t see how this may be fixed in the gesture core.
+
+This fix is valid as proposed.
+
+@Rob: Thank you for the patch!
+
+Regards
+Dietrich</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41785</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-12-02 12:56:44 +0100</bug_when>
+            <thetext>The fix was easy as the check if a double tap should be fired simply did not check that the same target was tapped twice.
+
+master: 9eac56ea5cf3d436040ea9b034af0e6700c66081
+4.0.x: 74de983ac82fb7315cbe4c60aab5db49c904e5c3
+next: eb57cdffe9940265a2dd25c1fe816da73ccabe9a</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41787</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2014-12-02 13:27:06 +0100</bug_when>
+            <thetext>(In reply to comment #8)
+&gt; The fix was easy as the check if a double tap should be fired simply did not
+&gt; check that the same target was tapped twice.
+&gt; 
+&gt; master: 9eac56ea5cf3d436040ea9b034af0e6700c66081
+&gt; 4.0.x: 74de983ac82fb7315cbe4c60aab5db49c904e5c3
+&gt; next: eb57cdffe9940265a2dd25c1fe816da73ccabe9a
+
+Ah! OK! Martin you&#39;re totally right and I was wrong here.
+
+This fixes the cellDbltap for tables.
+
+Thank you.
+
+Regards
+Dietrich</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42118</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2015-01-09 14:02:48 +0100</bug_when>
+            <thetext>As Andreas Fink reported: In qooxdoo 4.0.2 and 4.1 the celldbltab event seems broken when the property focusCellOnPointerMove is set to false. You have to do a triple click when a row is not already focused. It worked with 4.0.1.
+I guess it relates to the fix of http://bugzilla.qooxdoo.org/show_bug.cgi?id=8735.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42281</commentid>
+            <who name="Tobias Oberrauch">tobias.oberrauch</who>
+            <bug_when>2015-01-23 15:01:19 +0100</bug_when>
+            <thetext>This issue is fixed on deskop environments with 732a6011f8502d040f53e6675983ae00d820010a
+
+@Rob
+Are you using a tablet or mobile device?</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

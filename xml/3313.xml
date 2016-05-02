@@ -1,0 +1,178 @@
+<bug>
+          <bug_id>3313</bug_id>
+          
+          <creation_ts>2010-01-09 17:31:00 +0100</creation_ts>
+          <short_desc>Re-opened window is losing its active property</short_desc>
+          <delta_ts>2014-03-03 15:23:26 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.popups</component>
+          <version>0.8.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Lukas Pilny">lp1051</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>16088</commentid>
+            <who name="Lukas Pilny">lp1051</who>
+            <bug_when>2010-01-09 17:31:22 +0100</bug_when>
+            <thetext>Steps to repro:
+1. Copy this code into playground
+2. open console (F7)
+3. press toggle button -&gt; window gets active (visible &amp;&amp; active)
+4. press toggle button -&gt; window gets minimalized (!visible &amp;&amp; !active)
+5. press toggle button -&gt; window gets opened and active (visible &amp;&amp; active)
+6. press toggle button -&gt; window should be minimalized again, but as you can see in console the value of BEFORE:: isActive() = false.
+
+However, I am not sure if it&#39;s problem of window component or the data binding with toggle button...
+
+var doc = this.getRoot();
+
+//create and open new window
+var window = new qx.ui.window.Window(&quot;Window&quot;);
+doc.add(window, {left:150, top : 250});
+window.open();
+
+var button = new qx.ui.form.ToggleButton(window.get(&quot;caption&quot;));
+//attach the window to this button, so it can be shown again if the button is clicked
+button.setUserData(&quot;window&quot;, window);
+//attach the button to the window, so it can be removed, if the window is closed
+window.setUserData(&quot;taskbarButton&quot;, button);
+
+//bind the active state of the window to button value
+window.bind(&quot;active&quot;, button, &quot;value&quot;);
+button.setValue(window.get(&quot;active&quot;));
+
+//if the button is clicked switch the state of the window and the button
+button.addListener(&quot;click&quot;, toggleMinMax, this);
+
+doc.add(button, {left:50, top : 220});
+
+function toggleMinMax(e)
+{
+  var window = e.getTarget().getUserData(&quot;window&quot;);
+  
+  window.info(&#39;BEFORE:: isActive() = &#39;+window.isActive()+&#39;, isVisible() = &#39;+window.isVisible());
+  if(window.isVisible() &amp;&amp; window.isActive()){
+    window.minimize();
+    window.setActive(false);
+  }else{
+    if(!window.isVisible()){
+      window.open();
+    }
+    window.setActive(true);
+  }
+  window.info(&#39;AFTER:: isActive() = &#39;+window.isActive()+&#39;, isVisible() = &#39;+window.isVisible());
+  
+}</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16120</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-12 09:31:57 +0100</bug_when>
+            <thetext>to Chris</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16143</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2010-01-13 14:40:36 +0100</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16159</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2010-01-13 16:02:17 +0100</bug_when>
+            <thetext>It seems to me that this is not a bug. The problem is that the click on the toggle button occurs that the window loses his active state. Here an example with a timer and it works like expected. Please run this code in the playground:
+
+var doc = this.getRoot();
+
+//create and open new window
+var win = new qx.ui.window.Window(&quot;Window&quot;);
+doc.add(win, {left:150, top : 250});
+win.open();
+
+var button = new qx.ui.form.ToggleButton(win.get(&quot;caption&quot;));
+//attach the window to this button, so it can be shown again if the button is clicked
+button.setUserData(&quot;window&quot;, win);
+//attach the button to the window, so it can be removed, if the window is closed
+win.setUserData(&quot;taskbarButton&quot;, button);
+
+//bind the active state of the window to button value
+win.bind(&quot;active&quot;, button, &quot;value&quot;);
+button.setValue(win.get(&quot;active&quot;));
+
+//if the button is clicked switch the state of the window and the button
+//button.addListener(&quot;click&quot;, toggleMinMax, this);
+
+var timer = new qx.event.Timer(2000);
+timer.addListener(&quot;interval&quot;, toggleMinMax, this);
+timer.start();
+
+doc.add(button, {left:50, top : 220});
+
+function toggleMinMax(e)
+{
+  win.info(&#39;BEFORE:: isActive() = &#39;+win.isActive()+&#39;, isVisible() = &#39;+win.isVisible());
+  if(win.isVisible() &amp;&amp; win.isActive()){
+    win.minimize();
+    win.setActive(false);
+  }else{
+    if(!win.isVisible()){
+      win.open();
+    }
+    win.setActive(true);
+  }
+  win.info(&#39;AFTER:: isActive() = &#39;+win.isActive()+&#39;, isVisible() = &#39;+win.isVisible());
+}</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16174</commentid>
+            <who name="Lukas Pilny">lp1051</who>
+            <bug_when>2010-01-13 20:08:40 +0100</bug_when>
+            <thetext>I tested your code, and everything seems to work fine there.
+Then I believe it is problem of binding the button to window. Because based on what you are saying the window could never get minimalized, when clicking on button (same behavior with &#39;mousedown&#39; event). It seems like the connection between button - value and window - active property collide at this particular moment.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16185</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2010-01-14 11:18:04 +0100</bug_when>
+            <thetext>Yes, that&#39;s right. Binding of button and window doesn&#39;t work. I have done a look at the window implementation. The active sate is always removed, when the window loses his focus (this occurs when the button is clicked). I set the bug report to invalid, because this is a correct behavior.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38013</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:26 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

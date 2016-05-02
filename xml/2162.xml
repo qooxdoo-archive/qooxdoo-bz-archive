@@ -1,0 +1,159 @@
+<bug>
+          <bug_id>2162</bug_id>
+          
+          <creation_ts>2009-03-26 13:54:00 +0100</creation_ts>
+          <short_desc>Certain combinations of properties and interfaces can cause an infinite loop</short_desc>
+          <delta_ts>2014-03-03 15:27:56 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>blocker</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Fabian Jakobs">fabian.jakobs</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          <cc>tinobutz</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>8945</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-26 13:54:55 +0100</bug_when>
+            <thetext>When embedding a 0.8 widget into a legacy appllication using qx.legacy.ui.embed.Future can cause an infinite loop.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8952</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-26 14:03:43 +0100</bug_when>
+            <thetext>*** Bug 2163 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8954</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-26 14:03:53 +0100</bug_when>
+            <thetext>*** Bug 2164 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8956</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-26 14:04:00 +0100</bug_when>
+            <thetext>*** Bug 2165 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8958</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-26 14:04:13 +0100</bug_when>
+            <thetext>*** Bug 2166 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8964</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-26 16:13:30 +0100</bug_when>
+            <thetext>Increase priority since the reason for the problem seems to by in the interface and property code.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8972</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-27 09:54:49 +0100</bug_when>
+            <thetext>update title</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8975</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-27 11:03:47 +0100</bug_when>
+            <thetext>This is a very strange bug, which only happens in one very specific situation. To understand the problem it is essential to know how properties and interfaces work:
+
+Properties:
+
+1. If a class defines a property, special code is added to the class constructor
+2. If the first instance of this class is instantiated this special code generates adds stub
+setter and getter to the prototype. 
+3. If e.g. the setter is called for the fist time, the stub code generates the real setter on the fly, replaces the stub with the generated setter and calls this method with the passed value.
+
+Interfaces:
+1. If a class implements an interface, which contains a member function, the method implementing this interface will be wrapped.
+2. This wrapped function will be added to the class prototype. If the method was defined in the class directly the wrapper overwrites the original function. If the method was defined in a super class the wrapped method simply shadows the function in the super class.
+
+To reproduce the infinite loop we need two classes A and B and an Interface I:
+
+A defines a property (e.g. enabled)
+B extends A and implements IForm
+I requires a methods generated by the property in A (e.g. setEnabled)
+
+A further constraint is that an instance of A has to exist before B is defined.
+
+This is what happens:
+1. A is defined with the property &quot;enabled&quot;
+2. an instance of A is created. This will add the stub methods to A&#39;s prototype
+3. B is defined. The interface check finds the setter stubs defined in A and wraps them.
+4. The wrapper is added to B&#39;s prototype. Now we have the stubs in A&#39;s prototype and the wrapped stubs in B&#39;s prototype
+5. If now an instance of B is created and &#39;setEnabled&#39; is called the infinite loop starts:
+
+5.1 b.setEnabled(true) calls the wrapped stub
+5.2 the wrapper calls the stub
+5.3 The stub generates the real setter and stores it in A&#39;s prototype
+5.4 The stub calls &quot;b.setEnabled(true)&quot; again with the intention to call the real setter. However
+  it finds the wrapped stub in B and the infinite loop starts.
+  
+  
+This bug was in qooxdoo probably since we introduced the new class system in 0.7. The reason why we&#39;ve found it so late was the constraint that an instance of A must exist before B is defined. In typical qooxdoo applications this almost never happens. However in applications using parts to load additional classes on demand, this is a common scenario.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8977</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-27 12:02:31 +0100</bug_when>
+            <thetext>fixed in rev. 18576</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8979</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2009-03-27 14:04:30 +0100</bug_when>
+            <thetext>(In reply to comment #7)
+
+&gt; This bug was in qooxdoo probably since we introduced the new class system in
+&gt; 0.7.
+
+Could you please fix this in 0.7 legacy branch as well? 
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8982</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-27 14:38:10 +0100</bug_when>
+            <thetext>fixed in legacy_0_7_x in rev. 18578</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39637</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:56 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

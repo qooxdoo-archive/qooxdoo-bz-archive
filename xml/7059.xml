@@ -1,0 +1,450 @@
+<bug>
+          <bug_id>7059</bug_id>
+          
+          <creation_ts>2012-11-29 17:59:00 +0100</creation_ts>
+          <short_desc>qx.lang deprecation and framework language extension consistency</short_desc>
+          <delta_ts>2012-12-04 19:49:15 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.lang</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>VERIFIED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P5</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="saaj">id</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>31544</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2012-11-29 17:59:39 +0100</bug_when>
+            <thetext>Migrating another app to 2.1 I&#39;ve faced more issues (but #7044, #7045 and LOGGING_DATE_TIME__format deprecation) which are related to javascript feature polyfill refactoring, but isn&#39;t actually a polyfill issue.
+
+
+Origin
+------
+
+Google suggests it&#39;s about Martin&#39;s summer-planned cleanup (http://qooxdoo.678.n2.nabble.com/cleanup-of-qx-lang-and-qx-type-td7580690.html) which has strange things to me, and hopefully was&#39;t implemented completely ;-) Though, reading further that thread some of them were explicitly abandoned (qx.lang.String.contains, qx.lang.Array.sum, clone), naturally, because readability matters.
+
+
+Object keys/values access and consistency
+-----------------------------------------
+
+Keys access now is meant to be native
+  
+  Object.keys(obj)
+
+whereas values access is still
+
+  qx.lang.Object.getValues(obj)
+
+So the combination in a code looks somewhat odd. It is inconsistent(naming, namespace), and not intuitive. The later is about Javascript itself as well, as keys() is in constructor, not prototype so not callable from an instance, which looks as somewhat crippled OOD.
+
+Purpose of a framework is to abstract inconsistencies when possible. So why not just leave it as a proxy (getKeys : Object.keys)? Other way keeping it consistent would be to provide corresponding Object.values.
+ 
+
+Object array projection and select
+----------------------------------
+
+Select is a handy for projecting an object array, like (example usecase: get model of a listbox, serialize to native object, get entry ids, send ids to a backend)
+
+  arr.map(qx.lang.Function.curry(qx.lang.Object.select, &quot;id&quot;));
+
+Order of select&#39;s arguments hints to this purpose as well, as it&#39;s probably intentionally inverted.
+
+
+Other deprecation
+-----------------
+
+qx.lang.Function.return*. returnNull is convenient for one-side for form element data-binding. returnTrue and returnFalse are handy for initialization of flag maps, e.g. 
+
+  var visiblity = columns.map(qx.lang.Function.returnTrue);
+
+
+qx.lang.Object.merge. Merge is merge, it&#39;s clear. Varargs accepted, OK, a feature. Now I have to replace all merge() with mergeWith(), expanding varargs to single calls. What is the benefit of this change? Also in Martin&#39;s post it was intended to replace mergeWith() by merge().
+
+These two were the same, at least, since 0.7. It&#39;s well-known and requires minimal maintenance, if any. So the idea behind this change is completely unclear to me.
+
+
+Workaround
+----------
+
+Technically, in the &quot;worst&quot; scenario, it&#39;s not a big deal to put all needed methods to top-level static app class. But anyway I&#39;d like to understand what way this process goes and what is the aim, to complete 2.1 migration accordingly. Currently I see the following changes, which doesn&#39;t make a complete picture:
+
+* Provide complete modern JS polyfill, whatever duplicated functionality in qx.lang is deprecated. Readability and consistency is probably neglected. E.g. qx.lang.Object, Object.keys.
+* Provide complete modern JS polyfill, but keep duplicated functionality in qx.lang. E.g. qx.lang.Function.bind.
+* Deprecate some qx.lang functionality, which is unrelated to polyfill changes. Readability is probably neglected. E.g. qx.lang.Object.merge, qx.lang.Function.return*.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31554</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-11-30 09:02:47 +0100</bug_when>
+            <thetext>Hey,
+thanks for the long report and digging into so much details. See my comments on the questions below.
+
+
+&gt; Object keys/values access and consistency
+&gt; -----------------------------------------
+&gt; 
+&gt; Keys access now is meant to be native
+&gt; 
+&gt;   Object.keys(obj)
+&gt; 
+&gt; whereas values access is still
+&gt; 
+&gt;   qx.lang.Object.getValues(obj)
+&gt; 
+&gt; So the combination in a code looks somewhat odd. It is inconsistent(naming,
+&gt; namespace), and not intuitive. The later is about Javascript itself as well, as
+&gt; keys() is in constructor, not prototype so not callable from an instance, which
+&gt; looks as somewhat crippled OOD.
+&gt; 
+&gt; Purpose of a framework is to abstract inconsistencies when possible. So why not
+&gt; just leave it as a proxy (getKeys : Object.keys)? Other way keeping it
+&gt; consistent would be to provide corresponding Object.values.
+
+Sure, this is not consistent. The reason for that is, that the keys method is a standard method defined by the language spec. So we don&#39;t have much of a choice if we want to offer an API which is spec like. The values on the other hand, is a convenience method provided by the framework. 
+We do have two rules we have to consider here: 1. we want to offer a polyfill for the native API and 2. we don&#39;t extend the native types if not defined by the spec. These two conditions restrict us to such scenarios.
+
+
+&gt; Object array projection and select
+&gt; ----------------------------------
+&gt; 
+&gt; Select is a handy for projecting an object array, like (example usecase: get
+&gt; model of a listbox, serialize to native object, get entry ids, send ids to a
+&gt; backend)
+&gt; 
+&gt;   arr.map(qx.lang.Function.curry(qx.lang.Object.select, &quot;id&quot;));
+&gt; 
+&gt; Order of select&#39;s arguments hints to this purpose as well, as it&#39;s probably
+&gt; intentionally inverted.
+
+We removed all methods which could easily implemented by the developer. The goal was to reduce the the amount of code we offer to have a cleaner API.
+
+
+&gt; Other deprecation
+&gt; -----------------
+&gt; 
+&gt; qx.lang.Function.return*. returnNull is convenient for one-side for form
+&gt; element data-binding. returnTrue and returnFalse are handy for initialization
+&gt; of flag maps, e.g. 
+&gt; 
+&gt;   var visiblity = columns.map(qx.lang.Function.returnTrue);
+
+The same here.
+
+&gt; qx.lang.Object.merge. Merge is merge, it&#39;s clear. Varargs accepted, OK, a
+&gt; feature. Now I have to replace all merge() with mergeWith(), expanding varargs
+&gt; to single calls. What is the benefit of this change? Also in Martin&#39;s post it
+&gt; was intended to replace mergeWith() by merge().
+
+The intension was to reduce the merge functions we offer. Its hard enough for a new user to find the functions hidden in some namespace but then having three methods which do mostly the same is too much.
+
+&gt; These two were the same, at least, since 0.7. It&#39;s well-known and requires
+&gt; minimal maintenance, if any. So the idea behind this change is completely
+&gt; unclear to me.
+&gt; 
+&gt; 
+&gt; Workaround
+&gt; ----------
+&gt; 
+&gt; Technically, in the &quot;worst&quot; scenario, it&#39;s not a big deal to put all needed
+&gt; methods to top-level static app class. But anyway I&#39;d like to understand what
+&gt; way this process goes and what is the aim, to complete 2.1 migration
+&gt; accordingly. Currently I see the following changes, which doesn&#39;t make a
+&gt; complete picture:
+&gt; 
+&gt; * Provide complete modern JS polyfill, whatever duplicated functionality in
+&gt; qx.lang is deprecated. Readability and consistency is probably neglected. E.g.
+&gt; qx.lang.Object, Object.keys.
+
+Well, thats all correct but misses some important things:
+- Developers can transfer their know-how from former JavaScript projects
+- The API&#39;s are future save for the developers
+- We can remove the polyfill as soon all browsers supporting it
+
+
+&gt; * Provide complete modern JS polyfill, but keep duplicated functionality in
+&gt; qx.lang. E.g. qx.lang.Function.bind.
+That was an exception because this function is so often used and we were not able to supply an automatic migration, that we decided to keep it around.
+
+
+&gt; * Deprecate some qx.lang functionality, which is unrelated to polyfill changes.
+&gt; Readability is probably neglected. E.g. qx.lang.Object.merge,
+&gt; qx.lang.Function.return*.
+
+That was the cleanup part. The intension was to remove the methods which can be easily added by the developer himself.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31559</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2012-11-30 13:19:57 +0100</bug_when>
+            <thetext>Hi, Martin.
+I&#39;m not sure it&#39;ll change anything, but I&#39;ll try ;-)
+
+&gt; Sure, this is not consistent. The reason for that is, that the keys method is a
+&gt; standard method defined by the language spec. So we don&#39;t have much of a choice
+&gt; if we want to offer an API which is spec like. The values on the other hand, is
+&gt; a convenience method provided by the framework. 
+&gt; We do have two rules we have to consider here: 1. we want to offer a polyfill
+&gt; for the native API and 2. we don&#39;t extend the native types if not defined by
+&gt; the spec. These two conditions restrict us to such scenarios.
+
+I understand that it is from the language spec. But my suggestion is to keep getKeys in qx.lang.Object as proxy to already polyfilled Object.keys. It doesn&#39;t violate any of your two rules, does it?
+
+
+&gt; The intension was to reduce the merge functions we offer. Its hard enough for &gt; a new user to find the functions hidden in some namespace but then having
+&gt; three methods which do mostly the same is too much.
+
+Surely three are moo much. But why not keep &quot;merge&quot;. It&#39;s clear and intuitive. &quot;mergeWith&quot; is somewhat suspiciously named. It always calls to read the doc, as once I see it it&#39;s unclear what actually it does, and what &quot;with&quot; stands for.
+
+
+&gt; We removed all methods which could easily implemented by the developer. The
+&gt; goal was to reduce the the amount of code we offer to have a cleaner API.
+
+&gt; That was an exception because this function is so often used and we were not
+&gt; able to supply an automatic migration, that we decided to keep it around.
+
+&gt; That was the cleanup part. The intension was to remove the methods which can
+&gt; be easily added by the developer himself.
+
+Still I see no certain rule-of-thumb. Isn&#39;t qx.lang.String.contains or qx.lang.Array.clone easy to implement by a developer? Of course they are! I bet at least a half of qx.lang is about simple language convenience methods. As well as these qx.lang.Object.select, qx.lang.Function.return*, etc. are a convenience. 
+
+But what is the reason for removing a convenience method? It&#39;s not a subsystem glue code or boilerplate code refactoring. It isn&#39;t an outdated code. It&#39;s just a convenience code with virtually zero maintenance cost. It just makes coding with qooxdoo a bit easier.
+
+When inste</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31560</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2012-11-30 13:27:15 +0100</bug_when>
+            <thetext>Hi, Martin.
+I&#39;m not sure it&#39;ll change anything, but I&#39;ll try ;-)
+
+&gt; Sure, this is not consistent. The reason for that is, that the keys method is a
+&gt; standard method defined by the language spec. So we don&#39;t have much of a choice
+&gt; if we want to offer an API which is spec like. The values on the other hand, is
+&gt; a convenience method provided by the framework. 
+&gt; We do have two rules we have to consider here: 1. we want to offer a polyfill
+&gt; for the native API and 2. we don&#39;t extend the native types if not defined by
+&gt; the spec. These two conditions restrict us to such scenarios.
+
+I understand that it is from the language spec. But my suggestion is to keep getKeys in qx.lang.Object as proxy to already polyfilled Object.keys. It doesn&#39;t violate any of your two rules, does it?
+
+
+&gt; The intension was to reduce the merge functions we offer. Its hard enough for &gt; a new user to find the functions hidden in some namespace but then having
+&gt; three methods which do mostly the same is too much.
+
+Surely three are moo much. But why not keep &quot;merge&quot;. It&#39;s clear and intuitive. &quot;mergeWith&quot; is somewhat suspiciously named. It always calls to read the doc, as once I see it it&#39;s unclear what actually it does, and what &quot;with&quot; stands for.
+
+
+&gt; We removed all methods which could easily implemented by the developer. The
+&gt; goal was to reduce the the amount of code we offer to have a cleaner API.
+
+&gt; That was an exception because this function is so often used and we were not
+&gt; able to supply an automatic migration, that we decided to keep it around.
+
+&gt; That was the cleanup part. The intension was to remove the methods which can
+&gt; be easily added by the developer himself.
+
+Still I see no certain rule-of-thumb. Isn&#39;t qx.lang.String.contains or qx.lang.Array.clone easy to implement by a developer? Of course they are! I bet at least a half of qx.lang is about simple language convenience methods. As well as these qx.lang.Object.select, qx.lang.Function.return*, etc. are a convenience. 
+
+But what is the reason for removing a convenience method? It&#39;s not a subsystem glue code or boilerplate code refactoring. It isn&#39;t an outdated code. It&#39;s just a convenience code with virtually zero maintenance cost. It just makes coding with qooxdoo a bit easier.
+
+When instead of writing an index comparison, I put .contains predicate, I subconsciously +1 qx devs as they&#39;ve foreseen the case. Not writing an array sum by the hand, I +1 again. Instead returning function(){}, which formatted could mean something forgotten there, I put self-documenting .returnNull, I +1 again. These +1 summed represent the part of the framework satisfactory. No doubt my qooxdoo satisfactory is huge and these methods of language convenience play a tiny part. But anyway it&#39;s hard me to apprehend the beneficiary of removing a few dozen lines from occasionally-used convenience static classes.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31561</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2012-11-30 13:29:26 +0100</bug_when>
+            <thetext>I could not post the comment having a series of 500 error. The strange thing is that on of them was actually posted, but partially ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31585</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-12-03 14:06:59 +0100</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; Hi, Martin.
+&gt; I&#39;m not sure it&#39;ll change anything, but I&#39;ll try ;-)
+As this has been already release, there is really only a slight chance. ;)
+
+
+&gt; I understand that it is from the language spec. But my suggestion is to keep
+&gt; getKeys in qx.lang.Object as proxy to already polyfilled Object.keys. It
+&gt; doesn&#39;t violate any of your two rules, does it?
+
+We would loos the possibility to remove the feature without deprecation. Additionally, we usually don&#39;t want to have two methods doing the same. Thats again, not good for a newbie.
+
+
+&gt; Surely three are moo much. But why not keep &quot;merge&quot;. It&#39;s clear and intuitive.
+&gt; &quot;mergeWith&quot; is somewhat suspiciously named. It always calls to read the doc, as
+&gt; once I see it it&#39;s unclear what actually it does, and what &quot;with&quot; stands for.
+
+It was easier to keep this method than the other. If I would have build it from ground up, I would have chosen merge. But having an released API to consider, it was easier to have the mergeWith name which did not lead to a behavior change of the API and is therefore easier to migrate for the app developer.
+
+
+&gt; Still I see no certain rule-of-thumb. Isn&#39;t qx.lang.String.contains or
+&gt; qx.lang.Array.clone easy to implement by a developer? Of course they are! I bet
+&gt; at least a half of qx.lang is about simple language convenience methods. As
+&gt; well as these qx.lang.Object.select, qx.lang.Function.return*, etc. are a
+&gt; convenience. 
+&gt; 
+&gt; But what is the reason for removing a convenience method? It&#39;s not a subsystem
+&gt; glue code or boilerplate code refactoring. It isn&#39;t an outdated code. It&#39;s just
+&gt; a convenience code with virtually zero maintenance cost. It just makes coding
+&gt; with qooxdoo a bit easier.
+
+I agree that it makes it easier for the experienced developer who knows how to read the API and so on. But the goal was to make it easier for new developer to grasp the sense of the lang namespace and therefore, less is better.
+
+
+&gt; When instead of writing an index comparison, I put .contains predicate, I
+&gt; subconsciously +1 qx devs as they&#39;ve foreseen the case. Not writing an array
+&gt; sum by the hand, I +1 again. Instead returning function(){}, which formatted
+&gt; could mean something forgotten there, I put self-documenting .returnNull, I +1
+&gt; again. These +1 summed represent the part of the framework satisfactory. No
+&gt; doubt my qooxdoo satisfactory is huge and these methods of language convenience
+&gt; play a tiny part. But anyway it&#39;s hard me to apprehend the beneficiary of
+&gt; removing a few dozen lines from occasionally-used convenience static classes.
+
+Well, we don&#39;t say its impossible and bad style to do so. You can still add the methods to you custom util function and use them. I just think its not necessary to load the API with methods not really doing much.
+
+Regards,
+Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31597</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2012-12-03 17:02:14 +0100</bug_when>
+            <thetext>&gt; Additionally, we usually don&#39;t want to have two methods doing the same. Thats
+&gt; again, not good for a newbie.
+
+A qx newbie you&#39;re talking about is, what it seems to me, pretty rare case. As he&#39;s extremely experienced in JS and its up-to-date changes, and also aware of qx polyfill mechanics. And there&#39;s one thing. As JS isn&#39;t fully cross-browser, there&#39;s, probably, no well-known and reliable, and instantly searchable doc. 
+
+Say, I&#39;m a moderate JS programmer and I&#39;m starting with qooxdoo. I have qx API doc opened all the time I code. So I need to get an object&#39;s keys, and I&#39;m not aware of any native, cross-browser way to do so. I&#39;m not aware of qx polyfill, I don&#39;t even know what this word means. I type &quot;keys&quot; in API doc (qx2.2+) and see nothing. Currently I takes just to types &quot;keys&quot; to come to the reliable solution. Your newbie will probably code it by his own in a loop. Or will spend huge chunk of time to find JS 1.8 changes and qx polyfilling. And as retrieving object&#39;s keys is very basic operation it will be happening.
+
+Also there&#39;re no two ways to do the same in qx API. One of them is meant to be native. So this &quot;duplication&quot; is probably legitimized by amount of time it saves, even not considering how good it fits &quot;universal&quot; of &quot;a universal JavaScript framework&quot;, consistency, etc.
+
+
+&gt; It was easier to keep this method than the other. If I would have build it 
+&gt; from ground up, I would have chosen merge. But having an released API to 
+&gt; consider, it was easier to have the mergeWith name which did not lead to a 
+&gt; behavior change of the API and is therefore easier to migrate for the app
+&gt; developer.
+
+There must be really a tiny amount of qooxdoo end user who preferred merge because of vararg support, and not because it&#39;s self-documenting name. You could easily deprecate vararg behavior checking argument&#39;s length. Qooxdoo itself has only 7 files which refer to either of merge implementation. So no problem here as well.
+
+
+&gt; I agree that it makes it easier for the experienced developer who knows how 
+&gt; to read the API and so on. But the goal was to make it easier for new
+&gt; developer to grasp the sense of the lang namespace and therefore, less 
+&gt; is better.
+
+&gt; Well, we don&#39;t say its impossible and bad style to do so. You can still 
+&gt; add the methods to you custom util function and use them. I just think its
+&gt; not necessary to load the API with methods not really doing much.
+
+My thoughts about newbies, universality and API doc are above. I will surely move these convenience methods to top level util class. Actually I already have own in my apps for month or two (with pythonic dict(), items() and String.prototype.format ;-) ). I will also add Object.values to keep things at least somewhat consistent.
+
+There&#39;s also one thing. If I wouldn&#39;t have .contains or .returnTrue, etc., I wouldn&#39;t bother implementing it, sticking just with index comparison and returning function(){}. It&#39;s on a threshold of effort, or even little below to implement it at end-user side. So I, as these qx2.2+ newbies will, wouldn&#39;t have felt this great sense of a framework.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31610</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-12-04 11:37:04 +0100</bug_when>
+            <thetext>(In reply to comment #6)
+
+&gt; A qx newbie you&#39;re talking about is, what it seems to me, pretty rare case. As
+&gt; he&#39;s extremely experienced in JS and its up-to-date changes, and also aware of
+&gt; qx polyfill mechanics. And there&#39;s one thing. As JS isn&#39;t fully cross-browser,
+&gt; there&#39;s, probably, no well-known and reliable, and instantly searchable doc. 
+
+I tend to disagree on that. MDN is a good and reliable source of documentation even cross browser. 
+
+&gt; Say, I&#39;m a moderate JS programmer and I&#39;m starting with qooxdoo. I have qx API
+&gt; doc opened all the time I code. So I need to get an object&#39;s keys, and I&#39;m not
+&gt; aware of any native, cross-browser way to do so. I&#39;m not aware of qx polyfill,
+&gt; I don&#39;t even know what this word means. I type &quot;keys&quot; in API doc (qx2.2+) and
+&gt; see nothing. Currently I takes just to types &quot;keys&quot; to come to the reliable
+&gt; solution. Your newbie will probably code it by his own in a loop. Or will spend
+&gt; huge chunk of time to find JS 1.8 changes and qx polyfilling. And as retrieving
+&gt; object&#39;s keys is very basic operation it will be happening.
+
+Sure, thats true for that case. But we had that all the time with older stuff like forEach or instanceOf. Thats just part of the language you have to use and know. As we don&#39;t want to have all the language docs in the qooxdoo docs which means we will always have such a scenario. Try to search for instanceof or forEach. You will find stuff but not what your looking for if you are searching for a native forEach method. But if you check out the namespace and qx.lang and see the namespace &#39;normalize&#39; which we did not name polyfill on intension, you will maybe realize that there could be help. ;)
+
+
+&gt; Also there&#39;re no two ways to do the same in qx API. One of them is meant to be
+&gt; native. So this &quot;duplication&quot; is probably legitimized by amount of time it
+&gt; saves, even not considering how good it fits &quot;universal&quot; of &quot;a universal
+&gt; JavaScript framework&quot;, consistency, etc.
+
+Same argument as above.
+ 
+&gt; There must be really a tiny amount of qooxdoo end user who preferred merge
+&gt; because of vararg support, and not because it&#39;s self-documenting name. You
+&gt; could easily deprecate vararg behavior checking argument&#39;s length. Qooxdoo
+&gt; itself has only 7 files which refer to either of merge implementation. So no
+&gt; problem here as well.
+In the most decisions we take, It&#39;s not the amount of work we have to do to change the framework / our apps, that worries us. It&#39;s the impact it has on the application developer. And changing the behavior of an existing method is always the last step we want to take because we can not deprecate that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31636</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2012-12-04 19:49:15 +0100</bug_when>
+            <thetext>&gt; I tend to disagree on that. MDN is a good and reliable source of documentation
+&gt; even cross browser. 
+
+You know, I was more about an offline language reference with instant search feature. Since I develop on Windows I&#39;m used to HTMLHelp (.chm) language references for Python, MySQL, etc. Qooxdoo API doc with its search experience is pretty close to HTMLHelp, whereas MDN is not. In the rest MDN is surely a good source of JS information.
+
+
+&gt; In the most decisions we take, It&#39;s not the amount of work we have to do to
+&gt; change the framework / our apps, that worries us. It&#39;s the impact it has on
+&gt; the application developer. And changing the behavior of an existing method
+&gt; is always the last step we want to take because we can not deprecate that.
+
+You&#39;re right. As if an app uses merge(), then misses deprecation release, and updates to the release were the change happened where no deprecation warning is shown but it operates differently, it&#39;s no good.
+
+
+&gt; Sure, thats true for that case. But we had that all the time with older stuff
+&gt; like forEach or instanceOf. Thats just part of the language you have to use 
+&gt; and know. As we don&#39;t want to have all the language docs in the qooxdoo docs
+&gt; which means we will always have such a scenario. Try to search for 
+&gt; instanceof or forEach. You will find stuff but not what your looking for 
+&gt; if you are searching for a native forEach method. But if you check out the
+&gt;  namespace and qx.lang and see the namespace &#39;normalize&#39; which we did not 
+&gt; name polyfill on intension, you will maybe realize that there could be help. 
+&gt; ;)
+
+Yes, from the perspective of &quot;good developer must know his tools&quot; you&#39;re absolutely right. And I tend to agree that readability is no excuse here. Just you&#39;ve started from qx newbies who should feel comfortable in qx.lang, so it should be as small as possible. But we end up targeting experienced developers who barely will be confused by qx.lang.Object.select or anything of the like. So there&#39;s no special sense to grasp from qx.lang but its &quot;Collection of utility classes for the native JavaScript types&quot;.
+
+Anyway, however it is, I can live with myapp.Lang.select or so on. So we can stop on it.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

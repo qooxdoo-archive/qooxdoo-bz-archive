@@ -1,0 +1,286 @@
+<bug>
+          <bug_id>4879</bug_id>
+          
+          <creation_ts>2011-03-26 00:55:00 +0100</creation_ts>
+          <short_desc>Problems with qx.data.store.Json not calling &quot;loaded&quot; event</short_desc>
+          <delta_ts>2011-09-20 07:41:05 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.4.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>23593</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-03-26 00:55:01 +0100</bug_when>
+            <thetext>Works fine for FF 3.16
+but
+IE 8.0.601 it is never called
+
+code:
+
+_getCData : function()
+{
+  var cStore = this.__cStore = new qx.data.store.Json(&quot;path/file.json&quot;);
+  cStore.addListener(&quot;loaded&quot;, this._bindCData, this);
+},
+
+_bindCData : function()
+{
+alert(&quot;Called me!&quot;);
+}
+
+_bindCData is never called.
+
+file.json has 260 lines and 4 columns of data to import into the store. The file is utf-8 and has linux/unix line ending. The file is located on local disk and in the same domain.
+
+No error or warning messages.
+
+Timeout issue?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23625</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-28 08:56:28 +0200</bug_when>
+            <thetext>Could not tell whats the reason for that. Could you maybe check what the changeState event does? Maybe that gives us some feedback whats going on here. In any case, that sounds like its caused by the transport layer. :| The store has also a delegate method to manipulate the request. You can attach listeners in there for debugging purposes to see what is going on. Maybe its a known issue... Tristan?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23637</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-03-28 10:10:22 +0200</bug_when>
+            <thetext>  cs.addListener(&quot;changeModel&quot;, this._aa, this);
+  cs.addListener(&quot;changeState&quot;, this._bb, this);
+  cs.addListener(&quot;changeUrl&quot;, this._cc, this);
+},
+
+_aa : function(e)
+{
+this.debug(&quot;change model&quot;);
+},
+
+_bb : function(e)
+{
+this.debug(e.getData());
+},
+
+_cc : function()
+{
+this.debug(&quot;change url&quot;);
+},
+
+
+No message -&gt; NO calls at all!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23665</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-03-28 14:39:45 +0200</bug_when>
+            <thetext>To rule out problems in the transport layer, could you make a request to the same URL using qx.io.remote.Request and report if you observe state changes. Moreover, what is the HTTP status of the response in Firefox? 204 be any chance?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23677</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-03-28 18:39:45 +0200</bug_when>
+            <thetext>with qx.data.store.Json :
+
+032586 com.p.c.reg.view.PI[667]: sending
+Native...6290515 (line 61)
+032607 com.p.c.reg.view.PI[667]: receiving
+Native...6290515 (line 61)
+032802 com.p.c.reg.view.PI[667]: completed
+
+with qx.io.remote.Request :
+
+var x = new qx.io.remote.Request(&quot;com/p/c/loc/c/ces_la.json&quot;);
+alert(x); // Comes here with: qx.io.remote.Request[829]
+
+x.addListener(&quot;changeState&quot;, this._onChangeState, this);
+x.addListener(&quot;failed&quot;, this._onFailed, this);
+x.addListener(&quot;completed&quot;, this._onCompleted, this);
+
+FF or IE: No state changes. Nothing happens.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23678</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-03-28 18:49:18 +0200</bug_when>
+            <thetext>appedning in the end to get the state:
+
+alert(x.getState()); -&gt; &quot;configured&quot;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23679</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-03-28 19:03:01 +0200</bug_when>
+            <thetext>x.send();
+
+040112 qx.io.remote.transport.XmlHttp[839]: Could not load from file: com/p/c/loc/c/ces_la.json
+Native...8934867 (line 61)
+045486 com.p.c.reg.view.PI[673]: failed
+
+popup error:
+
+[Exception... &quot;Access to restricted URI denied&quot;  code: &quot;1012&quot; nsresult: &quot;0x805303f4 (NS_ERROR_DOM_BAD_URI)&quot;  location: &quot;file:///home/S/dev/javascript/qooxdoo/frontend/framework/source/class/qx/io/remote/transport/XmlHttp.js?nocache=0.003428789841960156 Line: 357&quot;]
+
+So now my questions:
+1. why does it work for Json but only in FF and not IE?
+2. This is the same url in both cases (Json and Request) and the same domain
+3. I do use a relative path to overcome part of domain restriction, which should not be there</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23696</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-03-29 10:48:25 +0200</bug_when>
+            <thetext>Can you confirm that it is indeed the same URL for both transport.XmlHttp and data.store.Json? I suggest to use Firebug to track requests. I guess it could be the same resource but not the same URL. Resulting in a NS_ERROR_DOM_BAD_URI for the other URL.
+
+Or maybe remote.Request picks XHR transport, while data.store.Json chooses the script transport (which accepts the URL in question). To verify, set the crossDomain property of your request to true. This automagically chooses the script transport.
+
+What if you run your application from an HTTP server?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23720</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-03-30 15:27:29 +0200</bug_when>
+            <thetext>1. same url?
+
+Yes, exactly the same.
+
+The error came because we had added this code to qx.data.store.Json and the code is not available to the qx.io.remote.Request (which I think you should add there too or document it) :
+
+Index: data/store/Json.js
+===================================================================
+--- data/store/Json.js	(revision 26377)
++++ data/store/Json.js	(working copy)
+@@ -121,6 +121,9 @@
+     // apply function
+     _applyUrl: function(value, old) {
+       if (value != null) {
++        value = qx.util.AliasManager.getInstance().resolve(value);
++        value = qx.util.ResourceManager.getInstance().toUri(value);
++
+         this._createRequest(value);
+       }
+     },
+
+
+To find files in the resource. This has been sent as an enhancement bug.
+
+2. No difference now. See 1.
+
+3. On web server:
+
+FF OK
+IE OK
+
+
+Conclusion: Something happens running it locally. No error messages when IE can not load the data store. The url is the same in both store and request.
+
+Tracing it in IE does not give any stops or errors.
+
+What can it be?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23721</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-03-30 15:30:51 +0200</bug_when>
+            <thetext>are these two lines changing it in IE?
+
++        value = qx.util.AliasManager.getInstance().resolve(value);
++        value = qx.util.ResourceManager.getInstance().toUri(value);
+
+Strange if it was the reason and ONLY when run qx.data.store.Json locally in IE.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23728</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-03-31 09:19:01 +0200</bug_when>
+            <thetext>Thanks for your detailed report. I&#39;m not sure about what is going on yet, so let us dig a little deeper.
+
+_createRequest in qx.data.store.Json creates a qx.io.remote.Request with the URL passed to the store. In other words if the remote.Request fails with the URL, so should store.Json.
+
+To make sure we&#39;re talking about the same thing, could you please run the code below in your environment and report the log output for FF and IE?
+
+&lt;snip&gt;
+
+// Alias defined above
+
+// Resolve URL with alias and resource manager
+qx.log.Logger.debug(&quot;alias: &quot; + alias);
+var path = qx.util.AliasManager.getInstance().resolve(alias);
+qx.log.Logger.debug(&quot;path: &quot; + path);
+var url = qx.util.ResourceManager.getInstance().toUri(path);
+qx.log.Logger.debug(&quot;url: &quot; + url);
+
+var req = new qx.io.remote.Request(url, &quot;GET&quot;, &quot;application/json&quot;);
+
+req.addListener(&quot;completed&quot;, function() {
+  qx.log.Logger.debug(&quot;completed&quot;);
+}, this);
+
+req.addListener(&quot;changeState&quot;, function(e) {
+  qx.log.Logger.debug(&quot;state: &quot; + e.getData());
+}, this);
+
+&lt;/snip&gt;
+
+Are you passing a delegate to qx.data.store.Json? I&#39;m wondering what kind of request is sent in FF by store.Json.
+
+To find out, please add the following code right above this.__request.send()
+
+&lt;snip&gt;
+qx.log.Logger.debug(&quot;crossDomain: &quot; + this.__request.isCrossDomain());
+&lt;/snip&gt;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24492</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-05-13 07:39:44 +0200</bug_when>
+            <thetext>Any news?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25763</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-07-05 15:13:10 +0200</bug_when>
+            <thetext>The store was changed to use the new IO stack internally. Therefore, I suppose the report is no longer valid.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25764</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-07-05 15:19:12 +0200</bug_when>
+            <thetext>Can be closed! Works with new stack as far as we can see now.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

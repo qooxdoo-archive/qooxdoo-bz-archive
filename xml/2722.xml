@@ -1,0 +1,145 @@
+<bug>
+          <bug_id>2722</bug_id>
+          
+          <creation_ts>2009-08-26 18:58:00 +0200</creation_ts>
+          <short_desc>qx.io.remote.RequestQueue accesses null value</short_desc>
+          <delta_ts>2009-08-28 15:26:33 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Derrell Lipman">derrell.lipman</assigned_to>
+          <cc>alexander.steitz</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>11582</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-08-26 18:58:13 +0200</bug_when>
+            <thetext>A recent change appears to have broken RequestQueue. Assigned to Alex as the change was his.
+
+In my test using RpcExample, the request goes out, the proper response comes back (as indicated by Firebug), but it&#39;s dying at the line indicated by the arrow (below, near bottom) because &#39;request&#39; is null. This variable is null because e.getTarget() returns the Exchange object, but that object has already been disposed at this point.
+
+
+{dworkin} /home/derrell/ME/qooxdoo.git/trunk/qooxdoo/framework/source/class ---&gt; git diff 0330a02d^..0330a02d
+diff --git a/qooxdoo/framework/source/class/qx/io/remote/RequestQueue.js b/qooxdoo/framework/source/class/qx/io/remote/RequestQueue.js
+index a02ceb2..2c1c8bc 100644
+--- a/qooxdoo/framework/source/class/qx/io/remote/RequestQueue.js
++++ b/qooxdoo/framework/source/class/qx/io/remote/RequestQueue.js
+@@ -215,17 +215,9 @@ qx.Class.define(&quot;qx.io.remote.RequestQueue&quot;,
+       // Debug output
+       this._debug();
+ 
+-      // Establish event connection between qx.io.remote.Exchange instance and
+-      // qx.io.remote.Request
+-      vTransport.addListener(&quot;sending&quot;, vRequest._onsending, vRequest);
+-      vTransport.addListener(&quot;receiving&quot;, vRequest._onreceiving, vRequest);
+-      vTransport.addListener(&quot;completed&quot;, vRequest._oncompleted, vRequest);
+-      vTransport.addListener(&quot;aborted&quot;, vRequest._onaborted, vRequest);
+-      vTransport.addListener(&quot;timeout&quot;, vRequest._ontimeout, vRequest);
+-      vTransport.addListener(&quot;failed&quot;, vRequest._onfailed, vRequest);
+-
+       // Establish event connection between qx.io.remote.Exchange and me.
+       vTransport.addListener(&quot;sending&quot;, this._onsending, this);
++      vTransport.addListener(&quot;receiving&quot;, this._onreceiving, this);
+       vTransport.addListener(&quot;completed&quot;, this._oncompleted, this);
+       vTransport.addListener(&quot;aborted&quot;, this._oncompleted, this);
+       vTransport.addListener(&quot;timeout&quot;, this._oncompleted, this);
+@@ -294,6 +286,20 @@ qx.Class.define(&quot;qx.io.remote.RequestQueue&quot;,
+           this.debug(&quot;ActiveCount: &quot; + this.__activeCount);
+         }
+       }
++     
++      e.getTarget().getRequest()._onsending(e.clone());
++    },
++   
++   
++    /**
++     * Listens for the &quot;receiving&quot; event of the transport object and delegate
++     * the event to the current request object.
++     *
++     * @param e {qx.event.type.Event} event object
++     * @return {void}
++     */
++    _onreceiving : function(e) {
++      e.getTarget().getRequest()._onreceiving(e.clone());
+     },
+ 
+ 
+@@ -319,6 +325,14 @@ qx.Class.define(&quot;qx.io.remote.RequestQueue&quot;,
+       }
+ 
+       this._remove(e.getTarget());
++
++      // delegate the event to the handler method of the request depending
++      // on the current type of the event ( completed|aborted|timeout|failed )
++      var request = e.getTarget().getRequest();
++      var requestHandler = &quot;_on&quot; + e.getType();
++      if (request[requestHandler]) {                                         &lt;----
++        request[requestHandler](e.clone());
++      }
+     },</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11607</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-08-27 09:39:58 +0200</bug_when>
+            <thetext>Hi Derrell,
+
+thanks for the hint.
+Other users already pointed me to this issue and I&#39;ve committed a fix for this with Revision #19891. Can you please update your sources and re-test to verify my fix?
+
+Thanks,
+  Alex</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11639</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-08-27 14:27:41 +0200</bug_when>
+            <thetext>Confirmed fixed. Thanks.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11647</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-08-27 15:35:49 +0200</bug_when>
+            <thetext>Closing this one.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11688</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-08-28 15:26:33 +0200</bug_when>
+            <thetext>set target 0.8.3</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

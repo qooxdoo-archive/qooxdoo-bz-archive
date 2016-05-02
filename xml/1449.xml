@@ -1,0 +1,183 @@
+<bug>
+          <bug_id>1449</bug_id>
+          
+          <creation_ts>2008-10-03 09:59:00 +0200</creation_ts>
+          <short_desc>Can&#39;t hide table status bar permanently</short_desc>
+          <delta_ts>2014-03-03 15:22:04 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>0.8.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.7.5</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Hugh Gibson">hgibson</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>5704</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-10-03 09:59:27 +0200</bug_when>
+            <thetext>I&#39;ve discovered that properties that are refined don&#39;t have the apply method called.
+
+The circumstances were as follows:
+
+We derive from the Table class, and hide the status bar. This is because we don&#39;t need it anyway, and with the remote table it results in a duplicate call for the row count. Therefore in the derived table class I have: 
+
+      statusBarVisible :
+         {
+         refine : true,
+         init : false
+         }
+
+The status bar is created in the constructor and it is assumed that it is displayed permanently. Refining the property value like this appears to work but the apply function _applyStatusBarVisible is never called. Therefore the status bar is never hidden.
+
+In Firefox it appears that the &quot;auto&quot; height setting for the status bar combined with no text causes it to be hidden anyway. However in IE a blank status bar is always shown.
+
+The workaround I&#39;ve used is to call this._statusBar.setDisplay(false); in the constructor which is a kludge. There are two possible &quot;proper&quot; solutions:
+
+1. Explicitly set the status bar display in the table constructor, depending on the value of statusBarVisible.
+
+2. Automatically calling the apply method for refined properties where the value has changed from the base class. This is obviously more controversial but might be the &quot;right&quot; fix.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5705</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-10-03 18:13:45 +0200</bug_when>
+            <thetext>The way to handle this is to have the constructor of your derived class call this.initStatusBarVisible().  See http://qooxdoo.org/documentation/0.8/defining_properties?s=init#applying_an_init_value
+
+There&#39;s no reason for the Table class itself to do this, as there&#39;s no processing to do, but it&#39;s easy to add to a subclass when required.
+
+I&#39;ll close this bug as &quot;invalid&quot; for now since this is by design.  If you feel the design is wrong, I&#39;d recommend submitting a new bug for the general case.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5706</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-10-04 08:21:37 +0200</bug_when>
+            <thetext>Thanks. That call causes the apply method to be invoked which is sufficient to hide the status bar. The init value for the property prevents the base class from requesting the row count when showing the status bar.
+
+However, the base class still assumes that the status bar will be displayed even though the value of this property is false.
+
+I think there may be a general class of problem here: where properties are used with init values, and the code assumes that the value of &quot;init&quot; is as specified in the class rather than explicitly getting it. Perhaps there is a case for automatically calling initPropertyNameX for every property with an init value, after the class constructor has been called. Alternatively make sure that constructor code never assumes the value of a property.
+
+I&#39;ll raise a question on the mailing list about it.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5707</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-10-04 08:55:46 +0200</bug_when>
+            <thetext>Having made the posting on the mailing list I think there is a case for there being a bug here. An extract:
+
+I think there&#39;s a general class of problem here:
+   If a property is defined then the class constructor should not
+   assume the value of the property.
+
+There is a precedent for this in existing code: qx.ui.layout.BoxLayout has an orientation property which has init : &quot;horizontal&quot;. It&#39;s refined in qx.ui.layout.VerticalBoxLayout to &quot;vertical&quot;. The constructor for BoxLayout calls this.initOrientation(); if no value is passed in explicitly. It doesn&#39;t assume that the orientation is &quot;horizontal&quot; as set in the property definition of BoxLayout.
+
+If this is accepted then there is a bug in the table code in that there are at least two properties (displayStatusBar and columnVisibilityButtonVisible) which have their values assumed.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5711</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-10-06 11:43:24 +0200</bug_when>
+            <thetext>to me. I absolutely agree</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6848</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-12-11 15:57:42 +0100</bug_when>
+            <thetext>fixed for 0.8 trunk in rev. 16946
+
+Still needs to be fixed in 0.7.x
+I&#39;ll move this bug to 0.7.5</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6874</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2008-12-12 12:59:08 +0100</bug_when>
+            <thetext>You changes broke the API Viewer in trunk:
+[Exception... &quot;&#39;Error: Property selectionModel of an instance of 
+qx.ui.table.Table is not (yet) ready!&#39; when calling method: 
+[nsIDOMEventListener::handleEvent]&quot; nsresult: &quot;0x8057001c 
+(NS_ERROR_XPC_JS_THREW_JS_OBJECT)&quot; location: &quot;&lt;unknown&gt;&quot; data: no]</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6891</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-12-15 10:01:34 +0100</bug_when>
+            <thetext>fixed this issue in rev. 16074
+
+move bug back to 0.7.5</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6894</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-12-15 10:09:58 +0100</bug_when>
+            <thetext>fixed this issue in rev. 16074
+
+move bug back to 0.7.5</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17318</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-17 13:36:08 +0100</bug_when>
+            <thetext>to Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17758</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-14 14:10:04 +0200</bug_when>
+            <thetext>Removed all core developers as assignee from 0.7 only bugs.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18376</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-05-19 09:29:03 +0200</bug_when>
+            <thetext>Set all open 0.7.x-only issues that have no assignee to WONTFIX. This is in accordance with 0.7.x users like the RAP team. If you want to work on such an 0.7.x issue, feel free to reopen it and assign it to you. The issues should only exist in the legacy 0.7.x versions and be already resolved in qooxdoo 0.8 or above.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37532</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:04 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

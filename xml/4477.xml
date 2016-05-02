@@ -1,0 +1,212 @@
+<bug>
+          <bug_id>4477</bug_id>
+          
+          <creation_ts>2010-12-13 11:01:00 +0100</creation_ts>
+          <short_desc>Long running script error in connection with table scrollbars</short_desc>
+          <delta_ts>2012-05-16 09:45:16 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.treevirtual</component>
+          <version>1.2.1</version>
+          <rep_platform>Firefox 3.6</rep_platform>
+          <op_sys>Linux</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.3.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Johannes Kissel">johannes.kissel</reporter>
+          <assigned_to name="Tino Butz">tinobutz</assigned_to>
+          <cc>martin.wittemann</cc>
+    
+    <cc>qooxdoo</cc>
+    
+    <cc>uwe.stahl</cc>
+          <qa_contact name="Derrell Lipman">derrell.lipman</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>3.6</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21923</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2010-12-13 11:01:06 +0100</bug_when>
+            <thetext>I use the TreeVirtual widget for a file tree. When scrollbars appear, after a few clicks the browser freezes and then a message appears: &quot;Long running script&quot;.
+
+We had this problem before with styled scrollbars (Bug 3279) but now it also occurs with native scrollbars.
+
+Tilman Schneider once patched it with the following code. But in recent versions of qooxdoo this causes even more problems.
+
+var origUpdateScrollBarVisibility = qx.ui.table.Table.prototype._updateScrollBarVisibility;
+qx.ui.table.Table.prototype._updateScrollBarVisibility = function() {
+  if (! qx.ui.core.queue.Manager.__inFlush) {
+    origUpdateScrollBarVisibility.apply(this);
+  } else if (! this.___scrollBarUpdatePlanned) {
+    this.___scrollBarUpdatePlanned = true;
+    var self = this;
+    window.setTimeout(function() {
+      self.___scrollBarUpdatePlanned = false;
+      origUpdateScrollBarVisibility.apply(self);
+    });
+  }
+};
+
+The code breaks an endless loop in the following lines of code:
+
+Loop (qooxdoo rev 22645):
+qx/ui/core/queue/Manager : 126
+qx/ui/core/queue/Layout : 71
+qx/ui/table/Table : 1986
+
+Alexander Steitz agreed with the prioritization of this bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21931</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-12-13 14:53:39 +0100</bug_when>
+            <thetext>Are you using the standard TreeVirtual data model? Where is your data coming from?
+
+There was a problem with this back in ancient times, but I haven&#39;t seen or heard of this problem any time recently. If you can provide a playground example that demonstrates the issue, I can look into it.
+
+Also please let me know which browser and browser version and OS you&#39;re using.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21936</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2010-12-13 15:47:24 +0100</bug_when>
+            <thetext>I use the standard SimpleTreeDataModel and I&#39;ll try to put together a small example.
+
+I updated browser and OS above.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21958</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-12-14 16:14:07 +0100</bug_when>
+            <thetext>I will check that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22096</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2010-12-23 18:42:03 +0100</bug_when>
+            <thetext>I could &quot;locate&quot; the issue:
+
+There is always a resize event fired by renderLayout method of the widget. The calculated size of the widget is always different. The table scroller will listen to this event and will try to recalculate the size of the scrollbars. This will trigger the rendering of the layout, the resize event is fired and so on and so on...
+
+Seems like the margins / paddings that are set in the header / scroller appearances are not considered right in the calculations (whether in the calculations of the header width, scroller width or widget width).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22112</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-12-30 09:58:18 +0100</bug_when>
+            <thetext>Puh, sounds like a really bad behavior. We should check that when im back.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22117</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2010-12-30 18:24:27 +0100</bug_when>
+            <thetext>Wrote a demo for this bug. Seems like the margins of the scrollbar / topRightWidget are not considered.
+
+To reproduce just add a margin of e.g. 2 to the theme keys of the table column-button and the scrollbars:
+
+    &quot;table/column-button&quot; :
+    {
+      alias : &quot;button-frame&quot;,
+
+      style : function(states)
+      {
+        return {
+          decorator : &quot;table-column-button&quot;,
+          padding   : 3,
+          margin : 2,
+          icon      : &quot;decoration/table/select-column-order.png&quot;
+        };
+      }
+    },
+    
+    &quot;table-scroller/scrollbar-y&quot;:
+    {
+      include : &quot;scrollbar&quot;,
+      alias : &quot;scrollbar&quot;,
+      
+      style : function(state)
+      {
+        return {
+          margin : 2
+        }
+      }
+    },
+
+See calculations for the width in:
+
+qx.ui.table.pane.Scroller -&gt; getPaneInsetRight
+
+called by
+
+qx.ui.table.columnmodel.resizebehavior.Abstract -&gt; _getAvailableWidth
+
+qx.ui.table.columnmodel.resizebehavior.Default -&gt; _computeColumnsFlexWidth</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22223</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-01-13 11:43:44 +0100</bug_when>
+            <thetext>*** Bug 4549 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22250</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-01-14 13:53:54 +0100</bug_when>
+            <thetext>Fixed
+
+trunk Rev. 24550
+branch Rev. 24551</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22293</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-01-17 12:48:43 +0100</bug_when>
+            <thetext>We have now updated to the newest qooxdoo-version, but the problem still occurs.
+
+We have checked that we really are using the newest qooxdoo-version. The browser gets the newest version of the class Scroller.js, which also contains the changes that were made with the revision 24550.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22297</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-01-17 14:06:04 +0100</bug_when>
+            <thetext>Reopened Bug 4549. Seems to be a different bug. This bug is solved.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24132</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-04-19 13:47:44 +0200</bug_when>
+            <thetext>@Johannes:  Could you please verify this bug?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24207</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2011-04-26 09:25:41 +0200</bug_when>
+            <thetext>This bug still seams to be fixed ;-)</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

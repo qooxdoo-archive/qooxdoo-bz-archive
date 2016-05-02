@@ -1,0 +1,222 @@
+<bug>
+          <bug_id>7627</bug_id>
+          
+          <creation_ts>2013-08-05 17:46:00 +0200</creation_ts>
+          <short_desc>Disposing objects incorrectly</short_desc>
+          <delta_ts>2014-03-03 15:21:38 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>3.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>3.0.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Joaquín Fernández">jf</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>33551</commentid>
+            <who name="Joaquín Fernández">jf</who>
+            <bug_when>2013-08-05 17:46:24 +0200</bug_when>
+            <thetext>I have found some problems in qooxdoo core when destroying objects.
+
+Some local variables are not been disposed correctly because destruct
+method don&#39;t exists or not call to this._disposeObjects(&#39;__var&#39;)
+
+For example, qx.ui.mobile.core.Widget.js in constructor set an array
+named this.__children but there is not call to
+this._disposeObjects(&#39;__children&#39;). May be the children are disposed
+correctly but the reference to objects disposed remain in memory
+because __children is not setted to null.
+
+Run this playground with console open.
+
+http://tinyurl.com/qdejkqz
+
+You must see some like this:
+
+000514 qx.core.Init: Load runtime: 513ms
+001215 qx.core.Init: Main runtime: 694ms
+001296 qx.core.Init: Finalize runtime: 80ms
+002135 qx.application.Standalone[494-0]: Starting application &#39;Hello World&#39; ...
+002139 qx.application.Standalone[494-0]: Successfully started.
+039711 qx.application.Standalone[494-0]: Starting application &#39;Hello
+World (modified)&#39; ...
+039717 qx.ui.mobile.core.Widget[548-0]: Disposing
+qx.ui.mobile.core.Widget[548-0]
+039718 Missing destruct definition for &#39;__gV&#39; in
+qx.ui.mobile.core.Widget[undefined]:
+039721 qx.io.request.Xhr[548-0]: Disposing qx.io.request.Xhr[548-0]
+039722 Missing destruct definition for &#39;__rv&#39; in
+qx.io.request.Xhr[undefined]: [object Object]
+039722 Missing destruct definition for &#39;_transport&#39; in
+qx.io.request.Xhr[undefined]: [object Object]
+039723 Missing destruct definition for &#39;_parser&#39; in
+qx.io.request.Xhr[undefined]: [object Object]
+039723 qx.application.Standalone[494-0]: Successfully started.
+
+May be a good idea to do this check in qooxdoo tests before uploading to github.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33660</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-08-20 09:07:25 +0200</bug_when>
+            <thetext>Thanks for the report.
+
+(In reply to comment #0)
+&gt; I have found some problems in qooxdoo core when destroying objects.
+&gt; 
+&gt; Some local variables are not been disposed correctly because destruct
+&gt; method don&#39;t exists or not call to this._disposeObjects(&#39;__var&#39;)
+&gt; 
+&gt; For example, qx.ui.mobile.core.Widget.js in constructor set an array
+&gt; named this.__children but there is not call to
+&gt; this._disposeObjects(&#39;__children&#39;). May be the children are disposed
+&gt; correctly but the reference to objects disposed remain in memory
+&gt; because __children is not setted to null.
+
+The reference is not a problem for the garbage collector. As long as there is no connection to the global or local scope or to the DOM, the dispose should work as expected. So the warnings are more a hint than a &quot;fix that&quot; order.
+
+&gt; 
+&gt; Run this playground with console open.
+&gt; 
+&gt; http://tinyurl.com/qdejkqz
+&gt; 
+&gt; You must see some like this:
+&gt; 
+&gt; 000514 qx.core.Init: Load runtime: 513ms
+&gt; 001215 qx.core.Init: Main runtime: 694ms
+&gt; 001296 qx.core.Init: Finalize runtime: 80ms
+&gt; 002135 qx.application.Standalone[494-0]: Starting application &#39;Hello World&#39; ...
+&gt; 002139 qx.application.Standalone[494-0]: Successfully started.
+&gt; 039711 qx.application.Standalone[494-0]: Starting application &#39;Hello
+&gt; World (modified)&#39; ...
+&gt; 039717 qx.ui.mobile.core.Widget[548-0]: Disposing
+&gt; qx.ui.mobile.core.Widget[548-0]
+&gt; 039718 Missing destruct definition for &#39;__gV&#39; in
+&gt; qx.ui.mobile.core.Widget[undefined]:
+&gt; 039721 qx.io.request.Xhr[548-0]: Disposing qx.io.request.Xhr[548-0]
+&gt; 039722 Missing destruct definition for &#39;__rv&#39; in
+&gt; qx.io.request.Xhr[undefined]: [object Object]
+&gt; 039722 Missing destruct definition for &#39;_transport&#39; in
+&gt; qx.io.request.Xhr[undefined]: [object Object]
+&gt; 039723 Missing destruct definition for &#39;_parser&#39; in
+&gt; qx.io.request.Xhr[undefined]: [object Object]
+&gt; 039723 qx.application.Standalone[494-0]: Successfully started.
+&gt; 
+&gt; May be a good idea to do this check in qooxdoo tests before uploading to
+&gt; github.
+
+The old browsers like FF2 or IE6 had issues with such references but as we don&#39;t support these browsers anymore, we should not care about them. So this debug level you choose is a bit too much for modern browsers. ;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33834</commentid>
+            <who name="Joaquín Fernández">jf</who>
+            <bug_when>2013-09-05 18:49:54 +0200</bug_when>
+            <thetext>I am not sure. I think if you are right, when i create an instance of mobile widget and inmediately destroy it without use it, i must have the same count in object&#39;s registry. But if i run some very simple:
+
+var x1 = Object.keys(qx.core.ObjectRegistry.getRegistry());
+var label = new qx.ui.mobile.basic.Label(&quot;Item1&quot;);
+var widget = new qx.ui.mobile.form.Button(&quot;Error!&quot;);
+var popup = new qx.ui.mobile.dialog.Popup(widget, label);
+popup.show();
+console.log(x1.length, Object.keys(qx.core.ObjectRegistry.getRegistry()).length);
+widget.addListener(&quot;tap&quot;, function(){});
+popup.destroy();
+var x2 = Object.keys(qx.core.ObjectRegistry.getRegistry());
+console.log(x1.length, x2.length);
+x2.forEach(function (i) { 
+  if (x1.indexOf(i) == -1) 
+    console.log(i, qx.core.ObjectRegistry.getRegistry()[i].classname); 
+});
+
+x1 and x2 lengths are different. Now there are six objects not disposed in registry:
+
+684-0 qx.ui.mobile.basic.Label
+685-0 qx.ui.mobile.form.Button
+686-0 qx.ui.mobile.basic.Label
+687-0 qx.ui.mobile.basic.Image
+688-0 qx.ui.mobile.layout.HBox
+689-0 qx.ui.mobile.container.Composite
+
+If this object are not disposed and removed from registry, garbage collector can&#39;t remove them from memory.
+
+And not, i am not using old browser.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33835</commentid>
+            <who name="Joaquín Fernández">jf</who>
+            <bug_when>2013-09-05 18:59:01 +0200</bug_when>
+            <thetext>Sorry, i forgot ask if the containers don&#39;t dispose their childrens or developers must bu do it, because in the example label and button are added to popup container.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33836</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-09-06 07:49:13 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; If this object are not disposed and removed from registry, garbage collector
+&gt; can&#39;t remove them from memory.
+
+I agree on that but the sample has two mistakes which caused this behavior. The first on is, what you already asked yourself, about the container. It is not responsible of disposing its children. The child widgets could be reused after the container dispose so disposing the children is not a good idea. Thats why we stick to the rule: The part of the code calling the &#39;new&#39;, is responsible for disposing. In that case, its the demo code. But adding the destroy calls in the sample dies not fix the problem and the reason for that is the asynchronous behavior of destroy. This method only marks the objects for dispose and does not dispose them right away. But the sample checks the registry the moment after the destroy method has been called and at this point in time, the widgets are still alive.
+Here is the modified code sample including the changes:
+
+var x1 = Object.keys(qx.core.ObjectRegistry.getRegistry());
+var label = new qx.ui.mobile.basic.Label(&quot;Item1&quot;);
+var widget = new qx.ui.mobile.form.Button(&quot;Error!&quot;);
+var popup = new qx.ui.mobile.dialog.Popup(widget, label);
+popup.show();
+
+console.log(x1.length,
+Object.keys(qx.core.ObjectRegistry.getRegistry()).length);
+
+widget.addListener(&quot;tap&quot;, function(){});
+popup.destroy();
+
+label.destroy();
+widget.destroy();
+qx.ui.core.queue.Dispose.flush();
+
+var x2 = Object.keys(qx.core.ObjectRegistry.getRegistry());
+console.log(x1.length, x2.length);
+
+x2.forEach(function (i) { 
+  if (x1.indexOf(i) == -1) 
+    console.log(i, qx.core.ObjectRegistry.getRegistry()[i].classname); 
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37366</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:38 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

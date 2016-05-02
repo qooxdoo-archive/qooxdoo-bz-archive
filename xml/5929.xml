@@ -1,0 +1,115 @@
+<bug>
+          <bug_id>5929</bug_id>
+          
+          <creation_ts>2011-12-09 12:30:00 +0100</creation_ts>
+          <short_desc>qx.io.rest.Resource cannot send arrays as JSON payload for POST/PUT</short_desc>
+          <delta_ts>2014-03-03 15:20:47 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>DUPLICATE</resolution>
+          <dup_id>5828</dup_id>
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.6.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Doru Moisa">teodor.moisa</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          <cc>alexander.steitz</cc>
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>27922</commentid>
+            <who name="Doru Moisa">teodor.moisa</who>
+            <bug_when>2011-12-09 12:30:32 +0100</bug_when>
+            <thetext>When using the qx.io.rest.Resource to send POST/PUT requests with JSON data as payload, it does not handle arrays correctly, because the invoke method requires an action and a params map.
+
+When sending an array instead of a map, and debug is on, an assertion error is thrown by qx.lang.Object.clone(), but without debug, the array is transformed into an object with numeric keys, and any backend services that were expecting an array, will fail to process the request.
+
+
+Example:
+
+// locations is represented by an array of location objects
+// the resource is configured to send and receive application/json mime 
+// types via the Content-type and Accept request headers
+var resource = new qx.io.rest.Resource(&#39;/locations/123&#39;);
+resource.map(&#39;post&#39; ...);
+resource.post([{street:&#39;Main&#39;},{street:&#39;Secondary&#39;}]);
+
+// will generate this payload:
+POST /locations/123
+Content-Type: application/json
+Accept: application/json
+
+{&quot;0&quot;:{&quot;street&quot;:&#39;Main&#39;},&quot;1&quot;:{&quot;street&quot;:&quot;Secondary&quot;}}
+// which obviously triggers a deserialization error on the backend
+
+
+This is another use case in favor of splitting request body off any URL parameters (explicitly specifying the URL parameters via the params map, AND a separate request body - if the HTTP method accepts a request body).
+
+Other use cases for this separation could be: sending binary entity content via a REST-full POST request with binary data in the request body. The current implementation cannot handle it.
+
+Thanks!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28138</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2012-01-02 11:50:54 +0100</bug_when>
+            <thetext>The behavior you describe is related to bug 5828. With this bug resolved, the following works:
+
+var res = new qx.io.rest.Resource();
+res.configureRequest(function(req) {
+  req.setRequestHeader(&quot;Content-Type&quot;, &quot;application/json&quot;);
+});
+res.map(&quot;post&quot;, &quot;POST&quot;, &quot;/&quot;);
+res.post([1,2]);
+
+(Note: The playground on demo.qooxdoo.org does not yet include the fix for bug 5828).
+
+However (as you will probably point out) passing an array no longer works when the URL contains placeholder that you want to fill by passing them as part of the parameters. Like this:
+
+res.map(&quot;post&quot;, &quot;POST&quot;, &quot;/{id}&quot;);
+res.post(); // ?!
+
+We are considering to introduce a second parameter. A second paramter is added complexity, however we think it is more explicit and less surprising considering the circumstances. What exactly do you mean with binary entity content? I&#39;m asking because there may be other issues involved.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28144</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2012-01-02 16:31:52 +0100</bug_when>
+            <thetext>Marking as duplicate. About the separation, please follow up bug 5996.
+
+*** This bug has been marked as a duplicate of bug 5828 ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37028</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:47 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

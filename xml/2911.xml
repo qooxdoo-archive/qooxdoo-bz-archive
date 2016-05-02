@@ -1,0 +1,299 @@
+<bug>
+          <bug_id>2911</bug_id>
+          
+          <creation_ts>2009-10-10 21:40:00 +0200</creation_ts>
+          <short_desc>Tree - error when removing childs in a very specific order</short_desc>
+          <delta_ts>2010-08-06 09:50:09 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.tree</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter>qooxdoo</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          <cc>carsten.lergenmueller</cc>
+    
+    <cc>fabian.jakobs</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>13053</commentid>
+            <who name="">qooxdoo</who>
+            <bug_when>2009-10-10 21:40:45 +0200</bug_when>
+            <thetext>Hi all,
+
+I&#39;m not sure whether it&#39;s a script-databinding or ui-tree. But when I do the same on the tree widget itself, it works. On the model tree it doesn&#39;t.
+
+Because it&#39;s hard to explain, a playground snippet is attached. 
+
+The bug in simple words - at least as simple as possible: create a widget tree a model tree and a tree controller. As model tree create a root node, a first node as child of root and another node as child of the first. Then remove the second one (i.e. create a model node that has had children but no children anymore) and then remove this node from its parent, then - well - I don&#39;t know what is going wrong, but as far as I can tell widget is not completely removed too.
+
+The point is not that the nodes can not be removed, but that the removal fails if it happens in this particular order.
+
+So the sample code does exactly this: a node class, a widget tree, a node tree and a controller. Then the model is filled as said with a &quot;root&quot; node, than a node &quot;parent&quot;, than a node &quot;child&quot;. Then the node &quot;child&quot; is removed from &quot;parent&quot; which then becomes &quot;the node that previously has had children but not anymore&quot; (tm).
+
+The main line is the second last line. This should remove &quot;parent&quot; from &quot;root&quot; but is not working. To proof the last line - which would simply add &quot;child&quot; to &quot;root&quot; - is not executed correctly
+
+(If even that is not clear, simply run the demo with and without the second last line and compare)
+
+Tested with 0.8.3 and trunk, with FF3.5 (Linux), Chrome and IE8, all with no difference.
+
+Some more observations. A TreeFolder gets a __childContainer when the first child is added.  In this case the container is not deleted, even if the last child is removed. And as far as I can tell this container is left behind, or at least parts of it. In Firebug I can see a qx.ui.container.Composite without $$hash. 
+
+Hope this is not too much and not too few to track it down further.
+
+Cheers,
+Axel</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13054</commentid>
+              <attachid>623</attachid>
+            <who name="">qooxdoo</who>
+            <bug_when>2009-10-10 21:42:28 +0200</bug_when>
+            <thetext>Created attachment 623
+Testcase (playground snippet)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13055</commentid>
+              <attachid>624</attachid>
+            <who name="">qooxdoo</who>
+            <bug_when>2009-10-11 12:11:42 +0200</bug_when>
+            <thetext>Created attachment 624
+Proposed Patch
+
+Patch against AbstractTreeItem.js (r20319)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13056</commentid>
+            <who name="">qooxdoo</who>
+            <bug_when>2009-10-11 12:25:57 +0200</bug_when>
+            <thetext>Forget about the controller/model/bindin, it&#39;s the qx.ui.tree.AbstractTreeItem.
+
+The problem is that in line 842 of AbstractTreeItem (r20391) one really wants to know whether the to be removed item has a childrenContainer. The assumption is that testing hasChildren is equivalent. But this is not true in all cases:
+
+---------------------------------
+tree = new qx.ui.tree.Tree();
+this.getRoot().add(tree);
+
+root = new qx.ui.tree.TreeFolder(&quot;root&quot;);
+tree.setRoot(root);
+
+p = new qx.ui.tree.TreeFolder(&quot;p&quot;);
+root.add(p);
+
+c = new qx.ui.tree.TreeFolder(&quot;c&quot;);
+p.add(c);
+p.removeAll();
+
+root.removeAt(0);
+---------------------------------------------
+
+In this case when root.removeAt(0) comes to the test treeItem.hasChildren() (which is then p.hasChildren()), it fails -- p has no children anymore (tm) -- but p still has a childContainer that must be removed.
+
+Cheers,
+Axel</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13057</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-12 09:09:58 +0200</bug_when>
+            <thetext>reopened bug, seems to be marked as resolved unintentionally.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13139</commentid>
+            <who name="">qooxdoo</who>
+            <bug_when>2009-10-12 21:08:19 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; reopened bug, seems to be marked as resolved unintentionally.
+
+@Andreas: Yes and no. I hadn&#39;t known that &quot;FIXED&quot; means checked in. So in this term it is of course not fixed. But I&#39;m pretty sure that the supplied patch is ok and fixes it (at least here it does :-). 
+
+So to shorten the story, just look or let look at comment #3 - which is much more clear than the first - and the patch. Everything else is obsolete.
+
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13140</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-13 09:20:09 +0200</bug_when>
+            <thetext>Chris, take a look, please, maybe double-checking with Fabian (Tree maintainer).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13161</commentid>
+              <attachid>623</attachid>
+            <who name="">qooxdoo</who>
+            <bug_when>2009-10-13 12:47:37 +0200</bug_when>
+            <thetext>Comment on attachment 623
+Testcase (playground snippet)
+
+I will attach a much simpler one, so this first testcase is now obsolete.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13163</commentid>
+              <attachid>626</attachid>
+            <who name="">qooxdoo</who>
+            <bug_when>2009-10-13 13:02:43 +0200</bug_when>
+            <thetext>Created attachment 626
+This code just uses ui.tree to demonstrate the race condition.
+
+This works in the playground. If you try, you can see the last command root.add(c) is not executed correctly. 
+
+I think the reason why I found it while using a controller is, that the controller explicitly calls the destroy on removed items. And this is the point where the DOM element gets orphaned and the things get messed up.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13699</commentid>
+            <who name="">qooxdoo</who>
+            <bug_when>2009-10-29 14:10:57 +0100</bug_when>
+            <thetext>@Fabian: Not that I want to push you, but after I read that you are the Tree maintainer, I think you will just need some few minutes to check (and to decide whos it is).
+
+First: Ignore the initial comment/report!! :-) 
+
+Just look at: http://demo.qooxdoo.org/devel/playground/#%7B%22code%22%3A%20%22tree%2520%253D%2520new%2520qx.ui.tree.Tree%28%29%253B%250Athis.getRoot%28%29.add%28tree%29%253B%250A%250A%252F%252F%2520DO%2520NOT%2520add%2520a%2520root.setOpen%28true%29%2520somewhere%2520here.%250A%252F%252F%2520Because%2520then%2520everything%2520works.%2520Strange%2520but%2520true.%250A%250A%252F%252F%2520create%2520a%2520root%2520and%2520a%2520folder%2520%2522a%2522%250Aroot%2520%253D%2520new%2520qx.ui.tree.TreeFolder%28%2522root%2522%29%253B%250Atree.setRoot%28root%29%253B%250Aa%2520%253D%2520new%2520qx.ui.tree.TreeFolder%28%2522a%2522%29%253B%250Aroot.add%28a%29%253B%250A%250A%252F%252F%2520add%2520a%2520child%2520to%2520%2522a%2522%2520and%2520remove%2520it%250Aa.add%28new%2520qx.ui.tree.TreeFolder%28%2522b%2522%29%29%253B%250Aa.removeAll%28%29%253B%250A%250A%252F%252F%2520now%2520remove%2520%2522a%2522%2520from%2520%2522root%2522.%2520This%2520is%2520the%2520point%250A%252F%252F%2520where%2520the%2520bug%2520happens%2520%28see%2520comment%2520%25233%29%250Aroot.removeAt%280%29%253B%250A%250A%252F%252F%2520%2522a%2522%2520should%2520now%2520be%2520unused.%2520Without%2520this%2520destroy%252C%2520%250A%252F%252F%2520everything%2520looks%2520ok.%2520But%2520%2522a%2522%2520gets%2520destroed%252C%2520like%250A%252F%252F%2520the%2520tree%2520controller%2520does%252C%2520then%2520the%2520nodes%2520%2522c%2522%250A%252F%252F%2520and%2520%2522d%2522%2520are%2520not%2520displayed%2520correctly.%250Aa.destroy%28%29%253B%250A%250Aroot.add%28new%2520qx.ui.tree.TreeFolder%28%2522c%2522%29%29%253B%250Aroot.add%28new%2520qx.ui.tree.TreeFolder%28%2522d%2522%29%29%253B%250A%250A%22%7D
+(pure ui.tree code)
+
+The essence is in comment #3 (forget the others) and the proposed patch, the latter at least to show the relevant lines of code.
+
+Best
+Axel</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13728</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-30 12:40:23 +0100</bug_when>
+            <thetext>Verified. It looks like a problem with the remove from a tree node.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13729</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-30 12:46:29 +0100</bug_when>
+            <thetext>Your test case was very helpful. In this exact scenario the tree folder&#39;s children container was not removed from the widget tree. The destroy call disposed the children container, which leads to a disposed widget in the tree. 
+
+fixed in r20544
+
+please check this fix and set the bug to verified if it works for you.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14628</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:16:10 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14963</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-26 13:33:34 +0100</bug_when>
+            <thetext>*** Bug 3038 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="1" ispatch="0" isprivate="0" isurl="0">
+            <attachid>623</attachid>
+            <date>2009-10-10 21:42:00 +0200</date>
+            <delta_ts>2009-10-13 12:47:37 +0200</delta_ts>
+            <desc>Testcase (playground snippet)</desc>
+            <filename>bug2911-testcase.js</filename>
+            <type>application/javascript</type>
+            <size>1122</size>
+            <attacher>qooxdoo</attacher>
+            
+              <data encoding="base64">Ly8gZGVmaW5lIHRoZSBtb2RlbCB0cmVlIGNsYXNzCnF4LkNsYXNzLmRlZmluZSgicXgudGVzdC5U
+cmVlTm9kZSIsIHsKICAgICAgZXh0ZW5kIDogcXguY29yZS5PYmplY3QsCiAgICAgIGNvbnN0cnVj
+dCA6IGZ1bmN0aW9uKCkgewogICAgICAgIHRoaXMuYmFzZShhcmd1bWVudHMpOwoKICAgICAgICB0
+aGlzLnNldENoaWxkcmVuKG5ldyBxeC5kYXRhLkFycmF5KCkpOwogICAgICB9LAogICAgICBwcm9w
+ZXJ0aWVzIDoKICAgICAgewogICAgICAgIGNoaWxkcmVuIDogewogICAgICAgICAgY2hlY2sgOiAi
+cXguZGF0YS5BcnJheSIsCiAgICAgICAgICBldmVudCA6ICJjaGFuZ2VDaGlsZCIsCiAgICAgICAg
+ICBudWxsYWJsZSA6IHRydWUKICAgICAgICB9LAogICAgICAgIG5hbWUgOiB7CiAgICAgICAgICBj
+aGVjayA6ICJTdHJpbmciLAogICAgICAgICAgaW5pdCA6ICJyb290IiwKICAgICAgICAgIGV2ZW50
+IDogImNoYW5nZU5hbWUiCiAgICAgICAgfQogICAgICB9Cn0pOwoKLy8gY3JlYXRlIHRoZSB3aWRn
+ZXQgdHJlZQp0cmVlID0gbmV3IHF4LnVpLnRyZWUuVHJlZSgpOwp2YXIgZG9jID0gdGhpcy5nZXRS
+b290KCk7CmRvYy5hZGQodHJlZSk7CgovLyBjcmVhdGUgdGhlIG1vZGVsIHRyZWUKdmFyIG1vZGVs
+ID0gbmV3IHF4LnRlc3QuVHJlZU5vZGUoKTsKdmFyIGEgPSBuZXcgcXgudGVzdC5UcmVlTm9kZSgp
+OwphLnNldE5hbWUoIlBhcmVudCIpOwptb2RlbC5nZXRDaGlsZHJlbigpLnB1c2goYSk7CnZhciBi
+ID0gbmV3IHF4LnRlc3QuVHJlZU5vZGUoKTsKYi5zZXROYW1lKCJDaGlsZCIpOwphLmdldENoaWxk
+cmVuKCkucHVzaChiKTsKCi8vIGNyZWF0ZSB0aGUgY29udHJvbGxlcgp2YXIgY29udHJvbGxlciA9
+IG5ldyBxeC5kYXRhLmNvbnRyb2xsZXIuVHJlZShtb2RlbCwgdHJlZSwgImNoaWxkcmVuIiwgIm5h
+bWUiKTsKCi8vIG5vdyByZW1vdmUgdGhlIG5vZGUgY2hpbGQKYS5nZXRDaGlsZHJlbigpLnJlbW92
+ZUF0KDApOwoKLy8gdGhpcyBpcyB0aGUgYnJlYWtpbmcgc3RlcAptb2RlbC5nZXRDaGlsZHJlbigp
+LnJlbW92ZUF0KDApOwoKLy8gdGhpcyBpcyBqdXN0IHRvIHNob3cgdGhhdCB0aGUgdHJlZSBpcyBv
+dXQgb2Ygc3luYwptb2RlbC5nZXRDaGlsZHJlbigpLnB1c2goYikK
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>624</attachid>
+            <date>2009-10-11 12:11:00 +0200</date>
+            <delta_ts>2009-10-11 12:11:42 +0200</delta_ts>
+            <desc>Proposed Patch</desc>
+            <filename>abstracttreeitem.diff</filename>
+            <type>text/plain</type>
+            <size>992</size>
+            <attacher>qooxdoo</attacher>
+            
+              <data encoding="base64">SW5kZXg6IGZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkvdHJlZS9BYnN0cmFjdFRyZWVJdGVt
+LmpzCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT0KLS0tIGZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkvdHJlZS9BYnN0
+cmFjdFRyZWVJdGVtLmpzCShSZXZpc2lvbiAyMDMxOSkKKysrIGZyYW1ld29yay9zb3VyY2UvY2xh
+c3MvcXgvdWkvdHJlZS9BYnN0cmFjdFRyZWVJdGVtLmpzCShBcmJlaXRza29waWUpCkBAIC02MjAs
+NiArNjIwLDE2IEBACiAKIAogICAgIC8qKgorICAgICAqIFdoZXRoZXIgdGhlIGl0ZW0gaGFzIGEg
+Y2hpbGRyZW5Db250YWluZXIKKyAgICAgKgorICAgICAqIEByZXR1cm4ge0Jvb2xlYW59IFdoZXRo
+ZXIgdGhlIGl0ZW0gaGFzIGEgY2hpbGRyZW5Db250YWluZXIuCisgICAgICovCisgICAgaGFzQ2hp
+bGRyZW5Db250YWluZXIgOiBmdW5jdGlvbigpIHsKKyAgICAgIHJldHVybiB0aGlzLl9fY2hpbGRy
+ZW5Db250YWluZXIgPyB0cnVlIDogZmFsc2U7CisgICAgfSwKKworCisgICAgLyoqCiAgICAgICog
+UmV0dXJucyBhbGwgY2hpbGRyZW4gb2YgdGhlIGZvbGRlci4KICAgICAgKgogICAgICAqIEBwYXJh
+bSByZWN1cnNpdmUge0Jvb2xlYW4gPyB0cnVlfSB3aGV0aGVyIGNoaWxkcmVuIG9mIHN1YmZvbGRl
+ciBzaG91bGQgYmUKQEAgLTg0Miw3ICs4NTIsNyBAQAogCiAgICAgICAgIHZhciBjb250YWluZXIg
+PSB0aGlzLmdldENoaWxkcmVuQ29udGFpbmVyKCk7CiAKLSAgICAgICAgaWYgKHRyZWVJdGVtLmhh
+c0NoaWxkcmVuKCkpIHsKKyAgICAgICAgaWYgKHRyZWVJdGVtLmhhc0NoaWxkcmVuQ29udGFpbmVy
+KCkpIHsKICAgICAgICAgICBjb250YWluZXIucmVtb3ZlKHRyZWVJdGVtLmdldENoaWxkcmVuQ29u
+dGFpbmVyKCkpOwogICAgICAgICB9CiAgICAgICAgIHF4LmxhbmcuQXJyYXkucmVtb3ZlKHRoaXMu
+X19jaGlsZHJlbiwgdHJlZUl0ZW0pOwo=
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>626</attachid>
+            <date>2009-10-13 13:02:00 +0200</date>
+            <delta_ts>2009-10-13 13:02:43 +0200</delta_ts>
+            <desc>This code just uses ui.tree to demonstrate the race condition.</desc>
+            <filename>bug2911-showcase2.js</filename>
+            <type>application/javascript</type>
+            <size>277</size>
+            <attacher>qooxdoo</attacher>
+            
+              <data encoding="base64">dHJlZSA9IG5ldyBxeC51aS50cmVlLlRyZWUoKTsKdGhpcy5nZXRSb290KCkuYWRkKHRyZWUpOwoK
+CnJvb3QgPSBuZXcgcXgudWkudHJlZS5UcmVlRm9sZGVyKCJyb290Iik7CnRyZWUuc2V0Um9vdChy
+b290KTsKCnAgPSBuZXcgcXgudWkudHJlZS5UcmVlRm9sZGVyKCJwIik7CnJvb3QuYWRkKHApOwoK
+YyA9IG5ldyBxeC51aS50cmVlLlRyZWVGb2xkZXIoImMiKTsKcC5hZGQoYyk7CgpwLnJlbW92ZUFs
+bCgpOwpyb290LnJlbW92ZUF0KDApOwpwLmRlc3Ryb3koKTsKcm9vdC5hZGQoYyk7Cg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

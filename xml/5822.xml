@@ -1,0 +1,387 @@
+<bug>
+          <bug_id>5822</bug_id>
+          
+          <creation_ts>2011-11-23 07:52:00 +0100</creation_ts>
+          <short_desc>terminate() method is never called in &#39;build&#39; version</short_desc>
+          <delta_ts>2012-01-02 09:33:24 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>DUPLICATE</resolution>
+          <dup_id>5552</dup_id>
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Nick T">Nicholas.Tindall</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>27586</commentid>
+            <who name="Nick T">Nicholas.Tindall</who>
+            <bug_when>2011-11-23 07:52:28 +0100</bug_when>
+            <thetext>The terminate method on an application extending Standalone is never called in the build version of an application.
+
+To confirm this: create a standalone application, add a terminate method like so:
+
+terminate: function()
+{
+    this.base(arguments);
+    debugger;
+}
+
+1. Build the source version of the application, load it in the browser, navigate away from it or close the tab and the debugger is invoked.
+
+2. Repeat step 1 with the build version, the debugger is never invoked.
+
+I did a text search and the &#39;debugger;&#39; statement is compiled into the build version, I can only assume this means the terminate method is never being called in the build version.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27593</commentid>
+            <who name="Nick T">Nicholas.Tindall</who>
+            <bug_when>2011-11-23 13:17:51 +0100</bug_when>
+            <thetext>The method of reproducing the issue only seems to work in Chrome. The other browsers seem to ignore the &#39;debugger;&#39; statement in terminate() in both the source and build versions. 
+
+Perhaps Chrome is the only browser that will delay a close/navigate in those circumstances?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27597</commentid>
+            <who name="Nick T">Nicholas.Tindall</who>
+            <bug_when>2011-11-24 01:25:37 +0100</bug_when>
+            <thetext>I&#39;ve made a test using the setting of cookie values that works cross-browser. The behavior is observable in both Chrome(15) and Firefox(8). 
+
+The bug also appears to apply to the &quot;close()&quot; method in both browsers.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27600</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-11-24 10:37:17 +0100</bug_when>
+            <thetext>Thanks for the report. I&#39;ll check it out.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27617</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-11-25 09:27:31 +0100</bug_when>
+            <thetext>Just checked it and it seems to work with my tests on current master. Added a debugger statement and a base call to both , close and terminate function. Checked it with Chrome devel (17) and Firefox stable (8) on mac and both worked like expected. But I realized that chrome blocks alert statements in the unload process so you need to add a debugger to get a break on the termination.
+
+I&#39;ll mark the bug as &quot;WORKSFORME&quot; because thats basically what it is. If you still have that problem, please give me some more details about it and a demo app to reproduce.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27636</commentid>
+              <attachid>1087</attachid>
+            <who name="Nick T">Nicholas.Tindall</who>
+            <bug_when>2011-11-27 23:45:49 +0100</bug_when>
+            <thetext>Created attachment 1087
+Very basic test app that demonstrates the problem
+
+When I build (generate.py build) this app with the 1.5 release version (http://downloads.sourceforge.net/qooxdoo/qooxdoo-1.5-sdk.zip) of Qooxdoo, the &#39;debugger;&#39; statement is never reached when a tab containing it is closed. This appears to be the case for Chrome 15 and Firefox 8 on Windows XP.
+
+Am I doing something wrong, or are we just seeing different behaviour on different platforms?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27637</commentid>
+            <who name="Nick T">Nicholas.Tindall</who>
+            <bug_when>2011-11-28 00:21:33 +0100</bug_when>
+            <thetext>Another piece of information that might help. I put a debugger; statement in the qx.core.Init.__shutdown and qx.core.Init.__close methods.
+
+    __close : function(e)
+    {
+      var app = this.__application;
+      if (app) {
+        e.setReturnValue(app.close());
+      }
+    },
+
+    __shutdown : function()
+    {
+      var app = this.__application;
+
+      if (app) {
+        app.terminate();
+      }
+    }
+
+In both cases, this.__application is undefined, meaning close/terminate is not being called.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27638</commentid>
+            <who name="Nick T">Nicholas.Tindall</who>
+            <bug_when>2011-11-28 00:38:29 +0100</bug_when>
+            <thetext>In the build version &#39;this.__application&#39; remains as &#39;this.__application&#39;. Could this be illegal access of a private variable?
+
+The private variables I can see on &#39;this&#39; in the debugger are called __cP, __cQ and __cR.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27639</commentid>
+            <who name="Nick T">Nicholas.Tindall</who>
+            <bug_when>2011-11-28 00:58:00 +0100</bug_when>
+            <thetext>I notice this issue is fixed in the latest version of qx.core.Init (https://github.com/qooxdoo/qooxdoo/blob/master/framework/source/class/qx/core/Init.js) by replacing references to this.__application with calls to this.getApplication().
+
+I&#39;ve changed the status to resolved -&gt; Fixed</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27640</commentid>
+            <who name="Nick T">Nicholas.Tindall</who>
+            <bug_when>2011-11-28 01:04:00 +0100</bug_when>
+            <thetext>This is actually a duplicate
+
+*** This bug has been marked as a duplicate of bug 5552 ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27658</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-11-29 08:02:52 +0100</bug_when>
+            <thetext>Good Job, Nick. Thanks for the investigation!</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1087</attachid>
+            <date>2011-11-27 23:45:00 +0100</date>
+            <delta_ts>2011-11-27 23:45:49 +0100</delta_ts>
+            <desc>Very basic test app that demonstrates the problem</desc>
+            <filename>ttest.zip</filename>
+            <type>application/x-zip-compressed</type>
+            <size>11974</size>
+            <attacher>Nicholas.Tindall</attacher>
+            
+              <data encoding="base64">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
+AAAIAERMfD96Qjas2QIAAFcIAAAnAAAAdHRlc3Qvc291cmNlL2NsYXNzL3R0ZXN0L0FwcGxpY2F0
+aW9uLmpztVRLb9swDL77V3DexQk8uT0MA1IMWJum2KEdhnbAzopFOwIUyZPoNEXR/z7KjzzQbqdU
+cGwppD6+PrKYwvREK0kAYO6aJ6/rFc26460u0QbsD5ctrZwPfJieaMG0SJKThvBRhoCUEWGgYjo5
+uavTBKbwa6UD8EMrhLXUFmTTGF1K0s5CadgFcBU8udZD2QZy6yOFtHMuTSLin62YR32hsNIWs14m
+LvfqaZ48c/JxS2gVzIBvHICJB5JWSeMs5kkSq1SwhyfLZ1yMF9fd4u5qcf/wDuCcBn6vcb1EH2DG
+++fOZDGYHhLOGkw/BaWzxDnvs6+tJi3NcQGcQpCcrBopQCmNQQUjkmq9tjUEkp7ahssUYQ6vj4rj
+95vRlkDX1nm8xsYjq6HKpEFPk0GpiN+eCTOoWltGoCxK+1i6aAqYsysQ2gZ9T5JBQhycWMqAmfR1
+u0ZLYXKR7K8trFwaBOPqOrrORhQu2xo20mtpaVDUFWTMjZLdFAu70d7ZCCU4CVnKgu5OOolOjW6N
+FqJPjfMEljOw2VsqZSOX2nCGMeSAohZwo31nu3K+21duuwNiI3wzspOZil786NAu3jIkldIxR1y5
+0rsQPi29ewzoY3GDMyjgp0fuopsvQI6fuuYEbHTQnTtP/zQ5767vbL7ssjgdNp9OtXYuXKFxjzwM
++naXJbVv0FEI8U4OxObZE8yjJGYzLFuikcqRJ8Mf5/AVLD7GtLVacA3X4qoTZCkXMxD0pzQfZlTR
+DaPG1ukRIa9d2dF0GIFH0Xrn6MCuciXbjAyPRLxnYXYEdanU4FsstBqBJUGltxib3XmlLUc1dEvU
+EUyfbIgoh2eDFc3g/OwsZ4xmBp/PXl7ZkBZwE5GNDjxI0Q/iASUi3g6SLMUtli1hmu97GScHHdP1
+fpZ+R2Mc/HbeqA/pZMe5YfeSd5/uVRoX8M3J8J8JMEr7bq/Rv8Yl9OuYnJNhJ/EXI/gLUEsDBBQA
+AAAAAKlKfD8AAAAAAAAAAAAAAAAkAAAAdHRlc3Qvc291cmNlL2NsYXNzL3R0ZXN0L3NpbXVsYXRp
+b24vUEsDBBQAAAAIAKlKfD+joy5I+wEAAMoEAAA1AAAAdHRlc3Qvc291cmNlL2NsYXNzL3R0ZXN0
+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
+L3NvdXJjZS9jbGFzcy90dGVzdC90aGVtZS9EZWNvcmF0aW9uLmpzrY5BCsIwFET3/xSfrjSUdB9X
+okuXXkCa0WTRRJMvVKR3b9pC6QE6uzfMwGsUq51CxMyX+P4l/3JiZrz5FiFjgfNXXEy5gNoprBqi
+T6/vDh20xdMHHCoRZNEyd1e0MT3Ex1DV9C8W6AXBsuFyWyZdtEhhs6wnW7tiZlN4+g40HE8jUEsD
+BBQAAAAIAKlKfD/eproIfAAAACABAAAmAAAAdHRlc3Qvc291cmNlL2NsYXNzL3R0ZXN0L3RoZW1l
+L0ZvbnQuanOtjrEOwjAMRHd/hdUJoirdw4SQmBj5A3IlGZpAYqQi1H/HTX+hN92zz/INhs1OImLm
+S359S3wGcQ1v8YFUscH5IyGXqmB2EpuB6D3be8AE6zHGhEMngipW2uyak3Q9/fQ/ZkHy7FgPtuWU
+PUpqmX5tOKqp7NSt+YWW4+kPUEsDBBQAAAAIAKlKfD8R+upgpgAAAKsBAAAnAAAAdHRlc3Qvc291
+cmNlL2NsYXNzL3R0ZXN0L3RoZW1lL1RoZW1lLmpzrY6xCoMwFEX3fMWjUxsk7nYSS6eO/kCITw3U
+PI2vYCn+e6MpUpy9U+49JyGpBHlQhACAgvq3t03L2Vof1qAbMZb8xS35MRR5UECmQgyTKlvsUFVY
+W4fnEzOOrHjZIjkl4hM+0CFryMIhlBBDT/KQwb9eLFuy4goNec2W3M65bSCKNTneKfcwRWjNen+Y
+fmTpqtSuoch136P22hncPZFvIHizmC/XL1BLAwQUAAAACACpSnw/m/9D1LwAAAAPAQAAFwAAAHR0
+ZXN0L3NvdXJjZS9pbmRleC5odG1sLY+xcoMwEER7f8XlerjJpAmOROOkTgo3KWV8NnhAYLQ2+O+N
+kKubfbO7s2fevn93+/+/H6rRteXGxENz1/pguQaGrcg0Tfn0kffjWd6LopA5ejiatq3zZ8vqOSbV
+HcsNkekUjmI20+utuVve9R7qke0fgzJVSVmGzpDY9UVV7cagsDecsk8mWXvQoNUS0AAjq1hxqMZm
+AGEpe3Vc3N0lyhTGynISskbzS+DSSELLTEk7zaE/PhYeT6Tp/SdQSwMEFAAAAAAAqUp8PwAAAAAA
+AAAAAAAAABYAAAB0dGVzdC9zb3VyY2UvcmVzb3VyY2UvUEsDBBQAAAAAAKlKfD8AAAAAAAAAAAAA
+AAAcAAAAdHRlc3Qvc291cmNlL3Jlc291cmNlL3R0ZXN0L1BLAwQKAAAAAACtmhM5cxLjZ64JAACu
+CQAAJAAAAHR0ZXN0L3NvdXJjZS9yZXNvdXJjZS90dGVzdC90ZXN0LnBuZ4lQTkcNChoKAAAADUlI
+RFIAAAAgAAAAIAgGAAAAc3p69AAAAARzQklUCAgICHwIZIgAAAAJcEhZcwAACToAAAk6AfBkkkoA
+AAAZdEVYdFNvZnR3YXJlAHd3dy5pbmtzY2FwZS5vcmeb7jwaAAAJK0lEQVRYhcWXe4xU1R3HP+fe
+O3dmdh67O7Ozsy9Ylt1ld1HQwKogsZaqVLFRoCgJNKW01pi2JsamplUatWkrSUFM7RtbY9XWmipa
+rURiTDRdBAEFBHZ5ue/3zu7s7Lzvvef0j13W1aVK9I+e5Je59yZzvp/z+33PSyil+H824/P+ceXK
+h412tyvi0qzUmdceTHzefsTFZqB+9SMRze3a4HabG8vCwcriYIFZXOg3MrmcjCcy9vDoRHI8mW1J
+p9N/7HjtJ+8qxUV1/JkAQiAa1+74aW119K4vX9EQDYf8WsaCnJVGqTGkjOI2DfweA8e2OPVh/8Te
+ltYz4+n4+o5/bW3/QgA1N22bFwgWvLhu1ZKmaCTlSWfaCBZ04hKDuN1nKSo0sFUVLcfvw5EKKSXF
+fpPyYje79x4aPNcV29764j3bPxdAw7pH762vLr1v3aql0XhqmALjBaQzylDyS5QHXiBclKG0pJRY
+6gqOnP0Klq1jOxJIABbzSqvoHxjJ7H7j/ePjmeTa7lce6L1ogIY1j25YuWzBE1deVuV3nL/SOViD
+lH6ysgmfOU518QNYYgUp+xakylPgriGRcnC7jlAT/Sc6Y7R134AtaynyLWTXP946edQpW6yev835
+pJb2yQ9V6x4JV5QGdyy7fL4/nvg97YPVOKqM2qoAdRWFVEXn4wtsxee/B4+nGiHKyedaKPQlaare
+Q8/IShzloaHyVeaV/pae4XZuvX5JXUO+e9uFMjALIKB5nrt9dXNlPLGLYn8rfk+AaxefYk5kF8nM
+AToHk5zqr6UnlsHvcVFV4kOIILl8K3nrKooD7XjMBEKTuI0M86O/w+NVZkNt2eb5N21f/KkAdWt+
+9c3rlzctd5x9hHxv4HPnWLHwENncXjoGm9AwiBZ7KfS5UEoxMJphPK1TFLyM+rkHCQdfo7q0AxDT
+ffo9g5j8hmuubIz4C83nmpv/5LoggBCIUMD3s5o5IV+B62UAigMNjE0cZyRRA9xCeclyQgEXVSVe
+6isCuHTByHiGypKDeE2Htu7rmMjUoGYAAEQKT9A9dJSVy5rq4pWJb10QYO7N25YsWlAVylstCCYN
+q2kuzvYtprX7TkyjinN9CQ4fOcnRc8OksxbhgEHeckhkRhmIrWJorI7jHWvZ3/p9emNLceRHgy3x
+v0lxUdBlGPrmCwKYhmtLRXko4HO3oZTE0H0MxUOc6FpNKFjARNai/8Mj5Nr3MDE2Qu9IGq+pI4SD
+xjkumfcmy5oeozL8FnMiB0mko0ipMTnJFGVFxxhLJikPF1bXr37cfV53xl6gLheaIOzrZV/rWsYz
+S2msNshZJpYtGel8n43XN6Lrl/DM20NIKbFsh+roXiKFrUg5HyklleH3SKUHiQTydA83EvYd49zA
+Ckw9RibbRzjk93R3Dc0Bzn4sA4Zu+KQzhBI5ekcXk7dTZPNRHEfSe/ogq5c3sGLZVRi6jtsQlARN
+RsYzlBe/jSYC5PLjSKlQCqSykRLylkk276M68g7jqSjD48V4PaZX6qJiVgk8bsMdTxVx5Fwja5f/
+gbLCE6QyFoFsG3esuYLLFi3Csiw0TTA34iVvOQyOdqNrSUy9jHR2GMeRSKmmQCRlxUfpHFrCULyG
+U71Xk83aGIbukUKWzCpBJm9nDV2wv+0aBsZvpDTwb9L9u/nBho3U1zWSzWYxTROl4GRHDMsUaMKD
+bTeTzvWQt1JowodlpXCcSQgNm/LQUc70NJPKejFNSGfzGQ2GZwFYlp1USuE4ksHRHFpsHvduXkX1
+3Hkkk0l0XUfTNISAZDpHgUdQHfXzzomvUlr8Iql0LWXFgmDBXqT8KBNe1yixRBTbkfh0g2QymXEQ
+0/vCzIXooG1ZSCkJpD7gh1tuprKiiomJCWzbng5NE1SWeAkHTM72jtPWpXj76Bp6Rm5k38kFU2WQ
+07/tA4voHK7DdhwKTINYPJkOFOR6ZgGofP6pvoHRsVrzDA/ffRuRcIh4PD4tbFkWtm0jhEM2t59T
+XWMkkll0AaGAm96RCfpjYZIZ/7S4lIq2nqXYjoPtSLxundhYqv348w/mZwF8uOf+Y/roIWPr9zYQ
+9PsZGxv72Mht28ZxHASCiVQFQZ+LQp+JrkH3YIJs1iZv2YzEIziOnDakZYNtOwS8LuLxRM6R9pMz
+FyIDQAgh7rzru39/5Mc/KjAMg1gshq7r6LqOUmqq9gJd1xEIxia8pNLJyQVXAAoUk1PQNMamTZjJ
+F5DJGSigqsRHy8HW0+3N2WdmAmgAW769+bFLL730Ftu2pe04KhQKES4poa6uDiklQojpEkglSGfy
+WJZN3p4c9WQ45C2biXQBUkoAWk7cwEiilHllQVpPdQ4n+1u38NBDxqwMxK3EL17fs/fZV15+tchS
+etQON+/8WnNRePM3NuHxeKisrKS9vX3KAxq2Myk4c89RajIDp3saqQidw3EMOofqKfS5yaZSuf6+
+rmf7DzzRB/iEEJpSKjsNsPvp3aNAFvACBatvK//PhvXfubW3t5c5c6r4+S+3cu899xOLxabEJM7U
+KD/ZhsfL6Rqu5XhHM/6CQkJ+F4cOn+joemPHLsADSMARQlhKKee8CbXzEQgE3Nc2N1yt6zoul4sP
+TrTSB2z/9U7KysoQgPiUg/RIIsrrhzei6UuR2VT6wIEj7/W/+/TdkNdm6ky5Z3ohkufjhlXXbVq3
+7uvhjo4O6uvrefyJZ9MD2uUi7Te923Y+zo3XXTPpugs0TQiK/G6K/Aatradjwx3Hnhw4+NRLQAZw
+ZupMvU8CKKVsIUQO0JoWLtyk67qm6zq9vb35D959874uEV8QmdO4MVtRUtzz57/okaIlBD0+8pZE
+0wSmS8M0dBzLYmh4JHH6ZF/X4OHnHs4Mt/VNlTYL5GY8p9TUaXjakUqpnBDCSU4kcj6fj7q6Oh7d
+uaPnwIFDb8Ghd4aPl7000Ljq2khp+e3aeDKomx2GxzQNy7alZVlWJpPPZJMjh8Y797+aaN93FshP
+RW6G+ASQVTOO4rOO5es3ra+PFIb/pmma9+iR9+9oaTnQBZiAawrYOF9HlzfktjITFlgzU2tPhTUF
+kAXSQF4pNcu5n3ozEkKIKbHz4jMhBB9NRDVVU3tG5ABHfcbd76Ivp/8DblL9C9zx/wuOk61hJwmR
+cQAAAABJRU5ErkJgglBLAwQUAAAAAACpSnw/AAAAAAAAAAAAAAAAGQAAAHR0ZXN0L3NvdXJjZS90
+cmFuc2xhdGlvbi9QSwMEFAAAAAgAkhUaOZF782RVAAAAaQAAACMAAAB0dGVzdC9zb3VyY2UvdHJh
+bnNsYXRpb24vcmVhZG1lLnR4dE3MMQ6AIAxG4Z1T/Ju6cBovgIihhLSkQAy3t6P7996ZqeMmTXGI
+LrxUK6LwCMQYGrjXMEgYu29y4KGaOoRjwpIJnYZycttPbihywWoDiqZSbO2d+wBQSwECPwAUAAAA
+AADDTHw/AAAAAAAAAAAAAAAABgAkAAAAAAAAABAAAAAAAAAAdHRlc3QvCgAgAAAAAAABABgAXS5l
+OlWtzAFdLmU6Va3MAcJKruBSrcwBUEsBAj8AFAAAAAgAqUp8P9r9FFxAAwAAIwcAABEAJAAAAAAA
+AAAgAAAAJAAAAHR0ZXN0L2NvbmZpZy5qc29uCgAgAAAAAAABABgAOn+I4VKtzAE6f4jhUq3MATp/
+iOFSrcwBUEsBAj8AFAAAAAgAqUp8P9ma5tK/AwAASggAABEAJAAAAAAAAAAgAAAAkwMAAHR0ZXN0
+L2dlbmVyYXRlLnB5CgAgAAAAAAABABgAOn+I4VKtzAE6f4jhUq3MATp/iOFSrcwBUEsBAj8AFAAA
+AAgAqUp8P0b3zxREAQAAowIAABMAJAAAAAAAAAAgAAAAgQcAAHR0ZXN0L01hbmlmZXN0Lmpzb24K
+ACAAAAAAAAEAGAA6f4jhUq3MATp/iOFSrcwBOn+I4VKtzAFQSwECPwAUAAAACAAaLII+ZjMuWfMA
+AADZAQAAEAAkAAAAAAAAACAAAAD2CAAAdHRlc3QvcmVhZG1lLnR4dAoAIAAAAAAAAQAYAADimDWb
+8MsBMlTt4FKtzAGO5+rgUq3MAVBLAQI/ABQAAAAAAMVMfD8AAAAAAAAAAAAAAAANACQAAAAAAAAA
+EAAAABcKAAB0dGVzdC9zb3VyY2UvCgAgAAAAAAABABgAbdJUPFWtzAGBWl48Va3MATpU7eBSrcwB
+UEsBAj8AFAAAAAAAqUp8PwAAAAAAAAAAAAAAABMAJAAAAAAAAAAQAAAAQgoAAHR0ZXN0L3NvdXJj
+ZS9jbGFzcy8KACAAAAAAAAEAGAA2OYHhUq3MATY5geFSrcwBPpr04FKtzAFQSwECPwAUAAAAAACp
+Snw/AAAAAAAAAAAAAAAAGQAkAAAAAAAAABAAAABzCgAAdHRlc3Qvc291cmNlL2NsYXNzL3R0ZXN0
+LwoAIAAAAAAAAQAYADp/iOFSrcwBOn+I4VKtzAHqBvfgUq3MAVBLAQI/ABQAAAAIAERMfD96Qjas
+2QIAAFcIAAAnACQAAAAAAAAAIAAAAKoKAAB0dGVzdC9zb3VyY2UvY2xhc3MvdHRlc3QvQXBwbGlj
+YXRpb24uanMKACAAAAAAAAEAGAAlysysVK3MASXKzKxUrcwBOn+I4VKtzAFQSwECPwAUAAAAAACp
+Snw/AAAAAAAAAAAAAAAAJAAkAAAAAAAAABAAAADIDQAAdHRlc3Qvc291cmNlL2NsYXNzL3R0ZXN0
+L3NpbXVsYXRpb24vCgAgAAAAAAABABgAOn+I4VKtzAE6f4jhUq3MAUpsCuFSrcwBUEsBAj8AFAAA
+AAgAqUp8P6OjLkj7AQAAygQAADUAJAAAAAAAAAAgAAAACg4AAHR0ZXN0L3NvdXJjZS9jbGFzcy90
+dGVzdC9zaW11bGF0aW9uL0RlbW9TaW11bGF0aW9uLmpzCgAgAAAAAAABABgAOn+I4VKtzAE6f4jh
+Uq3MATp/iOFSrcwBUEsBAj8AFAAAAAAAqUp8PwAAAAAAAAAAAAAAAB4AJAAAAAAAAAAQAAAAWBAA
+AHR0ZXN0L3NvdXJjZS9jbGFzcy90dGVzdC90ZXN0LwoAIAAAAAAAAQAYADp/iOFSrcwBOn+I4VKt
+zAFWPiDhUq3MAVBLAQI/ABQAAAAIAKlKfD83qlkxmQIAAPcFAAApACQAAAAAAAAAIAAAAJQQAAB0
+dGVzdC9zb3VyY2UvY2xhc3MvdHRlc3QvdGVzdC9EZW1vVGVzdC5qcwoAIAAAAAAAAQAYADp/iOFS
+rcwBOn+I4VKtzAE6f4jhUq3MAVBLAQI/ABQAAAAAAKlKfD8AAAAAAAAAAAAAAAAfACQAAAAAAAAA
+EAAAAHQTAAB0dGVzdC9zb3VyY2UvY2xhc3MvdHRlc3QvdGhlbWUvCgAgAAAAAAABABgA5uuK4VKt
+zAHm64rhUq3MAV7KLuFSrcwBUEsBAj8AFAAAAAgAqUp8PwAZoAmBAAAAMgEAACwAJAAAAAAAAAAg
+AAAAsRMAAHR0ZXN0L3NvdXJjZS9jbGFzcy90dGVzdC90aGVtZS9BcHBlYXJhbmNlLmpzCgAgAAAA
+AAABABgAOn+I4VKtzAE6f4jhUq3MATp/iOFSrcwBUEsBAj8AFAAAAAgAqUp8P9eMRiJ8AAAAIwEA
+ACcAJAAAAAAAAAAgAAAAfBQAAHR0ZXN0L3NvdXJjZS9jbGFzcy90dGVzdC90aGVtZS9Db2xvci5q
+cwoAIAAAAAAAAQAYADp/iOFSrcwBOn+I4VKtzAE6f4jhUq3MAVBLAQI/ABQAAAAIAKlKfD+wWMjd
+gQAAADIBAAAsACQAAAAAAAAAIAAAAD0VAAB0dGVzdC9zb3VyY2UvY2xhc3MvdHRlc3QvdGhlbWUv
+RGVjb3JhdGlvbi5qcwoAIAAAAAAAAQAYADp/iOFSrcwBOn+I4VKtzAE6f4jhUq3MAVBLAQI/ABQA
+AAAIAKlKfD/eproIfAAAACABAAAmACQAAAAAAAAAIAAAAAgWAAB0dGVzdC9zb3VyY2UvY2xhc3Mv
+dHRlc3QvdGhlbWUvRm9udC5qcwoAIAAAAAAAAQAYAObriuFSrcwB5uuK4VKtzAHm64rhUq3MAVBL
+AQI/ABQAAAAIAKlKfD8R+upgpgAAAKsBAAAnACQAAAAAAAAAIAAAAMgWAAB0dGVzdC9zb3VyY2Uv
+Y2xhc3MvdHRlc3QvdGhlbWUvVGhlbWUuanMKACAAAAAAAAEAGADm64rhUq3MAebriuFSrcwB5uuK
+4VKtzAFQSwECPwAUAAAACACpSnw/m/9D1LwAAAAPAQAAFwAkAAAAAAAAACAAAACzFwAAdHRlc3Qv
+c291cmNlL2luZGV4Lmh0bWwKACAAAAAAAAEAGAA6f4jhUq3MAfOSfYpUrcwBOn+I4VKtzAFQSwEC
+PwAUAAAAAACpSnw/AAAAAAAAAAAAAAAAFgAkAAAAAAAAABAAAACkGAAAdHRlc3Qvc291cmNlL3Jl
+c291cmNlLwoAIAAAAAAAAQAYAI4ShuFSrcwBjhKG4VKtzAHKAVjhUq3MAVBLAQI/ABQAAAAAAKlK
+fD8AAAAAAAAAAAAAAAAcACQAAAAAAAAAEAAAANgYAAB0dGVzdC9zb3VyY2UvcmVzb3VyY2UvdHRl
+c3QvCgAgAAAAAAABABgA4qWD4VKtzAHipYPhUq3MAcoBWOFSrcwBUEsBAj8ACgAAAAAArZoTOXMS
+42euCQAArgkAACQAJAAAAAAAAAAgAAAAEhkAAHR0ZXN0L3NvdXJjZS9yZXNvdXJjZS90dGVzdC90
+ZXN0LnBuZwoAIAAAAAAAAQAYAICw8ZHUAckBICFk4VKtzAF6tGHhUq3MAVBLAQI/ABQAAAAAAKlK
+fD8AAAAAAAAAAAAAAAAZACQAAAAAAAAAEAAAAAIjAAB0dGVzdC9zb3VyY2UvdHJhbnNsYXRpb24v
+CgAgAAAAAAABABgAjhKG4VKtzAGOEobhUq3MAdbTbeFSrcwBUEsBAj8AFAAAAAgAkhUaOZF782RV
+AAAAaQAAACMAJAAAAAAAAAAgAAAAOSMAAHR0ZXN0L3NvdXJjZS90cmFuc2xhdGlvbi9yZWFkbWUu
+dHh0CgAgAAAAAAABABgAAMrkeckGyQHaGXXhUq3MAdoZdeFSrcwBUEsFBgAAAAAZABkA4QoAAM8j
+AAAAAA==
+</data>
+
+          </attachment>
+      
+
+    </bug>

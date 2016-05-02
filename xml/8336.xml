@@ -1,0 +1,86 @@
+<bug>
+          <bug_id>8336</bug_id>
+          
+          <creation_ts>2014-05-15 15:22:00 +0200</creation_ts>
+          <short_desc>Form button fires execute event twice on IOS device if the handler needs long to finish process</short_desc>
+          <delta_ts>2014-05-19 15:35:59 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>4.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mustafa Sak">mustafa.sak</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>alexander.steitz</cc>
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>40260</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-05-15 15:22:44 +0200</bug_when>
+            <thetext>See example on Ipad2. You will recognize, that the execute handler will be fire twice. (for loop is just running once cause of global variable)
+
+http://tinyurl.com/k8flpsd</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40265</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2014-05-15 15:50:44 +0200</bug_when>
+            <thetext>Tested on iPad4. This has IMO nothing to do with the loop - I actually removed it and still get the event fired twice. However the loop does provoke this in a more reliable way.
+
+It&#39;s more a timing issue with the pressed state I guess.
+
+http://tinyurl.com/kozl672
+
+Tap very fast e.g. at upper left corner and the log will only show one message. &quot;Normal&quot; tap does show the log message twice.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40273</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2014-05-15 16:26:31 +0200</bug_when>
+            <thetext>With the latest master the bug is not reproducable anymore on iPad4. The &quot;pressed&quot; states was removed and this seems to solve this issue.
+
+However, iPad2 is still affected.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40318</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-05-19 15:35:59 +0200</bug_when>
+            <thetext>After checking the implementation and the details, the behavior is pretty obvious. But first, we need to get the touch event model back to our minds. iOS fires the basic touch events like touchend, and after about 300ms the compatibility mouse events. Our pointer implementation needs to take care of touch and mouse events in case a device supports both. Both types of event trigger pointer events and with that, also the tap event. Unfortunately, the compatibility mouse event does not have any indicator to mark himself as such. The best way to detect this is to compare a few things to the latest touch event and decide if its a fake mouse event or not. As comparator, we use two basic values: the time between those events and the position. The current time allowed between the touch and fake mouse events has been 1000ms.
+Having that in mind, its obvious that if you have a handler reacting on a touch event, which&#39;s execution time is higher than 1000ms, the detection of the fake mouse event fail and considers those events as real. This leads to the second tap we see in the given sample.
+Removing the time check in total is not an option because the position detection needs to be wide in case of scrolling page content or moving targets. So the only option is to increase the time which I did to a value of 2500ms. This is the same value polymer [1] uses for its detection.
+
+[1] https://github.com/Polymer/PointerEvents/blob/master/src/touch.js#L15
+
+master: 6911af5b150b9d075338da2992333382b16bd281</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

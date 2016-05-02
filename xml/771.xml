@@ -1,0 +1,272 @@
+<bug>
+          <bug_id>771</bug_id>
+          
+          <creation_ts>2008-01-24 19:14:00 +0100</creation_ts>
+          <short_desc>Changing of theme causes error in disposed TreeVirtual</short_desc>
+          <delta_ts>2008-09-02 23:19:45 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.treevirtual</component>
+          <version>0.7.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Denis">nomus</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2799</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-01-24 19:14:36 +0100</bug_when>
+            <thetext>Hello,
+
+First of all, this problem can be seen only after applying patch/workaround that is described in bug #764 (http://bugzilla.qooxdoo.org/show_bug.cgi?id=764).
+
+This problem is related to situation that occurs after the following steps:
+- there was a TreeVirtual;
+- the tree was disposed;
+- theme was changed.
+As a result there will be error in qx.ui.table.Table. And it seems from error description that there are some lost references to instances of qx.ui.table.rowrenderer.Default.
+The following code snippet can be used to check the problem after applying the mentioned patch (click “Test” button to get the error):
+
+
+var doc = qx.ui.core.ClientDocument.getInstance();
+
+// tree
+var tree = new qx.ui.treevirtual.TreeVirtual(&quot;Tree&quot;);
+tree.set({
+        left   : 20,
+        top    : 20,
+        width  : 400,
+        height : 350,
+        border : &quot;inset-thin&quot;
+      });
+tree.setColumnWidth(0, 400);
+tree.setAlwaysShowOpenCloseSymbol(true);
+doc.add(tree);
+
+// tree data model
+var dataModel = tree.getDataModel();
+
+var te1 = dataModel.addBranch(null, &quot;Desktop&quot;, true);
+var te;
+dataModel.addBranch(te1, &quot;Files&quot;, true);
+te = dataModel.addBranch(te1, &quot;Workspace&quot;, true);
+dataModel.addLeaf(te, &quot;Windows (C:)&quot;);
+dataModel.addLeaf(te, &quot;Documents (D:)&quot;);
+dataModel.addBranch(te1, &quot;Network&quot;, true);
+te = dataModel.addBranch(te1, &quot;Trash&quot;, true);
+var te2 = dataModel.addBranch(null, &quot;Inbox&quot;, true);
+te = dataModel.addBranch(te2, &quot;Spam&quot;, false);
+for (var i = 1; i &lt; 3000; i++)
+{
+  dataModel.addLeaf(te, &quot;Spam Message #&quot; + i);
+}
+dataModel.addBranch(te2, &quot;Sent&quot;, true);
+dataModel.addBranch(te2, &quot;Trash&quot;, true);
+dataModel.addBranch(te2, &quot;Data&quot;, true);
+dataModel.addBranch(te2, &quot;Edit&quot;, true);
+dataModel.setData();
+
+var btnTest = new qx.ui.form.Button(&quot;Test&quot;);
+btnTest.setLeft(50);
+btnTest.setTop(400);
+btnTest.addEventListener(&quot;execute&quot;, function(event) {
+    doc.remove(tree);
+    tree.dispose();
+    tree = null;
+    qx.theme.manager.Meta.getInstance().setTheme(qx.theme.Ext);
+}, this);
+doc.add(btnTest);
+
+
+A rough workaround for this problem is to apply the following patch:
+
+
+qx.Class.patch(qx.ui.table.rowrenderer.Default,
+    qx.Mixin.define(&quot;patch.qx.ui.table.rowrenderer.Default&quot;,
+    {
+        members :
+        {
+            _updateTableContent : function()
+            {
+              if(this._noTableContentUpdate) {
+                return;
+              }
+        
+              if(this._table &amp;&amp; ! this._table.isDisposed()) {
+                this._table.updateContent();
+              }
+            }
+        }
+    })
+);
+
+
+Best regards,
+Denis</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2800</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-01-24 22:08:04 +0100</bug_when>
+            <thetext>My guess about this one is that the tree virtual class fails to dispose one of its objects. Looking at the code, it appears that custom.treeDataCellRenderer isn&#39;t disposed.
+
+Take a look at the demo application in bug 753 and use the method getNewObjects to get a report on extra objects that have been created but not disposed.
+
+Once you have tracked these down make sure they are disposed properly. The bug with changing themes should then go away.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2802</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-01-25 11:32:37 +0100</bug_when>
+            <thetext>Hugh, thank you for your suggestion. It helped me to find origin of the problem.
+
+Using the slightly modified version of Hugh’s getNewObjects function and FireBug I found that the problem originates in constructors of Table and TreeVirtual. There is the following line in constructor of Table (line #172):
+
+this.setDataRowRenderer(new qx.ui.table.rowrenderer.Default(this));
+
+There is the following line in constructor of TreeVirtual (line #194) that follows Table’s constructor call (line #168):
+
+this.setDataRowRenderer(custom.dataRowRenderer);
+
+As a result there is a lost reference to qx.ui.table.rowrenderer.Default each time TreeVirtual is created. To avoid this situation I suppose it is necessary to slightly modify constructors:
+a) replace line #172 in constructor of Table by the following lines
+
+if (custom.dataRowRenderer) {
+    this.setDataRowRenderer(custom.dataRowRenderer);
+}
+else {
+    this.setDataRowRenderer(new qx.ui.table.rowrenderer.Default(this));
+}
+
+b) delete line #194 from constructor of TreeVirtual.
+
+Best regards,
+Denis
+
+PS
+Here is modified version of Hugh’s getNewObjects function.
+
+      getNewObjects : function()
+         {
+         var vData = {};
+         var vCounter = 0;
+         var vObject;
+         var vDb = qx.core.Object.getDb();
+         var mHashCode = {};
+         var ar;
+   
+         for (var i=vDb.length - 1; i&gt;=0; i--)
+            {
+            vObject = vDb[i];
+   
+            if (vObject &amp;&amp; vObject.__disposed === false)
+               {
+               var sClassName = vObject.classname;
+               if (vData[sClassName] == null) 
+                  {
+                  vData[sClassName] = 1;
+                  } 
+               else 
+                  {
+                  vData[sClassName]++;
+                  }
+               ar = mHashCode[sClassName];
+               if (ar == null) {
+                   ar = mHashCode[sClassName] = new Array();
+               }
+               ar[ar.length] = vObject.toHashCode();
+               vCounter++;
+               }
+            }
+
+         if (! this._m_dObjectList) {
+             this._m_dObjectList = {};
+         }
+         var dMore = {};
+         for (var sClassName in vData)
+            {
+            if (!(sClassName in this._m_dObjectList))
+               {
+               this._m_dObjectList[sClassName] = 0;
+               }
+            if (this._m_dObjectList[sClassName] &gt;= 0 &amp;&amp; this._m_dObjectList[sClassName] &lt; vData[sClassName])
+               {
+               dMore[sClassName] = vData[sClassName] - this._m_dObjectList[sClassName];
+               }
+            }
+
+         this._m_dObjectList = vData;
+
+         var vArrData = [];
+         for (var vClassName in dMore)
+            {
+            vArrData.push({classname : vClassName,
+                           number    : dMore[vClassName],
+                           aHashCode : mHashCode[vClassName]
+                           });
+            }
+   
+         vArrData.sort(function(a, b) {
+            return b.number - a.number;
+            });
+
+         var vMsg = &quot;Summary: (&quot; + vCounter + &quot; Objects)\r\n\r\n&quot;;
+         for (var i=0; i&lt;vArrData.length; i++) 
+            {
+            vMsg += vArrData[i].number + &quot;: &quot; + vArrData[i].classname 
+                    + &quot; (&quot; + vArrData[i].aHashCode.join(&quot;, &quot;) + &quot;)\r\n&quot;;
+            }
+         return vMsg;
+         },
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2804</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-01-25 14:24:21 +0100</bug_when>
+            <thetext>Thanks for this evaluation!  I think that preventing setting a new row renderer early in the constructor only to overwrite it later is a nice efficiency fix, but is only a band aid for the more general problem.  It seems that the proper solution to this is to ensure that when a new row renderer is specified, all references to the old one are removed.  I&#39;ll look into this as soon as I get some time.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5010</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-02 23:19:45 +0200</bug_when>
+            <thetext>Not relevant for 0.8 anymore. Closed.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,267 @@
+<bug>
+          <bug_id>3008</bug_id>
+          
+          <creation_ts>2009-10-29 18:13:00 +0100</creation_ts>
+          <short_desc>Drag&amp;Drop does not always work in FF3 &amp; FF3.5</short_desc>
+          <delta_ts>2014-03-03 15:24:11 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>0.7.4</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.7.5</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tim Buschtoens">tbuschto</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>rherrmann</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>13716</commentid>
+            <who name="Tim Buschtoens">tbuschto</who>
+            <bug_when>2009-10-29 18:13:28 +0100</bug_when>
+            <thetext>I have not observed this in FF2 or any other browser.
+If a dragged widget has &quot;overflow&quot; set to  &quot;hidden&quot; and  selectable to &quot;true&quot;, DragAndDropHandler does not recognize valid drop-targets. I will attach a demo.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13717</commentid>
+              <attachid>637</attachid>
+            <who name="Tim Buschtoens">tbuschto</who>
+            <bug_when>2009-10-29 18:21:27 +0100</bug_when>
+            <thetext>Created attachment 637
+Demo Application
+
+This shows the actual Firefox-bug behind this problem: 
+The application displays what widget is hovered using the &quot;mouseover&quot;-event.
+Try &quot;dragging&quot; the boxes (i.e. mousdown on box, moving mouse out of box). In case of widget1 (red), the application will always say you are hovering widget1 until you release the mouse-button. This also works on dom-level without using the qooxdoo event-handling classes.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13718</commentid>
+            <who name="Tim Buschtoens">tbuschto</who>
+            <bug_when>2009-10-29 18:23:05 +0100</bug_when>
+            <thetext>&gt; The application displays what widget is hovered using the &quot;mouseover&quot;-event.
+Correction: &quot;mousemove&quot;-event!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13803</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-02 22:48:04 +0100</bug_when>
+            <thetext>Tim, so you say this is broken in FF3+ on a DOM level, not involving qooxdoo code? Do you think you&#39;d come up with a workaround in qooxdoo 0.7.x?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14158</commentid>
+            <who name="Tim Buschtoens">tbuschto</who>
+            <bug_when>2009-11-17 15:42:23 +0100</bug_when>
+            <thetext>I tried using the &quot;mouseover&quot;-event to store the current target and setting it on the following &quot;mousemove&quot;-events, but it turns out that doesn&#39;t work either. (No &quot;mouseout&quot; and &quot;mouseover&quot; events are thrown in this scenario.) However, it seems to work in Qooxdoo 0.8 (Demo-Browser=&gt;Drag&amp;Drop), so it would be important to know what is different there.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14203</commentid>
+            <who name="Tim Buschtoens">tbuschto</who>
+            <bug_when>2009-11-18 17:04:39 +0100</bug_when>
+            <thetext>Mozilla bug: https://bugzilla.mozilla.org/show_bug.cgi?id=339293
+
+We solved this now using this:
+---------
+      if( qx.core.Variant.isSet( &quot;qx.client&quot;, &quot;gecko&quot; ) ) {
+        var docElement = document.documentElement;
+        qx.html.EventRegistration.addEventListener( docElement, 
+                                                    &quot;mousedown&quot;, 
+                                                    this._ffMouseEventFix );
+      }
+
+[...]
+    _ffMouseEventFix : function( event ) {
+      try{
+        var target = event.originalTarget;
+        if( target.tagName != &quot;INPUT&quot; ) {
+          event.preventDefault();
+        }
+      } catch( e ) {
+        // NOTE: Apperently another Firefox bug: On the very first mousedown,
+        //       access to the events target is forbidden and causes an error.
+      }
+    },
+-----
+This obviously does not work for &quot;input&quot;-elements, or any other element that would not work correctly when calling preventDefault.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14264</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-20 16:54:13 +0100</bug_when>
+            <thetext>The demo translated to qooxdoo 0.8 (works in playground)
+
+
+var root = this.getRoot();
+
+var lab = new qx.ui.basic.Label();
+root.add(lab, {left: 130, top: 150});
+
+function onMoveWidget(e)
+{
+  e.stopPropagation();
+  lab.setValue(e.getTarget().getValue());
+}
+  
+root.addListener(&quot;mousemove&quot;, function(e) {
+  e.stopPropagation();
+  lab.setValue(&quot;root&quot;);
+});
+
+var w1 = new qx.ui.basic.Label(&quot;L1&quot;).set({
+  width: 100,
+  height: 100,
+  selectable: true,
+  backgroundColor: &quot;#DD8888&quot;
+});
+this.getRoot().add(w1, {left: 10, top: 10});
+w1.addListener(&quot;mousemove&quot;, onMoveWidget);
+
+
+var w2 = new qx.ui.basic.Label(&quot;L2&quot;).set({
+  width: 100,
+  height: 100,
+  //selectable: true,
+  backgroundColor: &quot;#88DD88&quot;
+});
+this.getRoot().add(w2, {left: 10, top: 200});
+w2.addListener(&quot;mousemove&quot;, onMoveWidget);
+
+var w3 = new qx.ui.basic.Label(&quot;L3&quot;).set({
+  width: 100,
+  height: 100,
+  //selectable: true,
+  backgroundColor: &quot;#8888DD&quot;
+});
+this.getRoot().add(w3, {left: 200, top: 10});
+w3.addListener(&quot;mousemove&quot;, onMoveWidget);
+
+var w4 = new qx.ui.basic.Label(&quot;L4&quot;).set({
+  width: 100,
+  height: 100,
+  //selectable: true,
+  backgroundColor: &quot;#DDDD88&quot;
+});
+this.getRoot().add(w4, {left: 200, top: 200});
+w4.addListener(&quot;mousemove&quot;, onMoveWidget);
+
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14265</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-20 17:01:13 +0100</bug_when>
+            <thetext>It looks like the same demo is working in qooxdoo 0.8. Note that all widgets have &quot;overflow: hidden&quot;. In 0.8 we don&#39;t set the &quot;MozUserSelect&quot; style. Instead we attach a global event handler to the &quot;mousedown&quot; and &quot;draggesture&quot; events. If the event target is not selectable we simply call &quot;preventDefault&quot; on the event. I&#39;m how to backported this to 0.7.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14268</commentid>
+            <who name="Tim Buschtoens">tbuschto</who>
+            <bug_when>2009-11-20 17:39:22 +0100</bug_when>
+            <thetext>(In reply to comment #7)
+I think this is basically what we do. This also means the bug is still there for selectable elements with style overflow set to hidden. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14269</commentid>
+            <who name="Tim Buschtoens">tbuschto</who>
+            <bug_when>2009-11-20 17:43:43 +0100</bug_when>
+            <thetext>In your demo only the &quot;label&quot;-tag has overflow:hidden, that is why w1 works.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18374</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-05-19 09:29:02 +0200</bug_when>
+            <thetext>Set all open 0.7.x-only issues that have no assignee to WONTFIX. This is in accordance with 0.7.x users like the RAP team. If you want to work on such an 0.7.x issue, feel free to reopen it and assign it to you. The issues should only exist in the legacy 0.7.x versions and be already resolved in qooxdoo 0.8 or above.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38297</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:11 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>637</attachid>
+            <date>2009-10-29 18:21:00 +0100</date>
+            <delta_ts>2009-10-29 18:21:27 +0100</delta_ts>
+            <desc>Demo Application</desc>
+            <filename>Application.js</filename>
+            <type>text/plain</type>
+            <size>2550</size>
+            <attacher>tbuschto</attacher>
+            
+              <data encoding="base64">cXguQ2xhc3MuZGVmaW5lKCJBcHBsaWNhdGlvbiIsIHsNCglleHRlbmQgOiBxeC5hcHBsaWNhdGlv
+bi5HdWksDQoNCgltZW1iZXJzIDogew0KCQltYWluIDogZnVuY3Rpb24oKSB7DQoJCQl0aGlzLmJh
+c2UoYXJndW1lbnRzKTsNCg0KCQkJdGhpcy53aWRnZXQxID0gbmV3IHF4LnVpLmxheW91dC5DYW52
+YXNMYXlvdXQoKTsNCgkJCXRoaXMud2lkZ2V0MS5zZXRMb2NhdGlvbiggMTAsIDEwICk7DQoJCQl0
+aGlzLndpZGdldDEuc2V0RGltZW5zaW9uKCAxMDAsIDEwMCApOw0KCQkJdGhpcy53aWRnZXQxLnNl
+dEJhY2tncm91bmRDb2xvciggIiNERDg4ODgiICk7CQkJDQoJCQl0aGlzLndpZGdldDEuYWRkVG9E
+b2N1bWVudCgpOwkJCQ0KCQkJDQoJCQl0aGlzLndpZGdldDIgPSBuZXcgcXgudWkubGF5b3V0LkNh
+bnZhc0xheW91dCgpOwkJCQ0KCQkJdGhpcy53aWRnZXQyLnNldExvY2F0aW9uKCAxMCwgMjAwICk7
+DQoJCQl0aGlzLndpZGdldDIuc2V0RGltZW5zaW9uKCAxMDAsIDEwMCApOw0KCQkJdGhpcy53aWRn
+ZXQyLnNldEJhY2tncm91bmRDb2xvciggIiM4OEREODgiICk7DQoJCQl0aGlzLndpZGdldDIuYWRk
+VG9Eb2N1bWVudCgpOwkJCQkJCQ0KCQkJDQoJCQl0aGlzLndpZGdldDMgPSBuZXcgcXgudWkubGF5
+b3V0LkNhbnZhc0xheW91dCgpOw0KCQkJdGhpcy53aWRnZXQzLnNldExvY2F0aW9uKCAyMDAsIDEw
+ICk7DQoJCQl0aGlzLndpZGdldDMuc2V0RGltZW5zaW9uKCAxMDAsIDEwMCApOw0KCQkJdGhpcy53
+aWRnZXQzLnNldEJhY2tncm91bmRDb2xvciggIiM4ODg4REQiICk7CQkJDQoJCQl0aGlzLndpZGdl
+dDMuYWRkVG9Eb2N1bWVudCgpOw0KCQkJDQoJCQl0aGlzLndpZGdldDQgPSBuZXcgcXgudWkubGF5
+b3V0LkNhbnZhc0xheW91dCgpOw0KCQkJdGhpcy53aWRnZXQ0LnNldExvY2F0aW9uKCAyMDAsIDIw
+MCApOw0KCQkJdGhpcy53aWRnZXQ0LnNldERpbWVuc2lvbiggMTAwLCAxMDAgKTsNCgkJCXRoaXMu
+d2lkZ2V0NC5zZXRCYWNrZ3JvdW5kQ29sb3IoICIjRERERDg4IiApOwkJCQ0KCQkJdGhpcy53aWRn
+ZXQ0LmFkZFRvRG9jdW1lbnQoKTsNCgkJCQ0KCQkJLy9idWdneQ0KCQkJdGhpcy53aWRnZXQxLnNl
+dE92ZXJmbG93KCAiaGlkZGVuIiApOyANCgkJCXRoaXMud2lkZ2V0MS5zZXRTZWxlY3RhYmxlKCB0
+cnVlICk7DQoJCQkNCgkJCS8vd29ya3MNCgkJCXRoaXMud2lkZ2V0Mi5zZXRPdmVyZmxvdyggbnVs
+bCApOyANCgkJCXRoaXMud2lkZ2V0Mi5zZXRTZWxlY3RhYmxlKCB0cnVlICk7DQoJCQkNCgkJCS8v
+d29ya3MNCgkJCXRoaXMud2lkZ2V0My5zZXRPdmVyZmxvdyggImhpZGRlbiIgKTsNCgkJCXRoaXMu
+d2lkZ2V0My5zZXRTZWxlY3RhYmxlKCBmYWxzZSApOw0KCQkJDQoJCQkvL3dvcmtzDQoJCQl0aGlz
+LndpZGdldDQuc2V0T3ZlcmZsb3coIG51bGwgKTsNCgkJCXRoaXMud2lkZ2V0NC5zZXRTZWxlY3Rh
+YmxlKCBmYWxzZSApOw0KCQkJDQoJCQkNCgkJCXRoaXMuaW5mb0JveCA9IGRvY3VtZW50LmNyZWF0
+ZUVsZW1lbnQoICJkaXYiICk7DQoJCQl0aGlzLmluZm9Cb3guc3R5bGUucG9zaXRpb24gPSAiYWJz
+b2x1dGUiOw0KCQkJdGhpcy5pbmZvQm94LnN0eWxlLmxlZnQgPSAiMTMwcHgiOw0KCQkJdGhpcy5p
+bmZvQm94LnN0eWxlLnRvcCA9ICIxNTBweCI7DQoJCQl0aGlzLmluZm9Cb3guaW5uZXJIVE1MID0g
+Jy4uLic7DQoJCQlkb2N1bWVudC5ib2R5LmFwcGVuZENoaWxkKCB0aGlzLmluZm9Cb3ggKTsNCgkJ
+CQ0KCQkJdmFyIGRvYyA9IHF4LnVpLmNvcmUuQ2xpZW50RG9jdW1lbnQuZ2V0SW5zdGFuY2UoKTsN
+CgkJCQ0KCQkJdGhpcy53aWRnZXQxLmFkZEV2ZW50TGlzdGVuZXIoICJtb3VzZW1vdmUiLCBmdW5j
+dGlvbihlKXsNCgkJCSAgZS5zdG9wUHJvcGFnYXRpb24oKTsNCgkJCSAgdGhpcy5pbmZvQm94Lmlu
+bmVySFRNTCA9ICJ3aWRnZXQgMSAocmVkKSI7CQkJICANCgkJCX0sIHRoaXMgKTsNCgkJCQ0KCQkJ
+dGhpcy53aWRnZXQyLmFkZEV2ZW50TGlzdGVuZXIoICJtb3VzZW1vdmUiLCBmdW5jdGlvbihlKXsN
+CgkJCSAgZS5zdG9wUHJvcGFnYXRpb24oKTsNCgkJCSAgdGhpcy5pbmZvQm94LmlubmVySFRNTCA9
+ICJ3aWRnZXQgMiAoZ3JlZW4pIjsNCgkJCX0sIHRoaXMgKTsNCgkJCQ0KCQkJdGhpcy53aWRnZXQz
+LmFkZEV2ZW50TGlzdGVuZXIoICJtb3VzZW1vdmUiLCBmdW5jdGlvbihlKXsNCgkJCSAgZS5zdG9w
+UHJvcGFnYXRpb24oKTsNCgkJCSAgdGhpcy5pbmZvQm94LmlubmVySFRNTCA9ICJ3aWRnZXQgMyAo
+Ymx1ZSkiOw0KCQkJfSwgdGhpcyApOw0KCQkJDQoJCQl0aGlzLndpZGdldDQuYWRkRXZlbnRMaXN0
+ZW5lciggIm1vdXNlbW92ZSIsIGZ1bmN0aW9uKGUpew0KCQkJICBlLnN0b3BQcm9wYWdhdGlvbigp
+Ow0KCQkJICB0aGlzLmluZm9Cb3guaW5uZXJIVE1MID0gIndpZGdldCA0ICh5ZWxsb3cpIjsNCgkJ
+CX0sIHRoaXMgKTsNCg0KCQkJZG9jLmFkZEV2ZW50TGlzdGVuZXIoICJtb3VzZW1vdmUiLCBmdW5j
+dGlvbihlKXsNCgkJCSAgdGhpcy5pbmZvQm94LmlubmVySFRNTCA9ICJkb2N1bWVudCI7DQoJCQl9
+LCB0aGlzICk7DQoJCQkNCiAgICB9DQogICAgICAgDQogIH0NCn0pOw0K
+</data>
+
+          </attachment>
+      
+
+    </bug>

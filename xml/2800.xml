@@ -1,0 +1,205 @@
+<bug>
+          <bug_id>2800</bug_id>
+          
+          <creation_ts>2009-09-15 18:17:00 +0200</creation_ts>
+          <short_desc>Generate Internationalization Data in Separate Files</short_desc>
+          <delta_ts>2014-03-03 15:22:29 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.system</component>
+          <version>0.8.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>tinobutz</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>12331</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-09-15 18:17:12 +0200</bug_when>
+            <thetext>Currently, the generator places all translations and locale (CLDR) data in the 
+application&#39;s loader JS script (as qx.$$translations and qx.$$locales, 
+respectively). Devise an option to put this data into separate file(s), to save 
+space in the loader script.
+
+(This is related to, though different than, bug#2129, which aims at putting the 
+I18N data in each corresponding package).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12414</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-09-18 11:56:38 +0200</bug_when>
+            <thetext>Initial implementation of a solution with r20141. (Details to follow).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12567</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-09-23 10:34:00 +0200</bug_when>
+            <thetext>The feature is used in the following manner:
+
+- set the config option packages/i18n-with-boot : false; this activates the 
+saving of i18n info in separate files
+
+- i18n info will be collected for each locale separately, into individual files 
+which have the naming scheme &lt;script-base-name&gt;-&lt;locale_code&gt;.js, e.g. 
+&quot;myapp-gecko-en_US.js&quot;.
+
+- the contents of each file is a Json structure:
+  { &quot;&lt;locale_code&gt;&quot; : { &quot;Translations&quot; : {&lt;translation_map&gt;},
+                                 &quot;Locales&quot;        : {&lt;cldr_map&gt;}
+  }
+
+- the names of these files are registered in the loader/boot package of the 
+application, as
+  qx.$$i18n = { &quot;uris&quot; : { &quot;&lt;locale_code&gt;&quot; : &quot;&lt;namespace:script_uri&gt;&quot;,
+                                    . . .
+                                  }
+                     }
+
+- the entry for each locale in this map, &quot;&lt;namespace:script_uri&gt;&quot;, has to be 
+decoded through qx.$$loader.decodeUris(), to become usable. This ensures 
+unified access to generated (script) files.
+
+- the application (!) is in charge to retrieve the i18n files, and to do this 
+early enough before any translation or localization takes place in the app 
+code. The data is *not* retrieved automatically.
+
+- after retrieving and evaluating a i18n file, its contents has to be 
+registered with the Locale Manager of qooxdoo&#39;s run time in the following ways:
+  - for the translations:
+     qx.locale.Manager.getInstance().addTranslation(&quot;&lt;locale_code&gt;&quot;, 
+&lt;translation_map&gt;)
+  - for the cldr data:
+     qx.locale.Manager.getInstance().addLocale(&quot;&lt;locale_code&gt;&quot;, &lt;cldr_map&gt;)
+
+- after that the data is effective, and will be used in i18n transformations.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12577</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-09-23 11:46:52 +0200</bug_when>
+            <thetext>There is an issue with the way i18n files are encoded in qx.$$i18n.uris for the 
+*source* version of an app:
+
+Using the name space of the (main) library will not work when the generated 
+scripts are put into a different path than the class source files are.
+
+Example:
+
+qx.$$libraries = { &quot;myapp&quot; : { &quot;sourceUri&quot;: &quot;../source/class&quot;, ...
+
+qx.$$loader.uris = [[&quot;myapp:myapp/Application.js&quot;,...
+
+which correctly decodes to ../source/class/myapp/Application.js.
+
+But the generated skript is in &quot;../source/script/myapp.js&quot;, and therefore also 
+the i18n files. Ie. the spec
+
+qx.$$i18n.uris = {&quot;en_US&quot; : &quot;myapp:myapp-en_US.js&quot;,...
+
+leads to ../source/class/myapp-en_US.js, where it should be 
+../source/script/myapp-en_US.js.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13648</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-28 18:08:53 +0100</bug_when>
+            <thetext>The current solution provides no support for the automatic loading of the i18n 
+data files (it&#39;s up to application code to do this). As the solution is 
+particularly beneficial for large applications with multiple supported locales 
+and lots of / large translateable strings, it might be worthwhile adding 
+framework support for automatic loading. Here is a sketch how this could be 
+achieved. If we decide to follow this line of thought, it might merrit its own 
+bug.
+
+The idea is that the qx.locale.Manager loads the appropriate i18n file (think 
+&quot;custom-C.js&quot;, &quot;custom-en_EN.js&quot;, ...), whenever a current locale is set (at 
+startup or on invocation of .setLocale()).
+
+To enable this with existing features of the framework, and to relief the 
+Manager from calculating file dependencies from fall-back relations (&quot;en_EN&quot; -&gt; 
+&quot;en&quot; -&gt; &quot;C&quot;), the generator would auto-generate a qooxdoo *part* for each 
+required locale. Each part contains the corresponding locale file and its 
+fall-back files, e.g.
+
+  &quot;en_EN&quot; : [&quot;custom-en_EN.js&quot;, &quot;custom-en.js&quot;, &quot;custom-C.js&quot;]
+
+Then, qx.locale.Manager could just PartLoader.require(&quot;en_EN&quot;) when the locale 
+switches to &quot;en_EN&quot;.
+
+The files custom-en_EN.js, ... would be considered degenerate cases of the new 
+general package format (cf. bug#2350), without the class code (which is close 
+to what is already implemented). qx.locale.Manager (as well as other relevant 
+managers like translation.Manager and ResourceManager) should register for 
+&quot;part-loaded&quot; events, so they can pick up their relevant data from 
+qx.$$packageData (the current store where packages hook their data on), 
+whenever new packages are loaded.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14306</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-11-23 14:18:30 +0100</bug_when>
+            <thetext>To 1.0, as the immediate need is fullfilled. Still, (a) it seems not to work in 
+the source version (uri issue), and (b) lacks automatic loading support.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15668</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-12-10 19:39:01 +0100</bug_when>
+            <thetext>Made it work for source version; both source and build now use a virtual 
+&#39;__out__&#39; library to resolve uris of external I18N files (stored in qx.$$i18n).
+
+With r21074.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17400</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-03-20 21:04:45 +0100</bug_when>
+            <thetext>The intent of this bug, particularly the thoughts expressed in comment#4, is taken further in bug#3473, which implements I18N information as parts.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17686</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-04-09 19:20:24 +0200</bug_when>
+            <thetext>Removed the infrastructure implemented to solve this bug (generation of 
+external Json files, qx.$$i18n property in the loader, ...), as this has been 
+superseded by the I18N part implementation with bug#3473, and there is noone 
+left to the best of my knowledge who uses this implementation.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37693</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:29 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

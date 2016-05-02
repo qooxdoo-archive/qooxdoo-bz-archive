@@ -1,0 +1,105 @@
+<bug>
+          <bug_id>4415</bug_id>
+          
+          <creation_ts>2010-12-06 00:15:00 +0100</creation_ts>
+          <short_desc>Images copied to build folder even though combine-image has been run</short_desc>
+          <delta_ts>2013-02-07 10:08:36 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21742</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-12-06 00:15:24 +0100</bug_when>
+            <thetext>We have 250 image icons. To be able to load faster we use image combine to combine all into one image.
+
+Scenario A:
+1. image-combine -&gt; combined.png
+2. we do not use #asset( for all images as we do not want them to be copied to the build tree
+3. we get error messages for every image when run in source mode:
+
+&quot;try to load an unmanaged relative image:&quot;
+
+If we use #asset( then there is no problem.
+
+Scenario B:
+1. image-combine -&gt; combined.png
+2. we do use #asset( but only for combined.png, because we only want that to be copied to the build tree
+
+
+It means that to run the app both after source and build generation the unnecessary images will be automatically copied to the build tree!
+
+In some way the generator needs to identify what images have been combined and only copy the combined image and not all containing images too!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21746</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-12-06 08:25:19 +0100</bug_when>
+            <thetext>Thanks, we will check that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32171</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-07 10:08:36 +0100</bug_when>
+            <thetext>I think that&#39;s in part a usage problem:
+
+For one thing, you should *never* use combined images in #asset() hints!
+Combining images or not should be compeletely transparent for application code. 
+If your code needs an image, say foo/bar/baz.png, the you should add
+  #asset(foo/bar/baz.png)
+to the source file. This is independent of whether foo/bar/baz.png is contained 
+in a combined image or not. If the generator finds the combined image, it finds 
+that it contains foo/bar/baz.png, and then registers the combined image 
+whenever foo/bar/baz.png is required. That is, the dependency of code to a 
+combined image is always *inferred*, not explicit.
+
+So, in that sense the Generator is already identifying images that are 
+combined, and makes sure the combined image is copied. But then, the individual 
+images are copied, too! This is intentional, as e.g. older IE browser are not 
+capable of using combined images, which would break the application. This is 
+detected by the qooxdoo runtime, and then the individual images are used 
+instead of the combined image. Therefore, the individual images are also added 
+to the build.
+
+If you want to restrict this copying of the individual images, because e.g. you 
+know that the users of your app all use browsers that understand combined 
+images, please reopen this bug and we&#39;ll provide a configuration option to turn 
+that copying off.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

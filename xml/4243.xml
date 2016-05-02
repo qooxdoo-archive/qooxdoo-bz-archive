@@ -1,0 +1,291 @@
+<bug>
+          <bug_id>4243</bug_id>
+          
+          <creation_ts>2010-10-26 22:26:00 +0200</creation_ts>
+          <short_desc>Sorting by clicking on a column header only works once in &quot;build&quot; version</short_desc>
+          <delta_ts>2010-10-28 00:52:33 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>contrib</product>
+          <component>SmartTableModel</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter>aditya.siram</reporter>
+          <assigned_to name="Derrell Lipman">derrell.lipman</assigned_to>
+          
+          <qa_contact name="Dave Baggett">qooxdoo</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20884</commentid>
+            <who name="">aditya.siram</who>
+            <bug_when>2010-10-26 22:26:20 +0200</bug_when>
+            <thetext>Only in the &quot;build&quot; version when I click on a column header it sorts correctly, but subsequent clicks don&#39;t do anything. Everything works in the &quot;source&quot; version.
+
+The reason is that the sortByColumn method in the smart.model.Default directly sets  __sortAscending, a private variable of qx.ui.table.model.Simple. The &quot;build&quot; step, by default, obfuscates private variable names so subclasses don&#39;t have access to them, so this variable never gets set and since smarttable only sorts if the variable has changed subsequent clicks to the column header do nothing.
+
+qx.ui.table.model.Simple does not seem to have a setter for this variable so the current workaround in the SmartTable demo application is to disable the obfuscation of private variables by adding following line to the &quot;let&quot; section of the default config.json:
+ &quot;OPTIMIZE&quot;     : [&quot;variables&quot;, &quot;basecalls&quot;, &quot;strings&quot;]
+
+-deech</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20885</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-10-27 03:38:16 +0200</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20886</commentid>
+              <attachid>826</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-10-27 03:40:44 +0200</bug_when>
+            <thetext>Created attachment 826
+Patch to qx.ui.table.model.Simple
+
+This is the first of two patches. This one is to qx.ui.table.model.Simple. Adita, please apply the two patches and confirm that this solves the problem and doesn&#39;t break anything else obvious in Table or SmartTableModel. (It should be pretty clean.)
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20887</commentid>
+              <attachid>827</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-10-27 03:41:55 +0200</bug_when>
+            <thetext>Created attachment 827
+Patch to smart.model.Default
+
+This is the second of the two patches, and must be applied to smart.model.Default.
+
+Please report results.
+
+Thanks.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20911</commentid>
+            <who name="">aditya.siram</who>
+            <bug_when>2010-10-27 17:11:07 +0200</bug_when>
+            <thetext>Yes that worked. Perhaps you may want to notify the folks that wrote the SmartTable demos that they don&#39;t need to include the &quot;OPTIMIZE&quot; line in their config.json. 
+
+Thank you for your quick response.
+-deech</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20914</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-10-27 17:31:15 +0200</bug_when>
+            <thetext>Nope, not fixed yet.  The code has not yet been committed.
+.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20915</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-10-27 17:33:28 +0200</bug_when>
+            <thetext>The OPTIMIZE option should be used, and the code should work with it enabled.
+
+(In reply to comment #4)
+&gt; Yes that worked. Perhaps you may want to notify the folks that wrote the
+&gt; SmartTable demos that they don&#39;t need to include the &quot;OPTIMIZE&quot; line in their
+&gt; config.json. 
+&gt; 
+&gt; Thank you for your quick response.
+&gt; -deech</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20922</commentid>
+            <who name="">aditya.siram</who>
+            <bug_when>2010-10-27 21:55:52 +0200</bug_when>
+            <thetext>Due to this bug, currently the default and tree demos have the OPTIMIZE option set to *not* obfuscate private variables. Meaning that instead of :
+&quot;OPTIMIZE&quot;     : [&quot;variables&quot;, &quot;basecalls&quot;, &quot;privates&quot;, &quot;strings&quot;]
+they have :
+&quot;OPTIMIZE&quot;     : [&quot;variables&quot;, &quot;basecalls&quot;, &quot;strings&quot;]
+
+When the former &quot;OPTIMIZE&quot; line is removed from their config.json, the generator will default to the latter, which is what we want.
+
+-deech
+
+
+(In reply to comment #6)
+&gt; The OPTIMIZE option should be used, and the code should work with it enabled.
+&gt; 
+&gt; (In reply to comment #4)
+&gt; &gt; Yes that worked. Perhaps you may want to notify the folks that wrote the
+&gt; &gt; SmartTable demos that they don&#39;t need to include the &quot;OPTIMIZE&quot; line in their
+&gt; &gt; config.json. 
+&gt; &gt; 
+&gt; &gt; Thank you for your quick response.
+&gt; &gt; -deech</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20923</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-10-27 22:21:55 +0200</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; Due to this bug, currently the default and tree demos have the OPTIMIZE option
+&gt; set to *not* obfuscate private variables. Meaning that instead of :
+&gt; &quot;OPTIMIZE&quot;     : [&quot;variables&quot;, &quot;basecalls&quot;, &quot;privates&quot;, &quot;strings&quot;]
+&gt; they have :
+&gt; &quot;OPTIMIZE&quot;     : [&quot;variables&quot;, &quot;basecalls&quot;, &quot;strings&quot;]
+&gt; 
+&gt; When the former &quot;OPTIMIZE&quot; line is removed from their config.json, the
+&gt; generator will default to the latter, which is what we want.
+
+Of course. Sorry I misunderstood your suggestion. You are correct that once this fix is committed, we can also remove the disabling of privates optimization in SmartTableModel.
+
+Thanks for clarifying.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20924</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-10-28 00:52:33 +0200</bug_when>
+            <thetext>Fixed using the patches attached to this bug report, and reported working by Aditya Siram.
+
+r23611 (trunk) and 20826 (contrib).
+
+Derrell</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>826</attachid>
+            <date>2010-10-27 03:40:00 +0200</date>
+            <delta_ts>2010-10-27 03:40:44 +0200</delta_ts>
+            <desc>Patch to qx.ui.table.model.Simple</desc>
+            <filename>table.patch</filename>
+            <type>text/plain</type>
+            <size>1496</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS90YWJsZS9t
+b2RlbC9TaW1wbGUuanMgYi9xb294ZG9vL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkvdGFi
+bGUvbW9kZWwvU2ltcGxlLmpzCmluZGV4IDRiZjc5MGUuLmM1NDNlYmUgMTAwNjQ0Ci0tLSBhL3Fv
+b3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS90YWJsZS9tb2RlbC9TaW1wbGUuanMK
+KysrIGIvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L3VpL3RhYmxlL21vZGVsL1Np
+bXBsZS5qcwpAQCAtNDMzLDExICs0MzMsNDEgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC51aS50YWJs
+ZS5tb2RlbC5TaW1wbGUiLAogICAgICAgcmV0dXJuIHRoaXMuX19zb3J0Q29sdW1uSW5kZXg7CiAg
+ICAgfSwKIAorICAgIC8qKgorICAgICAqIFNldCB0aGUgc29ydCBjb2x1bW4gaW5kZXgKKyAgICAg
+KgorICAgICAqIFdBUk5JTkc6IFRoaXMgc2hvdWxkIGJlIGNhbGxlZCBvbmx5IGJlIHN1YmNsYXNz
+ZXMgd2l0aCBpbnRpbWF0ZQorICAgICAqICAgICAgICAgIGtub3dsZWRnZSBvZiB3aGF0IHRoZXkg
+YXJlIGRvaW5nISBZb3UndmUgYmVlbiB3YXJuZWQuCisgICAgICogCisgICAgICogQHBhcmFtIGFz
+Y2VuZGluZyB7Qm9vbGVhbn0KKyAgICAgKiAgIDxpPnRydWU8L2k+IGZvciBhbiBhc2NlbmRpbmcg
+c29ydDsKKyAgICAgKiAgIDxpPiBmYWxzZTwvaT4gZm9yIGEgZGVzY2VuZGluZyBzb3J0LgorICAg
+ICAqLworICAgIF9zZXRTb3J0Q29sdW1uSW5kZXggOiBmdW5jdGlvbihpbmRleCkKKyAgICB7Cisg
+ICAgICB0aGlzLl9fc29ydENvbHVtbkluZGV4ID0gaW5kZXg7CisgICAgfSwKKwogICAgIC8vIG92
+ZXJyaWRkZW4KICAgICBpc1NvcnRBc2NlbmRpbmcgOiBmdW5jdGlvbigpIHsKICAgICAgIHJldHVy
+biB0aGlzLl9fc29ydEFzY2VuZGluZzsKICAgICB9LAogCisgICAgLyoqCisgICAgICogU2V0IHdo
+ZXRoZXIgd2UncmUgc29ydGluZyBpbiBhc2NlbmRpbmcgb3Igbm90LgorICAgICAqCisgICAgICog
+V0FSTklORzogVGhpcyBzaG91bGQgYmUgY2FsbGVkIG9ubHkgYmUgc3ViY2xhc3NlcyB3aXRoIGlu
+dGltYXRlCisgICAgICogICAgICAgICAga25vd2xlZGdlIG9mIHdoYXQgdGhleSBhcmUgZG9pbmch
+IFlvdSd2ZSBiZWVuIHdhcm5lZC4KKyAgICAgKiAKKyAgICAgKiBAcGFyYW0gYXNjZW5kaW5nIHtC
+b29sZWFufQorICAgICAqICAgPGk+dHJ1ZTwvaT4gZm9yIGFuIGFzY2VuZGluZyBzb3J0OworICAg
+ICAqICAgPGk+IGZhbHNlPC9pPiBmb3IgYSBkZXNjZW5kaW5nIHNvcnQuCisgICAgICovCisgICAg
+X3NldFNvcnRBc2NlbmRpbmcgOiBmdW5jdGlvbihhc2NlbmRpbmcpCisgICAgeworICAgICAgdGhp
+cy5fX3NvcnRBc2NlbmRpbmcgPSBhc2NlbmRpbmc7CisgICAgfSwKKwogICAgIC8vIG92ZXJyaWRk
+ZW4KICAgICBnZXRSb3dDb3VudCA6IGZ1bmN0aW9uKCkgewogICAgICAgcmV0dXJuIHRoaXMuX19y
+b3dBcnIubGVuZ3RoOwo=
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>827</attachid>
+            <date>2010-10-27 03:41:00 +0200</date>
+            <delta_ts>2010-10-27 03:41:55 +0200</delta_ts>
+            <desc>Patch to smart.model.Default</desc>
+            <filename>smart.patch</filename>
+            <type>text/plain</type>
+            <size>3407</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3RydW5rL3Fvb3hkb28tY29udHJpYi9TbWFydFRhYmxlTW9kZWwvdHJ1bmsv
+c291cmNlL2NsYXNzL3NtYXJ0L21vZGVsL0RlZmF1bHQuanMgYi90cnVuay9xb294ZG9vLWNvbnRy
+aWIvU21hcnRUYWJsZU1vZGVsL3RydW5rL3NvdXJjZS9jbGFzcy9zbWFydC9tb2RlbC9EZWZhdWx0
+LmpzCmluZGV4IDhiNDY5MzAuLjE1NjhjNTYgMTAwNjQ0Ci0tLSBhL3RydW5rL3Fvb3hkb28tY29u
+dHJpYi9TbWFydFRhYmxlTW9kZWwvdHJ1bmsvc291cmNlL2NsYXNzL3NtYXJ0L21vZGVsL0RlZmF1
+bHQuanMKKysrIGIvdHJ1bmsvcW9veGRvby1jb250cmliL1NtYXJ0VGFibGVNb2RlbC90cnVuay9z
+b3VyY2UvY2xhc3Mvc21hcnQvbW9kZWwvRGVmYXVsdC5qcwpAQCAtMTQ5Nyw3ICsxNDk3LDcgQEAg
+cXguQ2xhc3MuZGVmaW5lKCJzbWFydC5tb2RlbC5EZWZhdWx0IiwKICAgICAgICAgLy8gSWYgdGhp
+cyB2YWx1ZSBpcyBpbiB0aGUgc29ydCBjb2x1bW4sIHdlIGhhdmUgdG8gcmVtb3ZlIHRoaXMgcm93
+CiAgICAgICAgIC8vIGFuZCByZWluc2VydCBpdCB0byBtYWludGFpbiB0aGUgc29ydC4KICAgICAg
+ICAgcmVpbnNlcnQgPSAodGhpcy5pc1NvcnRlZCgpICYmCi0gICAgICAgICAgICAgICAgICAgIChj
+b2x1bW5JbmRleCA9PT0gdGhpcy5fX3NvcnRDb2x1bW5JbmRleCkpOworICAgICAgICAgICAgICAg
+ICAgICAoY29sdW1uSW5kZXggPT09IHRoaXMuZ2V0U29ydENvbHVtbkluZGV4KCkpKTsKICAgICAg
+IH0KICAgICAgIGVsc2UKICAgICAgIHsKQEAgLTE1MjMsNyArMTUyMyw3IEBAIHF4LkNsYXNzLmRl
+ZmluZSgic21hcnQubW9kZWwuRGVmYXVsdCIsCiAKICAgICAgICAgLy8gSWYgYW55IHNldCB2YWx1
+ZSBpcyBpbiB0aGUgc29ydCBjb2x1bW4sIHdlIGhhdmUgdG8gcmVpbnNlcnQgdGhpcwogICAgICAg
+ICAvLyByb3cgdG8gbWFpbnRhaW4gdGhlIHNvcnQuCi0gICAgICAgIGlmICh0aGlzLmlzU29ydGVk
+KCkgJiYgVi5sZW5ndGggPj0gdGhpcy5fX3NvcnRDb2x1bW5JbmRleCkKKyAgICAgICAgaWYgKHRo
+aXMuaXNTb3J0ZWQoKSAmJiBWLmxlbmd0aCA+PSB0aGlzLmdldFNvcnRDb2x1bW5JbmRleCgpKQog
+ICAgICAgICB7CiAgICAgICAgICAgcmVpbnNlcnQgPSB0cnVlOwogICAgICAgICB9CkBAIC0yNDM2
+LDEyICsyNDM2LDEyIEBAIHF4LkNsYXNzLmRlZmluZSgic21hcnQubW9kZWwuRGVmYXVsdCIsCiAg
+ICAgewogICAgICAgaWYgKGNvbHVtbkluZGV4ID09PSB1bmRlZmluZWQpCiAgICAgICB7Ci0gICAg
+ICAgIGNvbHVtbkluZGV4ID0gdGhpcy5fX3NvcnRDb2x1bW5JbmRleDsKKyAgICAgICAgY29sdW1u
+SW5kZXggPSB0aGlzLmdldFNvcnRDb2x1bW5JbmRleCgpOwogICAgICAgfQogICAgICAgCiAgICAg
+ICBpZiAoYXNjZW5kaW5nID09PSB1bmRlZmluZWQpCiAgICAgICB7Ci0gICAgICAgIGFzY2VuZGlu
+ZyA9IHRoaXMuX19zb3J0QXNjZW5kaW5nOworICAgICAgICBhc2NlbmRpbmcgPSB0aGlzLmlzU29y
+dEFzY2VuZGluZygpOwogICAgICAgfQogCiAgICAgICB2YXIgY29tcGFyYXRvcjsKQEAgLTI0ODcs
+OSArMjQ4Nyw5IEBAIHF4LkNsYXNzLmRlZmluZSgic21hcnQubW9kZWwuRGVmYXVsdCIsCiAKICAg
+ICAgIC8vIElmIG9ubHkgdGhlIGFzY2VuZGluZyBib29sZWFuIGlzIGNoYW5naW5nLCB0aGVuIHdl
+IGNhbiBkbyBPKG4pIHdvcmsKICAgICAgIC8vIGluc3RlYWQgb2YgTyhuIGxnIG4pIHdvcmsganVz
+dCBieSByZXZlcnNpbmcgdGhlIGFycmF5LgotICAgICAgaWYgKCFmb3JjZSAmJiB0aGlzLl9fc29y
+dENvbHVtbkluZGV4ID09IGNvbHVtbkluZGV4KQorICAgICAgaWYgKCFmb3JjZSAmJiB0aGlzLmdl
+dFNvcnRDb2x1bW5JbmRleCgpID09IGNvbHVtbkluZGV4KQogICAgICAgewotICAgICAgICBpZiAo
+dGhpcy5fX3NvcnRBc2NlbmRpbmcgPT0gYXNjZW5kaW5nKQorICAgICAgICBpZiAodGhpcy5pc1Nv
+cnRBc2NlbmRpbmcoKSA9PSBhc2NlbmRpbmcpCiAgICAgICAgIHsKICAgICAgICAgICByZXR1cm47
+IC8vIG5vIGNoYW5nZSB0byBzb3J0IGF0IGFsbDogTygxKQogICAgICAgICB9CkBAIC0yNTAwLDcg
+KzI1MDAsNyBAQCBxeC5DbGFzcy5kZWZpbmUoInNtYXJ0Lm1vZGVsLkRlZmF1bHQiLAogICAgICAg
+ICAgIHRoaXMuZ2V0Um93QXJyYXkodikucmV2ZXJzZSgpOwogICAgICAgICB9CiAKLSAgICAgICAg
+dGhpcy5fX3NvcnRBc2NlbmRpbmcgPSBhc2NlbmRpbmc7CisgICAgICAgIHRoaXMuX3NldFNvcnRB
+c2NlbmRpbmcoYXNjZW5kaW5nKTsKICAgICAgIH0KICAgICAgIGVsc2UKICAgICAgIHsKQEAgLTI1
+MDksOCArMjUwOSw4IEBAIHF4LkNsYXNzLmRlZmluZSgic21hcnQubW9kZWwuRGVmYXVsdCIsCiAg
+ICAgICAgIC8vCiAKICAgICAgICAgLy8gUmVjb3JkIGhvdyB3ZSdyZSBub3cgc29ydGVkIGFuZCBn
+ZXQgdGhlIG5ldyBjb21wYXJhdG9yCi0gICAgICAgIHRoaXMuX19zb3J0Q29sdW1uSW5kZXggPSBj
+b2x1bW5JbmRleDsKLSAgICAgICAgdGhpcy5fX3NvcnRBc2NlbmRpbmcgPSBhc2NlbmRpbmc7Cisg
+ICAgICAgIHRoaXMuX3NldFNvcnRDb2x1bW5JbmRleChjb2x1bW5JbmRleCk7CisgICAgICAgIHRo
+aXMuX3NldFNvcnRBc2NlbmRpbmcoYXNjZW5kaW5nKTsKIAogICAgICAgICB2YXIgY29tcGFyYXRv
+ciA9IHRoaXMuZ2V0Q29tcGFyYXRvcigpOwogICAgICAgICBjb21wYXJhdG9yLmNvbHVtbkluZGV4
+ID0gY29sdW1uSW5kZXg7CkBAIC0yNTM4LDggKzI1MzgsOCBAQCBxeC5DbGFzcy5kZWZpbmUoInNt
+YXJ0Lm1vZGVsLkRlZmF1bHQiLAogICAgIHsKICAgICAgIGlmICh0aGlzLmlzU29ydGVkKCkpCiAg
+ICAgICB7Ci0gICAgICAgIHRoaXMuc29ydEJ5Q29sdW1uKHRoaXMuX19zb3J0Q29sdW1uSW5kZXgs
+Ci0gICAgICAgICAgICAgICAgICAgICAgICAgIHRoaXMuX19zb3J0QXNjZW5kaW5nLAorICAgICAg
+ICB0aGlzLnNvcnRCeUNvbHVtbih0aGlzLmdldFNvcnRDb2x1bW5JbmRleCgpLAorICAgICAgICAg
+ICAgICAgICAgICAgICAgICB0aGlzLmlzU29ydEFzY2VuZGluZygpLAogICAgICAgICAgICAgICAg
+ICAgICAgICAgICAvKmZvcmNlOiovIHRydWUpOwogICAgICAgfQogICAgIH0sCkBAIC0yNTUxLDcg
+KzI1NTEsNyBAQCBxeC5DbGFzcy5kZWZpbmUoInNtYXJ0Lm1vZGVsLkRlZmF1bHQiLAogCiAgICAg
+ICAvLyBJZiB3ZSdyZSBjdXJyZW50bHkgc29ydGVkIGFuZCB0aGUgY29tcGFyYXRvciBoYXMgY2hh
+bmdlZCBmb3IgdGhlCiAgICAgICAvLyBjb2x1bW4gd2UncmUgc29ydGVkIG9uLCBmb3JjZSBhIGZ1
+bGwgcmUtc29ydC4KLSAgICAgIGlmIChjb2x1bW5JbmRleCA9PSB0aGlzLl9fc29ydENvbHVtbklu
+ZGV4KQorICAgICAgaWYgKGNvbHVtbkluZGV4ID09IHRoaXMuZ2V0U29ydENvbHVtbkluZGV4KCkp
+CiAgICAgICB7CiAgICAgICAgIHRoaXMuX3Jlc29ydCgpOwogICAgICAgfQo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

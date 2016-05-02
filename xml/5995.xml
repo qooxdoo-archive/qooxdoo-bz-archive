@@ -1,0 +1,100 @@
+<bug>
+          <bug_id>5995</bug_id>
+          
+          <creation_ts>2012-01-02 16:18:00 +0100</creation_ts>
+          <short_desc>Drag &amp; drop &quot;drop&quot; event is not fired unless the mouse moves off the source widget first</short_desc>
+          <delta_ts>2013-08-26 09:14:54 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>1.6</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>2.1.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="John Spackman">john.spackman</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>28142</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2012-01-02 16:18:54 +0100</bug_when>
+            <thetext>Drag &amp; Drop will only send the drop event if the mouse moves off the widget being dragged (or over another, overlapping widget).  This is inconsistent because the &quot;drop&quot; event _is_ fired if you move off the widget and then return to the same place, but isn&#39;t fired if you move within the widget even though the dragstart and drag end are at the same X/Y position.
+
+Here&#39;s a playground example that demonstrates the problem, the events sequence can be seen in the log : http://tinyurl.com/co7zfp3
+
+The problem is because in qx.event.handler.DragDrop, the current drop target (this.__dropTarget) is not initialised until the &quot;mouseover&quot; event is received, but this only happens once the mouse moves onto a different widget.  
+
+The fix is to initialise this.__dropTarget in the _onMouseMove handler, on line 620 add the code between &quot;PATCH BEGIN&quot; and &quot;PATCH END&quot; comments:
+
+            // Register to root events
+            this.__manager.addListener(this.__root, &quot;mouseover&quot;, this._onMouseOver, this, true);
+            this.__manager.addListener(this.__root, &quot;mouseout&quot;, this._onMouseOut, this, true);
+            this.__manager.addListener(this.__root, &quot;keydown&quot;, this._onKeyDown, this, true);
+            this.__manager.addListener(this.__root, &quot;keyup&quot;, this._onKeyUp, this, true);
+            this.__manager.addListener(this.__root, &quot;keypress&quot;, this._onKeyPress, this, true);
+
+            /* PATCH BEGIN */
+            var dropable = this.__findDroppable(e.getTarget());
+            if (dropable &amp;&amp; dropable != this.__dropTarget)
+            {
+              this.__validDrop = this.__fireEvent(&quot;dragover&quot;, dropable, this.__dragTarget, true, e);
+              this.__dropTarget = dropable;
+            }
+            /* PATCH END */
+            
+            // Reevaluate current action</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28521</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2012-02-13 12:01:55 +0100</bug_when>
+            <thetext>Pull request in https://github.com/qooxdoo/qooxdoo/pull/16</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33116</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-06-26 16:01:48 +0200</bug_when>
+            <thetext>I just checked the behavior and could reproduce it with the version 1.6 which was entered. With the recent release, this behavior has changed and both cases do not fire an drop event. This is, according to the docs, the expected behavior:
+
+&quot;Fired on the drop target when the drag&amp;drop action is finished successfully.&quot;
+
+As the drop was not successful (according to the cursor), I don&#39;t think there should not be a drop event at all.
+
+@John, what do you mean?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33297</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-07-10 13:21:23 +0200</bug_when>
+            <thetext>I mark the bug as fixed because the current behavior seems to be valid and ok to me.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

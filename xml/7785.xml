@@ -1,0 +1,239 @@
+<bug>
+          <bug_id>7785</bug_id>
+          
+          <creation_ts>2013-10-09 15:25:00 +0200</creation_ts>
+          <short_desc>qx.bom.Viewport.getHeight(win) return wrong value under ios 7.0</short_desc>
+          <delta_ts>2014-03-03 15:26:28 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>iOS</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>3.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Oleg Filippov">Oleg.Filippov</reporter>
+          <assigned_to name="Christopher Zuendorf">christopher.zuendorf</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>34058</commentid>
+            <who name="Oleg Filippov">Oleg.Filippov</who>
+            <bug_when>2013-10-09 15:25:48 +0200</bug_when>
+            <thetext>qx.bom.Viewport.getHeight(win) uses document.body.clientHeight value. On ipad 4 in landscape mode it returns 692.
+However, window.innerHeight is 672, and this value is correct.
+
+Right now I have to run code like this as a workaround:
+
+var base_getHeight = qx.bom.Viewport.getHeight;
+qx.bom.Viewport.getHeight = function(win) {
+	var height = this.base_getHeight(win);
+	if(qx.core.Environment.get(&quot;device.type&quot;) == &quot;tablet&quot; &amp;&amp; qx.core.Environment.get(&quot;os.name&quot;) == &quot;ios&quot; &amp;&amp; qx.core.Environment.get(&quot;os.version&quot;) == &quot;7.0&quot;)
+	{
+		win = win || window;
+		height = win.innerHeight || height;
+	}
+	return height;
+}.bind({base_getHeight: base_getHeight});
+
+
+Looks like ios 7.0 has many bugs.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34059</commentid>
+            <who name="Oleg Filippov">Oleg.Filippov</who>
+            <bug_when>2013-10-09 15:36:08 +0200</bug_when>
+            <thetext>As a result of this bug Application root element is higher than the screen.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34061</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-10-10 10:49:15 +0200</bug_when>
+            <thetext>Thank you for your workaround, looks good.
+
+As you already discovered: this is a iOS7 bug. It calculates the clientHeight too large.
+
+I solved it in qx.Mobile with this fix:
+
+if (qx.core.Environment.get(&quot;os.name&quot;) == &quot;ios&quot;) {
+  document.documentElement.style.height = window.innerHeight + &quot;px&quot;;
+}
+
+Another workaround would be to add a &quot;padding-bottom: 20px;&quot; to the root container.
+
+I assume that this bug is going to be fixed soon in one of the next iOS versions.
+
+If the bug still occurs in the ramp down phase of the next qooxdoo version, we might provide a workaround for the viewport.getHeight() .</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34065</commentid>
+            <who name="Oleg Filippov">Oleg.Filippov</who>
+            <bug_when>2013-10-11 14:01:14 +0200</bug_when>
+            <thetext>Two more problems here:
+- qx.core.Environment.get(&quot;os.version&quot;) returns &quot;7.0&quot; on ios simulator, but empty string on a real ipad.
+
+- When I rotate device (portrait vs. landscape) it scroll whole window vertically on -20px position.
+
+So, my final fix looks like that:
+
+if(qx.core.Environment.get(&quot;device.type&quot;) == &quot;tablet&quot; &amp;&amp; qx.core.Environment.get(&quot;os.name&quot;) == &quot;ios&quot;)
+{
+	var v = (navigator.appVersion).match(/OS (\d+)_(\d+)_?(\d+)?/);
+	v = [parseInt(v[1], 10), parseInt(v[2], 10), parseInt(v[3] || 0, 10)];
+	if(v[0] == 7 &amp;&amp; v[1] == 0 &amp;&amp; v[2] &lt;= 2)
+	{
+		qx.bom.Viewport.getHeight = function(win) {
+			win = win || window;
+			return win.innerHeight || this.base_getHeight(win);
+		}.bind({base_getHeight: qx.bom.Viewport.getHeight});
+
+		qx.bom.Element.addListener(window, &quot;resize&quot;, function() {
+			window.scrollTo(0, 0);
+		}, this);
+	}
+}</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34066</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-10-11 14:27:01 +0200</bug_when>
+            <thetext>For the problem with the version, please open a separate bug.
+
+But you could also check if, document.clientHeight != window.innerHeight for detecting the bug.
+
+The scrolling bug:
+
+Yes, I know that problem very well. 
+
+The same scrolling also occurs when soft keyboard appears/disappears.
+
+I fixed that for qx.Mobile already:
+
+https://github.com/qooxdoo/qooxdoo/commit/a383648918569078d039efc56f60fec363249f97
+
+https://github.com/qooxdoo/qooxdoo/commit/41069c5eaf05fb4b1a711a2e318924670ff9e245
+
+
+Another strict solution would be, just to listen for &quot;onScroll&quot; event on document, and then scroll back to position (0,0).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34067</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-10-11 14:33:59 +0200</bug_when>
+            <thetext>Recently I read a blogpost about this problem authored by Phonegap:
+
+http://coenraets.org/blog/2013/09/phonegap-and-cordova-with-ios-7/
+
+
+Here is the way, the solved it:
+
+function onDeviceReady() {
+    if (parseFloat(window.device.version) === 7.0) {
+          document.body.style.marginTop = &quot;20px&quot;;
+    }
+}
+  
+document.addEventListener(&#39;deviceready&#39;, onDeviceReady, false);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34069</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-10-11 14:38:48 +0200</bug_when>
+            <thetext>Here is the solution, one of our qooxdoo App Developers used.
+
+Maybe you can use it, for optimizing your workaround...
+
+Would be great if you post your final solution as a comment to this bug.
+
+// scroll to top every time the window element was scrolled
+    q(window).on(&quot;scroll&quot;, this.__scrollTop, this);
+ 
+    this._window.scrollTo(0,0);
+
+
+
+  /**
+     * Handler for &lt;code&gt;scroll&lt;/code&gt; event of window.
+     * Scrolls window to top if scrolled down. Registers a
+     * &lt;code&gt;blur&lt;/code&gt; event to focused input fields.
+     * e {Object} Native scroll event
+     * blurEvent {Object} Native blur event
+     */
+    __scrollTop : function(e, blurEvent)
+    {
+      if (blurEvent){
+        // tell the blured element to blur natively again.
+        blurEvent.getTarget().getContentElement().getDomElement().blur();
+      }
+ 
+ 
+      if (this._window.scrollY == 0){
+        return;
+      }
+ 
+      var focusedWidget = qx.ui.core.FocusHandler.getInstance().getFocusedWidget();
+      if (focusedWidget instanceof qx.ui.form.AbstractField) {
+        focusedWidget.addListenerOnce(&quot;blur&quot;, this.__scrollTop.bind(this, e));
+        return;
+      }
+     
+      //qx.event.Timer.once(this.__scrollAction, this, 500);
+      this._window.scrollTo(0,0);
+    }
+  }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34424</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-11-28 11:00:27 +0100</bug_when>
+            <thetext>A nice example of the problem:
+
+http://krpano.com/ios/bugs/ios7-ipad-landscape/</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34431</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-11-28 17:22:35 +0100</bug_when>
+            <thetext>Master: d7de4522c823c7cf8cd324e16678e6f89b0f9abc</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34432</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-11-28 17:58:40 +0100</bug_when>
+            <thetext>Branch_3_0_x.
+14331416ffe4bbb1602132b4ecca9a9ca9e85340</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39122</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:28 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

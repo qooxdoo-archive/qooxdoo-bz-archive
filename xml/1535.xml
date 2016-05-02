@@ -1,0 +1,188 @@
+<bug>
+          <bug_id>1535</bug_id>
+          
+          <creation_ts>2008-11-04 16:11:00 +0100</creation_ts>
+          <short_desc>Improve generator messages</short_desc>
+          <delta_ts>2011-02-22 19:20:54 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>6116</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-11-04 16:11:46 +0100</bug_when>
+            <thetext>Some messages output by the generator could be rewritten to provide more detail.  Ideally, each message generated in -q (quiet) mode would have a prefix indicating whether it is a warning or an error, and then provide detail of the error and where the error comes from.  
+
+For example, when running &quot;generate.py -q api&quot; in the framework directory, one message that currently appears is &quot;Excludes may break code!&quot;  I would recommend that this message be replaced by something like this:
+
+Warning: qx.legacy.* has been explicitly excluded at config.json:19
+Warning: qx.test.* has been explicitly excluded at config.json:19
+
+That is easily recognized as a warning, not an error, and specifies the location in the configuration file which caused the warning to be generated, in case the exclusion was not intentional.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6122</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-11-04 22:52:46 +0100</bug_when>
+            <thetext>.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12983</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-08 13:40:44 +0200</bug_when>
+            <thetext>as enhancement</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21502</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-23 14:31:58 +0100</bug_when>
+            <thetext>Prefixed all warnings with &quot;Warning: &quot;, errors with &quot;Error: &quot;, asf. (Warnings 
+are actually the only relevant, since the generator exits on errors, rather 
+than logging a message and continuing).
+
+In that specific case, included the exclude configuration with the message. (It 
+is not so easy to log like you suggested, as config entries might be inherited, 
+and an exclude value might be the result of merging config keys of various 
+configs. When the job is run, it is not obvious anymore which config file 
+provided a particular value).
+
+Derrell, does this fullfill your request?
+
+With r23939.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21503</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-11-23 14:44:44 +0100</bug_when>
+            <thetext>Hi Thomas. I can&#39;t determine from your reply exactly what the caveat is about inherited configs, so I&#39;m not sure what the message will end up looking like. It sounds like you don&#39;t track which file various configs came from, and thus can&#39;t show exactly what file the exclude came from? What does it now show?
+
+In any case, I suspect what you&#39;ve done must already be a nice improvement. Thanks!
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21504</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-23 15:05:38 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; Hi Thomas. I can&#39;t determine from your reply exactly what the caveat is about 
+inherited configs,
+&gt; so I&#39;m not sure what the message will end up looking like. It sounds like you 
+don&#39;t track which
+&gt; file various configs came from, and thus can&#39;t show exactly what file the 
+exclude came from? 
+&gt; What does it now show?
+
+It just shows the whole exclude key, something like this:
+
+  Warning: Excludes may break code ([u&#39;qx.test.*&#39;, u&#39;qx.dev.unit.*&#39;, 
+u&#39;playground.test.*&#39;])
+
+You suggested a per-element warning, together with the config file and line 
+where this exclude entry was set. But this is something I can&#39;t determine at 
+that stage of the generator run. A final exclude key like the above might 
+derive from various different files, e.g.
+
+file1.json: &quot;jobs&quot; : {
+                        &quot;foo&quot; : {
+                            &quot;exclude&quot; : [&quot;playground.test.*&quot;]
+                            ...
+
+file2.json: &quot;jobs&quot;: {
+                       &quot;bar&quot; : {
+                            &quot;exclude&quot; : [&quot;qx.dev.unit.*&quot;]
+                            ...
+
+file3.json: &quot;jobs&quot;: {
+                        &quot;baz&quot;: {
+                             &quot;exclude&quot; : [&quot;qx.test.*&quot;]
+                             ...
+
+and finally the using config
+
+config.json: &quot;include&quot; : [{&quot;path&quot;:&quot;file1.json&quot;}, {&quot;path&quot;:&quot;file2.json&quot;}, 
+{&quot;path&quot;:&quot;file3.json&quot;}]
+                     &quot;jobs&quot; : {
+                         &quot;myjob&quot;: {
+                             &quot;extend&quot; : [&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;]
+                             ...
+
+Job &quot;myjob&quot; will wind up having the above exclude key [&quot;qx.test.*&quot;, 
+&quot;qx.dev.unit.*&quot;, &quot;playground.test.*&quot;], but I can&#39;t tell anymore where the 
+individual entries stem from (let alone in which line of the corresponding file 
+they were set). - See?!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21505</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-11-23 15:12:27 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; It just shows the whole exclude key, something like this:
+&gt; 
+&gt;   Warning: Excludes may break code ([u&#39;qx.test.*&#39;, u&#39;qx.dev.unit.*&#39;, 
+&gt; u&#39;playground.test.*&#39;])
+
+Ok, so I guess from that one could find|grep for the appropriate entries. That&#39;s certainly not ideal, but probably adequate. Retaining the source location of the exclude would add some fair amount of code, and probably isn&#39;t necessary all that often. At least it&#39;s now possible to find these, and it specifically indicates that it&#39;s a warning, which is the biggest help.
+
+Thanks!
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21506</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-23 15:24:19 +0100</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; Ok, so I guess from that one could find|grep for the appropriate entries. 
+That&#39;s certainly not ideal, 
+&gt; but probably adequate. Retaining the source location of the exclude would add 
+some fair amount
+&gt; of code, 
+
+Indeed, as I not only would need to track indivudal keys as they flow into the 
+final job, but also individual *elements* of each key&#39;s value. Not a bad idea, 
+but would require some re-coding of the configuration system.
+
+&gt; and probably isn&#39;t necessary all that often. At least it&#39;s now possible to 
+find these, and it specifically
+&gt;  indicates that it&#39;s a warning, which is the biggest help.
+
+Ok, so I&#39;m closing this bug.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

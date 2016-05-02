@@ -1,0 +1,165 @@
+<bug>
+          <bug_id>1770</bug_id>
+          
+          <creation_ts>2008-12-17 12:05:00 +0100</creation_ts>
+          <short_desc>Devise new layout that supports iconified embedded windows</short_desc>
+          <delta_ts>2014-03-03 08:46:31 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.layout</component>
+          <version>0.8.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          <votes>3</votes>
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>cesar.smx</cc>
+    
+    <cc>qooxdoo</cc>
+    
+    <cc>vvandens</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>7014</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-12-17 12:05:40 +0100</bug_when>
+            <thetext>Currently, an embedded window that supports the &quot;iconify&quot; symbol and method, 
+simply disappears, and cannot be retrieved anymore. A new layout for these 
+cases should be devised that supports docking of iconfied windows, e.g. at the 
+bottom of the parent window.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7039</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-12-17 13:21:33 +0100</bug_when>
+            <thetext>Future release</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10472</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-06-22 12:20:22 +0200</bug_when>
+            <thetext>The issue came up on the mailing list 
+(http://www.nabble.com/Where-do-minimized-windows-go--td24034264.html#a24034264), 
+and Andreas Fink provided his custom code to work around it. I just dump it 
+here without further review, maybe it is helpful when implementing the feature:
+
+---------- mailing list posting starts here -----------------------
+
+Hi,
+
+I&#39;ve implemented the functionality by myself like this:
+
+every window (I create windows from a xml description) has a button which can 
+be accessed with a getter, like this:
+
+this.__tlButton = new qx.ui.toolbar.Button(repName, 
+&quot;icon/16/apps/office-spreadsheet.png&quot;);
+this.__tlButton.setUserData(&quot;win&quot;, this); 
+this.__tlButton.addListener(&quot;execute&quot;, function(e) {
+	if (this.getMode() === &quot;minimized&quot;) {
+		this.setVisibility(&quot;visible&quot;);
+	}
+	this.bringToFront();
+}, this);
+
+I add the button to a toolbar part with a context menu:
+
+var contextMenu = new qx.ui.menu.Menu(); var restoreButton = new 
+qx.ui.menu.Button(this.tr(&quot;Restore&quot;), &quot;image/restore.png&quot;); 
+contextMenu.add(restoreButton); restoreButton.addListener(&quot;execute&quot;, 
+function(e) {
+	var win = this.getLayoutParent().getOpener().getUserData(&quot;win&quot;);
+	win.restore();
+	win.bringToFront();
+});
+var minButton = new qx.ui.menu.Button(this.tr(&quot;Minimize&quot;), 
+&quot;image/minimize.png&quot;); contextMenu.add(minButton); 
+minButton.addListener(&quot;execute&quot;, function(e) {
+	var win = this.getLayoutParent().getOpener().getUserData(&quot;win&quot;);
+	win.minimize();
+});
+var maxButton = new qx.ui.menu.Button(this.tr(&quot;Maximize&quot;), 
+&quot;image/maximize.png&quot;); contextMenu.add(maxButton); 
+maxButton.addListener(&quot;execute&quot;, function(e) {
+	var win = this.getLayoutParent().getOpener().getUserData(&quot;win&quot;);
+	if (win.getMode() === &quot;minimized&quot;) {
+		win.setVisibility(&quot;visible&quot;);
+	}
+	win.maximize();
+	win.bringToFront();
+});
+contextMenu.addSeparator();
+var closeButton = new qx.ui.menu.Button(this.tr(&quot;Close&quot;), &quot;image/close.png&quot;); 
+contextMenu.add(closeButton); closeButton.addListener(&quot;execute&quot;, function(e) {
+	this.getLayoutParent().getOpener().getUserData(&quot;win&quot;).close();
+});
+ 
+this.__widgets[&quot;tl&quot;] = new qx.ui.toolbar.Part(); 
+toolbar.add(this.__widgets[&quot;tl&quot;]);
+      
+this.__widgets[&quot;tl&quot;].addListener(&quot;contextmenu&quot;, function(e) {
+	var target = e.getTarget();
+	var win = target.getUserData(&quot;win&quot;);
+     	if (win !== null) { //only if really a buttons was right clicked
+     		contextMenu.setOpener(target);
+     		contextMenu.open();
+     	}
+}, this);
+
+In my app every window gets destroyed when it is closed, so I added the 
+following code to the destruct section to remove the button from the &quot;taskbar&quot;:
+
+destruct : function() {
+	if (this.__tlButton.getLayoutParent()) {
+		this.__tlButton.getLayoutParent().remove(this.__tlButton);
+	}
+	//disposes removed for mail
+}
+
+Hope the code snippets helps you to get your own &quot;taskbar&quot; implemented. It 
+works really perfect in my app (screenshot attached).
+
+Greetings,
+Andreas</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12522</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-22 11:24:44 +0200</bug_when>
+            <thetext>Increased prio for this useful addition. but untargeted it as it is unlikely to make it into 1.0.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35563</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:31 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

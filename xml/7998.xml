@@ -1,0 +1,224 @@
+<bug>
+          <bug_id>7998</bug_id>
+          
+          <creation_ts>2013-12-12 14:19:00 +0100</creation_ts>
+          <short_desc>Error tool tip does not appear if mouse cursor is over the textfield</short_desc>
+          <delta_ts>2014-02-17 08:46:53 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>4.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mustafa Sak">mustafa.sak</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>alexander.steitz</cc>
+    
+    <cc>andreas.parusel</cc>
+    
+    <cc>dietrich.streifert</cc>
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>34632</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2013-12-12 14:19:24 +0100</bug_when>
+            <thetext>Think about an textfield widget, which valides his value on Enter key. Often the mouse cursor lays over this field, because of focus by mouse click.
+
+Now the validation fails and the textfield will be rendered with a red border. But the reason why will only shown by tool tip.
+
+And that tool tip does only appear if you first leave to textfield and re-hover it again.
+
+This is a very ugly behavior. I would prefer to see the tool tip on validation fail anyway. Or even because the mouse cursor lays over the textfield.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34640</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-12-13 09:20:24 +0100</bug_when>
+            <thetext>Good report, totally agree.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34888</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-01-29 17:55:35 +0100</bug_when>
+            <thetext>Here is the demo code to reproduce:
+
+var tf = new qx.ui.form.TextField();
+tf.setLiveUpdate(true);
+this.getRoot().add(tf);
+tf.setInvalidMessage(&quot;Nonono!&quot;);
+tf.addListener(&quot;input&quot;, function(e) {
+  tf.setValid(tf.getValue().length &lt; 3);
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34930</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-02-03 11:03:53 +0100</bug_when>
+            <thetext>We decided not to let the form fields handle the showing of the tooltip so the last demo could not be used to reproduce. Instead, we let the validation manager take care of that which knows the first invalid input field and shows the tooltip for that element.
+
+master: ef03b93f99588ecc76ea2c4e6075b4797bf436a9</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34980</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2014-02-06 12:22:35 +0100</bug_when>
+            <thetext>I&#39;m sorry but I think the fix introduces an unwanted behaviour if the field is not visisible yet.
+
+In our use case we have a (quite large) form with a custom renderer rendering the fields within several tabs. The form itself is placed in a window.
+
+Before the window opens a form validation is done and (with the new code) the tooltip shows up at the left top corner of the document window before the field is visible. Furthermore it is not ensured that the first invalid field is visible even if the window is visible, because the field may be placed within a currently not active tab of the tab view.
+
+So an additionl test is needed within method __showToolTip to ensure the item where the tooltip should be placed to is visible:
+
+            if(item.isSeeable() === false) {
+              return;
+            }
+
+Regards
+Dietrich</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34983</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-02-06 13:33:33 +0100</bug_when>
+            <thetext>You are right, added a check for that. Thanks for testing. :)
+
+master: b4719c0ae41626f0c661df525f9a9eccd8973c05</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34985</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2014-02-06 14:57:09 +0100</bug_when>
+            <thetext>Sorry but there is still a problem on our side if the form is reset and closed/hidden afterwards immidiately.
+
+The reset is done by applying the initial values of the form again, thus containing invalid field values, which in this case means an empty field.
+
+As a result the tooltip is opened while the form disappears.
+
+Is there any way to close the tooltip if the item is hidden.
+
+Regards
+Dietrich</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34989</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-02-07 07:47:35 +0100</bug_when>
+            <thetext>I would suggest to close the tooltip on the application side. You can easily access it by using the tooltip manager:
+
+qx.ui.tooltip.Manager.getInstance().getSharedErrorTooltip().hide();
+
+That would be the easiest solution because adding a listener for hide to the item and removing it on hide would be much effort on the framework side which could be done with a single line of code in the app.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34993</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2014-02-07 10:32:57 +0100</bug_when>
+            <thetext>(In reply to comment #9)
+&gt; I would suggest to close the tooltip on the application side. You can easily
+&gt; access it by using the tooltip manager:
+&gt; 
+&gt; qx.ui.tooltip.Manager.getInstance().getSharedErrorTooltip().hide();
+&gt; 
+&gt; That would be the easiest solution because adding a listener for hide to the
+&gt; item and removing it on hide would be much effort on the framework side which
+&gt; could be done with a single line of code in the app.
+
+The more I try to adapt our application logic to this new behaviour, the more it gets complicated and weird on avoiding the error tooltip popping up in undesired situations.
+
+It would be very helpfull to have this behaviour configurable or at the minimum allowing to override method __setValid or __showToolTip by making them non private.
+
+For our application I would switch the new logic completely off.
+
+Regards
+Dietrich</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35005</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-02-10 08:22:20 +0100</bug_when>
+            <thetext>Thats not a big deal. Made the _showTooltip method protected to allow overriding.
+
+master: def78e57d608a8c643fb4c3b8efb722766f86a39</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35006</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2014-02-10 09:29:40 +0100</bug_when>
+            <thetext>(In reply to comment #11)
+&gt; Thats not a big deal. Made the _showTooltip method protected to allow
+&gt; overriding.
+&gt; 
+&gt; master: def78e57d608a8c643fb4c3b8efb722766f86a39
+
+Thank you Martin!
+
+To complete this I&#39;ve created a pull request which makes qx.ui.form.Form more override friendly for the case wher a derived validation manager is used. Added an overrideable method for instance creation of the validation manager:
+
+https://github.com/qooxdoo/qooxdoo/pull/76
+
+With this change we avoid double object creation in classes which are derived from qx.ui.form.Form and use a derived validation manager.
+
+Regards
+Dietrich</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35020</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2014-02-11 08:34:22 +0100</bug_when>
+            <thetext>(In reply to comment #12)
+&gt; 
+&gt; To complete this I&#39;ve created a pull request which makes qx.ui.form.Form more
+&gt; override friendly for the case wher a derived validation manager is used. Added
+&gt; an overrideable method for instance creation of the validation manager:
+&gt; 
+&gt; https://github.com/qooxdoo/qooxdoo/pull/76
+&gt; 
+&gt; With this change we avoid double object creation in classes which are derived
+&gt; from qx.ui.form.Form and use a derived validation manager.
+&gt; 
+&gt; Regards
+&gt; Dietrich
+
+Createed separate bug http://bugzilla.qooxdoo.org/show_bug.cgi?id=8104 for this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35022</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-02-11 09:32:58 +0100</bug_when>
+            <thetext>(In reply to comment #13)
+&gt; Createed separate bug http://bugzilla.qooxdoo.org/show_bug.cgi?id=8104 for
+&gt; this.
+
+Great, thanks. :)</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

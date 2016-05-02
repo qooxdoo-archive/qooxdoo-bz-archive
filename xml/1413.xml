@@ -1,0 +1,168 @@
+<bug>
+          <bug_id>1413</bug_id>
+          
+          <creation_ts>2008-09-19 17:21:00 +0200</creation_ts>
+          <short_desc>Value of macro &quot;QOOXDOO_URI&quot; is not used</short_desc>
+          <delta_ts>2014-03-03 15:26:35 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.8.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Alexander Steitz">alexander.steitz</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>steffen.frey</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>5593</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-09-19 17:21:58 +0200</bug_when>
+            <thetext>The macro &quot;QOOXDOO_URI&quot; is still present in the config.json file and their template for creating a skeleton application, but the value is not used at the moment by the generator. 
+
+The problem behind this is that the URI&#39;s in the source version are generated at the moment using the relative path from the application root to the framework class folder. In most cases this is the right decision, however the URI&#39;s can manipulated anymore and thus a different setup is not possible.
+
+Defining a alternative URI to the framework class files in the source version should be possible.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5679</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-09-30 15:14:21 +0200</bug_when>
+            <thetext>add steffen to cc (shopconfig has similar issue)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5868</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2008-10-16 15:37:36 +0200</bug_when>
+            <thetext>There’s a one-line change in tool/pylib/generator/config/Config.py, on line 428 (in the 0.8.0 release) comment the line “lib[&#39;uri&#39;] = lib[&#39;path&#39;]”, here’s the code snippet for context:
+
+  ...snip...
+      manifest = Manifest(self.absPath(manifest))
+      lib = manifest.patchLibEntry(lib)
+      # absolutize paths (this might not be the best place to do that)
+      for entry in (&#39;path&#39;,):
+        lib[entry] = self.absPath(lib[entry])
+      # patch uri: set it to &#39;path&#39; here, let Generator.scanLib append suffix for classes
+      # and correct it in Generator.runSource, which knows the prefix and relativizes the
+      # result
+      #lib[&#39;uri&#39;] = lib[&#39;path&#39;]    &lt; &lt; DELETE THIS LINE
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5870</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-10-16 19:43:11 +0200</bug_when>
+            <thetext>John also wrote on the ML:
+&quot;...there is a related change I&#39;d like to ask for: by
+default, the base.json adds the application&#39;s Manifest with a URI of &quot;..&quot;.
+I would like to be able to override this in my app&#39;s config.json to give an
+explicit URI - an easy way to do this would be to add a &quot;URI&quot; variable in
+the &quot;let&quot; section of base.json and use that on lines 43 and 65 instead of
+&quot;..&quot;.  Would it be possible for you to add that it in, or is there a better
+way for me to achieve the same thing?&quot;
+
+I&#39;ve added APPLICATION_URI to base.json, application.json to that end. This should be reviewed in the context of the general URI handling in configs.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5973</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2008-10-23 13:57:57 +0200</bug_when>
+            <thetext>The patch in comment #2 fixes the problem for file locations but resourceUri&#39;s are also broken; in tools/pylib/generator/Generator.py on line 831 and 832 the generator applies paths to the URIs:
+
+  [...snip...]
+  # The place where the app HTML (&quot;index.html&quot;) lives
+  if self._config.get(&quot;compile-source/root&quot;, False):
+      self.approot = self._config1.absPath(self._config.get(&quot;compile-source/root&quot;))
+      # e.g. for: liburi = Path.rel_from_to(approot, lib[&#39;path&#39;])
+
+  # Read in settings
+  settings = self.getSettings()
+
+  # Get resource list
+  libs = self._config.get(&quot;library&quot;, [])
+
+&gt; &gt; DELETE FROM HERE
+  # patch uri entry
+  for lib in libs:
+      lib[&#39;uri&#39;] = Path.rel_from_to(self.approot, lib[&#39;path&#39;])
+&lt; &lt; TO HERE
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6509</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-11-26 15:12:06 +0100</bug_when>
+            <thetext>There is also a bunch of inconsistencies in specific job definitions concerning URI handling. Particularly, the &quot;compile-dist&quot; (which has a &#39;uri&#39; subkey) and &quot;compile-source&quot; (which hasn&#39;t) should have a unique and consisten set of subkeys to tweak URIs.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6560</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-12-01 13:59:48 +0100</bug_when>
+            <thetext>- made generator honor the &quot;uri&quot; setting from the &quot;library&quot; key again
+- add a central Generator._computeResourceUri() method, that implements the 
+documented logic for URI composition of 
+      to_libraryroot  + library_internal_path + resource_path
+  or
+      (applicationroot_to_configdir + configdir_to_libraryroot) + 
+library_internal_path + resource_path
+  respectively. See 
+http://qooxdoo.org/documentation/0.8/generator_config_articles#uri_handling
+
+- LibraryPath does quite a bit of URI juggling at the moment, which might need 
+revamping, but I&#39;ll postpone that for the moment.
+- the &quot;compile-dist&quot; and prob. the &quot;compile-source&quot; action keys have various 
+and not aligned notions of URI configuration; this needs
+  to be stream-lined.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6607</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-12-03 10:34:37 +0100</bug_when>
+            <thetext>Implemented in trunk.
+
+For the issue with the &quot;compile-dist&quot; config key an own bug has been opened 
+(bug#1660). &quot;compile-source&quot; seems non-critical.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26178</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-07-21 17:10:12 +0200</bug_when>
+            <thetext>verified</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39166</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:35 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

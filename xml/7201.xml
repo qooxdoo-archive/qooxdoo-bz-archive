@@ -1,0 +1,130 @@
+<bug>
+          <bug_id>7201</bug_id>
+          
+          <creation_ts>2013-02-05 10:30:00 +0100</creation_ts>
+          <short_desc>.getSizeHint() caches the value after first invocation and doesn&#39;t reset</short_desc>
+          <delta_ts>2013-10-07 08:13:22 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.layout</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>3.0.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Andreas Parusel">andreas.parusel</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>thron7</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>32112</commentid>
+              <attachid>1232</attachid>
+            <who name="Andreas Parusel">andreas.parusel</who>
+            <bug_when>2013-02-05 10:30:16 +0100</bug_when>
+            <thetext>Created attachment 1232
+Playground example
+
+Following use-case:
+
+There is a button with toggling labels. In Order to prevent constant resizing of the button, the user wants to calculate the length of the longest label.
+
+The problem is that after first invocation, .getSizeHint() always returns the same value.
+
+The attached playground sample-code illustrates the issue</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32114</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-05 12:51:17 +0100</bug_when>
+            <thetext>NB:
+
+The API documentation for .getSizeHint() (of LayoutItem [1]) is rather vague about the return value of the method. Its prose reads &quot;The map with the preferred width/height and the allowed minimum and maximum values in cases where shrinking or growing is required.&quot;
+
+I think it would be helpful for the user if the return value was properly documented, with all map keys (height, maxHeight, minHeight, width, maxWidth, minWidth) and their meaning, so the user knows how to access them.
+
+
+[1] http://demo.qooxdoo.org/2.1.x/apiviewer/#qx.ui.core.LayoutItem~getSizeHint!method_public</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33796</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-08-30 13:46:45 +0200</bug_when>
+            <thetext>Shorter sample to reproduce:
+
+
+var l = new qx.ui.basic.Label(&quot;First Button&quot;);
+this.getRoot().add(l);
+
+console.log(&quot;Label-width old:&quot; + l.getSizeHint().width);
+
+l.setValue(&quot;Much much longer Label for the Button&quot;);
+console.log(&quot;Label-width new:&quot; + l.getSizeHint().width);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33797</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-08-30 13:56:44 +0200</bug_when>
+            <thetext>After some debugging I found out that basically everything works as expected. The setValue call marks the content hint as invalid and adds the label to the layout queue for rerendering. This said, it is quite obvious why the synchronous call next to the value change does return the old size hint and not the new one. Adding a flush fixes the issue and is good enough for this report (as discussed with the bug creator).
+
+
+var l = new qx.ui.basic.Label(&quot;First Button&quot;);
+this.getRoot().add(l);
+
+console.log(&quot;Label-width old:&quot; + l.getSizeHint().width);
+
+l.setValue(&quot;Much much longer Label for the Button&quot;);
+qx.ui.core.queue.Manager.flush();
+console.log(&quot;Label-width new:&quot; + l.getSizeHint().width);</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1232</attachid>
+            <date>2013-02-05 10:30:00 +0100</date>
+            <delta_ts>2013-02-05 10:30:16 +0100</delta_ts>
+            <desc>Playground example</desc>
+            <filename>example.js</filename>
+            <type>application/x-javascript</type>
+            <size>602</size>
+            <attacher>andreas.parusel</attacher>
+            
+              <data encoding="base64">Ly8gQ3JlYXRlIGEgYnV0dG9uCnZhciBidXR0b24gPSBuZXcgcXgudWkuZm9ybS5CdXR0b24oIkZp
+cnN0IEJ1dHRvbiIsICJpY29uLzIyL2FwcHMvaW50ZXJuZXQtd2ViLWJyb3dzZXIucG5nIik7CmNv
+bnNvbGUubG9nKCJMYWJlbC13aWR0aCBvbGQ6IiArIGJ1dHRvbi5nZXRDaGlsZENvbnRyb2woImxh
+YmVsIikuZ2V0U2l6ZUhpbnQoKS53aWR0aCk7CgpidXR0b24uc2V0TGFiZWwoIk11Y2ggbXVjaCBs
+b25nZXIgTGFiZWwgZm9yIHRoZSBCdXR0b24iKTsKY29uc29sZS5sb2coIkxhYmVsLXdpZHRoIG5l
+dzoiICsgYnV0dG9uLmdldENoaWxkQ29udHJvbCgibGFiZWwiKS5nZXRTaXplSGludCgpLndpZHRo
+KTsKCi8vIERvY3VtZW50IGlzIHRoZSBhcHBsaWNhdGlvbiByb290CnZhciBkb2MgPSB0aGlzLmdl
+dFJvb3QoKTsKCi8vIEFkZCBidXR0b24gdG8gZG9jdW1lbnQgYXQgZml4ZWQgY29vcmRpbmF0ZXMK
+ZG9jLmFkZChidXR0b24sCnsKICBsZWZ0IDogMTAwLAogIHRvcCAgOiA1MAp9KTsKCi8vIEFkZCBh
+biBldmVudCBsaXN0ZW5lcgpidXR0b24uYWRkTGlzdGVuZXIoImV4ZWN1dGUiLCBmdW5jdGlvbihl
+KSB7CiAgYWxlcnQoIkhlbGxvIFdvcmxkISIpOwp9KTs=
+</data>
+
+          </attachment>
+      
+
+    </bug>

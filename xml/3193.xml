@@ -1,0 +1,126 @@
+<bug>
+          <bug_id>3193</bug_id>
+          
+          <creation_ts>2009-12-07 14:40:00 +0100</creation_ts>
+          <short_desc>overly agressive optimizer breaks remote communication</short_desc>
+          <delta_ts>2014-03-03 08:46:04 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>15364</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-12-07 14:40:45 +0100</bug_when>
+            <thetext>Consider this scenario:
+
+A backend requires an options object that contains a field __name__ so the application developer creates such an object
+
+var options = { __name__ : &quot;label1&quot; };
+
+ and passes it to the server. This works fine in the source version, but the build version obfuscates the __name__ field, breaking what&#39;s required at the server. Turning off privates optimization had no effect for me so I disabled all four optimization features and it still broke it!
+
+I tried rewriting options with a fixed string in each of these ways, but they all do the same thing as far as obfuscating the variable name and breaking requests to the server:
+
+var options = { &quot;__name__&quot;, &quot;label1&quot; };
+
+var options = {};
+options[&quot;__name__&quot;] = &quot;label1&quot;;
+
+Firstly, it seems that turning off optimization isn&#39;t actually disabling it entirely. 
+
+Additionally, there needs to be a way to tell the optimizer, even when enabled, not to optimize certain fields because they need to be seen in exactly that form elsewhere.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15365</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-12-07 14:48:25 +0100</bug_when>
+            <thetext>This really shoudn&#39;t happen. I suspect the variable optimizer could be doing too much.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15376</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-12-07 16:01:30 +0100</bug_when>
+            <thetext>The issue only shows up with the private optimizer, and is equally redeemed 
+when private optimization is off (Derrell, there must be something in your 
+environment you&#39;re missing). The private optimizer is in fact too aggressive as 
+it basically only checks for the &quot;__&quot; prefix when scanning for privates. A 
+close solution would be to restrict the privateoptimizer.lookup() function to 
+the actually *declared* privates (in statics, members), and only replace those. 
+Then Derrell would only need to make sure the class his code is in does not 
+have its own __name__ private attribute.
+
+(There is not much you can do on the privateoptimizer.update() side, as there 
+might even be legal object literals referring to privates of the current class 
+(as Fabian told me), so restricting the places were you try to replace privates 
+currently doesn&#39;t seem feasible).
+
+The workaround is to use the second variant Derrell tried, but split the object 
+key into two strings, like this:
+
+var options = {}
+options[&quot;__&quot;+&quot;name__&quot;] = &quot;label1&quot;
+
+Re-target to 1.0.1, as the solution amounts to a re-write of the private 
+optimizer which should have more time for testing.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16479</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-27 16:30:39 +0100</bug_when>
+            <thetext>moved to target 1.0.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18764</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-06-17 16:26:50 +0200</bug_when>
+            <thetext>-&gt; unspec</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26075</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-07-18 11:39:41 +0200</bug_when>
+            <thetext>fixed summary, as the issue goes away when private optimization is off</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35401</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:04 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

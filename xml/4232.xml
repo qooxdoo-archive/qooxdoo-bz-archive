@@ -1,0 +1,253 @@
+<bug>
+          <bug_id>4232</bug_id>
+          
+          <creation_ts>2010-10-22 19:27:00 +0200</creation_ts>
+          <short_desc>Patch for variable image sizes i.e. not hardcoded to 16x16</short_desc>
+          <delta_ts>2010-12-13 08:33:21 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.treevirtual</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="John Spackman">john.spackman</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>derrell.lipman</cc>
+    
+    <cc>martin.wittemann</cc>
+    
+    <cc>qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20853</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2010-10-22 19:27:19 +0200</bug_when>
+            <thetext>qx.ui.treevirtual.SimpleTreeDataCellRenderer requires all images to be 16x16, regardless of the rowHeight set on tree; images larger than 16x16 arte cropped.  This patch detects the size of the image and allows the rowHeight to do the cropping, allowing images of any size to be used.
+
+The change is in qx.ui.treevirtual.SimpleTreeDataCellRenderer._addIcon starting at line 454, change this:
+
+      var html = this._addImage(
+      {
+        url         : imageUrl,
+        position    :
+        {
+          top         : 0,
+          left        : pos,
+          width       : 19,
+          height      : 16
+        }
+      });
+
+      return (
+        {
+          html : html,
+          pos  : pos + 19
+        });
+
+
+To this:
+
+
+      var alias = this.__am.resolve(imageUrl);
+      var imageWidth = this.__rm.getImageWidth(alias);
+      var imageHeight = this.__rm.getImageHeight(alias);
+	      
+      var html = this._addImage(
+      {
+        url         : imageUrl,
+        position    :
+        {
+          top         : 0,
+          left        : pos,
+          width       : imageWidth, 
+          height      : imageHeight
+        },
+        imageWidth  : imageWidth,
+        imageHeight : imageHeight
+      });
+
+      return (
+        {
+          html : html,
+          pos  : pos + imageWidth + 3
+        });</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20890</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-27 08:28:30 +0200</bug_when>
+            <thetext>Derrell, please review.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20898</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-10-27 13:09:56 +0200</bug_when>
+            <thetext>&gt;         position    :
+&gt;         {
+&gt;           top         : 0,
+&gt;           left        : pos,
+&gt;           width       : imageWidth, 
+&gt;           height      : imageHeight
+
+I think we need to limit the width to no more than rowHeight+3 and height to no more than rowHeight, where rowHeight is retrieved from the table object. Otherwise, it&#39;s probably fine.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20905</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2010-10-27 15:41:35 +0200</bug_when>
+            <thetext>There would be an issue because there is currently no access to the table object from the renderer, and although this could be fixed it would mean an API change and possibly break existing custom renderers.
+
+It&#39;s not necessary to specifically clip the image to the rowHeight-3 because the overflow is hidden, effectively clipping the image to the rowHeight anyway.  The image width is a different matter however and the image will push the text across to the right to accomodate it.
+
+I&#39;m not convinced that it&#39;s necessary to force clipping because generally speaking icons come from a set of a predefined size (eg Qx has 16x 22x 32x 48x etc variants) and because a clipped image looks plain wrong it sounds like curing the symptom rather than the cause.
+
+However, if the renderer _did_ have access to the table&#39;s rowHeight then it would be a really useful option to be able to scale the images rather than just clip them EG for cases where the icons you have are too big and for whatever reason you don&#39;t want to create scaled-down set by hand.  
+
+John</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20906</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-10-27 15:53:02 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; There would be an issue because there is currently no access to the table
+&gt; object from the renderer,
+
+Ah, but there you&#39;re wrong. The table object is available in the &#39;table&#39; member of the &#39;cellInfo&#39; object that is passed to the renderer.
+
+I also just looked at the code a bit more carefully. If we make this change, I think a change should also be made (somehow!) to the _addIndentation() method. It needs to know how much an image for the containing folder has caused indentation to increase. The problem seems a bit more complicated than it did at first. I wonder whether it might make more sense to provide a mechanism to set the fixed (static) width and height, where they would default to 16 and 19 (or rowHeight and rowHeight+3) but be set by the user...???
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20907</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2010-10-27 16:21:49 +0200</bug_when>
+            <thetext>&gt; Ah, but there you&#39;re wrong. The table object is available in the &#39;table&#39; member
+&gt; of the &#39;cellInfo&#39; object that is passed to the renderer.
+
+oh cool - perhaps if the tree had an &quot;iconWidth&quot; property (default=16) then both _addIcon and _addIndentation could use that and rowHeight-3 for the image height.  As a bonus, _addIcon could scale the image too.
+
+John</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20908</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-10-27 16:24:51 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; &gt; Ah, but there you&#39;re wrong. The table object is available in the &#39;table&#39; member
+&gt; &gt; of the &#39;cellInfo&#39; object that is passed to the renderer.
+&gt; 
+&gt; oh cool - perhaps if the tree had an &quot;iconWidth&quot; property (default=16) then
+&gt; both _addIcon and _addIndentation could use that and rowHeight-3 for the image
+&gt; height.  As a bonus, _addIcon could scale the image too.
+
+I wonder if the solution is as simple as changing this:
+
+
+          width       : 19,
+          height      : 16
+
+to this:
+
+          width       : cellInfo.table.getRowHeight() + 3,
+          height      : cellInfo.table.getRowHeight()
+
+That doesn&#39;t provide the scaling you&#39;re looking for, though.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20943</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2010-10-28 16:40:15 +0200</bug_when>
+            <thetext>Yes, I think you&#39;re right.  There&#39;s no use-case to scale the image at present, that was just a nice-to-have that snuck in, and in fact my first attempts to change this was to be able to access the table rather than get the size of the image anyway.  
+
+I&#39;ve just tested that and found a slight difference is required: it needs to explicitly set the imageWidth and imageHeight properties when calling _addImage, otherwise the image&#39;s div does not have a height and it&#39;s clipped to the size of the nbsp:
+
+
+	      var html = this._addImage(
+	      {
+	        url         : imageUrl,
+	        position    :
+	        {
+	          top         : 0,
+	          left        : pos,
+	          width       : rowHeight + 3,
+	          height      : rowHeight
+	        },
+	        imageWidth  : rowHeight,
+	        imageHeight : rowHeight
+	      });
+	
+	      return (
+	        {
+	          html : html,
+	          pos  : pos + rowHeight + 3
+	        });
+	    }
+
+John</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20987</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-10-29 13:04:01 +0200</bug_when>
+            <thetext>Andreas, this looks reasonable. It should probably have some additional testing by whomever it&#39;s assigned to, testing for backwards compatibility with various size images and various rowHeight property values, and then committed.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20996</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-29 14:05:47 +0200</bug_when>
+            <thetext>Derrell, wouldn&#39;t you (maybe with John&#39;s help) be able to take of that as a maintainer of treevirtual?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20999</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-10-29 14:41:50 +0200</bug_when>
+            <thetext>(In reply to comment #9)
+&gt; Derrell, wouldn&#39;t you (maybe with John&#39;s help) be able to take of that as a
+&gt; maintainer of treevirtual?
+
+Yes. I just can&#39;t commit right now to when I&#39;ll be able to do it. If you&#39;d like to leave it on my plate, that&#39;s fine.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21635</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-30 13:57:34 +0100</bug_when>
+            <thetext>Applied the patch and changed the TreeVirtual demo to show one larger icon. Looked good so far for me.
+
+trunk: r24066</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

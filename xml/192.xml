@@ -1,0 +1,211 @@
+<bug>
+          <bug_id>192</bug_id>
+          
+          <creation_ts>2006-10-16 16:52:00 +0200</creation_ts>
+          <short_desc>Modification of property &quot;maximum&quot; failed</short_desc>
+          <delta_ts>2007-07-05 10:46:37 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>0.6.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="David Perez">craquerpro</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>561</commentid>
+            <who name="David Perez">craquerpro</who>
+            <bug_when>2006-10-16 16:52:37 +0200</bug_when>
+            <thetext>When I call this:
+   var newData = [ [&#39;column1&#39;, &#39;column2&#39;] ];
+   myTable.getTableModel().setData(newData);
+
+I get this error:
+
+ERROR: qx.ui.core.ScrollBar[4454]: Modification of property &quot;maximum&quot; failed with exception: TypeError - vCurrentChild has no properties 
+
+This error happens in:
+  qx.renderer.layout.VerticalBoxLayoutImpl.computeChildrenFlexHeight()
+
+at this line:
+  qx.Proto.computeChildrenFlexHeight = function() { if(this._childrenFlexHeightComputed||!this.getEnableFlexSupport()) 
+
+
+After having studied the problem, I suspect in this method for qx.ui.core.ScrollBar:
+
+qx.Proto._checkValue = function(propValue, propData) {
+  var innerSize = (this.getTopLevelWidget() == null) ? 0 :
+    (this._horizontal ? this.getInnerWidth() : this.getInnerHeight());
+
+  // NOTE: We can&#39;t use Number.limit here because our maximum may get negative
+  //       (when the scrollbar isn&#39;t needed). In this case Number.limit returns
+  //       this negative maximum instead of 0. But we need that the minimum is
+  //       stronger than the maximum.
+  //       -&gt; We use Math.max and Math.min
+  return Math.max(0, Math.min(this.getMaximum() - innerSize, propValue));
+}
+
+
+The condition this.getTopLevelWidget() == null is for checking the case of initial UI construction.
+
+In my case it doesn&#39;t fail when creating a table in the initial UI construction phase, but when I create a table later.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>562</commentid>
+            <who name="David Perez">craquerpro</who>
+            <bug_when>2006-10-16 16:57:27 +0200</bug_when>
+            <thetext>I have changed the line from:
+  var innerSize = (this.getTopLevelWidget() == null) ? 0 :
+to:
+  var innerSize = (this.getTopLevelWidget() == null || !this.getElement()) ? 0 :
+
+and now it works!
+
+:-)
+
+Don&#39;t know if this the best solution.  If required I can make a patch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>565</commentid>
+            <who name="Til Schneider">tilman.schneider</who>
+            <bug_when>2006-10-17 09:20:27 +0200</bug_when>
+            <thetext>Thanks for the report.
+
+Can you please provide a small test case or can you tell, how this bug can be reproduced?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>572</commentid>
+            <who name="David Perez">craquerpro</who>
+            <bug_when>2006-10-18 11:41:20 +0200</bug_when>
+            <thetext>Finally I&#39;ve been able to get a simple snippet that produces the error.
+Having an example and a solution, your job must be easy!  :-)
+
+Snippet:
+
+    qx.core.Init.getInstance().defineMain(function() {
+    	var tv = new qx.ui.pageview.tabview.TabView;
+    	tv.auto();
+	    var t1 = new qx.ui.pageview.tabview.TabViewButton(&quot;Label&quot;);
+	    t1.setChecked(true);
+	    var t2 = new qx.ui.pageview.tabview.TabViewButton(&quot;Table&quot;);
+	    var p1 = new qx.ui.pageview.tabview.TabViewPage(t1);
+	    p1.auto();
+	    p1.add(new qx.ui.basic.Label(&#39;Demo label&#39;));
+	    var p2 = new qx.ui.pageview.tabview.TabViewPage(t2);
+	    p2.auto();
+	    tv.getBar().add(t1, t2);
+	    tv.getPane().add(p1, p2);
+
+	    var tableModel = new qx.ui.table.SimpleTableModel();
+	    tableModel.setColumns([ &quot;A&quot;, &quot;B&quot; ]);
+	    var rowData = [ [ 1, 2], [ 3, 4] ];
+	    tableModel.setData(rowData);
+
+	    var table = new qx.ui.table.Table(tableModel);
+	    table.set({ columnVisibilityButtonVisible: false,left:10, top:30, width:200, height:100 });
+	    p2.add(table);
+	    tv.addToDocument();
+
+		tv.getBar().getManager().addEventListener(&#39;changeSelected&#39;, function(ev) {
+			tableModel.setData([ [ 5, 6], [ 7, 8] ]);
+		});
+});
+
+As you can see, if I try to change the table data, when the root widget has been already created, and the table isn&#39;t visible, produces the error.
+
+Callstack under FF 1.5:
+at qx.js:5178 
+at qx.js:2930 
+at qx.js:5101 
+at qx.js:2832 
+at qx.js:132 
+at qx.js:2836 
+at qx.js:132 
+at qx.js:5299 
+at qx.js:2832 
+at qx.js:132 
+at qx.js:2836 
+at qx.js:132 
+at qx.js:5109 
+at qx.js:2930 
+at qx.js:5101 
+at qx.js:2832 
+at qx.js:132 
+at qx.js:2836 
+at qx.js:132 
+at qx.js:5299 
+at qx.js:2832 
+at qx.js:132 
+at qx.js:2836 
+at qx.js:132 
+at qx.js:7123 
+at qx.js:7129 
+at qx.js:280 
+at qx.js:13417 
+at qx.js:13403 
+at qx.js:12953 
+at qx.js:863 
+at qx.js:854 
+at qx.js:849 
+at qx.js:12503 
+at a.html:35 
+at qx.js:863 
+at qx.js:854 
+at qx.js:285 
+at qx.js:6661 
+at qx.js:7073 
+at qx.js:280 
+at qx.js:7080 
+at qx.js:863 
+at qx.js:854 
+at qx.js:2242 
+at qx.js:2207 
+at qx.js:2087
+
+Supplied qx.js as an attachment
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>583</commentid>
+            <who name="David Perez">craquerpro</who>
+            <bug_when>2006-10-23 11:55:30 +0200</bug_when>
+            <thetext>Any new about this bug?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1799</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2007-07-05 10:46:37 +0200</bug_when>
+            <thetext>I have just checked your code and it does not cause any errors. I suppose it has been fixed in the mean time.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

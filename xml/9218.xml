@@ -1,0 +1,255 @@
+<bug>
+          <bug_id>9218</bug_id>
+          
+          <creation_ts>2015-10-15 16:58:00 +0200</creation_ts>
+          <short_desc>Text selection and mouse events in Chrome</short_desc>
+          <delta_ts>2015-11-11 16:27:44 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>5.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>DUPLICATE</resolution>
+          <dup_id>9105</dup_id>
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>5.0.2</target_milestone>
+          
+          <blocked>9210</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Andreas Ecker">qooxdoo</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>dietrich.streifert</cc>
+    
+    <cc>john.spackman</cc>
+    
+    <cc>mitya</cc>
+    
+    <cc>nanexxo+qooxdoo</cc>
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>43588</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-15 16:58:30 +0200</bug_when>
+            <thetext>On behalf of Dimitri, from his post to the mailing list (2015-10-15), http://qooxdoo.678.n2.nabble.com/Text-selection-and-mouse-events-in-Chrome-td7587685.html :
+
+We&#39;ve recently hit a very nasty bug in our qooxdoo desktop app and
+recent Chrome/Chromium versions. Symptoms are: if there is a selectable
+text inside a qx.ui.window.Window, and you move the window (or just
+single-click window header), you won&#39;t be able to select text by mouse
+dragging anymore (double- or triple-clicking will work however). See a
+link [1] to Playground snippet that demonstrates the issue. In case the
+link expires, here is the code to run in Playground:
+
+var win = new qx.ui.window.Window(&quot;First Window&quot;);
+win.setWidth(300);
+win.setHeight(200);
+win.setShowMinimize(false);
+
+this.getRoot().add(win, {left:20, top:20});
+win.open();
+
+var label = new qx.ui.basic.Label(&quot;Lorem ipsum dolor sit amet&quot;).set({
+   selectable: true
+});
+
+win.add(label);
+
+Now the gory details. As I&#39;ve already mentioned, the issue is observed
+*only* in recent Chrome/Chromium releases, for all desktop platforms;
+Firefox and older WebKit-based browsers, like Safari or GNOME Epiphany,
+are not affected. Furthermore, we&#39;ve been able to track this bug down to
+particular changeset in Chrome&#39;s Blink engine [2]. We didn&#39;t bisect
+further to determine particular commit, but it seems quite plausible
+that the culprit is [3]:
+
+Make the mousemove event cancellable
+The mouse move event used to be non cancellable in the 90s and
+when the specications changes in 2002-2003, not not everyone noticed.
+
+The change was introduced about two years ago, in Chrome 31.0.1622.0.
+
+Now guys, could you please help me understand what this issue is all
+about? If my hypothesis is correct and it has something to do with
+mousemove event cancellation, then what&#39;s going on? I could probably
+suggest that mousemove events for the window, once canceled, are being
+kept canceled forever? It&#39;s interesting that if you open DOM inspector
+and just drag that label&#39;s DIV out of the window, somewhere to beginning
+of BODY, you&#39;ll be able to select text again; that means, only the
+window becomes &quot;broken&quot;, not the entire application/document.
+
+With all the above - is it a qooxdoo or a Chrome bug? If latter, we
+should be able to concoct a plain non-qooxdoo MWE that Chrome guys would
+probably expect from us. So here I&#39;m kindly asking your assistance in
+isolating (and, hopefully, fixing) this pesky bug.
+
+Cheers,
+Dimitri
+
+
+[1] http://tinyurl.com/osswyny
+[2]
+http://build.chromium.org/f/chromium/perf/dashboard/ui/changelog_blink.html?url=/trunk&amp;range=157209%3A157206
+[3] http://src.chromium.org/viewvc/blink?view=rev&amp;revision=157207</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43589</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-15 16:59:30 +0200</bug_when>
+            <thetext>From John Spackman on mailing list:
+
+Hi Dimitri
+
+I’ve been able to find the two stack traces that call preventDefault during a mousemove event, they are:
+
+anonymous(),
+qx.event.type.Native.preventDefault,
+qx.event.type.Roll.stop,
+qx.ui.window.Window._onMoveRoll,
+qx.ui.core.EventHandler._dispatchEvent,
+qx.event.dispatch.AbstractBubbling.dispatchEvent,
+qx.event.Manager.dispatchEvent,
+qx.event.Registration.fireEvent,
+qx.event.handler.Gesture._fireEvent,
+qx.event.handler.GestureCore.prototype._fireRoll(),
+qx.event.handler.GestureCore.prototype.gestureMove(),
+qx.event.handler.GestureCore.prototype.checkAndFireGesture(),
+qx.event.handler.Gesture.prototype.__ho(),
+qx.event.handler.Gesture.prototype.checkAndFireGesture(),
+anonymous(),
+qx.event.dispatch.Direct.prototype.dispatchEvent(),
+bP()
+
+anonymous(),
+qx.event.type.Native.preventDefault,
+qx.ui.core.EventHandler._dispatchEvent,
+qx.event.dispatch.AbstractBubbling.dispatchEvent,
+qx.event.Manager.dispatchEvent,
+qx.event.Registration.fireEvent,
+qx.event.handler.Gesture._fireEvent,
+qx.event.handler.GestureCore._fireRoll,
+qx.event.handler.GestureCore.gestureMove,
+qx.event.handler.GestureCore.prototype.checkAndFireGesture(),
+qx.event.handler.Gesture.prototype.__ho(),
+qx.event.handler.Gesture.prototype.checkAndFireGesture(),
+anonymous(),
+qx.event.dispatch.Direct.prototype.dispatchEvent(),
+bP()
+
+But it’s only the first stack trace that seems to trigger the problem; the gesture code is trying to stop a “gesturemove” event but because the underlying native event is a “mousemove”, it’s the mousemove which is actually getting preventDefault’ed.  To test whether this is a Qooxdoo bug or a Chrome bug, I temporarily patched qx.event.type.Native.preventDefault to read:
+
+    /**
+     * Prevent browser default behavior, e.g. opening the context menu, ...
+     */
+    preventDefault : function()
+    {
+      this.base(arguments);
+      if (this._native._original.type !== &quot;mousemove&quot;)
+        qx.bom.Event.preventDefault(this._native);
+    },
+
+Obviously far too crude a fix for real use but I think it shows that it’s not some other part of Qooxdoo which is subsequently suppressing events because only the browser is being excluded from preventDefault and the problem goes away.
+
+The solution may lie in qx.event.handler.GestureCore.gestureMove, lines 240 onward currently say:
+
+        if(!this.__isMultiPointerGesture) {
+          this.__fireTrack(&quot;track&quot;, domEvent, gesture.target);
+          this._fireRoll(domEvent, &quot;touch&quot;, gesture.target);
+        }
+
+I think that in order to provide a unified touch/pointer event system, the call to this._fireRoll is trying to simulate a touch event (which would be reasonable to want to preventDefault) but it’s associated with the mousemove (domEvent  is a “pointermove” event and domEvent._original is then “mousemove” event), so I’ve tried patching it to this:
+
+        if(!this.__isMultiPointerGesture) {
+          if (domEvent._original &amp;&amp; domEvent._original.type == &quot;mousemove&quot;)
+            domEvent.preventDefault = function(){};
+          this.__fireTrack(&quot;track&quot;, domEvent, gesture.target);
+          this._fireRoll(domEvent, &quot;touch&quot;, gesture.target);
+        }
+
+That works, and as a workaround would be targeted at just this problem.  I have not tested it on any platforms which support gestures.
+
+John</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43590</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-15 16:59:58 +0200</bug_when>
+            <thetext>From John Spackman on mailing list:
+
+Actually thinking about it, when I said that my quick hack in qx.event.type.Native.preventDefault showed it can’t be another part of Qooxdoo causing the problem, that’s not true because there could be multiple native event handlers for mousemove within Qooxdoo.  That would need to be eliminated, but hopefully straightforward to track down and prove or disprove.
+
+Hope it helps anyway :)
+
+John</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43591</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-15 17:00:41 +0200</bug_when>
+            <thetext>Could be related to bug #9210</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43606</commentid>
+            <who name="Dimitri">mitya</who>
+            <bug_when>2015-10-19 00:14:14 +0200</bug_when>
+            <thetext>Andreas, thanks once again for filing the bug.
+
+Okay, what at first seemed a Chrome bug turns out to be a complex issue in qooxdoo event layer. Concerning the original example, here&#39;s what we&#39;ve got so far for different browsers:
+
+IE (9-11): text selection doesn&#39;t work at all (!)
+WebKit-based browsers: works fine
+Firefox: works fine
+Chrome (32+): selection works until you move a window
+
+What was introduced in Chrome 32 is the most strict DOM L3 Events compliance. preventDefault() on mousemove event actually cancels its effects, including text selection. Firefox follows the spec in a formal way [1], letting preventDefault() be called and setting defaultPrevented to true, but not actually canceling it.
+
+This can be demonstrated with a simple fiddle: http://jsfiddle.net/ky2zrtgc/
+
+What&#39;s interesting, in this fiddle IE demonstrates behavior similar to Firefox, though for initial example you can&#39;t select text in IE at all, so probably the reason for that is completely different.
+
+[1] https://bugzilla.mozilla.org/show_bug.cgi?id=704423</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43636</commentid>
+            <who name="Aleksandar Josipovic">nanexxo+qooxdoo</who>
+            <bug_when>2015-11-09 11:59:16 +0100</bug_when>
+            <thetext>I too have stumbled upon this behavior when working with Chrome. (Altough I can&#39;t reproduce non selectable text in IE11)
+There are three Bugreports (bug #9105; bug #9210; bug #9218) that have been opened for this issue.
+
+The report for bug #9105 has a pull request linked which fixes the issue in my case.
+
+For future reference, I&#39;m on Windows 8.1, FireFox 42, Chrome 46, IE 11.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43638</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-11-11 16:27:44 +0100</bug_when>
+            <thetext>Aleksandar, thanks for pointing out this might be related to bug #9105. Indeed, fixing the issue in the bug mentioned seems to also fix the problem of this bug here as well as apparently bug #9210. 
+
+Marked both dependent bugs as duplicates. Please verify that it fixes the issues in your apps. If you still encounter issues, please open new ones - the more specific the better. Thanks to everybody involved!
+
+*** This bug has been marked as a duplicate of bug 9105 ***</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

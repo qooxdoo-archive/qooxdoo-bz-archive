@@ -1,0 +1,261 @@
+<bug>
+          <bug_id>125</bug_id>
+          
+          <creation_ts>2006-08-11 17:29:00 +0200</creation_ts>
+          <short_desc>Tables - Cannot create CellEditorFactory for ComboBox</short_desc>
+          <delta_ts>2014-03-03 15:24:01 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.7.2</target_milestone>
+          
+          
+          <votes>2</votes>
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Choon Whee">chunhui</reporter>
+          <assigned_to name="Til Schneider">tilman.schneider</assigned_to>
+          <cc>craquerpro</cc>
+    
+    <cc>usc</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>275</commentid>
+            <who name="Choon Whee">chunhui</who>
+            <bug_when>2006-08-11 17:29:06 +0200</bug_when>
+            <thetext>I tried to create A ComboBoxCellEditorFactory but it wouldn&#39;t work as the ComboBox&#39;s popup couldn&#39;t locate the parent widget. It would exist for any widget that users popups. Flat widgets that fit into the cell space works fine. I did a CheckBoxCellEditorFactory and it works perfectly fine.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>278</commentid>
+            <who name="Til Schneider">tilman.schneider</who>
+            <bug_when>2006-08-14 09:31:28 +0200</bug_when>
+            <thetext>Please provide a small example that shows the bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>286</commentid>
+            <who name="Ulrich Schreiner">usc</who>
+            <bug_when>2006-08-17 11:14:52 +0200</bug_when>
+            <thetext>change the location of &quot;qx.js&quot; and the location of the images, widgets, resources (or remove the specific lines)
+
+start the example and double click a cell in the first column. a combobox should appear with three elements. but it does not.
+
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=iso-8859-15&quot; /&gt;
+    &lt;title&gt;Table/Combobox test&lt;/title&gt;
+	  &lt;script type=&quot;text/javascript&quot; src=&quot;/qooxdoo/frontend/framework/source/script/qx.js&quot; &gt;&lt;/script&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;script type=&quot;text/javascript&quot;&gt;
+
+			qx.OO.defineClass(&quot;ComboCellEditorFactory&quot;, qx.ui.table.CellEditorFactory,
+				function() {
+  				qx.ui.table.CellEditorFactory.call(this);
+			});
+			qx.Proto.createCellEditor = function(cellInfo) {
+			  this._cellEditor = new qx.ui.form.ComboBox ();
+			  for (var i=0; i&lt;3; i++) {
+			    this._cellEditor.add (new qx.ui.form.ListItem(&quot;&quot;+i,null,&quot;&quot;+i));
+			  }
+				this._cellEditor.setSelected(this._cellEditor.getManager().getItems()[0]);
+			  return this._cellEditor;
+			}
+			qx.Proto.getCellEditorValue = function(cellEditor) {
+				return &quot;1&quot;;
+			}
+
+
+	qx.core.Init.getInstance().defineInitialize(function() {
+		qx.manager.object.AliasManager.getInstance().add(&quot;widget&quot;,&quot;/qooxdoo/frontend/framework/build/resource/widget/windows&quot;)
+		qx.manager.object.AliasManager.getInstance().add(&quot;static&quot;,&quot;/qooxdoo/frontend/framework/build/resource/static&quot;)
+		qx.manager.object.AliasManager.getInstance().add(&quot;icon&quot;,&quot;/qooxdoo/frontend/framework/build/resource/icon/crystalsvg&quot;)
+	});
+
+    qx.core.Init.getInstance().defineMain(function()
+    {
+var d = qx.ui.core.ClientDocument.getInstance();
+
+    // table model
+    var tableModel = new qx.ui.table.SimpleTableModel();
+    tableModel.setColumns([ &quot;ID&quot;, &quot;A number&quot;, &quot;A date&quot;, &quot;Boolean Test&quot;]);
+    var rowData = [];
+    var now = new Date().getTime();
+    var dateRange = 400 * 24 * 60 * 60 * 1000; // 400 days
+    for (var row = 0; row &lt; 100; row++) {
+      var dt = new Date(now + Math.random() * dateRange - dateRange / 2);
+      rowData.push([row,Math.random() *10000,dt,(Math.random() &gt; 0.5)]);
+    }
+    tableModel.setData(rowData);
+    tableModel.setColumnEditable(0, true);
+    tableModel.setColumnEditable(1, true);
+    tableModel.setColumnEditable(2, true);
+
+    // table
+    var table = new qx.ui.table.Table(tableModel);
+    with (table) {
+      set({ left:10, top:30, right:300, bottom:30 });
+      setMetaColumnCounts([1, -1]);
+      getSelectionModel().setSelectionMode(qx.ui.table.SelectionModel.MULTIPLE_INTERVAL_SELECTION);
+      getTableColumnModel().setDataCellRenderer(3, new qx.ui.table.BooleanDataCellRenderer());
+    	getTableColumnModel().setCellEditorFactory(0, new ComboCellEditorFactory())
+    };
+
+    d.add(table);
+    });
+
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>287</commentid>
+            <who name="Ulrich Schreiner">usc</who>
+            <bug_when>2006-08-18 12:22:19 +0200</bug_when>
+            <thetext>hi,
+
+the shown code displays a combobox, but not the dropdown-area. you can select a value with the cursor-keys. when pressing TAB, you get an exception, because the &quot;stopEditing&quot; and after that the &quot;cancelEditing&quot; (TablePaneScroller) is called. these functions are triggered by the focus-event on the _cellEditor. BUT: the combobox itself has listeners on the same event which are called AFTER the &quot;cancelEditing&quot; but in &quot;cancelEditing&quot; the _cellEditor was &quot;disposed&quot; and now you get many errors.
+
+but a removal of this &quot;dispose&quot; does not really help, because the editor-component is removed from the focusIndicator and now it does not have any parents any more. which leads to other errors ... :-(
+
+i don&#39;t have a solution for this.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>312</commentid>
+            <who name="David Perez">craquerpro</who>
+            <bug_when>2006-09-01 12:29:52 +0200</bug_when>
+            <thetext>This also happens to Spinners.
+In addition, if my widget is a BoxLayout that has inside a Checkbox + TextField, this error also appears when clicking the Checkbox.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>314</commentid>
+            <who name="David Perez">craquerpro</who>
+            <bug_when>2006-09-01 12:31:25 +0200</bug_when>
+            <thetext>*** Bug 138 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>725</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2006-11-29 14:20:59 +0100</bug_when>
+            <thetext>Til, can you take a look at this?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2257</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-09-11 14:51:24 +0200</bug_when>
+            <thetext>Marked for 0.7.2. Can anybody have a look at this? Fabian? Derrell?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2314</commentid>
+              <attachid>256</attachid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2007-09-12 16:29:09 +0200</bug_when>
+            <thetext>Created attachment 256
+Example demonstrating the bug for qooxdoo trunk</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2330</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2007-09-18 15:33:59 +0200</bug_when>
+            <thetext>fixed now in trunk and legacy 0.7</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38233</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:01 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>256</attachid>
+            <date>2007-09-12 16:29:00 +0200</date>
+            <delta_ts>2007-09-12 16:29:09 +0200</delta_ts>
+            <desc>Example demonstrating the bug for qooxdoo trunk</desc>
+            <filename>Bug_125.html</filename>
+            <type>text/html</type>
+            <size>2997</size>
+            <attacher>fabian.jakobs</attacher>
+            
+              <data encoding="base64">PGh0bWw+CjxoZWFkPgogIDxtZXRhIGh0dHAtZXF1aXY9IkNvbnRlbnQtVHlwZSIgY29udGVudD0i
+dGV4dC9odG1sOyBjaGFyc2V0PXV0Zi04IiAvPgogIDx0aXRsZT5xb294ZG9vICZyYXF1bzsgRGVt
+byBCcm93c2VyPC90aXRsZT4KICA8c2NyaXB0IHR5cGU9InRleHQvamF2YXNjcmlwdCIgc3JjPSIu
+Li8uLi9zY3JpcHQvZGVtby5qcyI+PC9zY3JpcHQ+CiAgPHNjcmlwdCB0eXBlPSJ0ZXh0L2phdmFz
+Y3JpcHQiIHNyYz0iLi4vdXRpbC5qcyI+PC9zY3JpcHQ+CjwvaGVhZD4KPGJvZHk+CiAgPGRpdiBp
+ZD0iZGVzY3JpcHRpb24iPgogICAgPHA+U29tZSBzcGVlZCB0ZXN0cyBmb3IgcXgudWkuYmFzaWMu
+QXRvbS4gUGxlYXNlIHJlZ2FyZCwgdGhhdCBtYW55IG9mIHRoaW5ncyBpbiB0aGUgZmluaXNoZWQK
+ICAgIHBhZ2UgYXJlIG1vZGlmaWVkIG9uIHRoZSBhbHJlYWR5IGNyZWF0ZWQgYW5kIHZpc2libGUg
+cXgudWkuYmFzaWMuQXRvbSBpbnN0YW5jZXMuIFRoaXMgaXMgbm90CiAgICBhIGdvb2QgZXhhbXBs
+ZSBpbiBzY3JpcHRpbmcgcW9veGRvby4gSXQncyBhbHdheXMgZmFzdGVyIHRvIGNvbmZpZ3VyZSBh
+IGluc3RhbmNlIG9mIHF4LnVpLmNvcmUuV2lkZ2V0CiAgICBjb21wbGV0ZWx5LCBiZWZvcmUgYWRk
+IGl0IHRvIHRoZSBxeC51aS5jb3JlLkNsaWVudERvY3VtZW50IG9yIGFueSBvdGhlciB2aXNpYmxl
+IHBhcmVudCBxeC51aS5jb3JlLldpZGdldC48L3A+CiAgPC9kaXY+Cgo8c2NyaXB0IHR5cGU9InRl
+eHQvamF2YXNjcmlwdCI+CgogIHF4LkNsYXNzLmRlZmluZSgiQ29tYm9DZWxsRWRpdG9yRmFjdG9y
+eSIsCiAgewogICAgZXh0ZW5kIDogcXguY29yZS5UYXJnZXQsCiAgICBpbXBsZW1lbnQgOiBxeC51
+aS50YWJsZS5JQ2VsbEVkaXRvckZhY3RvcnksCgogICAgbWVtYmVycyA6IHsKCiAgICAgIGNyZWF0
+ZUNlbGxFZGl0b3IgOiBmdW5jdGlvbihjZWxsSW5mbykgewoJCQkgIHRoaXMuX2NlbGxFZGl0b3Ig
+PSBuZXcgcXgudWkuZm9ybS5Db21ib0JveCAoKTsKCQkJICBmb3IgKHZhciBpPTA7IGk8MzsgaSsr
+KSB7CgkJCSAgICB0aGlzLl9jZWxsRWRpdG9yLmFkZCAobmV3IHF4LnVpLmZvcm0uTGlzdEl0ZW0o
+IiIraSxudWxsLCIiK2kpKTsKCQkJICB9CgkJCQl0aGlzLl9jZWxsRWRpdG9yLnNldFNlbGVjdGVk
+KHRoaXMuX2NlbGxFZGl0b3IuZ2V0TWFuYWdlcigpLmdldEl0ZW1zKClbMF0pOwoJCQkgIHJldHVy
+biB0aGlzLl9jZWxsRWRpdG9yOwoJCQl9LAoKCQkJZ2V0Q2VsbEVkaXRvclZhbHVlIDogZnVuY3Rp
+b24oY2VsbEVkaXRvcikgewoJCQkJcmV0dXJuIDE7CgkJCX0KICAgIH0KICB9KTsKCgoJLyoKICBx
+eC5jb3JlLkluaXQuZ2V0SW5zdGFuY2UoKS5kZWZpbmVJbml0aWFsaXplKGZ1bmN0aW9uKCkgewoJ
+CXF4Lm1hbmFnZXIub2JqZWN0LkFsaWFzTWFuYWdlci5nZXRJbnN0YW5jZSgpLmFkZCgid2lkZ2V0
+IiwiL3Fvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3JrL2J1aWxkL3Jlc291cmNlL3dpZGdldC93aW5k
+b3dzIikKCQlxeC5tYW5hZ2VyLm9iamVjdC5BbGlhc01hbmFnZXIuZ2V0SW5zdGFuY2UoKS5hZGQo
+InN0YXRpYyIsIi9xb294ZG9vL2Zyb250ZW5kL2ZyYW1ld29yay9idWlsZC9yZXNvdXJjZS9zdGF0
+aWMiKQoJCXF4Lm1hbmFnZXIub2JqZWN0LkFsaWFzTWFuYWdlci5nZXRJbnN0YW5jZSgpLmFkZCgi
+aWNvbiIsIi9xb294ZG9vL2Zyb250ZW5kL2ZyYW1ld29yay9idWlsZC9yZXNvdXJjZS9pY29uL2Ny
+eXN0YWxzdmciKQoJfSk7CgkqLwoKICBxeC5jb3JlLkluaXQuZ2V0SW5zdGFuY2UoKS5kZWZpbmVN
+YWluKGZ1bmN0aW9uKCkKICB7CiAgICB2YXIgZCA9IHF4LnVpLmNvcmUuQ2xpZW50RG9jdW1lbnQu
+Z2V0SW5zdGFuY2UoKTsKCiAgICAvLyB0YWJsZSBtb2RlbAogICAgdmFyIHRhYmxlTW9kZWwgPSBu
+ZXcgcXgudWkudGFibGUubW9kZWwuU2ltcGxlKCk7CiAgICB0YWJsZU1vZGVsLnNldENvbHVtbnMo
+WyAiSUQiLCAiQSBudW1iZXIiLCAiQSBkYXRlIiwgIkJvb2xlYW4gVGVzdCJdKTsKICAgIHZhciBy
+b3dEYXRhID0gW107CiAgICB2YXIgbm93ID0gbmV3IERhdGUoKS5nZXRUaW1lKCk7CiAgICB2YXIg
+ZGF0ZVJhbmdlID0gNDAwICogMjQgKiA2MCAqIDYwICogMTAwMDsgLy8gNDAwIGRheXMKICAgIGZv
+ciAodmFyIHJvdyA9IDA7IHJvdyA8IDEwMDsgcm93KyspIHsKICAgICAgdmFyIGR0ID0gbmV3IERh
+dGUobm93ICsgTWF0aC5yYW5kb20oKSAqIGRhdGVSYW5nZSAtIGRhdGVSYW5nZSAvIDIpOwogICAg
+ICByb3dEYXRhLnB1c2goW3JvdyxNYXRoLnJhbmRvbSgpICoxMDAwMCxkdCwoTWF0aC5yYW5kb20o
+KSA+IDAuNSldKTsKICAgIH0KICAgIHRhYmxlTW9kZWwuc2V0RGF0YShyb3dEYXRhKTsKICAgIHRh
+YmxlTW9kZWwuc2V0Q29sdW1uRWRpdGFibGUoMCwgdHJ1ZSk7CiAgICB0YWJsZU1vZGVsLnNldENv
+bHVtbkVkaXRhYmxlKDEsIHRydWUpOwogICAgdGFibGVNb2RlbC5zZXRDb2x1bW5FZGl0YWJsZSgy
+LCB0cnVlKTsKCiAgICAvLyB0YWJsZQogICAgdmFyIHRhYmxlID0gbmV3IHF4LnVpLnRhYmxlLlRh
+YmxlKHRhYmxlTW9kZWwpOwogICAgd2l0aCAodGFibGUpIHsKICAgICAgc2V0KHsgbGVmdDoxMCwg
+dG9wOjMwLCByaWdodDozMDAsIGJvdHRvbTozMCB9KTsKICAgICAgLy9zZXRNZXRhQ29sdW1uQ291
+bnRzKFsxLCAtMV0pOwogICAgICBzZXRSb3dIZWlnaHQoMzApOwogICAgICBnZXRTZWxlY3Rpb25N
+b2RlbCgpLnNldFNlbGVjdGlvbk1vZGUocXgudWkudGFibGUuc2VsZWN0aW9uLk1vZGVsLk1VTFRJ
+UExFX0lOVEVSVkFMX1NFTEVDVElPTik7CiAgICAgIGdldFRhYmxlQ29sdW1uTW9kZWwoKS5zZXRE
+YXRhQ2VsbFJlbmRlcmVyKDMsIG5ldyBxeC51aS50YWJsZS5jZWxscmVuZGVyZXIuQm9vbGVhbigp
+KTsKICAgIAlnZXRUYWJsZUNvbHVtbk1vZGVsKCkuc2V0Q2VsbEVkaXRvckZhY3RvcnkoMCwgbmV3
+IENvbWJvQ2VsbEVkaXRvckZhY3RvcnkoKSkKICAgIH07CgogICAgZC5hZGQodGFibGUpOwogIH0p
+OwoKICAgIDwvc2NyaXB0Pgo8L2JvZHk+CjwvaHRtbD4K
+</data>
+
+          </attachment>
+      
+
+    </bug>

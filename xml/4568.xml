@@ -1,0 +1,575 @@
+<bug>
+          <bug_id>4568</bug_id>
+          
+          <creation_ts>2011-01-20 15:37:00 +0100</creation_ts>
+          <short_desc>table-contextmenu displayed on gray area of the table</short_desc>
+          <delta_ts>2014-03-03 15:26:20 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>1.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://tinyurl.com/6ycfpgl</bug_file_loc>
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martin_GER">msto</reporter>
+          <assigned_to name="Derrell Lipman">derrell.lipman</assigned_to>
+          <cc>derrell.lipman</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>22371</commentid>
+            <who name="Martin_GER">msto</who>
+            <bug_when>2011-01-20 15:37:59 +0100</bug_when>
+            <thetext>The contextmenu of tables is displayed not only by click on data lines, also by clicking on the gray area of table.
+
+On this example http://tinyurl.com/6ycfpgl
+
+I have tried it width Version 1.3 and 1.4.pre. The error is the same!
+Also I have use &quot;table.setContextMenuHandler(0,...&quot; in a other attempt. Without success (example in attachment)!
+
+-&gt; also see forum &quot;table contextmenu displayed only on data lines&quot;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22373</commentid>
+              <attachid>867</attachid>
+            <who name="Martin_GER">msto</who>
+            <bug_when>2011-01-20 15:39:26 +0100</bug_when>
+            <thetext>Created attachment 867
+code for tabledemo</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22377</commentid>
+              <attachid>868</attachid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2011-01-20 16:40:33 +0100</bug_when>
+            <thetext>Created attachment 868
+Proposed quick-fix
+
+For a quick fix you can apply the attached patch to
+&quot;qx.ui.table.MTableContextMenu&quot;.
+
+But for a permanent fix I would like to have this behavior configurable...
+
+Reason:
+  In my application I can start with an empty table and I still have to be
+  able to open the context menu there, because in the context menu there&#39;s an
+  entry/button called &quot;add one row&quot; ;)
+
+So I recommend that the behavior is controlled by something like
+&quot;showMenuOnEmptyRow&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22378</commentid>
+              <attachid>869</attachid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2011-01-20 16:58:04 +0100</bug_when>
+            <thetext>Created attachment 869
+Proposed fix
+
+This is my proposal for a permanent fix.
+
+We can of cause discuss about the name of the property/flag
+or the init-value... ;)
+But in general I would like to see this kind of solution.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22379</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-01-20 17:00:56 +0100</bug_when>
+            <thetext>Thanks, Peter. I&#39;ll look at your proposed fix and try to get something into trunk shortly.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22380</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-01-21 00:23:20 +0100</bug_when>
+            <thetext>Peter, your new patch does not appear to do what you want when incorporated with the bug #4065, #4066, #4067 patch. This new one works perfectly initially, but as soon as I have right-clicked on one of the existing rows, the context menu will no longer show up on the non-row (gray) area...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22381</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-01-21 23:45:10 +0100</bug_when>
+            <thetext>Martin, I think your quick fix will be to have your context menu handler check for row===null (note the triple equal!) and if so, return false. The row value will be null when the user clicks in the area below the last row, and returning false says to not display the context menu.
+
+From the mailing list, this is my explanation to Peter of why I think I&#39;m having trouble with Peter&#39;s proposed fix:
+
+
+Unless you patched Scroller.js as well as MTableContextMenu.js, I still contend that it can&#39;t work. Here&#39;s my testing scenario. Run this program in the playground, using trunk:
+
+// enhance the table
+qx.Class.include(qx.ui.table.Table, qx.ui.table.MTableContextMenu);
+
+// helping function
+function createRandomRows(rowCount) {
+  var rowData = [];
+  for (var row = 0; row &lt; rowCount; row++) {
+    rowData.push([ row, row%2===0, Math.random() * 10000 ]);
+  }
+  return rowData;
+}
+
+// window
+var win = new qx.ui.window.Window(&quot;Table&quot;).set({
+  layout : new qx.ui.layout.Grow,
+  contentPadding : 0
+});
+this.getRoot().add(win);
+win.moveTo(30, 40);
+win.open();
+
+// table model
+var tableModel = new qx.ui.table.model.Simple().set({
+  columns : [ &quot;ID&quot;, &quot;Show Menu&quot;, &quot;A number&quot; ],
+  data : createRandomRows(10)
+});
+
+// table
+var table = new qx.ui.table.Table(tableModel);
+table.setContextMenuHandler(1, function (col, row, table, dataModel, contextMenu) {
+  contextMenu.add(new qx.ui.menu.Button(&quot;row &quot;+row, &quot;icon/16/actions/go-bottom.png&quot;));
+  contextMenu.add(new qx.ui.menu.Button(&quot;col &quot;+col, &quot;icon/16/actions/go-last.png&quot;));
+  if (row === null)
+  {
+    return true;
+  }
+  return row%2===0; // only show on even row numbers
+});
+//table.setShowMenuOnEmptyRows(false);
+win.add(table);
+
+// table column model
+var tcm = table.getTableColumnModel();
+tcm.setDataCellRenderer(1, new qx.ui.table.cellrenderer.Boolean);
+
+
+Notice that I&#39;ve added a new comparison to the context menu handler, to handle the case where the row is null. This will occur when you right-click in the gray area of the table, below the data rows.
+
+Now right-click on the gray area (below column 1, the second column). You&#39;ll get the context menu. Then right-click on a data row, in column 1. If your right-click is on an even row, you&#39;ll get the context menu; odd row, not. Now again right-click in the gray area. The context menu will not appear. The reason is because in the _onContextMenu function in Scroller.js, it checks for whether the saved _lastMouseDownCell row and column match the current row and column, and does not fire the event if those don&#39;t match. The value of _lastMouseDownCell is only updated when clicking on a data row, so the row value of null does not match the row value saved in _lastMouseDownCell, which was whatever row you of data you last right-clicked on.
+
+So right now, we have a situation where the gray area context menu can happen sometimes, and not other times. That&#39;s bad. Martin can solve his problem (for now) by doing as I did in my playground example, and test for row===null, returning false if it is. Peter, your desire to have the the context menu available seems not to work at present... unless you&#39;ve made other changes that I don&#39;t know about.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22394</commentid>
+              <attachid>871</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-01-24 22:10:35 +0100</bug_when>
+            <thetext>Created attachment 871
+Proposed patch that works regardless of focus indicator visibility
+
+This is my proposed patch. To allow firing the cellContextmenu event when the row value is null (i.e., clicking in the area below the data rows), we need an explicit check for it, since we might not enter that block of code based on the focus indicator being hidden.
+
+Although not strictly necessary because the user&#39;s event handler could test for the row value being null, this patch also adds a new property to specify whether right clicks in the area below the data cells should fire the cellContextMenu event.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22407</commentid>
+              <attachid>872</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-01-25 14:57:30 +0100</bug_when>
+            <thetext>Created attachment 872
+Revised patch to correct bug in previous one
+
+Patch 871 was buggy. This replacement should be better. It&#39;s been tested with all four combinations of boolean values of the properties contextMenuFromDataCellsOnly and showCellFocusIndicator.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22412</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-01-25 16:59:01 +0100</bug_when>
+            <thetext>Peter confirmed the revised path. Patch committed in r24667.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22413</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-01-25 17:01:21 +0100</bug_when>
+            <thetext>For the record, here&#39;s the playground test app which can be used to verify the four possible settings of properties contextMenuFromDataCellsOnly and showCellFocusIndicator.
+
+// enhance the table
+qx.Class.include(qx.ui.table.Table, qx.ui.table.MTableContextMenu);
+
+// helping function
+function createRandomRows(rowCount) {
+  var rowData = [];
+  for (var row = 0; row &lt; rowCount; row++) {
+    rowData.push([ row, row%2===0, Math.random() * 10000 ]);
+  }
+  return rowData;
+}
+
+// window
+var win = new qx.ui.window.Window(&quot;Table&quot;).set({
+  layout : new qx.ui.layout.Grow,
+  contentPadding : 0
+});
+this.getRoot().add(win);
+win.moveTo(30, 40);
+win.open();
+
+// table model
+var tableModel = new qx.ui.table.model.Simple().set({
+  columns : [ &quot;ID&quot;, &quot;Show Menu&quot;, &quot;A number&quot; ],
+  data : createRandomRows(10)
+});
+
+// table
+var table = new qx.ui.table.Table(tableModel);
+table.setContextMenuHandler(1, function (col, row, table, dataModel, contextMenu) {
+  contextMenu.add(new qx.ui.menu.Button(&quot;row &quot;+row, &quot;icon/16/actions/go-bottom.png&quot;));
+  contextMenu.add(new qx.ui.menu.Button(&quot;col &quot;+col, &quot;icon/16/actions/go-last.png&quot;));
+  if (row === null)
+  {
+    return true;
+  }
+  return row%2===0; // only show on even row numbers
+});
+//table.setShowMenuOnEmptyRows(false);
+win.add(table);
+
+// table column model
+var tcm = table.getTableColumnModel();
+tcm.setDataCellRenderer(1, new qx.ui.table.cellrenderer.Boolean);
+
+table.setContextMenuFromDataCellsOnly(false);
+table.setShowCellFocusIndicator(true);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22442</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-01-26 15:57:57 +0100</bug_when>
+            <thetext>Correct target milestone. This does not belong in the bug-fix release; only in the next release from trunk.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39076</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:20 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>867</attachid>
+            <date>2011-01-20 15:39:00 +0100</date>
+            <delta_ts>2011-01-20 15:39:26 +0100</delta_ts>
+            <desc>code for tabledemo</desc>
+            <filename>tabledemo.txt</filename>
+            <type>text/plain</type>
+            <size>3984</size>
+            <attacher>msto</attacher>
+            
+              <data encoding="base64">dGhlIG5hbWUgb2YgQXBwbGljYXRpb246ICJ0YWJsZWRlbW8iDQoNCg0KDQoiQXBwbGljYXRpb24u
+anMiOg0KDQovKiAqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioNCiNhc3NldCh0YWJsZWRlbW8vKikNCioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKiAqLw0KcXguQ2xhc3MuZGVmaW5lKCJ0YWJsZWRlbW8uQXBwbGljYXRpb24iLA0Kew0K
+ICAgICAgICBleHRlbmQgOiBxeC5hcHBsaWNhdGlvbi5TdGFuZGFsb25lLA0KICAgICAgIA0KICAg
+ICAgICBtZW1iZXJzIDoNCiAgICAgICAgew0KICAgICAgICAgICAgICAgIG1haW4gOiBmdW5jdGlv
+bigpDQogICAgICAgICAgICAgICAgew0KICAgICAgICAgICAgICAgICAgICAgICAgLy8gQ2FsbCBz
+dXBlciBjbGFzcw0KICAgICAgICAgICAgICAgICAgICAgICAgdGhpcy5iYXNlKGFyZ3VtZW50cyk7
+DQogICAgICAgICAgICAgICAgICAgICAgIA0KICAgICAgICAgICAgICAgICAgICAgICAgdmFyIHRh
+YmxlZGVtb19wcm9ncmFtbSA9IG5ldyB0YWJsZWRlbW8uQ3JlYXRlVGFibGUoKTsgIA0KICAgICAg
+ICAgICAgICAgICAgICAgICAgdGhpcy5nZXRSb290KCkuYWRkKHRhYmxlZGVtb19wcm9ncmFtbSwg
+e2VkZ2U6IDB9KTsNCiAgICAgICAgICAgICAgICB9DQogICAgICAgIH0NCn0pOw0KDQoNCg0KIkNy
+ZWF0ZVRhYmxlLmpzIjoNCg0KLyogKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqDQojYXNzZXQodGFibGVkZW1vLyop
+DQoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKiogKi8NCnF4LkNsYXNzLmRlZmluZSgidGFibGVkZW1vLkNyZWF0ZVRh
+YmxlIiwNCnsNCiAgICAgICAgZXh0ZW5kIDogcXgudWkuY29udGFpbmVyLkNvbXBvc2l0ZSwNCiAg
+ICAgICANCiAgICAgICAgY29uc3RydWN0IDogZnVuY3Rpb24oKQ0KICAgICAgICB7DQogICAgICAg
+ICAgICAgICAgcXguQ2xhc3MuaW5jbHVkZShxeC51aS50YWJsZS5UYWJsZSwgcXgudWkudGFibGUu
+TVRhYmxlQ29udGV4dE1lbnUpOw0KICAgICAgICAgICAgICAgDQogICAgICAgICAgICAgICAgdGhp
+cy5iYXNlKGFyZ3VtZW50cyk7DQogICAgICAgICAgICAgICANCiAgICAgICAgICAgICAgICB2YXIg
+aGF1cHRfbGF5b3V0ID0gbmV3IHF4LnVpLmxheW91dC5WQm94KCk7DQogICAgICAgICAgICAgICAg
+aGF1cHRfbGF5b3V0LnNldFNlcGFyYXRvcigic2VwYXJhdG9yLXZlcnRpY2FsIik7DQogICAgICAg
+ICAgICAgICAgdGhpcy5zZXRMYXlvdXQoaGF1cHRfbGF5b3V0KTsNCiAgICAgICAgICAgICAgICB0
+aGlzLnNldEJhY2tncm91bmRDb2xvcigiI2ZmZmZmZiIpOw0KICAgICAgICAgICAgICAgDQogICAg
+ICAgICAgICAgICAgdmFyIGNvbnRhaW5lcjEgPSB0aGlzLmNyZWF0ZV9jb250YWluZXIxKCk7DQog
+ICAgICAgICAgICAgICAgdGhpcy5hZGQoY29udGFpbmVyMSk7DQogICAgICAgICAgICAgICAgdGhp
+cy5zZXROYXRpdmVDb250ZXh0TWVudSh0cnVlKTsNCiAgICAgICAgfSwNCiAgICAgICAgbWVtYmVy
+cyA6DQogICAgICAgIHsNCiAgICAgICAgICAgICAgICBjcmVhdGVfY29udGFpbmVyMSA6IGZ1bmN0
+aW9uKCkNCiAgICAgICAgICAgICAgICB7DQogICAgICAgICAgICAgICAgICAgICAgICB2YXIgbGF5
+b3V0ID0gbmV3IHF4LnVpLmxheW91dC5WQm94KCk7DQogICAgICAgICAgICAgICAgICAgICAgICB2
+YXIgYm9yZGVyQ29sb3IgPSAiI2NjY2NjYyI7ICANCiAgICAgICAgICAgICAgICAgICAgICAgIHZh
+ciBib3JkZXJfY29udGFpbmVyID0gbmV3IHF4LnVpLmRlY29yYXRpb24uU2luZ2xlKDEsICJzb2xp
+ZCIsIGJvcmRlckNvbG9yKS5zZXQoeyB9KTsNCiAgICAgICAgICAgICAgICAgICAgICAgIHZhciBj
+b250YWluZXIgPSBuZXcgcXgudWkuY29udGFpbmVyLkNvbXBvc2l0ZShsYXlvdXQpLnNldCh7DQog
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGJhY2tncm91bmRDb2xvcjogIiNjY2NjY2Mi
+LA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBkZWNvcmF0b3I6IGJvcmRlcl9jb250
+YWluZXINCiAgICAgICAgICAgICAgICAgICAgICAgIH0pOyAgDQoNCiAgICAgICAgICAgICAgICAg
+ICAgICAgIGNvbnRhaW5lci5hZGQodGhpcy5jcmVhdGVfdGFibGUoKSwgeyBmbGV4OiAxIH0pOw0K
+ICAgICAgICAgICAgICAgICAgICAgICANCiAgICAgICAgICAgICAgICAgICAgICAgIHJldHVybiBj
+b250YWluZXI7DQogICAgICAgICAgICAgICAgfSwNCiAgICAgICAgICAgICAgICBjcmVhdGVfdGFi
+bGUgOiBmdW5jdGlvbigpDQogICAgICAgICAgICAgICAgew0KICAgICAgICAgICAgICAgICAgICAg
+ICAgdmFyIHJvd0RhdGEgPSBbWzEsMTEsMTExLDExMTFdLFsyLDIyLDIyMiwyMjIyXSxbMywzMywz
+MzMsMzMzM11dOw0KICAgICAgICAgICAgICAgICAgICAgICANCiAgICAgICAgICAgICAgICAgICAg
+ICAgIHZhciB0YWJsZU1vZGVsID0gdGhpcy5fdGFibGVNb2RlbCA9IG5ldyBxeC51aS50YWJsZS5t
+b2RlbC5TaW1wbGUoKTsNCiAgICAgICAgICAgICAgICAgICAgICAgIHRhYmxlTW9kZWwuc2V0Q29s
+dW1ucyhbIm51bWJlciAxIiwgIm51bWJlciAyIiwgIm51bWJlciAzIiwgIm51bWJlciA0Il0pOw0K
+ICAgICAgICAgICAgICAgICAgICAgICAgdGFibGVNb2RlbC5zZXREYXRhKHJvd0RhdGEpOw0KDQog
+ICAgICAgICAgICAgICAgICAgICAgICB2YXIgdGFibGUgPSBuZXcgcXgudWkudGFibGUuVGFibGUo
+dGFibGVNb2RlbCk7DQogICAgICAgICAgICAgICAgICAgICAgIA0KICAgICAgICAgICAgICAgICAg
+ICAgICAgdGFibGUuc2V0KHsNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgd2lkdGg6
+IDYwMCwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgaGVpZ2h0OiA0MDAsDQogICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgIGRlY29yYXRvciA6IG51bGwNCiAgICAgICAgICAg
+ICAgICAgICAgICAgIH0pOw0KICAgICAgICAgICAgICAgICAgICAgICAgdGFibGUuc2V0Q29udGV4
+dE1lbnVIYW5kbGVyKDIsIHRoaXMuX2NvbnRleHRNZW51KTsNCiAgICAgICAgICAgICAgICAgICAg
+ICAgIHRhYmxlLnNldENvbnRleHRNZW51SGFuZGxlcigzLCB0aGlzLl9jb250ZXh0TWVudSk7DQoN
+CiAgICAgICAgICAgICAgICAgICAgICAgIHJldHVybiB0YWJsZTsNCiAgICAgICAgICAgICAgICB9
+LA0KICAgICAgICAgICAgICAgIF9jb250ZXh0TWVudSA6IGZ1bmN0aW9uKGNvbCwNCiAgICAgICAg
+ICAgICAgICAgICAgICAgIHJvdywNCiAgICAgICAgICAgICAgICAgICAgICAgIHRhYmxlLA0KICAg
+ICAgICAgICAgICAgICAgICAgICAgZGF0YU1vZGVsLA0KICAgICAgICAgICAgICAgICAgICAgICAg
+Y29udGV4dE1lbnUpDQogICAgICAgICAgICAgICAgew0KICAgICAgICAgICAgICAgICAgICAgICAg
+dmFyIGJ1dHRvbjEgPSBuZXcgcXgudWkubWVudS5CdXR0b24oImJ1dHRvbiAxIik7DQogICAgICAg
+ICAgICAgICAgICAgICAgICB2YXIgYnV0dG9uMiA9IG5ldyBxeC51aS5tZW51LkJ1dHRvbigiYnV0
+dG9uIDIiKTsNCiAgICAgICAgICAgICAgICAgICAgICAgIHZhciBidXR0b24zID0gbmV3IHF4LnVp
+Lm1lbnUuQnV0dG9uKCJidXR0b24gMyIpOw0KICAgICAgICAgICAgICAgICAgICAgICANCiAgICAg
+ICAgICAgICAgICAgICAgICAgIGNvbnRleHRNZW51LmFkZChidXR0b24xKTsNCiAgICAgICAgICAg
+ICAgICAgICAgICAgIGNvbnRleHRNZW51LmFkZChidXR0b24yKTsNCiAgICAgICAgICAgICAgICAg
+ICAgICAgIGNvbnRleHRNZW51LmFkZChidXR0b24zKTsNCg0KICAgICAgICAgICAgICAgICAgICAg
+ICAgcmV0dXJuIHRydWU7DQogICAgICAgICAgICAgICAgfQ0KICAgICAgICB9DQp9KTsg
+</data>
+
+          </attachment>
+          <attachment isobsolete="1" ispatch="1" isprivate="0" isurl="0">
+            <attachid>868</attachid>
+            <date>2011-01-20 16:40:00 +0100</date>
+            <delta_ts>2011-01-25 14:57:30 +0100</delta_ts>
+            <desc>Proposed quick-fix</desc>
+            <filename>MTableContextMenu.js.patch</filename>
+            <type>text/plain</type>
+            <size>464</size>
+            <attacher>schnepe2</attacher>
+            
+              <data encoding="base64">SW5kZXg6IE1UYWJsZUNvbnRleHRNZW51LmpzDQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09DQotLS0gTVRhYmxlQ29udGV4
+dE1lbnUuanMJKFJldmlzaW9uIDI0NTc4KQ0KKysrIE1UYWJsZUNvbnRleHRNZW51LmpzCShBcmJl
+aXRza29waWUpDQpAQCAtNTEsNyArNTEsNyBAQA0KIAogICAgICAgICAvLyBJZiB0aGVyZSdzIG5v
+IGNvbnRleHQgbWVudSBoYW5kbGVyIGZvciB0aGlzIGNvbHVtbiwgd2UgaGF2ZSBub3RoaW5nCiAg
+ICAgICAgIC8vIHRvIGRvLgotICAgICAgICBpZiAodHlwZW9mIGNvbnRleHRNZW51SGFuZGxlciAh
+PT0gImZ1bmN0aW9uIikgeworICAgICAgICBpZiAodHlwZW9mIGNvbnRleHRNZW51SGFuZGxlciAh
+PT0gImZ1bmN0aW9uIiB8fCAhIGUuZ2V0Um93KCkpIHsKICAgICAgICAgICByZXR1cm47CiAgICAg
+ICAgIH0KIAo=
+</data>
+
+          </attachment>
+          <attachment isobsolete="1" ispatch="1" isprivate="0" isurl="0">
+            <attachid>869</attachid>
+            <date>2011-01-20 16:58:00 +0100</date>
+            <delta_ts>2011-01-25 14:57:30 +0100</delta_ts>
+            <desc>Proposed fix</desc>
+            <filename>MTableContextMenu.js.patch</filename>
+            <type>text/plain</type>
+            <size>1430</size>
+            <attacher>schnepe2</attacher>
+            
+              <data encoding="base64">SW5kZXg6IE1UYWJsZUNvbnRleHRNZW51LmpzDQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09DQotLS0gTVRhYmxlQ29udGV4
+dE1lbnUuanMJKFJldmlzaW9uIDI0NjEyKQ0KKysrIE1UYWJsZUNvbnRleHRNZW51LmpzCShBcmJl
+aXRza29waWUpDQpAQCAtNDQsOSArNDQsMTcgQEANCiAgICAgICAgICAgY29udGV4dE1lbnUgPSBu
+dWxsOwogICAgICAgICB9CiAKKyAgICAgICAgdmFyIGNvbCA9IGUuZ2V0Q29sdW1uKCk7CisgICAg
+ICAgIHZhciByb3cgPSBlLmdldFJvdygpOworCisgICAgICAgIC8vIElmIHdlIHNob3VsZG4ndCBk
+aXNwbGF5IHRoZSBjb250ZXh0IG1lbnUgaW4gdGhlIGVtcHR5IHNwYWNlLCB3ZSBoYXZlCisgICAg
+ICAgIC8vIG5vdGhpbmcgdG8gZG8uCisgICAgICAgIGlmIChyb3cgPT09IG51bGwgJiYgISB0aGlz
+LmlzU2hvd01lbnVPbkVtcHR5Um93cygpKSB7CisgICAgICAgICAgcmV0dXJuOworICAgICAgICB9
+CisKICAgICAgICAgLy8gR2V0IHRoZSBjb250ZXh0IG1lbnUgaGFuZGxlciBmb3IgdGhlIGNvbHVt
+biBvbiB3aGljaCB0aGUgY29udGV4dAogICAgICAgICAvLyBtZW51IHJlcXVlc3Qgd2FzIGlzc3Vl
+ZC4KLSAgICAgICAgdmFyIGNvbCA9IGUuZ2V0Q29sdW1uKCk7CiAgICAgICAgIHZhciBjb250ZXh0
+TWVudUhhbmRsZXIgPSB0aGlzLmdldENvbnRleHRNZW51SGFuZGxlcihjb2wpOwogCiAgICAgICAg
+IC8vIElmIHRoZXJlJ3Mgbm8gY29udGV4dCBtZW51IGhhbmRsZXIgZm9yIHRoaXMgY29sdW1uLCB3
+ZSBoYXZlIG5vdGhpbmcKQEAgLTc3LDcgKzg1LDcgQEANCiAgICAgICAgIC8vIENhbGwgdGhlIGNv
+bnRleHQgbWVudSBoYW5kbGVyIGZvciB0aGlzIGNvbHVtbi4KICAgICAgICAgdmFyIGJTaG93Q29u
+dGV4dE1lbnUgPSBjb250ZXh0TWVudUhhbmRsZXIuY2FsbChoYW5kbGVyQ29udGV4dCwKICAgICAg
+ICAgICBjb2wsCi0gICAgICAgICAgZS5nZXRSb3coKSwKKyAgICAgICAgICByb3csCiAgICAgICAg
+ICAgdGhpcywKICAgICAgICAgICB0YWJsZU1vZGVsLAogICAgICAgICAgIGNvbnRleHRNZW51CkBA
+IC0xMDIsNiArMTEwLDE2IEBADQogICAgIHRoaXMuX19jb250ZXh0TWVudUhhbmRsZXJDb250ZXh0
+ID0gWyBdOwogICB9LAogCisgIHByb3BlcnRpZXMgOgorICB7CisgICAgLyoqIFdoZXRoZXIgdG8g
+ZGlzcGxheSB0aGUgY29udGV4dCBtZW51IGV2ZW4gb24gZW1wdHkgcm93cyAoZ3JleSBhcmVhKSAq
+LworICAgIHNob3dNZW51T25FbXB0eVJvd3MgOiAgeworICAgICAgaW5pdCAgICAgOiB0cnVlLAor
+ICAgICAgY2hlY2sgICAgOiAiQm9vbGVhbiIsCisgICAgICBudWxsYWJsZSA6IGZhbHNlCisgICAg
+fQorICB9LAorCiAgIG1lbWJlcnMgOgogICB7CiAgICAgX19jb250ZXh0TWVudUhhbmRsZXIgOiBu
+dWxsLAo=
+</data>
+
+          </attachment>
+          <attachment isobsolete="1" ispatch="1" isprivate="0" isurl="0">
+            <attachid>871</attachid>
+            <date>2011-01-24 22:10:00 +0100</date>
+            <delta_ts>2011-01-25 14:57:30 +0100</delta_ts>
+            <desc>Proposed patch that works regardless of focus indicator visibility</desc>
+            <filename>x.patch</filename>
+            <type>text/plain</type>
+            <size>3386</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS90YWJsZS9U
+YWJsZS5qcyBiL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS90YWJsZS9UYWJs
+ZS5qcwppbmRleCA5ZTQwMjY5Li4zNjVhNDczIDEwMDY0NAotLS0gYS9xb294ZG9vL2ZyYW1ld29y
+ay9zb3VyY2UvY2xhc3MvcXgvdWkvdGFibGUvVGFibGUuanMKKysrIGIvcW9veGRvby9mcmFtZXdv
+cmsvc291cmNlL2NsYXNzL3F4L3VpL3RhYmxlL1RhYmxlLmpzCkBAIC00OTksNiArNDk5LDIyIEBA
+IHF4LkNsYXNzLmRlZmluZSgicXgudWkudGFibGUuVGFibGUiLAogICAgIH0sCiAKICAgICAvKioK
+KyAgICAgKiBCeSBkZWZhdWx0LCB0aGUgImNlbGxDb250ZXh0bWVudSIgZXZlbnQgaXMgZmlyZWQg
+b25seSB3aGVuIGEgZGF0YSBjZWxsCisgICAgICogaXMgcmlnaHQtY2xpY2tlZC4gSXQgaXMgbm90
+IGZpcmVkIHdoZW4gYSByaWdodC1jbGljayBvY2N1cnMgaW4gdGhlCisgICAgICogZW1wdHkgYXJl
+YSBvZiB0aGUgdGFibGUgYmVsb3cgdGhlIGxhc3QgZGF0YSByb3cuIEJ5IHR1cm5pbmcgb24gdGhp
+cworICAgICAqIHByb3BlcnR5LCAiY2VsbENvbnRleHRNZW51IiBldmVudHMgd2lsbCBhbHNvIGJl
+IGdlbmVyYXRlZCB3aGVuIGEKKyAgICAgKiByaWdodC1jbGljayBvY2N1cnMgaW4gdGhhdCBlbXB0
+eSBhcmVhLiBJbiBzdWNoIGEgY2FzZSwgcm93IGlkZW50aWZpZXIKKyAgICAgKiBpbiB0aGUgZXZl
+bnQgZGF0YSB3aWxsIGJlIG51bGwsIHNvIGV2ZW50IGhhbmRsZXJzIGNhbiBjaGVjayAocm93ID09
+PQorICAgICAqIG51bGwpIHRvIGhhbmRsZSB0aGlzIGNhc2UuCisgICAgICovCisgICAgY29udGV4
+dE1lbnVGcm9tRGF0YUNlbGxzT25seSA6CisgICAgeworICAgICAgY2hlY2sgOiAiQm9vbGVhbiIs
+CisgICAgICBpbml0IDogdHJ1ZSwKKyAgICAgIGFwcGx5IDogIl9hcHBseUNvbnRleHRNZW51RnJv
+bURhdGFDZWxsc09ubHkiCisgICAgfSwKKworICAgIC8qKgogICAgICAqIFdoZXRoZXIgdGhlIHRh
+YmxlIHNob3VsZCBrZWVwIHRoZSBmaXJzdCB2aXNpYmxlIHJvdyBjb21wbGV0ZS4gSWYgc2V0IHRv
+IGZhbHNlLAogICAgICAqIHRoZSBmaXJzdCByb3cgbWF5IGJlIHJlbmRlcmVkIHBhcnRpYWwsIGRl
+cGVuZGluZyBvbiB0aGUgdmVydGljYWwgc2Nyb2xsIHZhbHVlLgogICAgICAqLwpAQCAtMTEwOCw2
+ICsxMTI0LDE3IEBAIHF4LkNsYXNzLmRlZmluZSgicXgudWkudGFibGUuVGFibGUiLAogCiAKICAg
+ICAvLyBwcm9wZXJ0eSBtb2RpZmllcgorICAgIF9hcHBseUNvbnRleHRNZW51RnJvbURhdGFDZWxs
+c09ubHkgOiBmdW5jdGlvbih2YWx1ZSwgb2xkKQorICAgIHsKKyAgICAgIHZhciBzY3JvbGxlckFy
+ciA9IHRoaXMuX2dldFBhbmVTY3JvbGxlckFycigpOworCisgICAgICBmb3IgKHZhciBpPTA7IGk8
+c2Nyb2xsZXJBcnIubGVuZ3RoOyBpKyspIHsKKyAgICAgICAgc2Nyb2xsZXJBcnJbaV0uc2V0Q29u
+dGV4dE1lbnVGcm9tRGF0YUNlbGxzT25seSh2YWx1ZSk7CisgICAgICB9CisgICAgfSwKKworCisg
+ICAgLy8gcHJvcGVydHkgbW9kaWZpZXIKICAgICBfYXBwbHlLZWVwRmlyc3RWaXNpYmxlUm93Q29t
+cGxldGUgOiBmdW5jdGlvbih2YWx1ZSwgb2xkKQogICAgIHsKICAgICAgIHZhciBzY3JvbGxlckFy
+ciA9IHRoaXMuX2dldFBhbmVTY3JvbGxlckFycigpOwpkaWZmIC0tZ2l0IGEvcW9veGRvby9mcmFt
+ZXdvcmsvc291cmNlL2NsYXNzL3F4L3VpL3RhYmxlL3BhbmUvU2Nyb2xsZXIuanMgYi9xb294ZG9v
+L2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkvdGFibGUvcGFuZS9TY3JvbGxlci5qcwppbmRl
+eCBiMTYwNmNhLi40MzBmMDE4IDEwMDY0NAotLS0gYS9xb294ZG9vL2ZyYW1ld29yay9zb3VyY2Uv
+Y2xhc3MvcXgvdWkvdGFibGUvcGFuZS9TY3JvbGxlci5qcworKysgYi9xb294ZG9vL2ZyYW1ld29y
+ay9zb3VyY2UvY2xhc3MvcXgvdWkvdGFibGUvcGFuZS9TY3JvbGxlci5qcwpAQCAtMjc4LDYgKzI3
+OCwyMiBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LnVpLnRhYmxlLnBhbmUuU2Nyb2xsZXIiLAogCiAK
+ICAgICAvKioKKyAgICAgKiBCeSBkZWZhdWx0LCB0aGUgImNlbGxDb250ZXh0bWVudSIgZXZlbnQg
+aXMgZmlyZWQgb25seSB3aGVuIGEgZGF0YSBjZWxsCisgICAgICogaXMgcmlnaHQtY2xpY2tlZC4g
+SXQgaXMgbm90IGZpcmVkIHdoZW4gYSByaWdodC1jbGljayBvY2N1cnMgaW4gdGhlCisgICAgICog
+ZW1wdHkgYXJlYSBvZiB0aGUgdGFibGUgYmVsb3cgdGhlIGxhc3QgZGF0YSByb3cuIEJ5IHR1cm5p
+bmcgb24gdGhpcworICAgICAqIHByb3BlcnR5LCAiY2VsbENvbnRleHRNZW51IiBldmVudHMgd2ls
+bCBhbHNvIGJlIGdlbmVyYXRlZCB3aGVuIGEKKyAgICAgKiByaWdodC1jbGljayBvY2N1cnMgaW4g
+dGhhdCBlbXB0eSBhcmVhLiBJbiBzdWNoIGEgY2FzZSwgcm93IGlkZW50aWZpZXIKKyAgICAgKiBp
+biB0aGUgZXZlbnQgZGF0YSB3aWxsIGJlIG51bGwsIHNvIGV2ZW50IGhhbmRsZXJzIGNhbiBjaGVj
+ayAocm93ID09PQorICAgICAqIG51bGwpIHRvIGhhbmRsZSB0aGlzIGNhc2UuCisgICAgICovCisg
+ICAgY29udGV4dE1lbnVGcm9tRGF0YUNlbGxzT25seSA6CisgICAgeworICAgICAgY2hlY2sgOiAi
+Qm9vbGVhbiIsCisgICAgICBpbml0IDogdHJ1ZQorICAgIH0sCisKKworICAgIC8qKgogICAgICAq
+IFdoZXRoZXIgdG8gcmVzZXQgdGhlIHNlbGVjdGlvbiB3aGVuIGEgaGVhZGVyIGNlbGwgaXMgY2xp
+Y2tlZC4gU2luY2UKICAgICAgKiBtb3N0IGRhdGEgbW9kZWxzIGRvIG5vdCBoYXZlIHByb3Zpc2lv
+bnMgdG8gcmV0YWluIGEgc2VsZWN0aW9uIGFmdGVyCiAgICAgICogc29ydGluZywgdGhlIGRlZmF1
+bHQgaXMgdG8gcmVzZXQgdGhlIHNlbGVjdGlvbiBpbiB0aGlzIGNhc2UuIFNvbWUgZGF0YQpAQCAt
+MTQ0MSw3ICsxNDU3LDggQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC51aS50YWJsZS5wYW5lLlNjcm9s
+bGVyIiwKICAgICAgIHZhciByb3cgPSB0aGlzLl9nZXRSb3dGb3JQYWdlUG9zKHBhZ2VYLCBwYWdl
+WSk7CiAgICAgICB2YXIgY29sID0gdGhpcy5fZ2V0Q29sdW1uRm9yUGFnZVgocGFnZVgpOwogCi0g
+ICAgICBpZiAodGhpcy5fX2ZvY3VzSW5kaWNhdG9yLmlzSGlkZGVuKCkgfHwKKyAgICAgIGlmICgh
+IHRoaXMuZ2V0U2hvd0NlbGxGb2N1c0luZGljYXRvcigpIHx8CisgICAgICAgICAgKCEgdGhpcy5n
+ZXRDb250ZXh0TWVudUZyb21EYXRhQ2VsbHNPbmx5KCkgJiYgcm93ID09PSBudWxsKSB8fAogICAg
+ICAgICAgICh0aGlzLl9fbGFzdE1vdXNlRG93bkNlbGwgJiYKICAgICAgICAgICAgcm93ID09IHRo
+aXMuX19sYXN0TW91c2VEb3duQ2VsbC5yb3cgJiYKICAgICAgICAgICAgY29sID09IHRoaXMuX19s
+YXN0TW91c2VEb3duQ2VsbC5jb2wpKQo=
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>872</attachid>
+            <date>2011-01-25 14:57:00 +0100</date>
+            <delta_ts>2011-01-25 14:57:30 +0100</delta_ts>
+            <desc>Revised patch to correct bug in previous one</desc>
+            <filename>x.patch</filename>
+            <type>text/plain</type>
+            <size>3757</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS90YWJsZS9U
+YWJsZS5qcyBiL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS90YWJsZS9UYWJs
+ZS5qcwppbmRleCA5ZTQwMjY5Li4zNjVhNDczIDEwMDY0NAotLS0gYS9xb294ZG9vL2ZyYW1ld29y
+ay9zb3VyY2UvY2xhc3MvcXgvdWkvdGFibGUvVGFibGUuanMKKysrIGIvcW9veGRvby9mcmFtZXdv
+cmsvc291cmNlL2NsYXNzL3F4L3VpL3RhYmxlL1RhYmxlLmpzCkBAIC00OTksNiArNDk5LDIyIEBA
+IHF4LkNsYXNzLmRlZmluZSgicXgudWkudGFibGUuVGFibGUiLAogICAgIH0sCiAKICAgICAvKioK
+KyAgICAgKiBCeSBkZWZhdWx0LCB0aGUgImNlbGxDb250ZXh0bWVudSIgZXZlbnQgaXMgZmlyZWQg
+b25seSB3aGVuIGEgZGF0YSBjZWxsCisgICAgICogaXMgcmlnaHQtY2xpY2tlZC4gSXQgaXMgbm90
+IGZpcmVkIHdoZW4gYSByaWdodC1jbGljayBvY2N1cnMgaW4gdGhlCisgICAgICogZW1wdHkgYXJl
+YSBvZiB0aGUgdGFibGUgYmVsb3cgdGhlIGxhc3QgZGF0YSByb3cuIEJ5IHR1cm5pbmcgb24gdGhp
+cworICAgICAqIHByb3BlcnR5LCAiY2VsbENvbnRleHRNZW51IiBldmVudHMgd2lsbCBhbHNvIGJl
+IGdlbmVyYXRlZCB3aGVuIGEKKyAgICAgKiByaWdodC1jbGljayBvY2N1cnMgaW4gdGhhdCBlbXB0
+eSBhcmVhLiBJbiBzdWNoIGEgY2FzZSwgcm93IGlkZW50aWZpZXIKKyAgICAgKiBpbiB0aGUgZXZl
+bnQgZGF0YSB3aWxsIGJlIG51bGwsIHNvIGV2ZW50IGhhbmRsZXJzIGNhbiBjaGVjayAocm93ID09
+PQorICAgICAqIG51bGwpIHRvIGhhbmRsZSB0aGlzIGNhc2UuCisgICAgICovCisgICAgY29udGV4
+dE1lbnVGcm9tRGF0YUNlbGxzT25seSA6CisgICAgeworICAgICAgY2hlY2sgOiAiQm9vbGVhbiIs
+CisgICAgICBpbml0IDogdHJ1ZSwKKyAgICAgIGFwcGx5IDogIl9hcHBseUNvbnRleHRNZW51RnJv
+bURhdGFDZWxsc09ubHkiCisgICAgfSwKKworICAgIC8qKgogICAgICAqIFdoZXRoZXIgdGhlIHRh
+YmxlIHNob3VsZCBrZWVwIHRoZSBmaXJzdCB2aXNpYmxlIHJvdyBjb21wbGV0ZS4gSWYgc2V0IHRv
+IGZhbHNlLAogICAgICAqIHRoZSBmaXJzdCByb3cgbWF5IGJlIHJlbmRlcmVkIHBhcnRpYWwsIGRl
+cGVuZGluZyBvbiB0aGUgdmVydGljYWwgc2Nyb2xsIHZhbHVlLgogICAgICAqLwpAQCAtMTEwOCw2
+ICsxMTI0LDE3IEBAIHF4LkNsYXNzLmRlZmluZSgicXgudWkudGFibGUuVGFibGUiLAogCiAKICAg
+ICAvLyBwcm9wZXJ0eSBtb2RpZmllcgorICAgIF9hcHBseUNvbnRleHRNZW51RnJvbURhdGFDZWxs
+c09ubHkgOiBmdW5jdGlvbih2YWx1ZSwgb2xkKQorICAgIHsKKyAgICAgIHZhciBzY3JvbGxlckFy
+ciA9IHRoaXMuX2dldFBhbmVTY3JvbGxlckFycigpOworCisgICAgICBmb3IgKHZhciBpPTA7IGk8
+c2Nyb2xsZXJBcnIubGVuZ3RoOyBpKyspIHsKKyAgICAgICAgc2Nyb2xsZXJBcnJbaV0uc2V0Q29u
+dGV4dE1lbnVGcm9tRGF0YUNlbGxzT25seSh2YWx1ZSk7CisgICAgICB9CisgICAgfSwKKworCisg
+ICAgLy8gcHJvcGVydHkgbW9kaWZpZXIKICAgICBfYXBwbHlLZWVwRmlyc3RWaXNpYmxlUm93Q29t
+cGxldGUgOiBmdW5jdGlvbih2YWx1ZSwgb2xkKQogICAgIHsKICAgICAgIHZhciBzY3JvbGxlckFy
+ciA9IHRoaXMuX2dldFBhbmVTY3JvbGxlckFycigpOwpkaWZmIC0tZ2l0IGEvcW9veGRvby9mcmFt
+ZXdvcmsvc291cmNlL2NsYXNzL3F4L3VpL3RhYmxlL3BhbmUvU2Nyb2xsZXIuanMgYi9xb294ZG9v
+L2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkvdGFibGUvcGFuZS9TY3JvbGxlci5qcwppbmRl
+eCBiMTYwNmNhLi45MTBjOWM3IDEwMDY0NAotLS0gYS9xb294ZG9vL2ZyYW1ld29yay9zb3VyY2Uv
+Y2xhc3MvcXgvdWkvdGFibGUvcGFuZS9TY3JvbGxlci5qcworKysgYi9xb294ZG9vL2ZyYW1ld29y
+ay9zb3VyY2UvY2xhc3MvcXgvdWkvdGFibGUvcGFuZS9TY3JvbGxlci5qcwpAQCAtMjc4LDYgKzI3
+OCwyMiBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LnVpLnRhYmxlLnBhbmUuU2Nyb2xsZXIiLAogCiAK
+ICAgICAvKioKKyAgICAgKiBCeSBkZWZhdWx0LCB0aGUgImNlbGxDb250ZXh0bWVudSIgZXZlbnQg
+aXMgZmlyZWQgb25seSB3aGVuIGEgZGF0YSBjZWxsCisgICAgICogaXMgcmlnaHQtY2xpY2tlZC4g
+SXQgaXMgbm90IGZpcmVkIHdoZW4gYSByaWdodC1jbGljayBvY2N1cnMgaW4gdGhlCisgICAgICog
+ZW1wdHkgYXJlYSBvZiB0aGUgdGFibGUgYmVsb3cgdGhlIGxhc3QgZGF0YSByb3cuIEJ5IHR1cm5p
+bmcgb24gdGhpcworICAgICAqIHByb3BlcnR5LCAiY2VsbENvbnRleHRNZW51IiBldmVudHMgd2ls
+bCBhbHNvIGJlIGdlbmVyYXRlZCB3aGVuIGEKKyAgICAgKiByaWdodC1jbGljayBvY2N1cnMgaW4g
+dGhhdCBlbXB0eSBhcmVhLiBJbiBzdWNoIGEgY2FzZSwgcm93IGlkZW50aWZpZXIKKyAgICAgKiBp
+biB0aGUgZXZlbnQgZGF0YSB3aWxsIGJlIG51bGwsIHNvIGV2ZW50IGhhbmRsZXJzIGNhbiBjaGVj
+ayAocm93ID09PQorICAgICAqIG51bGwpIHRvIGhhbmRsZSB0aGlzIGNhc2UuCisgICAgICovCisg
+ICAgY29udGV4dE1lbnVGcm9tRGF0YUNlbGxzT25seSA6CisgICAgeworICAgICAgY2hlY2sgOiAi
+Qm9vbGVhbiIsCisgICAgICBpbml0IDogdHJ1ZQorICAgIH0sCisKKworICAgIC8qKgogICAgICAq
+IFdoZXRoZXIgdG8gcmVzZXQgdGhlIHNlbGVjdGlvbiB3aGVuIGEgaGVhZGVyIGNlbGwgaXMgY2xp
+Y2tlZC4gU2luY2UKICAgICAgKiBtb3N0IGRhdGEgbW9kZWxzIGRvIG5vdCBoYXZlIHByb3Zpc2lv
+bnMgdG8gcmV0YWluIGEgc2VsZWN0aW9uIGFmdGVyCiAgICAgICogc29ydGluZywgdGhlIGRlZmF1
+bHQgaXMgdG8gcmVzZXQgdGhlIHNlbGVjdGlvbiBpbiB0aGlzIGNhc2UuIFNvbWUgZGF0YQpAQCAt
+MTQ0MSw3ICsxNDU3LDE5IEBAIHF4LkNsYXNzLmRlZmluZSgicXgudWkudGFibGUucGFuZS5TY3Jv
+bGxlciIsCiAgICAgICB2YXIgcm93ID0gdGhpcy5fZ2V0Um93Rm9yUGFnZVBvcyhwYWdlWCwgcGFn
+ZVkpOwogICAgICAgdmFyIGNvbCA9IHRoaXMuX2dldENvbHVtbkZvclBhZ2VYKHBhZ2VYKTsKIAot
+ICAgICAgaWYgKHRoaXMuX19mb2N1c0luZGljYXRvci5pc0hpZGRlbigpIHx8CisgICAgICAvKgor
+ICAgICAgICogVGhlICdyb3cnIHZhbHVlIHdpbGwgYmUgbnVsbCBpZiB0aGUgcmlnaHQtY2xpY2sg
+d2FzIGluIHRoZSBibGFuaworICAgICAgICogYXJlYSBiZWxvdyB0aGUgbGFzdCBkYXRhIHJvdy4g
+U29tZSBhcHBsaWNhdGlvbnMgZGVzaXJlIHRvIHJlY2VpdmUKKyAgICAgICAqIHRoZSBjb250ZXh0
+IG1lbnUgZXZlbnQgYW55d2F5LCBhbmQgY2FuIHNldCB0aGUgcHJvcGVydHkgdmFsdWUgb2YKKyAg
+ICAgICAqIGNvbnRleHRNZW51RnJvbURhdGFDZWxsc09ubHkgdG8gZmFsc2UgdG8gYWNoaWV2ZSB0
+aGF0LgorICAgICAgICovCisgICAgICBpZiAocm93ID09PSBudWxsICYmIHRoaXMuZ2V0Q29udGV4
+dE1lbnVGcm9tRGF0YUNlbGxzT25seSgpKQorICAgICAgeworICAgICAgICByZXR1cm47CisgICAg
+ICB9CisKKyAgICAgIGlmICghIHRoaXMuZ2V0U2hvd0NlbGxGb2N1c0luZGljYXRvcigpIHx8Cisg
+ICAgICAgICAgcm93ID09PSBudWxsIHx8CiAgICAgICAgICAgKHRoaXMuX19sYXN0TW91c2VEb3du
+Q2VsbCAmJgogICAgICAgICAgICByb3cgPT0gdGhpcy5fX2xhc3RNb3VzZURvd25DZWxsLnJvdyAm
+JgogICAgICAgICAgICBjb2wgPT0gdGhpcy5fX2xhc3RNb3VzZURvd25DZWxsLmNvbCkpCg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

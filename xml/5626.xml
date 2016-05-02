@@ -1,0 +1,186 @@
+<bug>
+          <bug_id>5626</bug_id>
+          
+          <creation_ts>2011-09-20 14:01:00 +0200</creation_ts>
+          <short_desc>qx.io.request.XHR causes error &quot;JSON.parse: unexpected end of data&quot; for aborted requests</short_desc>
+          <delta_ts>2011-10-20 07:55:38 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io.remote</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          <cc>atankeev</cc>
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26849</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-09-20 14:01:43 +0200</bug_when>
+            <thetext>We have just updated to qooxdoo trunk (revision 28608).
+We are using a json-datastore that internaly uses qx.io.request.XHr.
+We have noticed that we get the following error when the backend service
+that is called by the Json store does not respond and therefore
+the Xhr request gets aborted:
+
+Catched window error: JSON.parse: unexpected end of data - qx/io/request/Xhr:312
+
+The problem is that the class qx.bom.request.Xhr automatically sets the http status code to 304 if the status code is 0. (And the status code is always 0 for our aborted requests):
+
+__normalizeStatus: function() {
+  // BUGFIX: Opera
+  // Opera tells 0 when it should be 304
+  if (nxhr.readyState === qx.bom.request.Xhr.DONE &amp;&amp; this.status === 0) {
+    this.status = 304;
+  } 
+
+
+Then following code in class qx.io.request.Xhr therefore thinks that this aborted request was successful and therefore starts the parsing of the response:
+
+_onReadyStateChange: function() {
+  if (qx.util.Request.isSuccessful(this.getStatus())) {
+    parsedResponse = this._getParsedResponse();
+
+But the response of the aborted request is empty.
+
+Is this information sufficient or do you need more information?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26850</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-20 15:52:52 +0200</bug_when>
+            <thetext>Thanks for the report. My first guess is that I did not take aborted requests into account when I added the workaround. I&#39;ll take a closer look.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26851</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-20 15:57:21 +0200</bug_when>
+            <thetext>Can you please enable the debugging mode (qx.debug.io) and paste from the log?
+
+Here is how: http://manual.qooxdoo.org/current/pages/communication/request_io.html#debugging</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26853</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-09-20 16:29:38 +0200</bug_when>
+            <thetext>This problem can be reproduced by copying the following two lines of code into the qooxdoo playground:
+
+var store = new qx.data.store.Json();
+store.setUrl(&quot;http://laleld.this-url-does-not-exist.de&quot;);
+
+
+The debug output of the playground with this code is:
+
+-- start output of playground ------------------------------------
+006280 playground.Application[475-0]: Starte Anwendung &#39;Hello World (geändert)&#39; ...
+006283 qx.io.request.Xhr[486-0]: Open low-level request with method: GET, url: http://laleld.this-url-does-not-exist.de, async: true
+006284 qx.bom.request.Xhr: Open native request with method: GET, url: http://laleld.this-url-does-not-exist.de, async: true
+006285 qx.bom.request.Xhr: Received native readyState: 1
+006286 qx.io.request.Xhr[486-0]: Fire readyState: 1
+006288 qx.io.request.Xhr[486-0]: Accepting: &#39;application/json&#39;
+006289 qx.io.request.Xhr[486-0]: Send low-level request
+006290 qx.bom.request.Xhr: Send native request
+
+GET http://laleld.this-url-does-not-exist.de/ (Aborted)
+			
+006296 qx.bom.request.Xhr: Received native readyState: 1
+006298 playground.Application[475-0]: Anwendung gestartet.
+006323 qx.bom.request.Xhr: Received native readyState: 2
+006325 qx.io.request.Xhr[486-0]: Fire readyState: 2
+006328 qx.bom.request.Xhr: Received native readyState: 4
+006329 qx.io.request.Xhr[486-0]: Fire readyState: 4
+006330 qx.io.request.Xhr[486-0]: Request completed with HTTP status: 304
+006331 qx.io.request.Xhr[486-0]: Response is of type: &#39;null&#39;
+JSON.parse: unexpected end of data
+-- start output of playground ------------------------------------</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26863</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-21 13:23:55 +0200</bug_when>
+            <thetext>What exactly do you mean with &quot;not respond&quot;? Does the request timeout? Or does any kind of redirection happen? Maybe you can paste the output of curl -v?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26869</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-09-21 15:51:11 +0200</bug_when>
+            <thetext>The requested curl output is:
+* About to connect() to localhost port 8080 (#0)
+*   Trying 127.0.0.1... Connection refused
+* couldn&#39;t connect to host
+* Closing connection #0
+curl: (7) couldn&#39;t connect to host
+
+The problem should also be reproducible by using the playground code from comment &quot;2011-09-20 16:29:38 CEST&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26870</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-21 16:42:28 +0200</bug_when>
+            <thetext>Thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26876</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-22 09:23:11 +0200</bug_when>
+            <thetext>Fixed with r28726 on trunk and r28727 on branch_1_5_x.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26881</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-09-22 12:36:14 +0200</bug_when>
+            <thetext>This fix has not solved our problem.
+
+The json store offers two events:
+- loaded
+- error
+We expect that the &quot;error&quot; event is thrown if the request is aborted.
+But the opera workaround that automatically sets the status code of aborted requests to &quot;304&quot; is still active. This means aborted requests cause a &quot;loaded&quot; event instead of an &quot;error&quot; event. But aborted requests should result in an &quot;error&quot; event.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26885</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-09-22 15:57:14 +0200</bug_when>
+            <thetext>(Correction of my previous comment):
+
+This fix has now solved our problem, therefore I can close this issue.
+
+(I forgot to update one file after updating to qooxdoo r28726. Therefore I thought this issue were not fixed.)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27263</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-10-20 07:55:38 +0200</bug_when>
+            <thetext>*** Bug 5718 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

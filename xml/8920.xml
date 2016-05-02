@@ -1,0 +1,136 @@
+<bug>
+          <bug_id>8920</bug_id>
+          
+          <creation_ts>2015-02-10 08:33:00 +0100</creation_ts>
+          <short_desc>Right click on a qx.ui.table.Table row (show context menu) does not select the row anymore in master</short_desc>
+          <delta_ts>2015-02-16 11:41:40 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.1.1</target_milestone>
+          <dependson>8873</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Dietrich Streifert">dietrich.streifert</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>42431</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2015-02-10 08:33:42 +0100</bug_when>
+            <thetext>In current master, pointing with the mouse to a row and right clicking does not select the line anymore.
+
+This is for us a substantional change in behaviour which was introduced with last master.
+
+To reproduce open the widget browser for master (devel) with the table context menu demo. Clicking with the right mouse button does not select the pointed row:
+
+http://demo.qooxdoo.org/devel/demobrowser/index.html#table~Table_Context_Menu.html
+
+In contrary to this using the same demo with in 4.1 shows the expected behaviour:
+
+http://demo.qooxdoo.org/4.1/demobrowser/index.html#table~Table_Context_Menu.html
+
+Selecting or focusing the row (or cell) when right clicking is the default behaviour e.g. in Windows explorer, in MS Excel, OS X finder.
+
+This should be again the default behaviour.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42496</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2015-02-13 09:08:52 +0100</bug_when>
+            <thetext>It seems that the following change solves the issue for us:
+
+--- a/framework/source/class/qx/ui/table/pane/Scroller.js
++++ b/framework/source/class/qx/ui/table/pane/Scroller.js
+@@ -87,6 +87,7 @@ qx.Class.define(&quot;qx.ui.table.pane.Scroller&quot;,
+     this._paneClipper.addListener(&quot;pointermove&quot;, this._onPointermovePane, this);
+     this._paneClipper.addListener(&quot;pointerdown&quot;, this._onPointerdownPane, this);
+     this._paneClipper.addListener(&quot;tap&quot;, this._onTapPane, this);
++    this._paneClipper.addListener(&quot;contextmenu&quot;, this._onTapPane, this);
+     this._paneClipper.addListener(&quot;contextmenu&quot;, this._onContextMenu, this);
+     if (qx.core.Environment.get(&quot;device.type&quot;) === &quot;desktop&quot;) {
+       this._paneClipper.addListener(&quot;dblclick&quot;, this._onDbltapPane, this);
+
+Thus adding the _onTapPane event listener the &quot;contextmenu&quot; event leads to the row under the mouse pointer being selected on a right click.
+
+But to be honest: I&#39;m not shure on that. It seems that the tap event is not fired if the right mouse button is pressed. Should this be?
+
+On the other side the _onTapPane event listener seems to be &quot;prepared&quot; for handling right mouse button presses near line 105 of qx.ui.table.selection.Manager where the event is tested against method isRightPressed.
+
+Maybe someone with more insight should have a look on this.
+
+If this is a bug in the deep of the pointer/tap/mouse event handling it should be solved there and not in the table pane scroller.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42497</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2015-02-13 09:10:11 +0100</bug_when>
+            <thetext>Additional comment: If this is the right fix for the bug, I&#39;ll be glad to prepare a pull request.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42498</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2015-02-13 09:51:29 +0100</bug_when>
+            <thetext>Found the commit which introduced the change:
+
+https://github.com/qooxdoo/qooxdoo/commit/ec34cf4409be7e906e0aa5cae6921341feeb4525
+
+which corresponds to bug #8873
+
+If I revert the change, the old behaviour is back: the table row gets selected on right click.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42504</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-02-13 12:57:03 +0100</bug_when>
+            <thetext>You are right, this behavior change came in with #8873. But taking a look at the report makes me thing that the report itself is totally valid. A tap should not fire on right click. This behavior is like the native click. So I closed the other bug as I don&#39;t think we should change that.
+
+But back to the table problem. In the first place I asked myself why this worked at all but it did and so does it in google spreadsheet e.g. Not breaking this behavior sounds like a good idea and could be done with the proposed fix. Just file me a pull request and we have that thing back to normal in no time. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42506</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2015-02-13 13:24:09 +0100</bug_when>
+            <thetext>OK here is the pull request:
+
+https://github.com/qooxdoo/qooxdoo/pull/121</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42533</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-02-16 11:41:30 +0100</bug_when>
+            <thetext>Thanks for the pull request. Merged it with 
+
+master: 92b2e0dfb3aecf7dc75e43f6b43677a2433f1302
+4.1.x: cbdee68ffd694f6260d34ee1904e81a546af3b8e</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

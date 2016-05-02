@@ -1,0 +1,163 @@
+<bug>
+          <bug_id>3986</bug_id>
+          
+          <creation_ts>2010-08-12 17:16:00 +0200</creation_ts>
+          <short_desc>Resource copying has changed, no longer overrides</short_desc>
+          <delta_ts>2014-03-03 15:23:39 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.2.2</target_milestone>
+          
+          <blocked>3602</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Andy White">awhite</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          <cc>daniel.wagner</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>19797</commentid>
+            <who name="Andy White">awhite</who>
+            <bug_when>2010-08-12 17:16:52 +0200</bug_when>
+            <thetext>For 1.2 qooxdoo/tool/pylib/generator/Generator.py changed from using robocopy to copytool for copying resources files.  In the process it broke what I thought was a feature - namely that resources in one Qooxdoo project could be overridden by resources in another Qooxdoo project.  I hope my assumption was true - because my whole app architecture relies on it - and that this will be fixed soon.
+
+Specific details:
+
+1816	    def _copyResources(self, srcPath, targPath):
+1817	        # targPath *has* to be directory  -- there is now way of telling a
+1818	        # non-existing target file from a non-existing target directory :-)
+1819	        generator = self
+1820	        #generator._console.debug(&quot;_copyResource: %s =&gt; %s&quot; % (srcPath, targPath))
+1821	        copier = copytool.CopyTool(generator._console)
+1822	        args      = [&#39;-s&#39;, &#39;-u&#39;, &#39;-x&#39;] + [&quot;,&quot;.join(self.skip_list)] + [srcPath, targPath]
+1823	        copier.parse_args(args)
+1824	        copier.do_work()
+
+Note the &#39;-u&#39; argument to CopyTool.  That effectively stops my resources from overriding correctly.  Take it out the &#39;-u&#39; and we are back to what I think is the expected functionality (at least it was expected by me :) ).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19807</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-08-13 08:14:23 +0200</bug_when>
+            <thetext>Thomas, please check if its a regression and when we can fix this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19813</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-08-13 09:45:04 +0200</bug_when>
+            <thetext>If I understand the bug description right, it is indeed a regression, as 
+resource shadowing is a feature. But it should be a feature of resource 
+*selection*, not resource copying, where files might get copied over one 
+another (this is ugly). I&#39;ll take care of it.
+
+@Daniel, can you comment on the -u switch?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19822</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-08-13 12:59:02 +0200</bug_when>
+            <thetext>The -u switch tells copytool to only overwrite existing target files that are older than the source files. I assumed that was robocopy&#39;s default behavior, so either I misread robocopy&#39;s code or my implementation is wrong/different. I&#39;ll look into it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19826</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-08-13 15:16:02 +0200</bug_when>
+            <thetext>Found a difference in the way the two scripts determine if an existing target file is older than the source: Robocopy by default looks at the source file&#39;s change date as well as the modification date while copytool only checks the modification date. Added this check in copytool.py (r23045), but I&#39;m not convinced that will solve the problem.
+
+Andy, if you&#39;re still seeing this issue with the trunk version of copytool, we&#39;ll need some information about your job configuration so we can try to reproduce it.
+
+Please also try running the generator with the -v option. If you&#39;re seeing messages like &quot;Existing file foo/bar is newer than source file foo/baz, ignoring it.&quot; for files that you&#39;d expect to be overwritten, that would confirm it&#39;s a problem with copytool.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19863</commentid>
+            <who name="Andy White">awhite</who>
+            <bug_when>2010-08-16 18:39:27 +0200</bug_when>
+            <thetext>The check in the code is still related to the time of the file, which is not relevant in my build system.
+
+Here is what my config has for libraries.  The product name is ClarityBasic.
+
+      &quot;library&quot; :
+      [
+        {
+          &quot;manifest&quot; : &quot;../ClarityCore/Manifest.json&quot;
+        },
+        {
+          &quot;manifest&quot; : &quot;../ClarityServer10/Manifest.json&quot;
+        },
+        {
+          &quot;manifest&quot; : &quot;../Messageway60/Manifest.json&quot;
+        },
+        {
+          &quot;manifest&quot; : &quot;../MOVEit70/Manifest.json&quot;
+        }
+      ]
+
+So say I want to override a resource file in ClarityCore or MOVEit70 within ClarityBasic.  Regardless of when the file was created.
+
+Within 1.1 (perhaps by coincidence) I was able to simply add the resource under the same resource path within ClarityBasic and presto, the new resource showed up in the build for ClarityBasic.  
+
+I thought (though it may coincidence) that the order of overrides fell in the same order as the libraries where listed.  That is exactly what I wanted, and it appeared to work.  Perhaps that was not intentional?  But if it was, then removing the -u seems to achieve that goal.
+
+Put another way - it seems to me resource that selection should be based on the order of the libraries listed, with each new library entry overriding the previous and finally with the current project overriding any and all libraries.
+
+Or put yet another way:
+1) I am a developer on ClarityBasic and not a developer on ClarityCore.
+2) I put a newer file in a resource directory to override a ClarityCore file.
+3) I now see the correct resource (image/css/etc) in my build.
+4) A ClarityCore developer updates that resource file (image).
+5) I get the latest copy of ClarityCore.
+6) I no longer see my override from step 2.
+
+That makes no sense to me, it seems we should still honor the override file because that is the file that is meaningful to the developer of the project.  Furthermore, the developer of the project may have included a library - further down in the list of libraries (e.g. ClarityServer10) - with the express desire to use that library to override the features of ClarityCore.  So it seems quite natural to take the overrides in the order the libraries are listed and then, finally, from the project being built.
+
+If the principle above is the intention, I don&#39;t see the point in coding resource selection literally, but rather by simply overwriting the file in the proper sequence we achieve the same effect.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20607</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-13 07:54:11 +0200</bug_when>
+            <thetext>mass retargeting to 1.2.2 due to intermediate 1.2.1 release</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21217</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-11-10 15:12:08 +0100</bug_when>
+            <thetext>OK, spent some more time looking into this. Andy, you were right to begin with: The -u switch for copytool is not what we want when copying resources. What threw me for a loop was that robocopy is actually supposed to behave the same way with the options we used for it. Turns out it has a bug where it constructs an invalid path when comparing files (a comment actually says that code is a hack) so it always assumes the file doesn&#39;t exist in the target dir and overwrites. copytool doesn&#39;t have that bug so files weren&#39;t overwritten.
+
+Removed the -u switch in Generator.py r23743.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38093</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:39 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

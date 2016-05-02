@@ -1,0 +1,256 @@
+<bug>
+          <bug_id>3702</bug_id>
+          
+          <creation_ts>2010-05-12 06:00:00 +0200</creation_ts>
+          <short_desc>Better mechanism for getStyle on IE (with patch)</short_desc>
+          <delta_ts>2014-03-03 15:25:40 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>1.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Jean-Noel Rivasseau">elvanor</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          <cc>vincent</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>18308</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2010-05-12 06:00:47 +0200</bug_when>
+            <thetext>See the attached patch. It basically allows to return computed pixel values for certain properties for IE, even if normally IE would return a value in em or %.
+
+This patch is crucial for us, and will help anyone using qx.bom.element.Style, so please apply ASAP :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18309</commentid>
+              <attachid>741</attachid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2010-05-12 06:03:38 +0200</bug_when>
+            <thetext>Created attachment 741
+Patch to improve getStyle on IE</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18346</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-05-17 10:16:50 +0200</bug_when>
+            <thetext>Hi Jean-Noel,
+Alex, the man in charge for the low level layer, is on vacation for two weeks. He will take care of it as soon as he&#39;s back.
+
+--&gt; Alex</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19114</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-07-02 11:46:57 +0200</bug_when>
+            <thetext>accepting</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19291</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-07-14 08:42:02 +0200</bug_when>
+            <thetext>Hi Jean-Noel,
+
+I&#39;ve managed to include your patch and wrote an unit test against it verify it. Somehow your patch does not work out as expected (at least it does something what my unit test does not expect :)  )
+
+--snip--
+// retrieve the default font size -&gt; if nothing is set the fontSize of the body element is used
+// returns 11px as default
+var defaultFontSize = qx.bom.element.Style.get(paragraph, &quot;fontSize&quot;);
+
+var parts = defaultFontSize.split(&quot;px&quot;);
+// = 11
+this._fontSizeAsInteger = parts[0];
+
+if (qx.core.Variant.isSet(&quot;qx.client&quot;, &quot;mshtml&quot;))
+{
+  // setting &quot;2em&quot; - not using the qooxdoo BOM layer
+  this._el.style.fontSize = &quot;2em&quot;;
+        
+	var Style = qx.bom.element.Style;
+
+ 	// this returns &quot;44px&quot; with the patch applied instead of &quot;22px&quot;
+  this.assertEquals((this._fontSizeAsInteger * 2) + &quot;px&quot;, Style.get(this._el, &quot;fontSize&quot;));
+}
+--snip--
+
+Normally the unit &quot;em&quot; is used to set a fontSize or the lineHeight to be able to set a relative unit. In which use cases do you use the &quot;em&quot; unit in your code?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19292</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-07-14 08:43:45 +0200</bug_when>
+            <thetext>Forget to mention: &quot;this._el&quot; is the paragraph element and this element is created at the start of the unit test.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19338</commentid>
+            <who name="">vincent</who>
+            <bug_when>2010-07-15 15:23:23 +0200</bug_when>
+            <thetext>Hi Alex, I am the writer of the patch Jean-Noel posted.
+I think I know why your unit test fails. Your test actually found a real bug in my patch. It is because the &quot;em&quot; unit has different semantics when set on the &quot;fontSize&quot; property as when set on other properties.
+When it is set on other properties, &quot;1em&quot; is equal to the font size of the element. When set on &quot;fontSize&quot;, &quot;1em&quot; is equal to the fontSize of the parent element.
+
+My patch correctly computes the value of the property in the first case but fails in the second case (name == &quot;fontSize&quot;), since my patch puts (for example) &quot;2em&quot; on left, but the value &quot;2em&quot; stays on fontSize, and therefore we get as a result 4 times the font size of the parent element.
+
+Here&#39;s a suggestion for a correction (Style.js, line 521 or so, insert):
+--snip--
+
+			else if (/^-?[\.\d]+(em|%)$/i.test(currentStyle))
+			{
+				if (name == &quot;fontSize&quot;) // Special case for which the &quot;em&quot; unit has different semantics
+				{
+					// Remember the original values
+					var left = element.style.left, rsLeft = element.runtimeStyle.left;
+					var fontSize = element.style.fontSize, rsFontSize = element.runtimeStyle.fontSize;
+					// Put in the new values to get a computed value out
+					element.runtimeStyle.fontSize = &quot;1em&quot;;
+					element.style.fontSize = &quot;1em&quot;;
+					element.runtimeStyle.left = element.currentStyle.left;
+					element.style.left = currentStyle || 0;
+					
+					//  get a computed value out
+					var value = element.style.pixelLeft + &quot;px&quot;;
+					
+	 				// Revert the changed values
+					element.style.left = left;
+					element.runtimeStyle.left = rsLeft;
+					element.style.fontSize = fontSize;
+					element.runtimeStyle.fontSize = rsFontSize;
+					return value;
+				}
+				else
+				{
+					// Remember the original values
+					var left = element.style.left, rsLeft = element.runtimeStyle.left;
+					// Put in the new values to get a computed value out
+					element.runtimeStyle.left = element.currentStyle.left;
+					element.style.left = currentStyle || 0;
+					//  get a computed value out
+					var value = element.style.pixelLeft + &quot;px&quot;;
+	 				// Revert the changed values
+					element.style.left = left;
+					element.runtimeStyle.left = rsLeft;
+					return value;
+				}
+			}
+--snip--
+
+As you can see, in the &quot;fontSize&quot; case, I still put the &quot;2em&quot; on the left, but I hardcode temporarily  &quot;1em&quot; on the fontSize so that the product stays correct. I have several remarks on this version of the patch:
+
+- I believe this version to be better and to fix your test case, but I haven&#39;t been able to test it. It would be nice of you to do so if you can. Otherwise, I&#39;ll get around to it.
+
+- I am not exactly sure of the meaning of &quot;element.runtimeStyle&quot; as opposed to &quot;element.style&quot;. It may be that one of &#39;element.runtimeStyle.fontSize = &quot;1em&quot;;&#39; and &#39;element.style.fontSize = &quot;1em&quot;;&#39; is unneeded.
+
+- I am not exactly sure of what will happen with the &#39;%&#39; unit yet. The fontSize special case is very likely unneeded in the &#39;%&#39; case.
+
+
+To answer your question, our application analyses preexisting web sites, and we would like the Style.get(...,COMPUTED_STYLE) to return the correct value in pixels for every possible property on which a webmaster could conceivably  put the &quot;em&quot; unit :-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19339</commentid>
+            <who name="">vincent</who>
+            <bug_when>2010-07-15 15:25:33 +0200</bug_when>
+            <thetext>Warning, comment lines on my last snippet have been wrapped.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19377</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-07-19 13:57:14 +0200</bug_when>
+            <thetext>Hi Vincent,
+
+unfortunately your patch is only working for integer values. If e.g. the font size of the parent element is &quot;11px&quot; and the element to check has &quot;1.5em&quot; as font-size value IE (at least IE8) is reporting &quot;17px&quot; as value instead of &quot;16.5px&quot;.
+
+Another issue is that the attribute &quot;line-height&quot; is automatically translated into &quot;pt&quot; if the user is setting the value to e.g. &quot;1.5em&quot;. So if you have an element which has &quot;20px&quot; as font-size the corresponding line-height (&quot;1.5em&quot;) is *not* 30px. It is a pt value which can&#39;t be normalized.
+
+So instead of adding an incomplete patch I would encourage you to use your patch locally whenever you encounter an &quot;em&quot; value.
+
+If no objections are present at your side I would resolve this bug report as &quot;WONTFIX&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19472</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-07-28 16:04:41 +0200</bug_when>
+            <thetext>Set to WONTFIX as already described in Comment #8</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19483</commentid>
+            <who name="">vincent</who>
+            <bug_when>2010-07-28 17:35:04 +0200</bug_when>
+            <thetext>I still want to provide better results for getStyle but you have convinced me that it is much more complicated than I anticipated. I will reopen the bug when I have a better comprehension of the problem and another version of the patch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19484</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-07-28 17:52:29 +0200</bug_when>
+            <thetext>Sure, a patch is always welcome. This issue is unfortunately more complicated than it looks at first.
+So if you can provide a better patch, you&#39;re welcome.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38832</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:40 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>741</attachid>
+            <date>2010-05-12 06:03:00 +0200</date>
+            <delta_ts>2010-05-12 06:04:12 +0200</delta_ts>
+            <desc>Patch to improve getStyle on IE</desc>
+            <filename>ie-non-pixel.diff</filename>
+            <type>text/plain</type>
+            <size>1087</size>
+            <attacher>elvanor</attacher>
+            
+              <data encoding="base64">LS0tIFN0eWxlLmpzCTIwMTAtMDQtMjcgMDA6NTg6MjIuMDAwMDAwMDAwIC0wNzAwCisrKyBTdHls
+ZS1pZS1zdXBwb3J0LmpzCTIwMTAtMDUtMTEgMjA6NTc6MTkuODI5MjQ4NzE0IC0wNzAwCkBAIC01
+MTgsOSArNTE4LDIzIEBACiAgICAgICAgICAgICAgIC8vIFJldHVybiB2YWx1ZQogICAgICAgICAg
+ICAgICByZXR1cm4gdmFsdWU7CiAgICAgICAgICAgICB9CisJCQllbHNlIGlmICgvXi0/W1wuXGRd
+KyhlbXwlKSQvaS50ZXN0KGN1cnJlbnRTdHlsZSkpCisJCQl7CisJCQkJLy8gUmVtZW1iZXIgdGhl
+IG9yaWdpbmFsIHZhbHVlcworCQkJCXZhciBsZWZ0ID0gZWxlbWVudC5zdHlsZS5sZWZ0LCByc0xl
+ZnQgPSBlbGVtZW50LnJ1bnRpbWVTdHlsZS5sZWZ0OworCQkJCS8vIFB1dCBpbiB0aGUgbmV3IHZh
+bHVlcyB0byBnZXQgYSBjb21wdXRlZCB2YWx1ZSBvdXQKKwkJCQllbGVtZW50LnJ1bnRpbWVTdHls
+ZS5sZWZ0ID0gZWxlbWVudC5jdXJyZW50U3R5bGUubGVmdDsKKwkJCQllbGVtZW50LnN0eWxlLmxl
+ZnQgPSBjdXJyZW50U3R5bGUgfHwgMDsKKwkJCQkvLyBHZXQgYSBjb21wdXRlZCB2YWx1ZSBvdXQK
+KwkJCQl2YXIgdmFsdWUgPSBlbGVtZW50LnN0eWxlLnBpeGVsTGVmdCArICJweCI7CisgCQkJCS8v
+IFJldmVydCB0aGUgY2hhbmdlZCB2YWx1ZXMKKwkJCQllbGVtZW50LnN0eWxlLmxlZnQgPSBsZWZ0
+OworCQkJCWVsZW1lbnQucnVudGltZVN0eWxlLmxlZnQgPSByc0xlZnQ7CisJCQkJcmV0dXJuIHZh
+bHVlOworCQkJfQogCiAgICAgICAgICAgICAvLyBOb24tUGl4ZWwgdmFsdWVzIG1heSBiZSBwcm9i
+bGVtYXRpYwotICAgICAgICAgICAgaWYgKC9eLT9bXC5cZF0rKGVtfHB0fCUpPyQvaS50ZXN0KGN1
+cnJlbnRTdHlsZSkpIHsKKyAgICAgICAgICAgIGlmICgvXi0/W1wuXGRdKyhwdCk/JC9pLnRlc3Qo
+Y3VycmVudFN0eWxlKSkgewogICAgICAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoIlVudHJhbnNs
+YXRlZCBjb21wdXRlZCBwcm9wZXJ0eSB2YWx1ZTogIiArIG5hbWUgKyAiLiBPbmx5IHBpeGVsIHZh
+bHVlcyB3b3JrIHdlbGwgYWNyb3NzIGRpZmZlcmVudCBjbGllbnRzLiIpOwogICAgICAgICAgICAg
+fQogCg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

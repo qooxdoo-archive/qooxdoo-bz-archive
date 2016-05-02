@@ -1,0 +1,162 @@
+<bug>
+          <bug_id>9252</bug_id>
+          
+          <creation_ts>2016-02-04 15:39:00 +0100</creation_ts>
+          <short_desc>qx.ui.core.queue.Layout throws exceptions on queued but disposed widgets</short_desc>
+          <delta_ts>2016-02-05 14:59:46 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.layout</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>UNCONFIRMED</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          
+          <reporter name="Dietrich Streifert">dietrich.streifert</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>pollmeier</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>43691</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2016-02-04 15:39:16 +0100</bug_when>
+            <thetext>While writing some tests for my app in testrunner, I stumbled over some exceptions on widget dispose which made the tests fail.
+
+The relevant part of my test is as follows:
+
+      window.close();
+      window.dispose();
+
+      this.assertTrue(window.isDisposed());
+
+Running this test gives the following (again relevant part only) exception:
+
+Error message is:
+TypeError: Cannot read property &#39;isNativelyFocusable&#39; of null
+Stack trace:
+qx.ui.core.Widget:2883:19
+qx.core.Property:701:27), :3:624
+
+It seems that after disposal the qx queues are still flushing changes to the widget properties and fail if the content element was already removed, thus this.getContentElement() or this.getFocusElement() are returning null.
+
+This behaviour is simply reproducible with the following playground example
+
+    http://tinyurl.com/zynqxop
+
+Please click the button while having the log view open. You&#39;ll see the exception occuring. You may need to click on the playgrounds run button again to see the exception appear in the log window.
+
+Im not 100% sure but I think that the tests succeeded in qx 4.1, which means that there must have been some changes in the disposal logic or queue logic since.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43692</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2016-02-04 15:40:02 +0100</bug_when>
+            <thetext>It seems that already disposed widgets still get queued in the layout queue.
+
+One solution would be to avoid this in method qx.ui.core.LayoutItem in method renderLayout by excplicitly testing against isDisposed and return null. This would be by adding the code
+
+    if(this.isDisposed()) {
+        return null;
+    }
+
+before https://github.com/qooxdoo/qooxdoo/blob/master/framework/source/class/qx/ui/core/LayoutItem.js#L443</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43693</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2016-02-04 15:42:42 +0100</bug_when>
+            <thetext>The pull request https://github.com/qooxdoo/qooxdoo/pull/168 fixes the bug</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43694</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2016-02-04 16:12:25 +0100</bug_when>
+            <thetext>You can write:
+
+qx.ui.core.queue.Dispose.add(win);
+
+instead of win.dispose(). Thats how it is done inside widgets to avoid that stuff in the event queue is doing rendering/disposing in the wrong order.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43695</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2016-02-04 16:46:58 +0100</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; You can write:
+&gt; 
+&gt; qx.ui.core.queue.Dispose.add(win);
+&gt; 
+&gt; instead of win.dispose(). Thats how it is done inside widgets to avoid that
+&gt; stuff in the event queue is doing rendering/disposing in the wrong order.
+
+Thank you for the hint Cajus, but I&#39;m still getting the following error in console:
+
+self.__executeAndRescheduleOnError.self.__scheduled@Manager.js:162
+qx.ui.core.queue.Manager.__executeAndRescheduleOnError()@Manager.js:223
+qx.ui.core.queue.Manager.flush()@Manager.js:98
+(anonymous function)@Manager.js:69
+clb@AnimationFrame.js:182
+
+even if I use the qx.ui.core.queue.Dispose.add method:
+
+http://tinyurl.com/gqfwgko
+
+Please open the log window, hit run then click on the button to trigger the disposal, then hit run again.
+
+The error appears in the log window.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43696</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2016-02-05 11:38:31 +0100</bug_when>
+            <thetext>Sorry, I can&#39;t see the effect here. No errors.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43697</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2016-02-05 12:16:20 +0100</bug_when>
+            <thetext>Tested in Chrome and Firefox. But I don&#39;t understand why you want to flush the dispose queue. Thats something that should be done by qx when its time to. If you flush it manually, you don&#39;t win anything.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43698</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2016-02-05 14:59:46 +0100</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; Tested in Chrome and Firefox. But I don&#39;t understand why you want to flush the
+&gt; dispose queue. Thats something that should be done by qx when its time to. If
+&gt; you flush it manually, you don&#39;t win anything.
+
+I&#39;ve did this for the tests in the testrunner, to be able to test against win.isDisposed() === true.
+
+http://tinyurl.com/gqfwgko
+
+But even if I ommit the manual flushes I&#39;m getting the errors in the log window of the playground.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

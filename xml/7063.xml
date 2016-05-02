@@ -1,0 +1,145 @@
+<bug>
+          <bug_id>7063</bug_id>
+          
+          <creation_ts>2012-11-30 15:02:00 +0100</creation_ts>
+          <short_desc>Migration String.trim parentheses are misplaced</short_desc>
+          <delta_ts>2014-03-03 15:23:49 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.migration</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>2.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martijn">mevers47</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>31564</commentid>
+            <who name="Martijn">mevers47</who>
+            <bug_when>2012-11-30 15:02:32 +0100</bug_when>
+            <thetext>After running the ./generate migration command the following line of code was changed:
+
+- value = qx.lang.String.trim(value.substr(lastBreakChar + 1));
++ value = value.substr(lastBreakChar + 1.trim());
+
+
+The full hunk:
+--------------------------------------------------------------------------
+@@ -63,18 +63,18 @@ qx.Class.define(&quot;app.pkg1.pkg2.pkg3.WrappedText&quot;,
+ 
+         if (i &gt; maxlength) {
+           if (lastBreakChar !== null) {
+ 
+             var line = value.substring(0, lastBreakChar);
+-            lines.push(qx.lang.String.trim(line));
+-            value = qx.lang.String.trim(value.substr(lastBreakChar + 1));
++            lines.push(line.trim());
++            value = value.substr(lastBreakChar + 1.trim());
+             i = 0;
+             lastBreakChar = null;
+           }
+           else {
+             var line = value.substr(0, maxlength - 1);
+-            lines.push(qx.lang.String.trim(line) + &quot;-&quot;);
++            lines.push(line.trim() + &quot;-&quot;);
+             value = value.substr(maxlength - 1);
+             i = 0;
+           }
+ 
+         }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31577</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-12-03 09:10:03 +0100</bug_when>
+            <thetext>Thanks, will check that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31763</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-12-18 13:36:29 +0100</bug_when>
+            <thetext>Looks like this is not easy to do with a regex (if impossible at all). I&#39;ll assign the bug to Thomas as a reminder that we should talk about that next year and decide what to do. Here are some alternatives: 
+
+- Put in some code into the migration infrastructure to handle such cases
+- remove the automatic migration and add only a info message
+- keep the solution as it is and live with the case when someone has such a nested piece of code</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31835</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-01-07 11:47:54 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; Looks like this is not easy to do with a regex (if impossible at all). I&#39;ll
+&gt; assign the bug to Thomas as a reminder that we should talk about that next year
+&gt; and decide what to do. Here are some alternatives: 
+&gt; 
+&gt; - Put in some code into the migration infrastructure to handle such cases
+&gt; - remove the automatic migration and add only a info message
+&gt; - keep the solution as it is and live with the case when someone has such a
+&gt; nested piece of code
+
+Regexs are conceptually not capable of finding a matching closing paren after an opening one. But the issue can be solved by using the existing &#39;patch.py&#39; feature of the migration, where you provide a patch.py file that works on the syntax tree of a class.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31836</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-01-07 14:46:43 +0100</bug_when>
+            <thetext>I&#39;ve added more documentation to the tech manual, to illustrate the use of patching syntax trees during migration:
+
+https://github.com/qooxdoo/qooxdoo/blob/master/documentation/tech_manual/source/pages/tool/migration_data.rst</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31916</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-01-16 11:47:17 +0100</bug_when>
+            <thetext>- Moved all replacements of method calls that extract their argument from 
+01-main.dat to patch.py.
+- patch.py now runs a loop over these replacements, locates occurrences in 
+application code, extracts the argument(s), serializes them to strings, inserts 
+them into the replacement string templates, parses those back into syntax 
+trees, and replaces the old calls with the new trees.
+- An issue with patch.py is that it actually depends on the tool chain it was 
+created with, but is run with the tool chain of the target version, which might 
+run into compatibility problems. Add remark for that in the tech_manual.
+- Completed adaption of .toJS() methods for the CST, as it is used by patch.py.
+
+master: 528febc
+2.1.x: 6f7eb16</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38158</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:49 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,143 @@
+<bug>
+          <bug_id>5567</bug_id>
+          
+          <creation_ts>2011-08-30 15:38:00 +0200</creation_ts>
+          <short_desc>Add setRequestHeader / removeRequestHeader / getRequestHeader to AbstractRequest</short_desc>
+          <delta_ts>2012-01-02 07:35:46 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.6</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tino Butz">tinobutz</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26625</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-08-30 15:38:55 +0200</bug_when>
+            <thetext>Right now we provide a &quot;requestHeaders&quot; property in the qx.io.request.AbstractRequest class. In the old qx.io.remote.Request implementation we had some convenient methods setRequestHeader / removeRequestHeader / getRequestHeader / getRequestHeaders (see code below). In my opinion we should add the same functionality to the AbstractRequest class as well. The current API does not provide any information how to add new request headers. Is the returned request header object immutable? Can I add some new headers to it and will the be considered? All this is very unclear.
+
+/**
+     * Add a request header to the request.
+     *
+     * Example: request.setRequestHeader(&quot;Content-Type&quot;, &quot;text/html&quot;)
+     *
+     * Please note: Some browsers, such as Safari 3 and 4, will capitalize
+     * header field names. This is in accordance with RFC 2616[1], which states
+     * that HTTP 1.1 header names are case-insensitive, so your server backend
+     * should be case-agnostic when dealing with request headers.
+     *
+     * [1]{@link http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2}
+     *
+     * @param vId {String} The identifier to use for this added header
+     * @param vValue {String} The value to use for this added header
+     * @return {void}
+     */
+    setRequestHeader : function(vId, vValue) {
+      this.__requestHeaders[vId] = vValue;
+    },
+
+
+    /**
+     * Remove a previously-added request header
+     *
+     * @param vId {String} The id of the header to be removed
+     * @return {void}
+     */
+    removeRequestHeader : function(vId) {
+      delete this.__requestHeaders[vId];
+    },
+
+
+    /**
+     * Retrieve the value of a header which was previously set
+     *
+     * @param vId {String} The id of the header value being requested
+     * @return {String} The value of the header with the specified id
+     */
+    getRequestHeader : function(vId) {
+      return this.__requestHeaders[vId] || null;
+    },
+
+    /**
+     * Return the object containing all of the headers which have been added.
+     *
+     * @return {Object} The returned object has as its property names each of the ids of headers
+     *     which have been added, and as each property value, the value of the
+     *     property corresponding to that id.
+     */
+    getRequestHeaders : function() {
+      return this.__requestHeaders;
+    },</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26626</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-08-30 15:45:53 +0200</bug_when>
+            <thetext>The &quot;setRequestHeaders&quot; method is open for discussion as well. We did not provide such a method in the old implementation. I think the setRequestHeader(vId, vValue) method is sufficient.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26627</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-08-30 15:59:23 +0200</bug_when>
+            <thetext>We should also consider to provide a convenient way to configure the transport after its open() method is called. send() in io.request calls both open() and send() of the transport. setRequestHeader() raises an INVALID_STATE_ERR when called before open(), as well as as the overrideMimeType() method or the withCredentials property.
+
+With getTransport() we advertise the possibility to work with the raw transport. But without a (convenient) possibility to hook into the life cycle, some methods/properties remain inaccessible.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26631</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-08-30 18:29:04 +0200</bug_when>
+            <thetext>An example, how we have to add custom headers currently - this is to demonstrate how complicated the API is currently (besides my points from comment 0):
+
+var requestHeaders = request.getRequestHeaders();
+if (requestHeaders == null) { // request headers might be null
+  requestHeaders = request.setRequestHeaders({});
+}
+requestHeaders[&#39;Accept&#39;] = &#39;application/json&#39;;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26641</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-08-31 15:49:18 +0200</bug_when>
+            <thetext>Agreed. This is far too cumbersome.
+
+Added setRequestHeader(), removeRequestHeader() and getRequestHeader() alongside _getAllRequestHeaders() (close to the wording in XHR for getAllResponseHeaders).
+
+Deprecated the requestHeaders property. It really adds unnecessary complexity to support both approaches.
+
+With r28575 on trunk.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

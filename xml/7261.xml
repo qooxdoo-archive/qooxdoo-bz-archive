@@ -1,0 +1,109 @@
+<bug>
+          <bug_id>7261</bug_id>
+          
+          <creation_ts>2013-02-22 14:15:00 +0100</creation_ts>
+          <short_desc>Converter call behavior changed for virtual list and list controller</short_desc>
+          <delta_ts>2013-07-01 09:32:33 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.virtual</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christian Hagendorn">christian.hagendorn</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>32350</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2013-02-22 14:15:00 +0100</bug_when>
+            <thetext>The fix for bug #6880 changed the behavior for the converter call for converters which are used for virtual list or list controller. Normally a converter is defined with the &quot;bindItem&quot; method like:
+
+x.setDelegate({
+  bindItem: function(c, item, id)
+  {
+    c.bindProperty(&quot;label&quot;, &quot;label&quot;, {
+      converter : function(data) {
+        console.log(&quot;data&quot;, data);
+        return data + &quot; affe&quot;;
+      }
+    }, item, id);
+    c.bindProperty(&quot;model&quot;, &quot;model&quot;, null, item, id);
+  }
+});
+
+The converter is now called when the model structure changed because the controllers for the data binding has internally a property chain like:
+
+&quot;model[0].label&quot;
+
+You can see the behavior when you remove all model items like:
+model.removeAll();
+
+Example with list and list controller:
+http://tinyurl.com/bgr9l43
+
+Example with virtual list:
+http://tinyurl.com/a4tve9q
+
+It is expected that the converter is not called, because the the API user doesn&#39;t define a chain.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32352</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-02-22 14:31:32 +0100</bug_when>
+            <thetext>Here is a piece of solution we could use in the single value binding where the converter is called (L285):
+
+
+          var ignoreConverter = false;
+          // take care of the ignore pattern used for the controller
+          if (context.options.ignoreConverter) {
+            // the current property chain as string
+            var currentSourceChain = context.propertyNames.slice(0,j).join(&quot;.&quot;);
+            // match for the current patten given in the options
+            ignoreConverter = context.options.ignoreConverter.match(
+              &quot;^&quot; + currentSourceChain
+            ).length &gt; 0;
+          }
+
+
+It takes a ignore pattern which could be set by the controller to define that the converter is not called in cases we know its not necessary.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32846</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-05-29 11:33:59 +0200</bug_when>
+            <thetext>Added the suggested solution.
+
+master: a5d2409832fdb258a445d99f3b89740ae1d7783e</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

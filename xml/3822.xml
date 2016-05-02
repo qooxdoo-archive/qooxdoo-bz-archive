@@ -1,0 +1,185 @@
+<bug>
+          <bug_id>3822</bug_id>
+          
+          <creation_ts>2010-07-01 15:04:00 +0200</creation_ts>
+          <short_desc>Potential memory leak in TimerManager</short_desc>
+          <delta_ts>2014-03-03 15:26:13 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>19088</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-07-01 15:04:22 +0200</bug_when>
+            <thetext>Per-Ola Stenborg &lt;per-ola.stenborg@sadata.se&gt; reported a possible memory leak with TimerManager, using a recurrent timer. All I can think of is that Array.splice in the underlying browser implementation has an issue, although the problem is being seen in multiple browsers. I&#39;m looking into implementations not involving splice() to see if they fix the problem, and a patch has been provided to Per-Ola to test.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19089</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-07-01 15:05:06 +0200</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19090</commentid>
+              <attachid>762</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-07-01 15:06:02 +0200</bug_when>
+            <thetext>Created attachment 762
+Patch testing copying array instead of splicing into and out of it</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19119</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-07-02 14:42:00 +0200</bug_when>
+            <thetext>Assigning to Martin for a quick look...
+
+From my message on the mailing list:
+
+I must be blind... Maybe someone else can look at this fairly simple code, and figure out where I&#39;m doing something stupid. If using setInterval() directly doesn&#39;t cause your problem but TimerManager does, clearly something is wrong. Sometimes, though, the author, so intimately familiar with the code, overlooks the obvious, and I think that&#39;s what&#39;s happening here. Martin or anyone else with an interest, would you please look at TimerManager and see if you can find a potential memory leak in use of a recurrent timer, with the simple code:
+
+var timer = qx.util.TimerManager.getInstance();
+    
+timer.start(function(userData, timerId)
+            {
+              //  this.debug(&quot;Time!&quot;);      
+            },
+            100,
+            this,
+            null,
+            0);
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19120</commentid>
+              <attachid>762</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-07-02 14:43:04 +0200</bug_when>
+            <thetext>Comment on attachment 762
+Patch testing copying array instead of splicing into and out of it
+
+Patch failed to solve the problem. No reason to switch to this hack.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19124</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-07-02 16:03:57 +0200</bug_when>
+            <thetext>Back to me. Thank you to Andreas Fink! I was, in fact, being blind. Multiple listeners were being added for &quot;interval&quot; instead of using only the one listener that&#39;s supposed to be active.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19125</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-07-02 16:09:49 +0200</bug_when>
+            <thetext>Should be fixed with r22588. The code now tracks whether there is an active listener, and only adds a listener if one isn&#39;t already active. Should now be fixed.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19131</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-07-05 09:12:23 +0200</bug_when>
+            <thetext>Thanks for the fix Derrell. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39035</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:13 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="1" ispatch="1" isprivate="0" isurl="0">
+            <attachid>762</attachid>
+            <date>2010-07-01 15:06:00 +0200</date>
+            <delta_ts>2010-07-02 14:43:04 +0200</delta_ts>
+            <desc>Patch testing copying array instead of splicing into and out of it</desc>
+            <filename>x.patch</filename>
+            <type>text/plain</type>
+            <size>2622</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91dGlsL1RpbWVy
+TWFuYWdlci5qcyBiL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91dGlsL1RpbWVy
+TWFuYWdlci5qcwppbmRleCAzN2I4MmNjLi5jZTY2Nzc2IDEwMDY0NAotLS0gYS9xb294ZG9vL2Zy
+YW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdXRpbC9UaW1lck1hbmFnZXIuanMKKysrIGIvcW9veGRv
+by9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L3V0aWwvVGltZXJNYW5hZ2VyLmpzCkBAIC0xOTMs
+NiArMTkzLDkgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC51dGlsLlRpbWVyTWFuYWdlciIsCiAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB0aGlzLl9fcHJv
+Y2Vzc1F1ZXVlLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgdGhpcyk7CiAgICAgICB9CisgICAgICAKKyAgICAgIC8vIEF0dGVtcHQgdG8gZml4IGEg
+bWVtb3J5IGxlYWsgcG90ZW50aWFsbHkgaW52b2x2aW5nIEFycmF5LnNwbGljZSgpCisgICAgICB0
+aGlzLl9fYnVnRml4TWVtb3J5TGVhaygpOwogICAgIH0sCiAKICAgICAvKioKQEAgLTI0NCw2ICsy
+NDcsOCBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LnV0aWwuVGltZXJNYW5hZ2VyIiwKICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHRoaXMpOwogICAgICAgfQog
+CisgICAgICAvLyBBdHRlbXB0IHRvIGZpeCBhIG1lbW9yeSBsZWFrIHBvdGVudGlhbGx5IGludm9s
+dmluZyBBcnJheS5zcGxpY2UoKQorICAgICAgdGhpcy5fX2J1Z0ZpeE1lbW9yeUxlYWsoKTsKICAg
+ICB9LAogCiAgICAgLyoqCkBAIC0yNjgsNyArMjczLDcgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC51
+dGlsLlRpbWVyTWFuYWdlciIsCiAgICAgICAgICAgICAgdGltZXJEYXRhW3RpbWVyUXVldWVbMF1d
+LmV4cGlyZUF0IDw9IHRpbWVOb3cpCiAgICAgICB7CiAgICAgICAgIC8vIFl1cC4gIERvIGl0LiAg
+Rmlyc3QsIHJlbW92ZSBlbGVtZW50IGZyb20gdGhlIHF1ZXVlLgotICAgICAgICB2YXIgZXhwaXJl
+ZFRpbWVySWQgPSAodGltZXJRdWV1ZS5zcGxpY2UoMCwgMSkpWzBdOworICAgICAgICB2YXIgZXhw
+aXJlZFRpbWVySWQgPSB0aW1lclF1ZXVlLnNoaWZ0KCk7CiAKICAgICAgICAgLy8gQ2FsbCB0aGUg
+aGFuZGxlciBmdW5jdGlvbiBmb3IgdGhpcyB0aW1lcgogICAgICAgICB2YXIgZXhwaXJlZFRpbWVy
+RGF0YSA9IHRpbWVyRGF0YVtleHBpcmVkVGltZXJJZF07CkBAIC0yODUsNiArMjkwLDkgQEAgcXgu
+Q2xhc3MuZGVmaW5lKCJxeC51dGlsLlRpbWVyTWFuYWdlciIsCiAKICAgICAgICAgICAvLyBJbnNl
+cnQgdGhpcyB0aW1lciBiYWNrIG9uIHRoZSB0aW1lLW9yZGVyZWQgdGltZXIgcXVldWUKICAgICAg
+ICAgICB0aGlzLl9faW5zZXJ0TmV3VGltZXIoZXhwaXJlZFRpbWVyRGF0YS5leHBpcmVBdCwgZXhw
+aXJlZFRpbWVySWQpOworICAgICAgICAgIAorICAgICAgICAgIC8vIFRoZSBhcnJheSBtYXkgaGF2
+ZSBjaGFuZ2VkLiBSZS1yZXRyaWV2ZSBpdC4KKyAgICAgICAgICB0aW1lclF1ZXVlID0gdGhpcy5z
+ZWxmKGFyZ3VtZW50cykuX190aW1lclF1ZXVlOwogICAgICAgICB9CiAgICAgICAgIGVsc2UKICAg
+ICAgICAgewpAQCAtMzAxLDYgKzMwOSwyOSBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LnV0aWwuVGlt
+ZXJNYW5hZ2VyIiwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgIHRoaXMuX19wcm9jZXNzUXVldWUsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICB0aGlzKTsKICAgICAgIH0KKyAgICB9LAorICAgIAorICAg
+IC8qKgorICAgICAqIFRoZXJlIGFwcGVhcnMgdG8gYmUgYSBwb3NzaWJsZSBtZW1vcnkgbGVhayBy
+ZWxhdGVkIHRvIHRoZQorICAgICAqIEFycmF5LnNwbGljZSgpIGNhbGwuIENvcHkgdGhlIHRpbWVy
+IHF1ZXVlIHRvIGEgbmV3IGFycmF5IHNvIHRoYXQgdGhlCisgICAgICogb2xkLCBzcGxpY2VkIG9u
+ZSBjYW4gYmUgY2xlYW5lZCB1cC4KKyAgICAgKi8KKyAgICBfX2J1Z0ZpeE1lbW9yeUxlYWsgOiBm
+dW5jdGlvbigpCisgICAgeworICAgICAgLy8gR2V0IHRoZSBjdXJyZW50IHRpbWVyIHF1ZXVlCisg
+ICAgICB2YXIgb2xkVGltZXJRdWV1ZSA9IHRoaXMuc2VsZihhcmd1bWVudHMpLl9fdGltZXJRdWV1
+ZTsKKyAgICAgIAorICAgICAgLy8gQ3JlYXRlIGEgbmV3IHRpbWVyIHF1ZXVlCisgICAgICB2YXIg
+bmV3VGltZXJRdWV1ZSA9IFtdOworICAgICAgCisgICAgICAvLyBDb3B5IHRoZSBlbGVtZW50cyBv
+ZiB0aGUgb2xkIHRpbWVyIHF1ZXVlIHRvIHRoZSBuZXcgb25lLgorICAgICAgd2hpbGUgKG9sZFRp
+bWVyUXVldWUubGVuZ3RoID4gMCkKKyAgICAgIHsKKyAgICAgICAgbmV3VGltZXJRdWV1ZS5wdXNo
+KG9sZFRpbWVyUXVldWUuc2hpZnQoKSk7CisgICAgICB9CisgICAgICAKKyAgICAgIC8vIFJlYXNz
+aWduIHRoZSB0aW1lciBxdWV1ZSB0byBiZSB0aGUgbmV3IG9uZS4KKyAgICAgIHRoaXMuc2VsZihh
+cmd1bWVudHMpLl9fdGltZXJRdWV1ZSA9IG5ld1RpbWVyUXVldWU7CiAgICAgfQogICB9CiB9KTsK
+</data>
+
+          </attachment>
+      
+
+    </bug>

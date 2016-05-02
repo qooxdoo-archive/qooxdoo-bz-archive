@@ -1,0 +1,119 @@
+<bug>
+          <bug_id>5972</bug_id>
+          
+          <creation_ts>2011-12-20 18:53:00 +0100</creation_ts>
+          <short_desc>qx.lang.Object.toUriParameter ignores Arrays</short_desc>
+          <delta_ts>2012-02-13 13:02:52 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.6.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tino Butz">tinobutz</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>28072</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-12-20 18:53:18 +0100</bug_when>
+            <thetext>qx.io.request.AbstractRequest uses qx.lang.Object.toUriParameter to serialize the data. 
+
+Following scenario:
+
+I would like to send the post data &quot;application/x-www-form-urlencoded&quot;. The data is e.g.:
+
+{id:[2,3]}
+
+This should be transformed into:
+
+id=2&amp;id=3
+
+Right now the qx.lang.Object.toUriParameter method returns &quot;id=2,3&quot; - it ignores the array.
+
+I have fixed the code like that:
+
+===============================
+
+    toUriParameter: function(obj, post)
+    {
+      var key,
+          parts = [];
+
+      for (key in obj) {
+        if (obj.hasOwnProperty(key)) {
+
+          var value = obj[key];
+
+          if (value instanceof Array)
+          {
+            for (var i=0; i&lt;value.length; i++)
+            {
+              this.__toUriParameter(key, value[i], parts, post);
+            }
+          }
+          else
+          {
+            this.__toUriParameter(key, value, parts, post);
+          }
+        }
+      }
+
+      return parts.join(&quot;&amp;&quot;);
+    },
+    
+    
+    __toUriParameter : function(key, value, parts, post) {
+      var encode = window.encodeURIComponent;
+      if (post) {
+        parts.push(encode(key).replace(/%20/g, &quot;+&quot;) + &quot;=&quot; +
+          encode(value).replace(/%20/g, &quot;+&quot;));
+      } else {
+        parts.push(encode(key) + &quot;=&quot; + encode(value));
+      }
+    }
+
+===============================
+
+NOTE: Please check if the qx.util.Serializer.toUriParameter is doing this right as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28141</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2012-01-02 16:11:29 +0100</bug_when>
+            <thetext>Used provided patch, added tests and applied to master/branch.
+
+5597d7d (master)
+8a54305 (branch_1_6_x)</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

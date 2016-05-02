@@ -1,0 +1,221 @@
+<bug>
+          <bug_id>7247</bug_id>
+          
+          <creation_ts>2013-02-20 14:19:00 +0100</creation_ts>
+          <short_desc>Invalid mixin for qx.ui.decoration.dynamic.Single</short_desc>
+          <delta_ts>2014-03-03 15:23:12 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>2.1.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>2.1.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter>krejci</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>32304</commentid>
+              <attachid>1238</attachid>
+            <who name="">krejci</who>
+            <bug_when>2013-02-20 14:19:16 +0100</bug_when>
+            <thetext>Created attachment 1238
+View of debugger in state of error
+
+Today I have updated QX to 2.1.1 for our app, but it seems broken. Unfortunately I&#39;am not able to replicate that bug to playground, it seems to be tied to some situation in our app.
+
+qx.ui.core.queue.Appearance: Error in the &#39;Appearance&#39; queue:Error: The include definition in class &quot;qx.ui.decoration.dynamic.Single&quot; contains an invalid mixin at position 0: [Class qx.ui.decoration.Single]
+
+I made some digging and it goes with this commit:
+
+https://github.com/qooxdoo/qooxdoo/commit/72389fe5232467fcc9e6c276cca503769f69001d
+
+I am not sure what this change should be fixing, however if you follow code further, there is attempt to define new class dynamically and for include key it uses Class instead of Mixin. It than follows to qx.Class.__validateConfig() which ends up with exception above.
+
+https://github.com/qooxdoo/qooxdoo/blob/21be6659f0c5e29dd20b91ca8669bd8abacd4c5d/framework/source/class/qx/Class.js#L818
+
+I had attached little screenshot from debugger showing what are variables at this line of code:
+
+https://github.com/qooxdoo/qooxdoo/blob/1d7f15a34c4fa4701dbed873ba5ad1b54da0799b/framework/source/class/qx/theme/manager/Decoration.js#L140</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32313</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-02-21 08:33:14 +0100</bug_when>
+            <thetext>Thanks for the report. This behavior sounds strange but at the moment, I have no idea how to reproduce it so there is not really a way of fixing that issue. Checking the commit you pointed to as the source of the bug doesn&#39;t help much because I really can not imagine how that change should have broken anything.... 
+
+But after taking a second look I found the source of the problem: In your decoration theme, you are using the following line as decorator: [qx.ui.decoration.Single]. Using an array as decorator means that you want to combine decoration mixins to a dynamically created decorator class. But the array contains a class and not not a mixin which brings up the error. Either remove the [] or use MSingleBorder mixin.
+But why did it work before I hear you asking? The dynamic generation of the class does not check if it&#39;s a mixin or not so the process ended up with the class name &quot;qx.ui.decoration.Single&quot; for the new decorator class to create. But this class has already been created so the class define ignores the define order. Still, the decorator wants to use this newly crated class which is ofc possible because the class is already there and exactly what you were looking for.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32319</commentid>
+            <who name="">krejci</who>
+            <bug_when>2013-02-21 12:01:24 +0100</bug_when>
+            <thetext>Thank you very much, you are completely right, it is the issue.
+
+I made little tweak there, so it throws meaningful exception. Current state is really hard to debug and figure out what is happening.
+
+https://github.com/qooxdoo/qooxdoo/pull/52</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32341</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-02-22 09:00:44 +0100</bug_when>
+            <thetext>Thanks. Merged the pul request seconds ago.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37925</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:12 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1238</attachid>
+            <date>2013-02-20 14:19:00 +0100</date>
+            <delta_ts>2013-02-20 14:19:16 +0100</delta_ts>
+            <desc>View of debugger in state of error</desc>
+            <filename>debug_1.PNG</filename>
+            <type>image/png</type>
+            <size>6073</size>
+            <attacher>krejci</attacher>
+            
+              <data encoding="base64">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
+</data>
+
+          </attachment>
+      
+
+    </bug>

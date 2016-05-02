@@ -1,0 +1,165 @@
+<bug>
+          <bug_id>5597</bug_id>
+          
+          <creation_ts>2011-09-08 12:59:00 +0200</creation_ts>
+          <short_desc>Trivial errors cause the qooxdoo layout queue to hang</short_desc>
+          <delta_ts>2011-12-21 09:19:50 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.layout</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26739</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-09-08 12:59:45 +0200</bug_when>
+            <thetext>We are developing a portal framework in which several different apps are executed.
+It may happen that one of these apps makes a small error that causes qooxdoo to hang.
+This fault-intolerant behaviour should be improved. We do not want that our complete Qooxdoo-application needs to be reloaded after one of the applications from a different company makes an error.
+
+The problem can be reproduced by copying the following code into the qooxdoo playground:
+
+-- Start of playground code --------------------------------------------
+var button = new qx.ui.form.Button(&quot;Button&quot;);
+this.getRoot().add(button, {left: 100, top: 50 });
+
+var container = new qx.ui.container.Composite(new qx.ui.layout.Grid());
+this.getRoot().add(container, { left : 100, top  : 100 });
+
+container.add(new qx.ui.basic.Label(&quot;Hello 1&quot;), {row: 1, column: 2});
+
+qx.event.Timer.once( function() {
+  container.add(new qx.ui.basic.Label(&quot;Hello 2&quot;), {row: 1, column: 2});
+}, this, 5000);
+-- End of playground code --------------------------------------------
+
+The button &quot;Button&quot; shows a mouseover effect.
+But the mouseover effect stops working after 5 seconds are over.
+The timer that is executed after 5 seconds causes the following exception to be thrown when flushing the layout queue:
+  &quot;There is already a widget in this cell (1,2)&quot;
+
+The reason for this problem is a missing exception handling in the method qx.ui.core.queue.Layout.flush(). The flush method should catch exceptions that can occur when rendering widgets and then continue with the next widget (after logging that exception).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26746</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-09-09 12:56:55 +0200</bug_when>
+            <thetext>It would be nice if the layout queue would fire an event containing the widget that has caused the rendering error.
+This would enable us to register a listener that walks through the widget hierarchy and finds out which app (or part of the app) has caused this error. Otherwise it can be very hard to find out who has caused this problem.
+Example: We sometimes get the error &quot;There is already a widget in this cell (1,2)&quot;. We were not able to find out the reason for this error, because we are using dozens of grid layouts that could possible cause this error.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26795</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-09-15 09:06:38 +0200</bug_when>
+            <thetext>Now we have found another case that causes our Qooxdoo application to freeze:
+
+One (of 16) app has registered a listener to a disappear-event and forgotten to remove this listener when the app gets disposed. When the app is removed from our portal application, the disappear-event is fired inside the layout process. The disappear-handler then throws an exception because it tries to operate on a disposed object. This exception then causes the Qooxdoo layout queue to hang. The portal application then needs to be restartet.
+
+Since we have now three different cases that can cause the application to freeze, I would like to kindly ask whether it would be possible to implement this enhancement not only in Qooxdoo 1.6, but also in the Qooxdoo-1.5-branch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27524</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-11-14 15:53:19 +0100</bug_when>
+            <thetext>First of all, improved the error thrown by the the grid layout. It should contain a reference to itself to better debugging.
+
+After that, I wrapped the single flushes initiated by the queue manager into try catches in the debug mode (important!). With that, the flush might fail but does not break the whole application which is also nice for the playground. That should help you with the first and the last use case you mentioned.
+
+master: 33b002bb80985bbfa16b19aeec486724c22730f6
+
+Having an event is in my opinion not a good idea. In the end, its only a feature for the development and during that, you can always set break points in the code which fails and so on. Additionally, we would have to check every single exception which might be thrown during that process and add the possibility to access the widget responsible for the fail. Just too much work in comparison to just set a break point in the code.
+
+As you have seen, I only applied the fix for the master but thats just for you to see the code. If you think that might do it for you, I can apply the code to the branch as well and close the bug as fixed. What do you think?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27529</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-11-15 08:16:08 +0100</bug_when>
+            <thetext>These changes do not help us in finding the reasons for the entries in the error logging database.
+
+The changes in the grid layout have only changed the error message from:
+  &quot;There is already a widget in this cell (1,2)&quot;
+To:
+  &quot;There is already a widget in this cell (1,2) for qx.ui.layout.Grid[3892]&quot;
+
+The additional number (3892) does not help when analyzing the error messages in the logging database one hour later.
+The best solution would be to have a strack trace that points to the code that has created this faulty grid layout.
+
+
+The improved exception handling in the class qx/ui/core/queue/Manager is only activated when &quot;qx.debug&quot; is set to &quot;on&quot;. But we need it always.
+Our portal integrates a many apps from different developers. Therefore we cannot guarantee that every app always behaves correctly. And we cannot guarantee that errors will be fixed immediately after the are detected. Therefore we would like our portal to behave robust, even if a single app makes an error. And this robustness should be activated always and not only when &quot;qx.debug&quot; is on.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27533</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-11-15 08:53:22 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; These changes do not help us in finding the reasons for the entries in the
+&gt; error logging database.
+&gt; 
+&gt; The changes in the grid layout have only changed the error message from:
+&gt;   &quot;There is already a widget in this cell (1,2)&quot;
+&gt; To:
+&gt;   &quot;There is already a widget in this cell (1,2) for qx.ui.layout.Grid[3892]&quot;
+&gt; 
+&gt; The additional number (3892) does not help when analyzing the error messages in
+&gt; the logging database one hour later.
+&gt; The best solution would be to have a strack trace that points to the code that
+&gt; has created this faulty grid layout.
+The stack trace would only lead you most of the time to the start of the flushing process because thats async. That would not help either.
+
+&gt; The improved exception handling in the class qx/ui/core/queue/Manager is only
+&gt; activated when &quot;qx.debug&quot; is set to &quot;on&quot;. But we need it always.
+&gt; Our portal integrates a many apps from different developers. Therefore we
+&gt; cannot guarantee that every app always behaves correctly. And we cannot
+&gt; guarantee that errors will be fixed immediately after the are detected.
+&gt; Therefore we would like our portal to behave robust, even if a single app makes
+&gt; an error. And this robustness should be activated always and not only when
+&gt; &quot;qx.debug&quot; is on.
+
+I think we should stick to the fact that if something is going wrong in the queue flushing, the app code is simply wrong and should be fixed. And if thats so, the code should never go into production state. Thats why I put the try/catch only for debuggging purposes in there. I would not be happy if we build in a &quot;general&quot; fault tolerance for the deployment version because that could lead to bad code quality!
+
+Still, I do understand your issue! I&#39;ll have a word with Alex and see if we can come up with a better solution.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28077</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-12-21 09:19:50 +0100</bug_when>
+            <thetext>I set the bug to wontfix even though, it would be more a cantfix because offering a good stack trace is not possible due to the async manner of the queues itself.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

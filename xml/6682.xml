@@ -1,0 +1,87 @@
+<bug>
+          <bug_id>6682</bug_id>
+          
+          <creation_ts>2012-07-27 11:40:00 +0200</creation_ts>
+          <short_desc>qx.log.Logger.__log discards the stack trace</short_desc>
+          <delta_ts>2014-03-03 15:24:19 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.dev</component>
+          <version>2.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>2.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          
+          <qa_contact name="Alexander Steitz">alexander.steitz</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30278</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2012-07-27 11:40:06 +0200</bug_when>
+            <thetext>Our error logging database sometimes contains javascript exceptions for which the stack trace is missing.
+The problem is that the function qx.log.Logger.__log discards the stack trace that we need.
+But we need the stack trace. Otherwise we are not able to analyze the errors.
+
+Our application error is catched and handled as follows:
+  try {
+    // Do some stuff which throws qx.core.AssertionError: error
+  }catch(exc) {
+    qx.log.Logger.error(this, &quot;doing stuff failed&quot;, exc);
+  }
+
+The function qx.log.Logger.error then calls qx.log.Logger.__log
+
+Our javascript class which writes exceptions into the error logging database has registered itself by calling qx.log.Logger.register.
+Therefore our error logging class is then called by the function qx.log.Logger.__log.
+
+The problem is that qx.log.Logger.__log stringifies the exception and then only passes the stringified exception
+(instead of the original exception object) to our appendar class.
+But the stringify of the exception &quot;qx.core.AssertionError&quot; does not work.
+The problem is that qx.log.Logger.__detect returns the type &quot;instance&quot; instead of &quot;error&quot; for this kind of exception.
+Due to this wrong type, the stack trace is not stringified.
+And that is the reason why we are loosing the stack trace.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30339</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2012-08-08 10:17:10 +0200</bug_when>
+            <thetext>Thanks for the analysis, Uwe. I&#39;ve modified Logger.__detect so that it returns &quot;error&quot; for qx error objects. __serialize now looks for the &quot;basename&quot; property so that the serialization will include the exception&#39;s class name as well as its string representation and the stack trace.
+
+Fixed with eae11bf9 (master).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38343</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:19 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

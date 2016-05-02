@@ -1,0 +1,148 @@
+<bug>
+          <bug_id>4156</bug_id>
+          
+          <creation_ts>2010-10-05 09:55:00 +0200</creation_ts>
+          <short_desc>qx.util.JSON.__convertObject() problem with a native toJSON</short_desc>
+          <delta_ts>2014-03-03 15:23:22 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.dev.util</component>
+          <version>1.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Jean-Noel Rivasseau">elvanor</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20481</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2010-10-05 09:55:46 +0200</bug_when>
+            <thetext>This was discussed on the ML.
+
+It seems to me there is a bug in __convertObject() if the underlying
+object already has a native toJSON implementation. Because in that
+case you do:
+
+return this.__convert(incoming.toJSON(key), key); (l. 413 in Qx 1.2)
+
+whereas incoming.toJSON(key) already returns a String. So since it
+will go into __convert again the return String will get extra quotes
+and will be converted - clearly not what we want.
+
+I tried today not with a native implementation but with Prototype&#39;s
+implementation and ran into a bug because of this.
+
+I think it is sufficient to change the line to:
+
+                           return incoming.toJSON(key);
+
+
+Example with the following object:
+
+[{&quot;key1&quot;: &quot;value1&quot;}, {&quot;key1&quot;: &quot;value2&quot;}].
+
+Eg, an array of objects. If the native toJSON method exists it will
+return &#39;[{&quot;key1&quot;: &quot;value1&quot;}, {&quot;key1&quot;: &quot;value2&quot;}]&#39; exactly as a string
+without the single quotes. This is probably what you want in the end
+(in my case I send that to the server). If this is considered as a
+string and converted again via qx.util.Json, this does not make any
+sense (you obtain &#39; &quot;{\&quot;key1\&quot;: \&quot;value1\&quot;}, {\&quot;key1\&quot;: \&quot;value2\&quot;}]&quot;
+&#39; which does not make any sense to me (it&#39;s like you have a string,
+whereas in fact what you care about is the array / objects.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20499</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-10-06 08:14:31 +0200</bug_when>
+            <thetext>Thanks for the report. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21084</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2010-11-04 12:52:50 +0100</bug_when>
+            <thetext>No progress on that, although the change is trivial. Any update?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21141</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2010-11-08 08:24:27 +0100</bug_when>
+            <thetext>After some research, I came to the conclusion to mark this bug as INVALID.
+
+The native JSON implementation found in modern browsers is not to be confused with the toJSON() method. Native JSON is actually a global JSON object, that provides a stringify() and parse() method. In qx.lang.JSON we use this native JSON object if present. 
+
+If an object has the function toJSON(), this function is evaluated by stringify() to get the JSON representation. In other words, toJSON() is *not* a built-in method. One exception though is toJSON() from the Date object, which indeed has a built-in toJSON().
+
+Here are some excerpts from (what I believe to be) the (native) JSON specification, found at http://wiki.ecmascript.org/doku.php?id=es3.1:json_support.
+
+&gt; The stringify method produces a JSON text from a JavaScript value. If value is an object or 
+&gt; array, the structure will be visited recursively to determine the serialization of each 
+&gt; member or element. The structure must not be cyclical.
+
+&gt; When an object value is found, if the object contains a toJSON method, its toJSON method will 
+&gt; be called and the result will be stringified. A toJSON method does not serialize: it returns the 
+&gt; value represented by the name/value pair that should be serialized, or undefined if nothing 
+&gt; should be serialized. The toJSON method will be passed the key associated with the value, 
+&gt; and this will be bound to the object holding the key.
+
+The important part here is that toJSON() does *not* serialize. It returns the object that is the JSON representation. Therefore, it is correct to parse the value of toJSON() with __convert in our JavaScript implementation, since we still need to serialize the object returned.
+
+Here is an example:
+
+var obj = {a: &quot;a&quot;, b: {toJSON: function() {return []}}}
+JSON.stringify(obj)             // &quot;{&quot;a&quot;:&quot;a&quot;,&quot;b&quot;:[]}&quot;
+qx.util.Json.stringify(obj) // &quot;{&quot;a&quot;:&quot;a&quot;,&quot;b&quot;:[]}&quot;
+JSON.stringify(obj) === qx.util.Json.stringify(obj) // true</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21147</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2010-11-08 10:09:35 +0100</bug_when>
+            <thetext>Indeed, what you say seems correct. In this case, I guess there is a bug in Prototype&#39;s way of handling this:
+
+http://www.prototypejs.org/api/object/tojson
+
+since they use the toJSON basically as a stringify method. Can you confirm?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21149</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2010-11-08 10:30:01 +0100</bug_when>
+            <thetext>Prototype extends Object with the toJSON() method, so Prototype has the toJSON() method on each &quot;object&quot;. Indeed, they seem to return the value of toJSON() unserialized. But there might be a good reason, like compatibility with the native JSON perhaps. If you file a bug, let me know.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37991</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:22 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,214 @@
+<bug>
+          <bug_id>2286</bug_id>
+          
+          <creation_ts>2009-04-22 19:56:00 +0200</creation_ts>
+          <short_desc>Use &#39;native&#39; context menu for TextField if none was attached explicitly</short_desc>
+          <delta_ts>2014-03-03 08:46:21 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>0.7.4</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Rüdiger Herrmann">rherrmann</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>ivan</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9501</commentid>
+            <who name="Rüdiger Herrmann">rherrmann</who>
+            <bug_when>2009-04-22 19:56:30 +0200</bug_when>
+            <thetext>Text widgets should show the default (browser-provided) context menu as long as there was not explicitly set a context menu via API.
+This also applies to similar widgets like combo boxes, spinnes etc</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9503</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-23 09:35:46 +0200</bug_when>
+            <thetext>The event handler class &lt;http://demo.qooxdoo.org/0.7.4/apiviewer/#qx.event.handler.EventHandler&gt; has a property allowClientContextMenu, which can globally turn on native context menus. Is is this what you are looking for?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9524</commentid>
+            <who name="Rüdiger Herrmann">rherrmann</who>
+            <bug_when>2009-04-23 11:38:11 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; The event handler class
+&gt; &lt;http://demo.qooxdoo.org/0.7.4/apiviewer/#qx.event.handler.EventHandler&gt; has a
+&gt; property allowClientContextMenu, which can globally turn on native context
+&gt; menus. Is is this what you are looking for?
+No, I would like to have the cut/copy/paste context menu for text widgets if the widget has no context menu defined by application code</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9529</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-23 11:53:15 +0200</bug_when>
+            <thetext>That should be the case if you enable this property. Have you tried it?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9534</commentid>
+            <who name="Rüdiger Herrmann">rherrmann</who>
+            <bug_when>2009-04-23 12:04:37 +0200</bug_when>
+            <thetext>I just tried it. Setting this to true enabled to context menu *everywhere*.
+I want to have the  context menu shown only on text fields and only if noone explicitly attached a context menu.
+
+&lt; psuedo-code &gt;
+var textWithNativeMenu = new qx.ui.formTextField(); 
+// -&gt; right click would show the browsers&#39; cut/copy/paste context menu
+
+var textWithMyMenu = new qx.ui.formTextField(); 
+textWithMyMenu.setContextMenu( ... );
+// -&gt; right click would show the application-defined context menu </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9536</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-23 13:39:39 +0200</bug_when>
+            <thetext>It&#39;s hard to add a general fix to the framework. It will be easier to fix it in your application.
+
+This is how you can do it:
+
+1. Enable the native context menu globally
+2. Attach a context menu event listener to the application root. This listener checks whether the event target is an input element. If the target isn&#39;t an input element it calls e.preventDefault(). This blocks all context menus except the ones on input fields
+3. If you attach a local event listener on a textfield make sure to call e.preventDefault() in the handler.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10362</commentid>
+            <who name="Asen Draganov">asen</who>
+            <bug_when>2009-06-11 13:59:08 +0200</bug_when>
+            <thetext>I applied the procedure explained in comment #5. Generally it did the job. However there are also two unwanted effects:
+
+1. The browser context menu appears on all disabled widgets, because no events are  propagated in a disabled state.
+2. If there is an explicitly set context menu on a parent of the input element, the &#39;native&#39; browser menu doesn&#39;t appear on it as well.
+
+Could you please suggest a resolution of these problems?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10372</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-06-15 10:58:17 +0200</bug_when>
+            <thetext>To fix #1 you can check the domTarget property 
+&lt;http://demo.qooxdoo.org:8181/0.7.4/apiviewer/#qx.event.type.DomEvent~domTarget&gt;
+
+e.getDomTarget().tagName.toLowerCase() === &quot;input&quot;;
+
+I&#39;m not sure how to fix #2. If you call &quot;preventDefault&quot; in the handler of the parent widget
+there is no way to enable the native context menu in the text field. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10422</commentid>
+            <who name="Asen Draganov">asen</who>
+            <bug_when>2009-06-16 16:10:45 +0200</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; To fix #1 you can check the domTarget property 
+&gt; &lt;http://demo.qooxdoo.org:8181/0.7.4/apiviewer/#qx.event.type.DomEvent~domTarget&gt;
+&gt; 
+&gt; e.getDomTarget().tagName.toLowerCase() === &quot;input&quot;;
+&gt;
+Thank you for your answer, Fabian!
+Unfortunately your proposal either doesn&#39;t make sense in this case or I have not understood your idea. I already use domTarget property to identify the non-input elements, because I need to prevent their native context menus (step 2 in comment #5). This works well. My problem #1 is that, because of globally enabled context menus (step 1 in comment #5) I should always listen for &#39;contextmenu&#39; event, that is not fired (or at least not propagated) for disabled widgets. As a result, there are native browser menus on all disabled widgets, no matter &quot;input&quot; fields or not.
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10664</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-06-29 16:59:04 +0200</bug_when>
+            <thetext>Please always reassign, so that discussion doesn&#39;t stall. Back to Fabian.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12581</commentid>
+              <attachid>604</attachid>
+            <who name="Tim Buschtoens">tbuschto</who>
+            <bug_when>2009-09-23 11:57:55 +0200</bug_when>
+            <thetext>Created attachment 604
+suggested solution
+
+This is how we solved it, except we don&#39;t use the &quot;getAllowClientContextMenu&quot;-property at all anymore. (It&#39;s still there in this version of the patch.)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13005</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-08 14:48:20 +0200</bug_when>
+            <thetext>Tim, great you found a solution for your requirements. Not sure how such a custom hook could be part of the framework code, though. Fabian, comments?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17310</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-17 13:31:01 +0100</bug_when>
+            <thetext>to Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35502</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:21 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>604</attachid>
+            <date>2009-09-23 11:57:00 +0200</date>
+            <delta_ts>2009-09-23 11:57:55 +0200</delta_ts>
+            <desc>suggested solution</desc>
+            <filename>qx-eventhandler.txt</filename>
+            <type>text/plain</type>
+            <size>1369</size>
+            <attacher>tbuschto</attacher>
+            
+              <data encoding="base64">LS0tIHF4LWJ1aWxkL3NvdXJjZS9jbGFzcy9xeC9ldmVudC9oYW5kbGVyL0V2ZW50SGFuZGxlci5q
+cwkxMCBEZWMgMjAwOCAxNjo1Nzo1MyAtMDAwMAkxLjENCisrKyBxeC1idWlsZC9zb3VyY2UvY2xh
+c3MvcXgvZXZlbnQvaGFuZGxlci9FdmVudEhhbmRsZXIuanMJMjEgU2VwIDIwMDkgMTM6MDI6MzYg
+LTAwMDANCkBAIC0zODIsNiArMzgyLDIzIEBADQogDQogICBtZW1iZXJzIDoNCiAgIHsNCisgICAg
+X2FsbG93Q29udGV4dE1lbnUgOiBxeC5sYW5nLkZ1bmN0aW9uLnJldHVybkZhbHNlLA0KKw0KKyAg
+ICAvKioNCisgICAgICogU2V0cyBhIGNhbGxiYWNrLWZ1bmN0aW9uIHRvIGRlY2lkZSBpZiB0aGUg
+bmF0aXZlIGNvbnRleHQtIA0KKyAgICAgKiBtZW51IGlzIGRpc3BsYXllZC4gSXQgd2lsbCBiZSBj
+YWxsZWQgb24gRE9NLWV2ZW50cyBvZiB0aGUgdHlwZSANCisgICAgICogImNvbnRleHRtZW51Ii4g
+VGhlIHRhcmdldC1XaWRnZXQgb2YgdGhlIGV2ZW50IHdpbGwgYmUgZ2l2ZW4gYXMNCisgICAgICog
+dGhlIGZpcnN0IGFyZ3VtZW50LCB0aGUgZG9tLXRhcmdldCBhcyB0aGUgc2Vjb25kLiANCisgICAg
+ICogSXQgbXVzdCByZXR1cm4gYSBib29sZWFuLiBOdWxsIGlzIG5vdCBhbGxvd2VkLg0KKyAgICAg
+Kg0KKyAgICAgKiBAdHlwZSBtZW1iZXINCisgICAgICogQHBhcmFtIHZhbHVlIHtmdW5jdGlvbn0g
+VGhlIGNhbGxiYWNrIGZ1bmN0aW9uDQorICAgICAqIEByZXR1cm4ge3ZvaWR9DQorICAgICAqLyAg
+ICANCisgICAgc2V0QWxsb3dDb250ZXh0TWVudSA6IGZ1bmN0aW9uKCBmdW4gKSB7DQorICAgICAg
+dGhpcy5fYWxsb3dDb250ZXh0TWVudSA9IGZ1bjsNCisgICAgfSwNCisgICAgDQogICAgIC8qDQog
+ICAgIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KICAgICAgIFNUQVRFIEZMQUdTDQpAQCAtOTA0LDcgKzky
+MSw3IEBADQogICAgICAgICB9DQogDQogICAgICAgICAvLyBQcmV2ZW50IHRoZSBicm93c2VyJ3Mg
+bmF0aXZlIGNvbnRleHQgbWVudQ0KLSAgICAgICAgaWYgKHZUeXBlID09ICJjb250ZXh0bWVudSIg
+JiYgIXRoaXMuZ2V0QWxsb3dDbGllbnRDb250ZXh0TWVudSgpKSB7DQorICAgICAgICBpZiAodlR5
+cGUgPT0gImNvbnRleHRtZW51IiANCisgICAgICAgICAgICAmJiAhdGhpcy5nZXRBbGxvd0NsaWVu
+dENvbnRleHRNZW51KCkgDQorICAgICAgICAgICAgJiYgIXRoaXMuX2FsbG93Q29udGV4dE1lbnUo
+dk9yaWdpbmFsVGFyZ2V0LCB2RG9tVGFyZ2V0KSkgew0KICAgICAgICAgICBxeC5ldmVudC5oYW5k
+bGVyLkV2ZW50SGFuZGxlci5zdG9wRG9tRXZlbnQodkRvbUV2ZW50KTsNCiAgICAgICAgIH0NCiAN
+Cg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

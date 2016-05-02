@@ -1,0 +1,290 @@
+<bug>
+          <bug_id>5255</bug_id>
+          
+          <creation_ts>2011-06-16 16:35:00 +0200</creation_ts>
+          <short_desc>Provide a public API for retrieving the locale fallbacks</short_desc>
+          <delta_ts>2014-03-03 08:47:38 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.locale</component>
+          <version>1.4</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Alexander Steitz">alexander.steitz</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          <cc>johannes.kissel</cc>
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>25128</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-06-16 16:35:33 +0200</bug_when>
+            <thetext>Suppose you use localized images (= the locale part is encoded within the file name) to show the users of your application language specific images.
+
+The locale manager already does implement a fallback strategy for message IDs. So if the application hands in a specific message ID the locale manager will look up its catalog to get the corresponding translation string.
+
+Look up will e.g. be performed 
+
+  * en_US
+  * en
+  * C
+
+This fallback chain should be accessible by an application developer through public API, so he can insert his localized images.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25129</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-06-16 16:37:26 +0200</bug_when>
+            <thetext>In this context it should be also possible to change the default locale of the locale manager.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25136</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-06-17 12:20:41 +0200</bug_when>
+            <thetext>Mh, so the real aim is to use localized images.
+
+There are several other ways to achieve that. One is by using the normal translation facilities. Suppose you have an image in a button that you want to localize:
+
+   var b = new qx.ui.form.Button(&quot;Button text&quot;, &quot;myapp/imgs/i.png&quot;);
+
+The resource id myapp/imgs/i.png in this example is nothing more than a string, and strings can be localized with the tr() function, so there&#39;s nothing to keep you from localizing resource id&#39;s:
+
+   var b = new qx.ui.form.Button(&quot;Button text&quot;, this.tr(&quot;myapp/imgs/i.png&quot;));
+
+Now, for every locale you want to support the resource id of the image is send as a msgid into the corresponding .po file, and you just add the localized resource id&#39;s as the msgstr, sort of like their &quot;translation&quot;, like
+
+   en.po:
+      ...
+      msgid &quot;myapp/imgs/i.png&quot;
+      msgstr &quot;myapp/imgs/i_en.png&quot;
+      ...
+
+   en_US.po:
+      ...
+      msgid &quot;myapp/imgs/i.png&quot;
+      msgstr &quot;myapp/imgs/i_en_US.png&quot;
+      ...
+
+asf. Now, whatever locale is selected when the button is created, the correct image is used automatically, without the app pogrammer having to worry about it. Fall-back within the locale chain would be automatically handled, as with user-visible strings. What might need some extra care would be if you want to change the locale *after* the button has been created, to update the image accordingly.
+
+This approach frees you from constructing resource id&#39;s dynamically in application code, using the current active locale and its fall-back chain. Even if the programmer can query the fall-back chain, what would he do? Suppose he got en_US - en - C, so he constructs &quot;myapp/imgs/i_en_US.png&quot;, and now? Ask the ResourceManager if it knows about this image? And if that fails try with &quot;myapp/imgs/i_en.png&quot; asf.?
+
+Using resource id&#39;s as translatable strings frees you from all these quirks in the application code. If there is no localized image for a particular resource id, it automatically uses the fall-back. If you later add that image to the app, just make entries for it in the .po files, rebuild the app, and it is automatically being used.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25137</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-06-17 12:22:52 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; In this context it should be also possible to change the default locale of the
+&gt; locale manager.
+
+If &quot;default locale&quot; means &quot;current locale&quot; this API already exists: qx.locale.Manager.setLocale().</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25145</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2011-06-17 13:36:39 +0200</bug_when>
+            <thetext>Basically this would work for us. But I just asked TR if it would also work for them. I&#39;ll post the answer here.
+
+What we still need is the default locale. Qooxdoo has C as last fallback and we need en. A static member DEFAULT_LOCALE of the locale manager would be an easy solution.
+
+And to be standard-compliant: The default locale has also fallbacks. An example: If you have fr_CA as current locale and en_GB as default locale, then the fallback chain would look like this:
+
+fr_CA
+fr
+en_GB
+en</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25148</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-06-17 14:16:19 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; What we still need is the default locale. Qooxdoo has C as last fallback and we
+&gt; need en. A static member DEFAULT_LOCALE of the locale manager would be an 
+&gt; easy solution.
+Yes, still needed as the &quot;setLocale&quot; does not modify the default locale variable.
+
+&gt; And to be standard-compliant: The default locale has also fallbacks. An
+&gt; example: If you have fr_CA as current locale and en_GB as default locale, then
+&gt; the fallback chain would look like this:
+&gt; 
+&gt; fr_CA
+&gt; fr
+&gt; en_GB
+&gt; en
+I guess this would be another issue which should end up in another bugzilla issue. Feel free to open another enhancement bug for this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25150</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-06-17 15:05:05 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; What we still need is the default locale. Qooxdoo has C as last fallback and we
+&gt; need en. A static member DEFAULT_LOCALE of the locale manager would be an easy
+&gt; solution.
+
+What is &quot;default locale&quot; supposed to mean? Is it the locale the browser exhibits? Because &quot;default&quot; means a value in effect if no other value has been set explicitly. If the application doesn&#39;t set the locale, qooxdoo will use the browser locale, so this is the &quot;default&quot;. But you cannot change the browser&#39;s own locale, can you.
+
+&gt; 
+&gt; And to be standard-compliant: The default locale has also fallbacks. An
+&gt; example: If you have fr_CA as current locale and en_GB as default locale, then
+&gt; the fallback chain would look like this:
+&gt; 
+&gt; fr_CA
+&gt; fr
+&gt; en_GB
+&gt; en
+
+Where is this standard defined? Do you have a pointer?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25151</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2011-06-17 15:10:29 +0200</bug_when>
+            <thetext>My reference: http://userguide.icu-project.org/locale#TOC-Fallback
+
+What I mean with default locale is the end of the fallback chain. This should be configurable.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25174</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2011-06-20 12:45:25 +0200</bug_when>
+            <thetext>I just talked with TR. The solution does not fit for them, because would always have to advice external translators not translate these PO keys.
+
+And also the developers have a bad feeling to put technical stuff into translation resources.
+
+My current implementation looks like this:
+http://tinyurl.com/5tvlu64
+
+If this is integrated into the locale manager, the __lookupAndExpand method would look like this (excerpt):
+
+var fallbacks = this.self(arguments).getLocaleFallbacks();
+var txt;
+
+for (var i = 0; i &lt; fallbacks.length &amp;&amp; ! txt; i++) {
+  var locale = fallbacks[i];
+  
+  if (fallbacks[locale]) {
+    txt = fallbacks[locale][messageId];
+  }
+}
+
+return txt || messageId;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25180</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-06-20 18:55:15 +0200</bug_when>
+            <thetext>Unicode resource for fallback calculation:
+
+http://www.unicode.org/reports/tr35/#LanguageMatching</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25184</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-06-20 19:32:07 +0200</bug_when>
+            <thetext>(In reply to comment #8)
+&gt; I just talked with TR. The solution does not fit for them, because would always
+&gt; have to advice external translators not translate these PO keys.
+
+Well, what&#39;s the problem with that? Is it the problem of identifying which keys to skip? This could be helped by either using a perfix for the message key like &quot;__&quot;, e.g.
+
+   this.tr(&quot;__myapp/images/i.png&quot;)
+
+or, even better, use .trc to add a comment in the .po file, e.g.
+
+  this.trc(&quot;TECH-DATA&quot;, &quot;myapp/images/i.png&quot;)
+
+This would show up in the .po file as
+
+  #. TECH-DATA
+  #: gui/Application.js:71
+  msgid &quot;myapp/images/i.png&quot;
+  msgstr &quot;&quot;
+
+Should be easy to advise those entries as skip entries to the translator, right?!
+
+&gt; And also the developers have a bad feeling to put technical stuff into
+&gt; translation resources.
+
+But they are not concerned about putting natural language strings into translation resources?! A language string is as much a programming resource as an image. If you get them wrong the user interface is botched as much as if you pick a wrong image, maybe more. - I think this argument is artificial.
+
+
+&gt; 
+&gt; My current implementation looks like this:
+&gt; http://tinyurl.com/5tvlu64
+
+Thanks for the code, we&#39;ll keep that for later.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25189</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2011-06-21 10:02:16 +0200</bug_when>
+            <thetext>(In reply to comment #10)
+&gt; Should be easy to advise those entries as skip entries to the translator,
+&gt; right?!
+
+Actually not, because they import the files into special tools (translation memory) which ignore everything but the keys and values.
+
+&gt; Thanks for the code, we&#39;ll keep that for later.
+
+Does that mean, you&#39;ll do the trick later? ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25190</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-06-21 10:39:06 +0200</bug_when>
+            <thetext>(In reply to comment #11)
+&gt; (In reply to comment #10)
+&gt; &gt; Should be easy to advise those entries as skip entries to the translator,
+&gt; &gt; right?!
+&gt; 
+&gt; Actually not, because they import the files into special tools (translation
+&gt; memory) which ignore everything but the keys and values.
+
+Then they should start using proper tools. Any decent .po editor, like POEdit or KDE&#39;s Lokalize, uses tranlation memory and they still show extracted comments.
+
+&gt; 
+&gt; &gt; Thanks for the code, we&#39;ll keep that for later.
+&gt; 
+&gt; Does that mean, you&#39;ll do the trick later? ;-)
+
+Yes, later, when it&#39;s clear what is going to happen.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35969</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:47:38 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

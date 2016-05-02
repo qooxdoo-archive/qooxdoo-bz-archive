@@ -1,0 +1,210 @@
+<bug>
+          <bug_id>2014</bug_id>
+          
+          <creation_ts>2009-02-27 15:44:00 +0100</creation_ts>
+          <short_desc>Property system leads to wrong behavior in complex inheritance vs. init value usages.</short_desc>
+          <delta_ts>2014-02-17 18:53:16 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          <dependson>2712</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Alexander Steitz">alexander.steitz</reporter>
+          <assigned_to name="Sebastian Werner">info</assigned_to>
+          <cc>fabian.jakobs</cc>
+    
+    <cc>info</cc>
+    
+    <cc>martin.wittemann</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>8115</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-02-27 15:44:41 +0100</bug_when>
+            <thetext>The issue can be demonstrated using the demo &quot;showcase/Form&quot; in the demobrowser.
+
+Following steps are necessary to reproduce the issue:
+
+1) Remove the menu from the splitbutton: splitbuttonInstance.resetMenu(),
+2) Set a new menu: splitButtonInstance.setMenu(new qx.ui.menu.Menu);
+3) Set the parent widget of the splitbutton to disabled: containerInstance.setEnabled(false);
+
+-&gt; The button of the splitbutton is disabled, the &quot;arrow&quot; child control not.
+
+Disabling/Enabling the splitbutton manually works without problems.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8128</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-28 21:17:18 +0100</bug_when>
+            <thetext>This is really an ugly bug. I investigated the code for about 4 hours now and still it&#39;s not absolutely sure to say what modification to apply to fix the issue.
+
+Basically once we said that boolean properties should always return a valid value (bug #1209) and modified the code accordingly. The issue in this case comes from the &quot;init:true&quot; value configured in Widget.js. If we remove this line though, the normal getter returns &quot;inherit&quot; when calling getEnabled() and this is not what we want to have.
+
+The current code, when going into a reset() method sets the useinit-flag to true, which means that the current value is the init value. This is the source of the problem because in inherited cases like here, we normally think that the inherited value has higher priority. This is also the case when working with the setters etc.
+
+Maybe the best would be to return to the old behavior and offer some kind of new property setting named &quot;init_fallback&quot; which is the value the property should have when the inheritance do not work / is setted up yet. Otherwise the best default value for inherited properties is the special value &quot;inherit&quot; as it basically means use inheritance as default which is normally what one want to have here.
+
+I think we should left it as it is for the 0.8.2 release and should do further discussions and investigations during the next development phase.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8129</commentid>
+              <attachid>457</attachid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-28 21:18:54 +0100</bug_when>
+            <thetext>Created attachment 457
+Development changes during property debugging.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8130</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-28 21:20:57 +0100</bug_when>
+            <thetext>Another idea would be to always use the &quot;init&quot; value in inheritable properties in another way than in &quot;normal&quot; properties. Basically we could say that in inheritable properties the &quot;init&quot; values always define the value which is applied when no inheritance is used (not inserted into parent). So the init value is not the last instance for inherited values, but only the fallback init.
+
+Need to think on this further :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11473</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-08-24 23:10:46 +0200</bug_when>
+            <thetext>Sebastian, any updates on this bug? If you don&#39;t happen to work on it anytime soon, we&#39;d have to un-/re-assign it. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11474</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-08-24 23:11:00 +0200</bug_when>
+            <thetext>.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11479</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-08-25 08:25:00 +0200</bug_when>
+            <thetext>Ah interesting. I was searching for this bug a while ago. I have still a 80% working new property implementation on my drive. I will continue to work on this. I am not sure how this bug is related to the splitbutton. It was maybe first seen there but should be visible on many more cases. I changed to summary to better highlight the issue.
+
+Old summary:
+SplitButton: Child-control &quot;arrow&quot; is not disabled under certain circumstances</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13713</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-10-29 17:18:27 +0100</bug_when>
+            <thetext>See also: #2712.
+
+In my opinion we can close this bug as being a duplicate. What do you think?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13816</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-03 14:16:59 +0100</bug_when>
+            <thetext>Lets not close this bug. Martin is currently looking at the property system (particularly init value handling), so we should keep this issue on radar. Added Martin to CC. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35105</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2014-02-17 18:53:16 +0100</bug_when>
+            <thetext>Closed outdated issue as wontfix, as bug became stale without feedback from assignee.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>457</attachid>
+            <date>2009-02-28 21:18:00 +0100</date>
+            <delta_ts>2009-02-28 21:18:54 +0100</delta_ts>
+            <desc>Development changes during property debugging.</desc>
+            <filename>propertychanges.patch</filename>
+            <type>application/octet-stream</type>
+            <size>3403</size>
+            <attacher>info</attacher>
+            
+              <data encoding="base64">SW5kZXg6IGZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvY29yZS9Qcm9wZXJ0eS5qcwo9PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09Ci0tLSBmcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2NvcmUvUHJvcGVydHkuanMJKFJldmlz
+aW9uIDE4MjAwKQorKysgZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9jb3JlL1Byb3BlcnR5Lmpz
+CShBcmJlaXRza29waWUpCkBAIC03MDgsMTcgKzcwOCwxNSBAQAogICAgICAgewogICAgICAgICBp
+ZiAoY29uZmlnLmluaGVyaXRhYmxlKQogICAgICAgICB7Ci0gICAgICAgICAgY29kZS5wdXNoKCd2
+YXIgaW5pdD10aGlzLicsIHN0b3JlLmluaXRbbmFtZV0sICc7Jyk7CisgICAgICAgICAgY29kZS5w
+dXNoKCd7dmFyIGluaXQ9dGhpcy4nLCBzdG9yZS5pbml0W25hbWVdLCAnOycpOwogCiAgICAgICAg
+ICAgaWYgKGNvbmZpZy5udWxsYWJsZSkgewogICAgICAgICAgICAgY29kZS5wdXNoKCdpZihpbml0
+PT1xeC5jb3JlLlByb3BlcnR5LiQkaW5oZXJpdClpbml0PW51bGw7Jyk7Ci0gICAgICAgICAgfSBl
+bHNlIGlmIChjb25maWcuaW5pdCAhPT0gdW5kZWZpbmVkKSB7Ci0gICAgICAgICAgICBjb2RlLnB1
+c2goJ3JldHVybiB0aGlzLicsIHN0b3JlLmluaXRbbmFtZV0sICc7Jyk7CiAgICAgICAgICAgfSBl
+bHNlIHsKICAgICAgICAgICAgIGNvZGUucHVzaCgnaWYoaW5pdD09cXguY29yZS5Qcm9wZXJ0eS4k
+JGluaGVyaXQpdGhyb3cgbmV3IEVycm9yKCJJbmhlcml0YWJsZSBwcm9wZXJ0eSAnLCBuYW1lLCAn
+IG9mIGFuIGluc3RhbmNlIG9mICcsIGNsYXp6LmNsYXNzbmFtZSwgJyBpcyBub3QgKHlldCkgcmVh
+ZHkhIik7Jyk7CiAgICAgICAgICAgfQogCi0gICAgICAgICAgY29kZS5wdXNoKCdyZXR1cm4gaW5p
+dDsnKTsKKyAgICAgICAgICBjb2RlLnB1c2goJ3JldHVybiBpbml0O30nKTsKICAgICAgICAgfQog
+ICAgICAgICBlbHNlCiAgICAgICAgIHsKQEAgLTEwMTAsNiArMTAwOCwxMyBAQAogICAgICAgICAg
+IGNvZGUucHVzaCgnY29tcHV0ZWQ9dGhpcy4nLCB0aGlzLiQkc3RvcmUudXNlcltuYW1lXSwgJzsn
+KTsKICAgICAgICAgICBjb2RlLnB1c2goJ2Vsc2UgaWYodGhpcy4nLCB0aGlzLiQkc3RvcmUudGhl
+bWVbbmFtZV0sICchPT11bmRlZmluZWQpJyk7CiAgICAgICAgICAgY29kZS5wdXNoKCdjb21wdXRl
+ZD10aGlzLicsIHRoaXMuJCRzdG9yZS50aGVtZVtuYW1lXSwgJzsnKTsKKyAgICAgICAgICAKKyAg
+ICAgICAgICBpZiAoY29uZmlnLmluaGVyaXRhYmxlKSAKKyAgICAgICAgICB7CisgICAgICAgICAg
+ICBjb2RlLnB1c2goJ2Vsc2UgaWYodGhpcy4nLCB0aGlzLiQkc3RvcmUuaW5oZXJpdFtuYW1lXSwg
+JyE9PXVuZGVmaW5lZCknKSAgCisgICAgICAgICAgICBjb2RlLnB1c2goJ2NvbXB1dGVkPXRoaXMu
+JywgdGhpcy4kJHN0b3JlLmluaGVyaXRbbmFtZV0sICc7Jyk7CisgICAgICAgICAgfSAgICAgICAg
+ICAgCisgICAgICAgICAgCiAgICAgICAgICAgY29kZS5wdXNoKCdlbHNlIGlmKHRoaXMuJywgdGhp
+cy4kJHN0b3JlLmluaXRbbmFtZV0sICchPT11bmRlZmluZWQpeycpOwogICAgICAgICAgIGNvZGUu
+cHVzaCgnY29tcHV0ZWQ9dGhpcy4nLCB0aGlzLiQkc3RvcmUuaW5pdFtuYW1lXSwgJzsnKTsKICAg
+ICAgICAgICBjb2RlLnB1c2goJ3RoaXMuJywgdGhpcy4kJHN0b3JlLnVzZWluaXRbbmFtZV0sICc9
+dHJ1ZTsnKTsKQEAgLTEwNzUsMTAgKzEwODAsMTUgQEAKICAgICAgICAgICBjb2RlLnB1c2goJ2Rl
+bGV0ZSB0aGlzLicsIHRoaXMuJCRzdG9yZS51c2VyW25hbWVdLCAnOycpOwogCiAgICAgICAgICAg
+Ly8gQ29tcGxleCBjb21wdXRpb24gb2YgbmV3IHZhbHVlCi0gICAgICAgICAgY29kZS5wdXNoKCdp
+Zih0aGlzLicsIHRoaXMuJCRzdG9yZS5ydW50aW1lW25hbWVdLCAnIT09dW5kZWZpbmVkKScpCi0g
+ICAgICAgICAgY29kZS5wdXNoKCdjb21wdXRlZD10aGlzLicsIHRoaXMuJCRzdG9yZS5ydW50aW1l
+W25hbWVdLCAnOycpOwogICAgICAgICAgIGNvZGUucHVzaCgnaWYodGhpcy4nLCB0aGlzLiQkc3Rv
+cmUudGhlbWVbbmFtZV0sICchPT11bmRlZmluZWQpJyk7CiAgICAgICAgICAgY29kZS5wdXNoKCdj
+b21wdXRlZD10aGlzLicsIHRoaXMuJCRzdG9yZS50aGVtZVtuYW1lXSwgJzsnKTsKKyAgICAgICAg
+ICAKKyAgICAgICAgICBpZiAoY29uZmlnLmluaGVyaXRhYmxlKSAKKyAgICAgICAgICB7CisgICAg
+ICAgICAgICBjb2RlLnB1c2goJ2Vsc2UgaWYodGhpcy4nLCB0aGlzLiQkc3RvcmUuaW5oZXJpdFtu
+YW1lXSwgJyE9PXVuZGVmaW5lZCknKSAgCisgICAgICAgICAgICBjb2RlLnB1c2goJ2NvbXB1dGVk
+PXRoaXMuJywgdGhpcy4kJHN0b3JlLmluaGVyaXRbbmFtZV0sICc7Jyk7CisgICAgICAgICAgfSAg
+ICAgICAgICAKKyAgICAgICAgICAKICAgICAgICAgICBjb2RlLnB1c2goJ2Vsc2UgaWYodGhpcy4n
+LCB0aGlzLiQkc3RvcmUuaW5pdFtuYW1lXSwgJyE9PXVuZGVmaW5lZCl7Jyk7CiAgICAgICAgICAg
+Y29kZS5wdXNoKCdjb21wdXRlZD10aGlzLicsIHRoaXMuJCRzdG9yZS5pbml0W25hbWVdLCAnOycp
+OwogICAgICAgICAgIGNvZGUucHVzaCgndGhpcy4nLCB0aGlzLiQkc3RvcmUudXNlaW5pdFtuYW1l
+XSwgJz10cnVlOycpOwpAQCAtMTE1Nyw3ICsxMTY3LDE1IEBACiAgICAgICAgICAgICAvLyBEZWxl
+dGUgZW50cnkKICAgICAgICAgICAgIGNvZGUucHVzaCgnZGVsZXRlIHRoaXMuJywgdGhpcy4kJHN0
+b3JlLnRoZW1lW25hbWVdLCAnOycpOwogCi0gICAgICAgICAgICAvLyBGYWxsYmFjayB0byBpbml0
+IHZhbHVlCisgICAgICAgICAgICAvLyBVc2UgaW5oZXJpdGVkIHZhbHVlLCBpZiBkZWZpbmVkCisg
+ICAgICAgICAgICBpZiAoY29uZmlnLmluaGVyaXRhYmxlKSAKKyAgICAgICAgICAgIHsKKyAgICAg
+ICAgICAgICAgY29kZS5wdXNoKCdpZih0aGlzLicsIHRoaXMuJCRzdG9yZS5pbmhlcml0W25hbWVd
+LCAnIT09dW5kZWZpbmVkKScpICAKKyAgICAgICAgICAgICAgY29kZS5wdXNoKCdjb21wdXRlZD10
+aGlzLicsIHRoaXMuJCRzdG9yZS5pbmhlcml0W25hbWVdLCAnOycpOworICAgICAgICAgICAgICBj
+b2RlLnB1c2goJ2Vsc2UgJyk7CisgICAgICAgICAgICB9ICAgIAorICAgICAgICAgIAorICAgICAg
+ICAgICAgLy8gT3RoZXJ3aXNlIGZhbGxiYWNrIHRvIGluaXQgdmFsdWUKICAgICAgICAgICAgIGNv
+ZGUucHVzaCgnaWYodGhpcy4nLCB0aGlzLiQkc3RvcmUuaW5pdFtuYW1lXSwgJyE9PXVuZGVmaW5l
+ZCl7Jyk7CiAgICAgICAgICAgICAgIGNvZGUucHVzaCgnY29tcHV0ZWQ9dGhpcy4nLCB0aGlzLiQk
+c3RvcmUuaW5pdFtuYW1lXSwgJzsnKTsKICAgICAgICAgICAgICAgY29kZS5wdXNoKCd0aGlzLics
+IHRoaXMuJCRzdG9yZS51c2Vpbml0W25hbWVdLCAnPXRydWU7Jyk7Cg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

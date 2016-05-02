@@ -1,0 +1,153 @@
+<bug>
+          <bug_id>7954</bug_id>
+          
+          <creation_ts>2013-12-05 14:15:00 +0100</creation_ts>
+          <short_desc>getWidgetById() in destruct method caused a ScriptError on reload</short_desc>
+          <delta_ts>2014-12-16 08:07:23 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>mobile</component>
+          <version>3.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christian Hagendorn">christian.hagendorn</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="Christopher Zuendorf">christopher.zuendorf</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>34532</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2013-12-05 14:15:18 +0100</bug_when>
+            <thetext>I have a mobile app which using a simple form for login like:
+
+var form = new qx.ui.mobile.form.Form();
+
+var user = new qx.ui.mobile.form.TextField();
+user.setRequired(true);
+form.add(user, &quot;Username&quot;);
+
+var pwd = new qx.ui.mobile.form.PasswordField();
+pwd.setRequired(true);
+form.add(pwd, &quot;Password&quot;);
+    
+var save = new qx.ui.mobile.form.ToggleButton(false, &quot;Yes&quot;, &quot;No&quot;);
+form.add(save, &quot;Save?&quot;);
+
+page.getContent().add(new qx.ui.mobile.form.renderer.Single(form));
+
+var button = new qx.ui.mobile.form.Button(&quot;Login&quot;);
+page.getContent().add(button); 
+
+When I reload the app with the Browser I got some ScriptErrors like:
+qx.core.ObjectRegistry: Could not dispose object qx.ui.mobile.form.Label[213-0]: TypeError: Cannot read property &#39;qx_id_72&#39; of undefined TypeError: Cannot read property &#39;qx_id_72&#39; of undefined
+
+I could not create a running playground example, because the issue is a timing issue. I debugged the script error and found some reasons why the scrip error occurred.
+
+The exception happens in &quot;qx.ui.mobile.core.Widget&quot; with the &quot;getWidgetById&quot; method:
+getWidgetById : function(id) {
+  return qx.ui.mobile.core.Widget.__registry[id];
+},
+
+The call is triggered from the destructor form &quot;qx.ui.mobile.form.Label&quot;:
+destruct : function() {
+  var oldTarget = qx.ui.mobile.core.Widget.getWidgetById(this._getAttribute(&quot;for&quot;));
+  if (oldTarget) {
+    oldTarget.removeListener(&quot;changeEnabled&quot;, this._changeEnabled, this);
+  }
+}
+
+The problem is the the &quot;__registry&quot; is disposed before the destructor form the &quot;qx.ui.mobile.form.Label&quot; is called. The &quot;__registry&quot; is cleaned up when the &quot;shutdown&quot; event form the &quot;qx.event.handler.Application&quot; is fired on a native unload.
+
+As you can see in the &quot;_onNativeUnload&quot; implementation from &quot;&quot;qx.event.handler.Application&quot;. The &quot;shutdown&quot; event is fired before the shutdown process starts:
+_onNativeUnload : qx.event.GlobalError.observeMethod(function()
+{
+  if (!this.__isUnloaded)
+  {
+    this.__isUnloaded = true;
+
+    try
+    {
+      // Fire user event
+      qx.event.Registration.fireEvent(this._window, &quot;shutdown&quot;);
+    }
+    catch (e)
+    {
+      // IE doesn&#39;t execute the &quot;finally&quot; block if no &quot;catch&quot; block is present
+      throw e;
+    }
+    finally
+    {
+      // Execute registry shutdown
+      qx.core.ObjectRegistry.shutdown();
+    }
+  }
+})</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34582</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-12-09 13:45:40 +0100</bug_when>
+            <thetext>Removed getWidgetById out of destruct method.
+
+Remembering previously determined target widget, when using setLabelFor solves this problem.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34583</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-12-09 13:48:24 +0100</bug_when>
+            <thetext>Master:
+
+360889ec2298e114f7be2825531b37688332d856</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34586</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-12-09 14:03:16 +0100</bug_when>
+            <thetext>Implemented a work around for this problem inside the Label widget.
+
+This problem has to solved inside the widget registry in a later release.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34589</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-12-09 14:06:37 +0100</bug_when>
+            <thetext>Workaround Branch_3_0_x:
+
+0bd4015dfaadb37f2bae5c1afbfb1599533487b9</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41980</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-12-16 08:07:23 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

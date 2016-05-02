@@ -1,0 +1,133 @@
+<bug>
+          <bug_id>7104</bug_id>
+          
+          <creation_ts>2012-12-20 09:22:00 +0100</creation_ts>
+          <short_desc>Textfields (qx.ui.form.TextField) do not work in Firefox 19</short_desc>
+          <delta_ts>2014-03-03 15:23:16 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.controls</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>2.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>19.0</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>31775</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2012-12-20 09:22:04 +0100</bug_when>
+            <thetext>Textfields (the class qx.ui.form.TextField) do not work in Firefox 19.
+
+Firefox 19 will be deployd in February 2013. Since we are using Textfields at many places, we need a fix for this issue until mid of January.
+
+I cannot prove this using the qooxdoo playground, since the playground does also not work in Firefox 19 (see http://bugzilla.qooxdoo.org/show_bug.cgi?id=7103).
+
+The stack trace of the corresponding exception is:
+  qx.bom.Stylesheet.addRule
+  qx.ui.form.AbstractField.__addPlaceholderRules
+  qx.ui.form.AbstractField.constructor
+  qx.ui.form.TextField.constructor
+
+The exception is:
+  Error: An invalid or illegal string was specified
+
+The qooxdoo stacktrace shown above executes the following native javascript code:
+  var elem = document.createElement(&quot;style&quot;);
+  elem.type = &quot;text/css&quot;;
+  document.getElementsByTagName(&quot;head&quot;)[0].appendChild(elem);
+  var sheet = elem.sheet;
+  sheet.insertRule(&quot;input:-moz-placeholder, textarea:-moz-placeholder{color: #CBC8CD !important}&quot;, sheet.cssRules.length); 
+
+This code does not work anymore in Firefox 19, because &quot;-moz-placeholder&quot; is deprecated since Firefox 19, see https://developer.mozilla.org/de/docs/CSS/:-moz-placeholder
+This official firefox document says:
+The :-moz-placeholder pseudo-class will be deprecated in favor of the ::-moz-placeholder pseudo-element in Firefox 19.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31780</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2012-12-20 12:35:57 +0100</bug_when>
+            <thetext>I would recommend the following fix for this issue:
+
+Replace the following code in class qx.ui.form.AbstractField:
+
+      if (qx.core.Environment.get(&quot;engine.name&quot;) == &quot;gecko&quot;) {
+        var selector = &quot;input:-moz-placeholder, textarea:-moz-placeholder&quot;;
+        qx.bom.Stylesheet.addRule(this.__stylesheet, selector, &quot;color: &quot; + color 
+
+By:
+
+      if (qx.core.Environment.get(&quot;engine.name&quot;) == &quot;gecko&quot;) {
+        if( parseInt(qx.core.Environment.get(&quot;engine.version&quot;)) &gt;= 19 ) {
+          var selector = &quot;input::-moz-placeholder, textarea::-moz-placeholder&quot;;
+          qx.bom.Stylesheet.addRule(this.__stylesheet, selector, &quot;color: &quot; + color 
+        else {
+          var selector = &quot;input:-moz-placeholder, textarea:-moz-placeholder&quot;;
+          qx.bom.Stylesheet.addRule(this.__stylesheet, selector, &quot;color: &quot; +         }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31814</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2013-01-04 13:24:20 +0100</bug_when>
+            <thetext>Fixed by modifiying the insertion of the stylesheet rule which is used for 
+styling the placeholder. This implementation now differs between Firefox &gt;= 19 
+and the older Firefox releases.
+
+cc23c0d3f3681aa6a8d3a7c4d72ad64c0dee8245 (master)
+f89670c9d15d1aa161c37e7975858efcf539cca4 (branch_2_0_x)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31816</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2013-01-04 13:27:26 +0100</bug_when>
+            <thetext>*** Bug 7103 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31824</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-01-07 09:46:49 +0100</bug_when>
+            <thetext>Plase also commit the fix for the 2.1.x branch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31825</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2013-01-07 09:50:22 +0100</bug_when>
+            <thetext>Fixed also for branch_2_1_x with fd95988fa0433f62db8e58a8b94a2480af435388.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37954</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:16 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,133 @@
+<bug>
+          <bug_id>4354</bug_id>
+          
+          <creation_ts>2010-11-22 14:27:00 +0100</creation_ts>
+          <short_desc>Firefox can&#39;t fire event for new request before finished last request</short_desc>
+          <delta_ts>2014-03-03 15:22:48 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>unspecified</version>
+          <rep_platform>Firefox 3.6</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.4.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Villu Puusepp">villu</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>3.6</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21464</commentid>
+            <who name="Villu Puusepp">villu</who>
+            <bug_when>2010-11-22 14:27:19 +0100</bug_when>
+            <thetext>My application sends request
+ rpc = new qx.io.remote.Rpc()
+ rpc.addListener(&quot;completed&quot;, rpcCompleted, this);
+ rpc.callAsyncListeners(true, method, id, cache);
+
+Everything works as expected. Event &quot;completed&quot; fired and I have result.
+But only after request is finished. I have some rpc request that take a long time, more than 2 minutes.
+And if previous request is active, then I can&#39;t have an event for new request. I still can make a new requests and have a result for them, but event &quot;completed&quot; or &quot;failed&quot; not fired before the old request is finished. 
+In firebug I can see the new request started, and result returned when finished. But Qx cant have any event for that, looks like it still waits the first event. 
+Eventually  timeout event in qx occurred, but still  firefox does not fire events for qx eventlistener. Everything normalize only when manually stop the active request, or reload my application.
+
+In Chrome and IE no such a problem, and everything works well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21481</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-23 08:48:45 +0100</bug_when>
+            <thetext>Thanks for the report. Can you maybe supply a sample to reproduce that?
+This sounds like an issue with the amount of requests a browser can handle in parallel. We should check whats going on there.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24236</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-04-28 11:56:40 +0200</bug_when>
+            <thetext>Hi Villu,
+
+thanks for the report.
+
+I&#39;ve tried to reproduce your issue. I&#39;m assuming the problem (if there is any) is to be found in qx.io.remote.Request, that&#39;s why I base my examples on this. Further, I&#39;ve setup two backends running behind a reverse proxy to ensure that the first (slow) request does not block the second. Requests to pending/3 respond after 3 seconds.
+
+Here is the code I tried:
+
+var reqSlow = new qx.io.remote.Request();
+reqSlow.setUrl(&quot;http://localhost/backend/4567/pending/3&quot;);
+
+var reqFast = new qx.io.remote.Request();
+reqFast.setUrl(&quot;http://localhost/backend/4568/hello&quot;);
+
+reqFast.addListener(&quot;completed&quot;, function() {
+  this.debug(&quot;Received fast request&#39;s response&quot;);
+}, this);
+
+reqSlow.addListener(&quot;completed&quot;, function() {
+  this.debug(&quot;Received slow request&#39;s response&quot;);
+}, this);
+
+this.debug(&quot;Send slow request&quot;);
+reqSlow.send();
+
+this.debug(&quot;Send fast request&quot;);
+reqFast.send();
+
+What I get is:
+
+Send slow request
+Send fast request 
+[very short delay]
+Received fast request&#39;s response
+[delay of 3 seconds]
+Received slow request&#39;s response
+
+Tested in Chrome Stable, Firefox 3 and Firefox 4.
+
+Based on your setup, could you perhaps write a playground example yourself? This would be very helpful! As mentioned above, I can fake a long running request, meaning I can replace the original URL pointing to your backend.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25049</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-10 11:44:33 +0200</bug_when>
+            <thetext>Any news on this?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25125</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-16 11:44:14 +0200</bug_when>
+            <thetext>Can&#39;t reproduce. Marked as invalid.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37814</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:48 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

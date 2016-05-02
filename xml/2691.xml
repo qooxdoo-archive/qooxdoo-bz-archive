@@ -1,0 +1,90 @@
+<bug>
+          <bug_id>2691</bug_id>
+          
+          <creation_ts>2009-08-18 10:45:00 +0200</creation_ts>
+          <short_desc>Macros are fixed when Inheriting the Same Job Multiple Times</short_desc>
+          <delta_ts>2014-03-03 15:25:51 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.config</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>critical</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>11375</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-08-18 10:45:10 +0200</bug_when>
+            <thetext>If a job is inherited multiple times (like in run: [job1, job2, job3] and all 
+job* inherit from jobX) the macros that the parent job use are expanded only 
+once (like for job1 in the example). Subsequent jobs just re-use jobX&#39;s job 
+definition, and cannot expand its macros with new values.
+[This was seen in an image combining job, where there was a &#39;worker&#39; job that 
+did the actual combining, and multiple &#39;binding&#39; jobs that just provided 
+different &#39;let&#39; values for the macros in the worker job.]</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11376</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-08-18 10:59:11 +0200</bug_when>
+            <thetext>The issue was due to the fact that macro expansion worked on the job data 
+directly. The current job might have inherited a map from a parent job (e.g. 
+through a trigger like &#39;combine-images&#39; which carries names of output and input 
+files as key-values). While the job&#39;s data map of the current job is fresh, and 
+belongs to it alone, and the key &quot;combine-images&quot; is fresh, as it is an 
+immutual map key, the *value* of this key would be a reference to the existing 
+map allocated by the parent. If multiple jobs inherit from the same parent, 
+they all share the same &#39;combine-images&#39; value map. Now changing the values in 
+this map through macro expansion  (which will create new strings, as they are 
+immutable, but retain the map itself!) will make this change visible to all the 
+other jobs. Since all macros are expanded after this step, the next job 
+inheriting this parent has nothing to expand anymore as all macro references 
+are gone, and thus cannot supply alternative values for the macros.
+
+The fix was to have the macro expansion procedure create fresh map and array 
+references when doing its job, and filling the processed values in the fresh 
+containers and return them, rather than changing the existing containers 
+in-place. Thus, the original containers remain intact, retaining their 
+(unexpanded) macro references, and can be newly expanded by a subsequent job.
+
+With r19838.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38895</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:51 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

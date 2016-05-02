@@ -1,0 +1,163 @@
+<bug>
+          <bug_id>2563</bug_id>
+          
+          <creation_ts>2009-07-08 16:49:00 +0200</creation_ts>
+          <short_desc>Missing class in generated js file if package feature is used.</short_desc>
+          <delta_ts>2014-03-03 15:22:48 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christian Hagendorn">christian.hagendorn</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10811</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-07-08 16:49:29 +0200</bug_when>
+            <thetext>To reproduce the issue use a skeleton application and this config.json part:
+
+&lt;-- config.json --&gt;
+&quot;jobs&quot; :
+{
+  &quot;common&quot; :
+  {
+    &quot;packages&quot; :
+    {
+      &quot;parts&quot;    : 
+      {
+        &quot;boot&quot; : [ &quot;${APPLICATION}.Application&quot;, &quot;qx.bom.client.Engine&quot; ],
+        &quot;core&quot; : [ &quot;qx.bom.*&quot;, &quot;qx.dom.*&quot;, &quot;qx.event.*&quot; ]
+      },
+      &quot;init&quot; : &quot;boot&quot;
+    }      
+  }
+}
+&lt;-- end --&gt;
+
+The &quot;boot&quot; package should contain the &quot;qx.bom.client.Engine&quot; class, but it doesn&#39;t. This file is missing complete, neither the &quot;boot&quot; nor the &quot;core&quot; package contain this file. If I do not 	explicit set the &quot;qx.bom.client.Engine&quot; to the &quot;boot&quot; package, the class is part of the &quot;core&quot; package. It seems to me that the generator has problem if I explicit set a class to a other package, like the example above.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10812</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-07-08 17:15:55 +0200</bug_when>
+            <thetext>Thomas, I added an example to reproduce this issue. You can find this in the &quot;Bugs\2563&quot; frolder on qooxdoo-contrib SVN.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11310</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-08-12 18:39:04 +0200</bug_when>
+            <thetext>A bit of background:
+
+The way the part system is currently implemented has some caveats in the way 
+&quot;packages/parts/*/include&quot; keys and the general &quot;include&quot; key interact:
+
+a) The general &quot;include&quot; key, i.e. the class list with all dependencies fully 
+expanded, provides the &quot;master list&quot; of classes for the given application. All 
+classes given in the part &quot;include&quot;s, including all their dependencies, are 
+checked against this list. If any of those classes is not in the master list, 
+it will not be included in the app.
+
+Therefore, you cannot include classes in parts that are not covered by the 
+general &quot;include&quot;. If you want to use e.g. &quot;qx.bom.*&quot; in a part, you have to 
+add &quot;qx.bom.*&quot; to the general &quot;include&quot; list. Otherwise, only classes within 
+qx.bom.* that actually derive from the general include key will be actually 
+included, and the rest will be discarded.
+
+&quot;The general include key is a filter for all classes in parts.&quot;
+
+b) Any class that is in the master list that is never listed in one of the 
+parts, either directly or as dependency, will not be included in the app. That 
+means you have to *actively* make sure that all classes from the general 
+&quot;include&quot; get - directly or indirectly - listed in one of the parts, or they 
+will not be in the final app.
+
+&quot;The parts&#39; include keys are a filter for all classes in the general include 
+key.&quot;
+
+Or, to put both aspects in a single statement: The classes in the app are 
+exactly those in the *intersection* of the classes defined through the general 
+&quot;include&quot; key and all the classes defined by the &quot;include&quot; keys of the parts.
+
+Currently, the application developer has to make sure that they match, ie. that 
+the classes specified through the parts together sum up to the global class 
+list!
+
+There is another caveat that concerns the relation between &quot;include&quot;s of 
+different parts:
+
+c) Any class that is listed in a part&#39;s &quot;include&quot; (file globs expanded) will 
+not be included in another part. - But this also means that if two parts list 
+the same class, it won&#39;t be included in either of them!
+
+This is the case in the sample application, where the &#39;boot&#39; part lists 
+&#39;qx.bom.client.Engine&#39; and the &#39;core&#39; part lists &#39;qx.bom.*&#39; which, among other 
+classes, expands to qx.bom.client.Engine eventually. That&#39;s the reason why 
+qx.bom.client.Engine is not contained at all!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13018</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-08 15:20:41 +0200</bug_when>
+            <thetext>Thomas, thanks for the comprehensive analysis. Does this suggest to close the issue as INVALID, i.e. the user has to be careful here?+
+
+Wouldn&#39;t the info given here also be a nice addition to the manual?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14802</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:26:41 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0 (for issues with status &quot;NEW&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15686</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-12-11 10:49:09 +0100</bug_when>
+            <thetext>to me for 1.0</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15929</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-12-16 18:03:13 +0100</bug_when>
+            <thetext>I added information from this bug to the online manual, 
+http://qooxdoo.org/documentation/1.0/tool/generator_config_articles#packages_key</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37812</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:48 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

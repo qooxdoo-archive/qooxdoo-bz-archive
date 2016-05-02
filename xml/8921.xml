@@ -1,0 +1,133 @@
+<bug>
+          <bug_id>8921</bug_id>
+          
+          <creation_ts>2015-02-10 13:12:00 +0100</creation_ts>
+          <short_desc>IE 10 does not bubble to desktop event root if target element is a website widget</short_desc>
+          <delta_ts>2015-02-25 13:55:56 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mustafa Sak">mustafa.sak</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>alexander.steitz</cc>
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>42434</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2015-02-10 13:12:38 +0100</bug_when>
+            <thetext />
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42452</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-02-11 09:04:13 +0100</bug_when>
+            <thetext>Please don&#39;t forget to add a description later.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42471</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2015-02-12 10:37:11 +0100</bug_when>
+            <thetext>Mind you have a embedded Html widget with a website widget. A tap event will newer be fired if you add any pointer event listener to the website widget.
+
+See http://tinyurl.com/o62n7wo</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42632</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-02-24 15:59:10 +0100</bug_when>
+            <thetext>Just checked the sample and saw that this is really an edge case as you use one DOM element as desktop and website widget. We have never thought of such a use case and I&#39;m surprised that its working in any browser at all. Nevertheless, a quick check showed that a workaround using a separate DIV in the html.Embed fixes the problem which would be my suggestion to go. Here is the modified sample:
+
+var html = new qx.ui.embed.Html().set({
+  backgroundColor : &quot;yellow&quot;
+});
+html.addListener(&quot;tap&quot;, function(){
+  this.debug(&quot;TAP on embeded html&quot;);
+}, this);
+
+html.addListener(&quot;appear&quot;, function() {
+  var container = html.getContentElement().getDomElement();
+  el = q.create(&quot;&lt;div style=&#39;width: 100%; height: 100%;&#39;&gt;&quot;)[0];
+  container.appendChild(el);
+  
+  widget = new qx.ui.website.Widget(el);
+  el.id=&quot;4444&quot;;
+  widget.on(&quot;pointerdown&quot;, function(){
+    this.debug(&quot;POINTERDOWN on website widget&quot;);
+  }, this);
+}, this);
+
+this.getRoot().add(html, {edge : 10});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42633</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2015-02-24 16:46:12 +0100</bug_when>
+            <thetext>You solution seem not working on IE10 on Windows 7.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42636</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2015-02-24 18:11:00 +0100</bug_when>
+            <thetext>I just tried using &#39;qx.bom.Element.addListener&#39; ... instead of
+
+widget.on(&quot;pointerdown&quot;, function(){
+  this.debug(&quot;POINTERDOWN on website widget&quot;);
+}, this);
+
+
+So I wrote:
+
+qx.bom.Element.addListener(el, &quot;pointerdown&quot;, function(){
+  this.debug(&quot;POINTERDOWN on website widget&quot;);
+}, this);
+
+This is bypassing the qxWeb event normalization (I guess) and it works on IE10 on Windows 7!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42637</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2015-02-24 18:11:55 +0100</bug_when>
+            <thetext>Tested against the latest devel snapshot of the playground.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42642</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-02-25 13:55:56 +0100</bug_when>
+            <thetext>The pointer handler only listened to the prefixed events in IE10 which seems to break the idea of event bubbling we had. Listener to prefixed and unprefixed events fixed the issue.
+
+master: 6288c62e686b760d17d448d8da5155705a43d303
+4.1.x: 833ffb8441bdafec459a0340843e4f6669002ce7</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

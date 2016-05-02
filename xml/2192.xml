@@ -1,0 +1,226 @@
+<bug>
+          <bug_id>2192</bug_id>
+          
+          <creation_ts>2009-04-02 14:54:00 +0200</creation_ts>
+          <short_desc>Selecting a TextField via tab key is extremely slow</short_desc>
+          <delta_ts>2014-03-03 15:27:57 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>master</version>
+          <rep_platform>Firefox 2.0</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Jonathan Weiß">qooxdoo-bugs</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          <cc>fabian.jakobs</cc>
+    
+    <cc>info</cc>
+    
+    <cc>michael</cc>
+    
+    <cc>volbers</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>2</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9088</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2009-04-02 14:54:53 +0200</bug_when>
+            <thetext>Code to reproduce issue:
+
+      var container=new qx.ui.container.Composite(new qx.ui.layout.VBox());
+      this.getRoot().add(container,{edge:0});
+      for (var i=0;i&lt;50;i++)
+        container.add(new qx.ui.form.TextField());
+
+
+If you set the tabindex to the textfields, the process of switching to a 
+textfield is much faster:
+
+for (var i=0;i&lt;50;i++) container.add(new 
+qx.ui.form.TextField().set({tabIndex: i+1}); 
+
+
+Thanks to our users for reporting this issue: 
+http://n2.nabble.com/QX-0.8.x-slow-on-firefox-2--td2574055.html</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9092</commentid>
+            <who name="Stefan Volbers">volbers</who>
+            <bug_when>2009-04-02 15:38:30 +0200</bug_when>
+            <thetext>As reported on the mailing list, the bug and the workaround (setting tabIndex) are valid for IE 6, too.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9128</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2009-04-03 14:27:28 +0200</bug_when>
+            <thetext>I want to give you a small update on this issue. Selecting the next focusable 
+element without a tab index is slow by design. If a tab index is not set, 
+qooxdoo will figure out which widget to focus next depending on its top and 
+left position on the document and by using the z-index. I will now try to find 
+a way of speeding this up, but until then you can avoid this bottleneck by 
+setting tab indices on widgets.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9562</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-23 19:36:06 +0200</bug_when>
+            <thetext>The costly operation is the computation of the absolute document position of each
+widget. 
+
+I would suggest to add a widget position cache class, which computes the screen positions of 
+widgets and caches them. The caches should be flushed before AND after the layout flush.
+
+This WidgetPositionCache should be a singleton and used each time the position of a widget
+is required.
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9611</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2009-04-24 13:08:09 +0200</bug_when>
+            <thetext>Please review bugs/2192.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9619</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2009-04-24 15:24:27 +0200</bug_when>
+            <thetext>As discussed -&gt; back to me.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9818</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2009-05-06 11:29:39 +0200</bug_when>
+            <thetext>Since the cache can not be invalidated and getBoxObjectFor() does not work very 
+well, I am currently out of ideas how to solve this.
+-&gt; Fabian</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9819</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2009-05-06 14:38:47 +0200</bug_when>
+            <thetext>to Fabian.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9832</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-05-06 21:03:30 +0200</bug_when>
+            <thetext>Just found this bug report. Can you tell me in which client it is slow? In IE and Firefox we now have getBoundingClientRect which should be quite fast.
+
+Maybe you would also like to mention why the cache did not work. Mhh, maybe because of even a &quot;focus&quot; results into a new layout and this way the cache is invalid every time?
+
+Just let us keep in mind that this here, with 50 input fields in one view should be an edge case. More often some fields a protected by a focus root and this way only a section of the page gets computed this way. 
+
+It might be cool to find something to improve this, but it&#39;s not that important that it is a P1 bug IMHO.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9850</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-05-07 19:39:42 +0200</bug_when>
+            <thetext>It&#39;s Firefox 2. This browser only supports &quot;getBoxObjectFor&quot;, which is not used by qx.bom.element.Location. This makes it extremely slow.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11288</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-08-11 16:25:04 +0200</bug_when>
+            <thetext>Reducing prio to P2 as only FF2 is affected. A possible solution for this performance issue could be to allow for the legacy getBoxObjectFor() in FF2, see also bug #2232.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11295</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-08-11 21:30:28 +0200</bug_when>
+            <thetext>Firefox 2 has recently gone under one 1.5 percent market share (by net applications: http://marketshare.hitslink.com/browser-market-share.aspx?qprid=2). It really do not make a lot of sense to add addional code for a outdated and mainly unused browser. Also regarding that the issue is only performance related.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11851</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-09-03 11:09:07 +0200</bug_when>
+            <thetext>set target milestone to 0.9</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11871</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-03 13:36:00 +0200</bug_when>
+            <thetext>To recap: These potential performance problems seem _only_ to be present in FF2 and IE6 (note comment #1), and _only_ if tabIndex isn&#39;t properly used. Without a proper tabIndex qooxdoo tries to be &quot;smart&quot;, maybe too smart for some legacy browsers.
+
+I could really imagine to WONTFIX this issue altogether, accompanied by making the use of tabIndex more prominent in the docs/demos.   What&#39;d you think?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12515</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-22 11:13:00 +0200</bug_when>
+            <thetext>No feedback, yet. Assigned to you, Fabian, so that you can gather/give feedback for wontfix.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12568</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-09-23 10:35:38 +0200</bug_when>
+            <thetext>Normally the tabIndex attribute is not needed as the smart algorithm works quite good. I could imagine to disable tab-usage in such cases if the number of elements inside a root (window, frame, ...) is higher than for example 10. This might be a smart reduction of features. Always better than resulting in a somewhat hanging client for more than a second.
+
+Just wondering: In IE6 you have support for getBoundingClientRect. Is the issue here related to the all-over-slowness of IE6 and not exactly specific to the issue described here?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12588</commentid>
+            <who name="Stefan Volbers">volbers</who>
+            <bug_when>2009-09-23 14:43:51 +0200</bug_when>
+            <thetext>As I stated before &lt;a href=&quot;show_bug.cgi?id=2192#c1&quot;&gt;here&lt;/a&gt; the workaround (tabIndex) does speed up things in IE6 too - just double checked in a VM; it IS painfully slow, but at least the focus change happens instantly if there is a tabIndex. Else there is a delay of ~2-3 seconds (100% CPU, 2.4GHz Quad). So this bug is an IE6 issue, I&#39;m afraid.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14758</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:26:12 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0 (for issues with status &quot;NEW&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16511</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-27 16:30:56 +0100</bug_when>
+            <thetext>moved to target 1.0.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17234</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-15 13:42:58 +0100</bug_when>
+            <thetext>Is this still true for the newer FF&#39;s? If not, I think we can close the bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17278</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-17 11:30:44 +0100</bug_when>
+            <thetext>As this issue seems only be relevant for FF2 and not for any newer Firefox, we won&#39;t fix this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39644</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:57 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

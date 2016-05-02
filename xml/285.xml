@@ -1,0 +1,159 @@
+<bug>
+          <bug_id>285</bug_id>
+          
+          <creation_ts>2007-02-12 09:58:00 +0100</creation_ts>
+          <short_desc>qx.client.Command with Ctrl+Enter fires twice in IE7</short_desc>
+          <delta_ts>2010-03-11 09:56:06 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>0.6.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://demo.qooxdoo.org/current/sample/html/test/Keyhandler_1.html</bug_file_loc>
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Hugh Gibson">hgibson</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>874</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2007-02-12 09:58:10 +0100</bug_when>
+            <thetext>I have a qx.client.Command object set up to fire on ctrl+Enter. Under IE7 this fires twice every time I press the key combination. It works fine in FF2.
+
+There is a clue on the Keyhandler test site (see URL). Under IE7 there is the following sequence - (in reverse). Note the extra keypress for 0, 10. This doesn&#39;t occur in FF.
+
+ 
+keyup Control 17 0 false false false 
+keyup Enter 13 0 false true false 
+keyinput  0 10 false true false 
+keypress  0 10 false true false 
+keypress Enter 13 0 false true false 
+keydown Enter 13 0 false true false 
+keypress Control 17 0 false true false 
+keydown Control 17 0 false true false 
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>886</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2007-02-13 10:24:27 +0100</bug_when>
+            <thetext>We tried using F8 for this menu item, but that fires twice as well in IE7 even though the key tester only shows one keypress event for it.
+
+Looks like there is something fundamental wrong with key handling in IE7 and calling command objects.
+
+Hugh
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>887</commentid>
+              <attachid>102</attachid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2007-02-13 11:37:34 +0100</bug_when>
+            <thetext>Created attachment 102
+Patch to fix the problem.
+
+There was an error in the detection of the key event type for firing command objects.
+
+In KeyEventHandler.js, in the code for IE, there is code to inject a &quot;keypress&quot; event for non-printable characters. So there is a &quot;keydown&quot; followed by a &quot;keypress&quot; call to _idealKeyHandler. This calls through to EventHandler._onkeyevent_post. This method checks for &quot;keydown&quot; events but it doesn&#39;t check the vType passed through, it looks at the vDomEvent type. Therefore the injected &quot;keypress&quot; event is treated as a &quot;keydown&quot; event. Therefore two calls are made to check for command objects that match.
+
+You can see the fault at http://demo.qooxdoo.org/current/sample/html/test/Menu_2.html if opened in IE. Press &quot;Del&quot; and you get two message boxes, one after the other.
+
+A patch is attached which fixes the problem.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>888</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2007-02-13 12:08:57 +0100</bug_when>
+            <thetext>The faulty key handling also seems to affect FireFox 2.
+
+If you hit the &quot;Del&quot; key in
+
+http://demo.qooxdoo.org/current/sample/html/test/Menu_2.html
+
+every second key press is ignored.
+
+Tested on WinXP SP2 with FireFox 2.0.0.1.
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>889</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2007-02-13 15:10:06 +0100</bug_when>
+            <thetext>There are essentially two bugs:
+
+1. IE  calling the command for Ctrl+Enter twice
+
+This has been fixed in svn using the patch provided by Hugh.
+
+
+2. FF 2 on windows ignoring every second delete press in the menu demo
+
+This problem cannot be solved easily. The root of the problem is the alert box this seem to remove the focus from the main window and the next keypress is ignored. This can be solved by using qooxdoo widgets instead if an alert box.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>890</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2007-02-13 15:10:56 +0100</bug_when>
+            <thetext>closing the bug</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>102</attachid>
+            <date>2007-02-13 11:37:00 +0100</date>
+            <delta_ts>2007-02-13 11:37:34 +0100</delta_ts>
+            <desc>Patch to fix the problem.</desc>
+            <filename>qxBug285.patch</filename>
+            <type>text/plain</type>
+            <size>660</size>
+            <attacher>hgibson</attacher>
+            
+              <data encoding="base64">SW5kZXg6IHRydW5rL3Fvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9l
+dmVudC9oYW5kbGVyL0V2ZW50SGFuZGxlci5qcw0KPT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQ0KLS0tIHRydW5rL3Fvb3hk
+b28vZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9ldmVudC9oYW5kbGVyL0V2ZW50
+SGFuZGxlci5qcwkocmV2aXNpb24gNjE2NikNCisrKyB0cnVuay9xb294ZG9vL2Zyb250ZW5kL2Zy
+YW1ld29yay9zb3VyY2UvY2xhc3MvcXgvZXZlbnQvaGFuZGxlci9FdmVudEhhbmRsZXIuanMJKHdv
+cmtpbmcgY29weSkNCkBAIC01NDYsNyArNTQ2LDcgQEANCiAgIHZhciB2S2V5RXZlbnRPYmplY3Qg
+PSBuZXcgcXguZXZlbnQudHlwZS5LZXlFdmVudCh2VHlwZSwgdkRvbUV2ZW50LCB2RG9tVGFyZ2V0
+LCB2VGFyZ2V0LCBudWxsLCB2S2V5Q29kZSwgdkNoYXJDb2RlLCB2S2V5SWRlbnRpZmllcik7CiAK
+ICAgLy8gQ2hlY2sgZm9yIGNvbW1hbmRzCi0gIGlmICh2RG9tRXZlbnQudHlwZSA9PSAia2V5ZG93
+biIpIHsKKyAgaWYgKHZUeXBlID09ICJrZXlkb3duIikgewogICAgIHRoaXMuX2NoZWNrS2V5RXZl
+bnRNYXRjaCh2S2V5RXZlbnRPYmplY3QpOwogICB9CiAK
+</data>
+
+          </attachment>
+      
+
+    </bug>

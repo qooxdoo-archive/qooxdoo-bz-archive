@@ -1,0 +1,222 @@
+<bug>
+          <bug_id>2457</bug_id>
+          
+          <creation_ts>2009-06-04 12:41:00 +0200</creation_ts>
+          <short_desc>Databinding should use the converter functions, if any, before testing for model &quot;null&quot; property value</short_desc>
+          <delta_ts>2014-03-03 15:20:08 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="vvandens@gmail.com">vvandens</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>elvanor</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10274</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2009-06-04 12:41:46 +0200</bug_when>
+            <thetext>Databinding should use the converter functions, if any, before testing for model &quot;null&quot; property value and then triggering the &quot;resetXXX&quot; method.
+see the complete usecase here :
+http://sourceforge.net/mailarchive/forum.php?thread_name=4A279FBF.7000207%401und1.de&amp;forum_name=qooxdoo-devel</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10396</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-06-16 11:50:48 +0200</bug_when>
+            <thetext>Hello Vincent,
+could you please take a look at my written test for that scenario? The test has been commited with revision 19333 in qx.test.data.singlevalue.Simple.
+
+Here is the code and a little explanation. 
+
+I use two textfield widgets to test the behavior. As source property, the zindex acts as a nullable number property. The target property will be the appearance of the second textfield, which is of course a string and not nullable. 
+The first step configures a converter which converts the data to a string and to a special string in the null case.
+The second part sets 10 in the source property and sets up the binding also checking if its working.
+The last part sets the the zindex to null, which should lead to an error, if the converter will not be called. 
+
+
+      // define the converter (1)
+      var options = {
+        converter : function(data) {
+          if (data == null) {
+            return &quot;affe&quot;;
+          }
+          return data + &quot;&quot;;
+        }
+      };
+
+      // starting point (2)
+      this.__a.setZIndex(10);
+      this.__a.bind(&quot;zIndex&quot;, this.__b, &quot;appearance&quot;, options);
+      this.assertEquals(this.__a.getZIndex() + &quot;&quot;, this.__b.getAppearance(), &quot;Wrong start binding.&quot;);
+      
+      // set the zIndex to null (3)
+      this.__a.setZIndex(null);
+      this.assertEquals(&quot;affe&quot;, this.__b.getAppearance(), &quot;Converter will not be executed.&quot;);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10400</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2009-06-16 12:23:18 +0200</bug_when>
+            <thetext>Hi Martin,
+In this test case, you should also make sure that the resetAppearance() is never called on __b since the installed converter function enforces that the target never receives a null value.
+From what I read in the source, this was not the case in 0.8.2 in the __setInitialValue method of SingleValueBinding. For subsequent calls (the bindListener function in __bindEventToProperty method), the value is correctly converted before the test but the value is then tested against &quot;undefined&quot; and not against &quot;null&quot;. I&#39;m not a JS expert so it might be equivalent though...
+
+IMHO, the testcase sould be split between :
+- initial value test (and ensure that resetAppearance() is never called)
+- subsequent value change test (and ensure that resetAppearance() is never called)
+
+Best,
+Vincent
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10405</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-06-16 12:49:00 +0200</bug_when>
+            <thetext>Thats a good point. I changed the test and used a dummy object with no reset method at all. That way i could ensure that it will never be called if the test succeeds. But event the new test shows a green bar. ;)
+
+See here:
+
+      // create a test class
+      qx.Class.define(&quot;qx.Test&quot;, {
+        extend : qx.core.Object,
+        members : {
+          __a : null,
+          setA : function(data) {
+            this.__a = data;
+          },
+          getA : function() {
+            return this.__a;
+          }
+        }
+      });
+      var t = new qx.Test();
+      
+      // define the converter 
+      var options = {
+        converter : function(data) {
+          if (data == null) {
+            return &quot;affe&quot;;
+          }
+          return data + &quot;&quot;;
+        }
+      };
+      
+      // starting point
+      this.__a.setZIndex(10);
+      this.__a.bind(&quot;zIndex&quot;, t, &quot;a&quot;, options);
+      this.assertEquals(this.__a.getZIndex() + &quot;&quot;, t.getA(), &quot;Wrong start binding.&quot;);
+      
+      // set the zIndex to null
+      this.__a.setZIndex(null);
+      this.assertEquals(&quot;affe&quot;, t.getA(), &quot;Converter will not be executed.&quot;);
+
+      t.dispose();</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10406</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2009-06-16 13:29:16 +0200</bug_when>
+            <thetext>And what about having null as an initial zIndex value ? i.e. :
+
+      // starting point
+      this.__a.setZIndex(null);
+      this.__a.bind(&quot;zIndex&quot;, t, &quot;a&quot;, options);
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10408</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2009-06-16 13:41:06 +0200</bug_when>
+            <thetext>BTW, is there a difference between testing &quot;value == null&quot; (used in __setInitialValue) and &quot;value == undefined&quot; (used in __bindEventToProperty) ?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10409</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-06-16 13:54:40 +0200</bug_when>
+            <thetext>You were right! If the initial value was null, the test failed! But it is clear to me now because __setInitialValue checked the conversion after checking for null. I just changed the order of the checks and its working. :)
+Does it now work for you too?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10410</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2009-06-16 14:08:43 +0200</bug_when>
+            <thetext>Martin,
+I can&#39;t test it right now since I&#39;m still using the 0.8.2 release. But reading the trunk source, the change seems fine to me.
+What about the difference between &#39;value == null&#39; and &#39;value == undefined&#39; ? Shouldn&#39;t all tests be consistent (cf comment #5) ?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10412</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-06-16 14:33:53 +0200</bug_when>
+            <thetext>Oh, im sorry. Didn&#39;t see that comment. As long as you don&#39;t use the equality comparison (===), undefined is the same as null. So in regular cases, null == undefined is true. 
+But if you are evil, you can change the value of undefined to something else. Thats where ist getting ugly:
+undefined = &quot;test&quot;;
+null == undefined; // false
+
+But i dont think thats a problem in the current implementation.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10415</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2009-06-16 14:42:45 +0200</bug_when>
+            <thetext>Thanks for the free JS lesson ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10437</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-06-17 11:51:40 +0200</bug_when>
+            <thetext>*** Bug 2478 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14513</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:15:10 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14896</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 22:12:49 +0100</bug_when>
+            <thetext>corrected wrong milestone (was 0.9, but was fixed for 0.8.3 already)
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36771</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:08 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,282 @@
+<bug>
+          <bug_id>2419</bug_id>
+          
+          <creation_ts>2009-05-26 10:04:00 +0200</creation_ts>
+          <short_desc>Mixin themes need a way to override existing keys</short_desc>
+          <delta_ts>2014-03-03 15:23:59 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.theming</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.7.5</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Fabian Jakobs">fabian.jakobs</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          <cc>info</cc>
+    
+    <cc>matthew+qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10118</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-05-26 10:04:28 +0200</bug_when>
+            <thetext>We need a way to override theme keys in mixin themes. I see two possibilities:
+
+1. Allow overriding in the mixin:
+
+qx.Theme.define(&quot;MDecoration&quot;, {
+	&quot;override&quot; : true,
+	
+	&quot;decorations&quot; : { 
+	  ...
+	}
+})
+
+2. Allow overriding in the including Theme:
+
+qx.Theme.define(&quot;Decoration&quot;, {
+	patch : [MDecoration],
+	
+	decorations : 
+	{
+	  ...
+	}
+})</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10134</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-05-26 16:03:32 +0200</bug_when>
+            <thetext>fixed in r19236</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10149</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-05-27 11:05:46 +0200</bug_when>
+            <thetext>How was it fixed now and what was the reason for the solution?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10153</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-05-27 14:43:53 +0200</bug_when>
+            <thetext>We used the second option. Not being able to override keys was a major limitation.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10157</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-05-27 16:24:56 +0200</bug_when>
+            <thetext>BTW: I do not want to now what was the reason for the change. I wanted to know what was the reason for solution #2 as you mentioned to possible solutions :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10167</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-05-27 21:41:16 +0200</bug_when>
+            <thetext>It&#39;s preferable to have the class using a mixin to specify how it is being used, instead of a generic mixin to include such information. Otherwise it would break the generic character of a mixin. I guess everyone agrees with that concept.
+
+But I&#39;m not sure we want the patch feature be actually part of the closed form of a class/theme declaration instead of an explicit call like qx.Theme.patch(Theme1, MTheme1). Reminds me of bug #2382, my comment #1. 
+
+@Fabian, would love to discuss that with you after my vacation, so kept this bug open.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10169</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-05-27 21:55:38 +0200</bug_when>
+            <thetext>The second option suggest that the theme author already knows about keys which are overridden later. Seems to be a bit crazy to me. Infact it is more logical that the theme author knows about keys he/she want to override in the theme which the current theme derives from. Is this the use case you design this for? Just wonder.
+
+Andreas, I think you are right. If the statements above are true, I would say that the behavior how a mixin is included should be controlled by the including class, not by the mixin. A mixin should be generic, integratable, indepenent. These bugs #2419 and #2382 are related. The same problem, but in different parts of the framework.
+
+Anybody though already about implementing this at generator level? Or at definition level so that qx.Class or qx.Theme just use the contents from somewhere else? This might work through some kind of meta data as part of the headers created by the generator e.g.
+
+qx.patches = 
+{
+  &quot;qx.theme.Foo&quot; : [&quot;my.Modification1&quot;, &quot;other.Modification&quot; ],
+  ...
+}
+
+This might be declared somewhere at config.json. This offers the possibility to even benefit regarding size (as never used content is not integrated into the build at all).
+
+The same kind of map merge might also be interesting for combining the theme into one theme class e.g. when dealing with a large project which includes themes from different locations, then applied patches etc. In this case the application often still works with just the single theme created for this application. Instead of the whole overhead created through dealing with all these single classes, different styles of merge &amp; patch (where sometimes major blocks of the source themes are never used at all) this might be straigtforward.
+
+Would be interesting what you think about this.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10170</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-05-27 22:16:03 +0200</bug_when>
+            <thetext>Just a quick reply, as I can&#39;t look more into that right now. 
+
+It doesn&#39;t feel sufficient to handle those dependencies only at config/loader level, without it being part of the JS code base. One would also want to take includes into account, not only patches, right? There might even be a wider scope for similar use cases?
+
+On the other hand, only explicit patch() calls in the code base can&#39;t easily be in-/excluded for various builds (or they would be wrapped in custom variants). 
+
+Anyway, feels like we&#39;re hitting some general topics here, so lets see if there&#39;s a common scenario and solution (possibly including support both in config and code). </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10171</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-05-27 22:19:44 +0200</bug_when>
+            <thetext>Oops, to clarify, when I said &quot;support both in config and code&quot;, I didn&#39;t mean to end up with two orthogonal/competing solutions, but the impression that a solution only on one side might not be sufficient...
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10173</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-05-28 07:49:14 +0200</bug_when>
+            <thetext>Andreas, what I meant to say was:
+
+Add meta data for patches which are defined in the application config.json. This meta data could then be used by qx.Class/qx.Theme etc. to ignore the original value of specific entries and use the patched value instead. This is basically a additional hash lookup into the copy-process and quite cheap.
+
+What the could be done to still optimize the scenario is to do this patching at generator level where the keys from the patch are copied over to the original class(es). This way one deletes the original parts from the build which reduces the size overhead of patches. This do not work for includes though as these are a merge mechanism where you do not replace members of the original class.
+
+The definition of patches in config.json has the following benefits:
+
+* It omits the definition of the patch in the IMHO wrong place: the mixin
+* It makes it possible to patch initial application code as as soon as the class is loaded the patch is already applied (hint: the dependency tracing need to support this as well).
+* It allows further support for generator-level compression of patches (as mentioned above)
+
+I would prefer to introduce a new builder class &quot;qx.Patch&quot; to declare patches as in the meaning these are no mixins. At least how I understand mixins.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10176</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-05-28 11:55:05 +0200</bug_when>
+            <thetext>Ok, let me explain in more detail.
+
+In qooxdoo we support mixins for classes and themes. Mixins mix code/theme-values
+into existing classes/themes. This can be done in two ways:
+
+1. include: Defensive inclusion - throw an error if the mixin tries to redefine an existing key.
+2. patch: Agressive inclusion - The mixin overrides existing keys.
+
+We support both way programatically with qx.Theme.include and qx.Theme.patch but inside
+a theme definition we only allow &quot;include&quot;.
+
+This is odd because the author of the theme including a mixin knows about the name
+collision since &quot;include&quot; throws an error. If he wants to include the mixin anyway he has
+to fallback to write something like
+
+&quot;qx.Theme.patch(Theme, Mixin)&quot;
+
+after the definition of the mixin. The fix for this bug removes the necessity of this
+workaround and allows the author to put the information about, which mixins are 
+included using &quot;patch&quot; right next to the &quot;normal&quot; mixins.
+
+I don&#39;t really understand what the configs and the build system has to do with this issue.
+
+Further I don&#39;t see any need for qx.Patch because a mixin just declares what to mix in and
+not how to mix it in.
+
+@ae
+We can discusss this issue after your vacation but I&#39;d like to close the bug because
+I don&#39;t see a better way to solve this issue and the fix is already implemented.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10186</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-05-28 14:18:13 +0200</bug_when>
+            <thetext>Just wondering but what exactly is the reason an author writes a theme where he knows that some of the keys of this theme are overridden by the mixin he includes? Do not make a lot of sense to me. Can you please explain what I overlook here in type of a typical use case.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10207</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-05-28 17:20:26 +0200</bug_when>
+            <thetext>Here is a concrete use case:
+
+We have a project where we have a number of custom widgets and we maintain the 
+appearances of each widget in a separate appearance mixin.
+
+The &quot;master&quot; appearance derives from a qooxdoo appearance and selectively includes
+the appearance mixins for the used custom widgets. In some situations the mixins might
+override keys from the qooxdoo theme. Without this fix the author of the &quot;master&quot;
+appearance has no clean way to integrate the mixins.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10213</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-05-28 21:03:02 +0200</bug_when>
+            <thetext>Ok, Fabian. This makes sense. I think without such information the whole thread might be complicated to understand for other outsiders as well. Thanks.
+
+Have you ever thought about that a include has higher priority than extend? &quot;include&quot; is basically a mechanism to lay out features, to be used by one or multiple classes. As longer as I think about it I would think that dealing mixins with higher priority makes sense. You explicitely want to include these things to be added to your class. This way a member from a mixin has the same priority as the member from the &quot;normal&quot; members section of a class. The only case where you need the classic form of a patch then is when you want to override areas of the member section.
+
+What do you think about this?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10217</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-05-29 12:45:09 +0200</bug_when>
+            <thetext>If I had to reimplement mixins again I would probably give them higher priority than extend
+but I don&#39;t think we should change the semantics in qooxdoo anymore.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10231</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-05-29 14:21:40 +0200</bug_when>
+            <thetext>Do you really think that this is a huge problem? I don&#39;t see that this affects a lot of people. So it might be an easy modification which helps in all of these use cases.
+
+As I see this as a conceptual issue in qooxdoo I would like to get this fixed. The current phase in qooxdoo means to fix &quot;impractical features&quot; as noted in http://news.qooxdoo.org/the-week-in-qooxdoo-2009-05-22 so this also means to fix this one.
+
+I opened a bug (bug #2439) to discuss these changes separately as this is more a more general topic than this bug can fulfill.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10966</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-07-20 11:07:26 +0200</bug_when>
+            <thetext>-&gt; RE-OPEN
+Backporting feature to 0.7.x</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10967</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-07-20 11:07:54 +0200</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10968</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-07-20 11:08:19 +0200</bug_when>
+            <thetext>.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10972</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-07-20 13:09:25 +0200</bug_when>
+            <thetext>Fixed with Revision #19641</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38223</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:59 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

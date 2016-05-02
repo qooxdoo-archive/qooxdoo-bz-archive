@@ -1,0 +1,212 @@
+<bug>
+          <bug_id>2766</bug_id>
+          
+          <creation_ts>2009-09-09 16:31:00 +0200</creation_ts>
+          <short_desc>IE7 fatal error when setting invalid style (setBlockerColor with &#39;grey&#39;)</short_desc>
+          <delta_ts>2012-05-16 09:36:39 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>master</version>
+          <rep_platform>IE 7</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          <dependson>1736</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Fritz Zaucker">fritz.zaucker</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          <cc>info</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          <cf_browser_version>7</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>12096</commentid>
+            <who name="Fritz Zaucker">fritz.zaucker</who>
+            <bug_when>2009-09-09 16:31:18 +0200</bug_when>
+            <thetext>Hi,
+
+when doing
+
+     root.setBlockerColor(&quot;grey&quot;);
+
+this works just fine with Firefox and Chrome. IE8 either works as well or
+ignores it. IE7 thinks &quot;grey&quot; is invalid and dies in
+
+        framework/source/class/qx/bom/element/Style.js
+
+line 369:   element.style[name] = value !== null ? value : &quot;&quot;;
+
+Now, I guess it can be argued that this is my fault (for not using a
+hex-value and an &#39;invalid&#39; color string).
+
+But I guess this could happen to others as well and will of course happen
+for other &#39;invalid&#39; style assignments as well.
+
+It is rather hard to figure out as IE7 just dies with an error (at least in
+the build version). I didn&#39;t catch it in the source version, as I don&#39;t have
+a Windows setup for development and my development browsers (Firefox and
+Chrome under Linux) don&#39;t have that problem.
+
+I finally identified the problem with
+
+      try {
+              element.style[name] = value !== null ? value : &quot;&quot;;
+      }
+      catch(e) {
+              alert(&#39;e=&#39;+e+&#39;, name=&#39;+name+&#39;, value=&#39;+value);
+      }
+
+
+I wonder if it would be appropriate to put that into the Qooxdoo code.
+
+Best regards,
+Fritz</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12280</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-15 09:38:58 +0200</bug_when>
+            <thetext>Hi Fritz, what exactly do you mean by &quot;IE dies ...&quot;? So does
+element.style.backgroundColor = &quot;grey&quot;
+cause a real problem, oops?
+
+Chris, could you please confirm?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12315</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-15 13:41:11 +0200</bug_when>
+            <thetext>Hi Fritz, I could reproduce your issue with using &quot;grey&quot; as value for IE7 (&quot;setBlockerColor&quot;). But it seems to me that the the IE doesn&#39;t die, in my case the blocker occurs with no color. Could you please test my example?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12316</commentid>
+              <attachid>591</attachid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-15 13:42:30 +0200</bug_when>
+            <thetext>Created attachment 591
+example code</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12328</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-15 17:02:59 +0200</bug_when>
+            <thetext>Added try/catch if an error occurs by setting an invalid style attribute and log this if debug is on. (rev. 20117).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12334</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-09-15 23:25:10 +0200</bug_when>
+            <thetext>That&#39;s something I would not do in the low-level API. Using try-catch in such a widely used method reduces performance a lot. Not sure what this helps to throw a custom exception here. It might be perfectly OK to have the native exception here.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12335</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-09-15 23:27:09 +0200</bug_when>
+            <thetext>The alert() is also no working solution. The low-level APIs currently do not fix any invalid values. As it would be quite hard to find all invalid values.
+
+See also:
+http://dev.opera.com/articles/view/efficient-javascript/?page=2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12336</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-09-15 23:32:37 +0200</bug_when>
+            <thetext>Just wondering why the color &quot;grey&quot; is allowed at all. This is the issue. Someone might have changed the ColorUtil class and this leads to the problem. Previously the code only allowed &quot;gray&quot;. In the original behavior the value &quot;grey&quot; had lead to an exception during setting the property which is much more helpful. The change was introduced quite recently in revision #17055 by Alex. Should be reverted IMHO.
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12338</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-16 08:19:54 +0200</bug_when>
+            <thetext>Hi Sebastian, thank you for your veto, I will talk with Alex about the color value &quot;grey&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12411</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-09-18 10:47:33 +0200</bug_when>
+            <thetext>So as you removed support for &quot;grey&quot; can we please remove the try/error construct here as well?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12453</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-21 11:42:49 +0200</bug_when>
+            <thetext>The issue occurred, because the &#39;grey&#39; value is not valid for IE6 and IE7. Therefore the color shouldn&#39;t support form our property system as valid value. (Commit from bug #1736 was reverted)
+
+A general script error on setting invalid style values are okay and shouldn&#39;t be caught on qx.bom.element.Style. For this reason I removed the try/catch with rev. 20146.
+
+Fritz, I think removing the &#39;grey&#39; as valid color should solve your problem. Could you please verify this. Thanks.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13691</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-10-29 12:14:55 +0100</bug_when>
+            <thetext>CLOSED.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14553</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:15:28 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>591</attachid>
+            <date>2009-09-15 13:42:00 +0200</date>
+            <delta_ts>2009-09-15 13:42:30 +0200</delta_ts>
+            <desc>example code</desc>
+            <filename>Application.js</filename>
+            <type>text/plain</type>
+            <size>1220</size>
+            <attacher>christian.hagendorn</attacher>
+            
+              <data encoding="base64">LyogKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqDQoNCiAgIENvcHlyaWdodDoNCg0KICAgTGljZW5zZToNCg0KICAg
+QXV0aG9yczoNCg0KKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqICovDQoNCi8qICoqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKg0KDQoj
+YXNzZXQoYnVnMjc2Ni8qKQ0KDQoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiogKi8NCg0KLyoqDQogKiBUaGlzIGlz
+IHRoZSBtYWluIGFwcGxpY2F0aW9uIGNsYXNzIG9mIHlvdXIgY3VzdG9tIGFwcGxpY2F0aW9uICJi
+dWcyNzY2Ig0KICovDQpxeC5DbGFzcy5kZWZpbmUoImJ1ZzI3NjYuQXBwbGljYXRpb24iLA0Kew0K
+ICBleHRlbmQgOiBxeC5hcHBsaWNhdGlvbi5TdGFuZGFsb25lLA0KDQogIG1lbWJlcnMgOg0KICB7
+DQogICAgbWFpbiA6IGZ1bmN0aW9uKCkNCiAgICB7DQogICAgICB0aGlzLmJhc2UoYXJndW1lbnRz
+KTsNCg0KICAgICAgaWYgKHF4LmNvcmUuVmFyaWFudC5pc1NldCgicXguZGVidWciLCAib24iKSkN
+CiAgICAgIHsNCiAgICAgICAgcXgubG9nLmFwcGVuZGVyLk5hdGl2ZTsNCiAgICAgICAgcXgubG9n
+LmFwcGVuZGVyLkNvbnNvbGU7DQogICAgICB9DQoNCiAgICAgIHZhciBidXR0b24xID0gbmV3IHF4
+LnVpLmZvcm0uQnV0dG9uKCJGaXJzdCBCdXR0b24iLCAiYnVnMjc2Ni90ZXN0LnBuZyIpOw0KDQog
+ICAgICB2YXIgZG9jID0gdGhpcy5nZXRSb290KCk7DQogICAgICBkb2MuYWRkKGJ1dHRvbjEsIHts
+ZWZ0OiAxMDAsIHRvcDogNTB9KTsNCg0KICAgICAgZG9jLnNldEJsb2NrZXJDb2xvcigiZ3JleSIp
+Ow0KICAgICAgZG9jLnNldEJsb2NrZXJPcGFjaXR5KDAuNSk7DQogICAgICANCiAgICAgIGJ1dHRv
+bjEuYWRkTGlzdGVuZXIoImV4ZWN1dGUiLCBmdW5jdGlvbihlKSB7DQogICAgICAgIGRvYy5ibG9j
+aygpOw0KICAgICAgICANCiAgICAgICAgcXguZXZlbnQuVGltZXIub25jZShmdW5jdGlvbigpIHsN
+CiAgICAgICAgICB0aGlzLnVuYmxvY2soKTsNCiAgICAgICAgfSwgZG9jLCAyMDAwKTsNCiAgICAg
+IH0pOw0KICAgIH0NCiAgfQ0KfSk7DQo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

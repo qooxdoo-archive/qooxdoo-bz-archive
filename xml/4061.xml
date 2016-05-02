@@ -1,0 +1,323 @@
+<bug>
+          <bug_id>4061</bug_id>
+          
+          <creation_ts>2010-09-07 12:55:00 +0200</creation_ts>
+          <short_desc>Add necessary loaded functionality to Flash widget</short_desc>
+          <delta_ts>2011-04-04 16:46:16 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.4</target_milestone>
+          
+          <blocked>4084</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20093</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-09-07 12:55:34 +0200</bug_when>
+            <thetext>Here is the proposed code:
+
+Remove the &quot;appear&quot; event in the constructor if possible to find another solution to by pass IE 7 bug:
+
+and add 
+
+this._loading();
+
+in the constructor
+
+and two new events:
+
+  events :
+  {
+    /**
+     * Fired when the flash object still is loading.
+     *
+     * The loading action can be prevented by calling
+     * {@link qx.event.type.Event#preventDefault} on the event object
+     */
+    &quot;loading&quot; : &quot;qx.event.type.Event&quot;,
+
+    /**
+     * Fired after the flash object has been loaded.
+     *
+     * The loaded action can be prevented by calling
+     * {@link qx.event.type.Event#preventDefault} on the event object
+     */
+     &quot;loaded&quot; : &quot;qx.event.type.Event&quot;
+    },
+
+and add the following functions:
+
+        _loading : function(e)
+        {
+            if(!this.isLoaded())
+            {
+                var timer = qx.util.TimerManager.getInstance();
+                timer.start(this._loading, 0, this, null, 10);
+
+                this.fireEvent(&quot;loading&quot;);
+            }
+            else
+            {
+                this.fireEvent(&quot;loaded&quot;);
+            }
+        },
+
+        isLoaded : function()
+        {
+            return this.getPercentLoaded() == 100;
+        },
+
+        /*
+         *
+         * In the following order the errors occur:
+         * 1. flash element equals underfined, which means that the flash object has not been added to the DOM tree.
+         * 2. flash object has not received an identity, which is accessible yet.
+         * 3. the flash object has not been loaded enough to access the viewer functions.
+         *
+         */
+        getPercentLoaded : function()
+        {
+            var flashFE = this.__flashObj.getFlashElement();
+
+          // First make sure the movie is defined and has received a non-zero object id.
+            if(typeof(flashFE) != &quot;undefined&quot; &amp;&amp; flashFE != null)
+            {
+                try
+                {
+                    return flashFE.PercentLoaded();
+                }
+                catch(err)
+                {
+                    // Not an accessible function yet.
+                    return 0;
+                }
+            }
+            else
+            {
+                return 0;
+            }
+        },</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20123</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-09-10 13:57:42 +0200</bug_when>
+            <thetext>Thanks for the report. I just read it and don&#39;t get it why we should include it. Could you explain whats the problem?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20148</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-09-13 17:31:28 +0200</bug_when>
+            <thetext>It is easy to see when you consider loading of flash objects by the browser. All loading is asynchronous if not otherwise stated and it is impossible to know when the flash object has been loaded fully, without checking the existence of the DOM element, that the flash object has received an id and that the flash film has been 100% loaded. It has not been covered in the Flash widget so far, making it incomplete.
+
+The solution below solves these problems! That means it is possible to know when you for example can access the javascript commands of the Flash object or doing other things dependent on a full loading of the Flash object.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21133</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-11-06 11:28:50 +0100</bug_when>
+            <thetext>We have improved the loading functionality with a timeout.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21136</commentid>
+              <attachid>837</attachid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-11-06 11:33:09 +0100</bug_when>
+            <thetext>Created attachment 837
+Improved with timeout</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21210</commentid>
+              <attachid>839</attachid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-11-10 10:19:49 +0100</bug_when>
+            <thetext>Created attachment 839
+Checking for empty source string so the timeout timer is not started when no resource</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23542</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-03-24 18:17:33 +0100</bug_when>
+            <thetext>Thank you Stefan, I added the missing feature on trunk with r26058.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="1" ispatch="1" isprivate="0" isurl="0">
+            <attachid>837</attachid>
+            <date>2010-11-06 11:33:00 +0100</date>
+            <delta_ts>2010-11-10 10:19:49 +0100</delta_ts>
+            <desc>Improved with timeout</desc>
+            <filename>diff.txt</filename>
+            <type>text/plain</type>
+            <size>3412</size>
+            <attacher>dev</attacher>
+            
+              <data encoding="base64">MjNjMjMKPCBxeC5DbGFzcy5kZWZpbmUoInF4LnVpLmVtYmVkLkZsYXNoIiwKLS0tCj4gcXguQ2xh
+c3MuZGVmaW5lKCJxeC51aS5lbWJlZC5GbGFzaCIsCjgzYTg0LDExNQo+ICAgICAgRVZFTlRTCj4g
+ICAqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKgo+ICAgKi8KPiAgIGV2ZW50cyA6Cj4gICB7Cj4gICAgIC8q
+Kgo+ICAgICAgKiBGaXJlZCB3aGVuIHRoZSBmbGFzaCBvYmplY3Qgc3RpbGwgaXMgbG9hZGluZy4K
+PiAgICAgICoKPiAgICAgICogVGhlIGxvYWRpbmcgYWN0aW9uIGNhbiBiZSBwcmV2ZW50ZWQgYnkg
+Y2FsbGluZwo+ICAgICAgKiB7QGxpbmsgcXguZXZlbnQudHlwZS5FdmVudCNwcmV2ZW50RGVmYXVs
+dH0gb24gdGhlIGV2ZW50IG9iamVjdAo+ICAgICAgKi8KPiAgICAgImxvYWRpbmciIDogInF4LmV2
+ZW50LnR5cGUuRXZlbnQiLAo+IAo+ICAgICAvKioKPiAgICAgICogRmlyZWQgYWZ0ZXIgdGhlIGZs
+YXNoIG9iamVjdCBoYXMgYmVlbiBsb2FkZWQuCj4gICAgICAqCj4gICAgICAqIFRoZSBsb2FkZWQg
+YWN0aW9uIGNhbiBiZSBwcmV2ZW50ZWQgYnkgY2FsbGluZwo+ICAgICAgKiB7QGxpbmsgcXguZXZl
+bnQudHlwZS5FdmVudCNwcmV2ZW50RGVmYXVsdH0gb24gdGhlIGV2ZW50IG9iamVjdAo+ICAgICAg
+Ki8KPiAgICAgImxvYWRlZCIgOiAicXguZXZlbnQudHlwZS5FdmVudCIsCj4gCj4gICAgIC8qKgo+
+ICAgICAgKiBGaXJlZCBhZnRlciB0aGUgZmxhc2ggb2JqZWN0IGhhcyBnb3QgYSB0aW1lb3V0Lgo+
+ICAgICAgKgo+ICAgICAgKiBUaGUgdGltZW91dCBhY3Rpb24gY2FuIGJlIHByZXZlbnRlZCBieSBj
+YWxsaW5nCj4gICAgICAqIHtAbGluayBxeC5ldmVudC50eXBlLkV2ZW50I3ByZXZlbnREZWZhdWx0
+fSBvbiB0aGUgZXZlbnQgb2JqZWN0Cj4gICAgICAqLwo+ICAgICAidGltZW91dCIgOiAicXguZXZl
+bnQudHlwZS5FdmVudCIKPiAgIH0sCj4gCj4gICAvKgo+ICAgKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioK
+MTAwYTEzMywxNDEKPiAgICAgICogQSB0aW1lb3V0IHdoZW4gdHJ5aW5nIHRvIGxvYWQgdGhlIGZs
+YXNoIHNvdXJjZS4KPiAgICAgICovCj4gICAgIGxvYWRUaW1lb3V0IDoKPiAgICAgewo+ICAgICAg
+IGNoZWNrIDogIkludGVnZXIiLAo+ICAgICAgIGluaXQgOiAxMDAwMAo+ICAgICB9LAo+IAo+ICAg
+ICAvKioKMjI1YTI2NywzNDMKPiAgICAgICBQUk9URUNURUQgV0lER0VUIEFQSQo+ICAgICAtLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0KPiAgICAgKi8KPiAKPiAgICAgX2xvYWRpbmcgOiBmdW5jdGlvbihlKQo+
+ICAgICB7Cj4gICAgICAgdmFyIHNvdXJjZSA9IHRoaXMuZ2V0U291cmNlKCk7Cj4gCj4gICAgICAg
+aWYoc291cmNlICE9IG51bGwgJiYgc291cmNlICE9ICJ1bmRlZmluZWQiKQo+ICAgICAgIHsKPiAg
+ICAgICAgIGlmKCF0aGlzLmlzTG9hZGVkKCkpCj4gCXsKPiAgICAgICAgICAgaWYoIXRoaXMuX190
+aW1lKQo+ICAgICAgICAgICB7Cj4gICAgICAgICAgICAgdGhpcy5fX3RpbWUgPSBuZXcgRGF0ZSgp
+LmdldFRpbWUoKTsKPiAgICAgICAgICAgfQo+IAo+ICAgICAgICAgICB2YXIgdGltZURpZmYgPSBu
+ZXcgRGF0ZSgpLmdldFRpbWUoKSAtIHRoaXMuX190aW1lOwo+IAo+ICAgICAgICAgICBpZih0aGlz
+LmdldExvYWRUaW1lb3V0KCkgPiB0aW1lRGlmZikKPiAgICAgICAgICAgewo+ICAgICAgICAgICAg
+IHZhciB0aW1lciA9IHF4LnV0aWwuVGltZXJNYW5hZ2VyLmdldEluc3RhbmNlKCk7Cj4gICAgICAg
+ICAgICAgdGltZXIuc3RhcnQodGhpcy5fbG9hZGluZywgMCwgdGhpcywgbnVsbCwgMTApOwo+IAo+
+ICAgICAgICAgICAgIHRoaXMuZmlyZUV2ZW50KCJsb2FkaW5nIik7Cj4gICAgICAgICAgIH0KPiAg
+ICAgICAgICAgZWxzZQo+ICAgICAgICAgICB7Cj4gICAgICAgICAgICAgdGhpcy5kZWJ1ZygiVGlt
+ZW91dCBhZnRlcjogIiArIHRpbWVEaWZmKTsKPiAgICAgICAgICAgICB0aGlzLmZpcmVFdmVudCgi
+dGltZW91dCIpOwo+ICAgICAgICAgICAgIHRoaXMuX190aW1lID0gbnVsbDsKPiAgICAgICAgICAg
+fQo+ICAgICAgICAgfQo+ICAgICAgICAgZWxzZQo+ICAgICAgICAgewo+ICAgICAgICAgICB0aGlz
+LmZpcmVFdmVudCgibG9hZGVkIik7Cj4gICAgICAgICAgIHRoaXMuX190aW1lID0gbnVsbDsKPiAg
+ICAgICAgIH0KPiAgICAgICB9Cj4gICAgIH0sCj4gCj4gICAgIGlzTG9hZGVkIDogZnVuY3Rpb24o
+KQo+ICAgICB7Cj4gICAgICAgcmV0dXJuIHRoaXMuZ2V0UGVyY2VudExvYWRlZCgpID09PSAxMDA7
+Cj4gICAgIH0sCj4gCj4gICAgIC8qCj4gICAgICAqIEluIHRoZSBmb2xsb3dpbmcgb3JkZXIgdGhl
+IGVycm9ycyBvY2N1cjoKPiAgICAgICogMS4gZmxhc2ggZWxlbWVudCBlcXVhbHMgdW5kZWZpbmVk
+LCB3aGljaCBtZWFucyB0aGF0IHRoZSBmbGFzaCBvYmplY3QgaGFzIG5vdCBiZWVuIGFkZGVkIHRv
+IHRoZSBET00gdHJlZS4KPiAgICAgICogMi4gZmxhc2ggb2JqZWN0IGhhcyBub3QgcmVjZWl2ZWQg
+YW4gaWRlbnRpdHksIHdoaWNoIGlzIGFjY2Vzc2libGUgeWV0Lgo+ICAgICAgKiAzLiB0aGUgZmxh
+c2ggb2JqZWN0IGhhcyBub3QgYmVlbiBsb2FkZWQgZW5vdWdoIHRvIGFjY2VzcyB0aGUgdmlld2Vy
+IGZ1bmN0aW9ucy4KPiAgICAgICovCj4gICAgIGdldFBlcmNlbnRMb2FkZWQgOiBmdW5jdGlvbigp
+Cj4gICAgIHsKPiAgICAgICB2YXIgZmxhc2hGRSA9IHRoaXMuZ2V0Rmxhc2hFbGVtZW50KCk7Cj4g
+Cj4gICAgICAgLy8gRmlyc3QgbWFrZSBzdXJlIHRoZSBtb3ZpZSBpcyBkZWZpbmVkIGFuZCBoYXMg
+cmVjZWl2ZWQgYSBub24temVybyBvYmplY3QgaWQuCj4gICAgICAgaWYodHlwZW9mKGZsYXNoRkUp
+ICE9ICJ1bmRlZmluZWQiICYmIGZsYXNoRkUgIT0gbnVsbCkKPiAgICAgICB7Cj4gICAgICAgICB0
+cnkKPiAgICAgICAgIHsKPiAgICAgICAgICAgcmV0dXJuIGZsYXNoRkUuUGVyY2VudExvYWRlZCgp
+Owo+ICAgICAgICAgfQo+ICAgICAgICAgY2F0Y2goZXJyKQo+ICAgICAgICAgewo+ICAgICAgICAg
+ICAvLyBOb3QgYW4gYWNjZXNzaWJsZSBmdW5jdGlvbiB5ZXQuCj4gICAgICAgICAgIHJldHVybiAw
+Owo+ICAgICAgICAgfQo+ICAgICAgIH0KPiAgICAgICBlbHNlCj4gICAgICAgewo+ICAgICAgICAg
+cmV0dXJuIDA7Cj4gICAgICAgfQo+ICAgICB9LAo+IAo+ICAgICAvKgo+ICAgICAtLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0KMjcxYTM5MCwzOTEKPiAKPiAgICAgICB0aGlzLl9sb2FkaW5nKCk7Cg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>839</attachid>
+            <date>2010-11-10 10:19:00 +0100</date>
+            <delta_ts>2010-11-10 10:19:49 +0100</delta_ts>
+            <desc>Checking for empty source string so the timeout timer is not started when no resource</desc>
+            <filename>diff.txt</filename>
+            <type>text/plain</type>
+            <size>3431</size>
+            <attacher>dev</attacher>
+            
+              <data encoding="base64">MjNjMjMKPCBxeC5DbGFzcy5kZWZpbmUoInF4LnVpLmVtYmVkLkZsYXNoIiwKLS0tCj4gcXguQ2xh
+c3MuZGVmaW5lKCJxeC51aS5lbWJlZC5GbGFzaCIsCjgzYTg0LDExNQo+ICAgICAgRVZFTlRTCj4g
+ICAqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKgo+ICAgKi8KPiAgIGV2ZW50cyA6Cj4gICB7Cj4gICAgIC8q
+Kgo+ICAgICAgKiBGaXJlZCB3aGVuIHRoZSBmbGFzaCBvYmplY3Qgc3RpbGwgaXMgbG9hZGluZy4K
+PiAgICAgICoKPiAgICAgICogVGhlIGxvYWRpbmcgYWN0aW9uIGNhbiBiZSBwcmV2ZW50ZWQgYnkg
+Y2FsbGluZwo+ICAgICAgKiB7QGxpbmsgcXguZXZlbnQudHlwZS5FdmVudCNwcmV2ZW50RGVmYXVs
+dH0gb24gdGhlIGV2ZW50IG9iamVjdAo+ICAgICAgKi8KPiAgICAgImxvYWRpbmciIDogInF4LmV2
+ZW50LnR5cGUuRXZlbnQiLAo+IAo+ICAgICAvKioKPiAgICAgICogRmlyZWQgYWZ0ZXIgdGhlIGZs
+YXNoIG9iamVjdCBoYXMgYmVlbiBsb2FkZWQuCj4gICAgICAqCj4gICAgICAqIFRoZSBsb2FkZWQg
+YWN0aW9uIGNhbiBiZSBwcmV2ZW50ZWQgYnkgY2FsbGluZwo+ICAgICAgKiB7QGxpbmsgcXguZXZl
+bnQudHlwZS5FdmVudCNwcmV2ZW50RGVmYXVsdH0gb24gdGhlIGV2ZW50IG9iamVjdAo+ICAgICAg
+Ki8KPiAgICAgImxvYWRlZCIgOiAicXguZXZlbnQudHlwZS5FdmVudCIsCj4gCj4gICAgIC8qKgo+
+ICAgICAgKiBGaXJlZCBhZnRlciB0aGUgZmxhc2ggb2JqZWN0IGhhcyBnb3QgYSB0aW1lb3V0Lgo+
+ICAgICAgKgo+ICAgICAgKiBUaGUgdGltZW91dCBhY3Rpb24gY2FuIGJlIHByZXZlbnRlZCBieSBj
+YWxsaW5nCj4gICAgICAqIHtAbGluayBxeC5ldmVudC50eXBlLkV2ZW50I3ByZXZlbnREZWZhdWx0
+fSBvbiB0aGUgZXZlbnQgb2JqZWN0Cj4gICAgICAqLwo+ICAgICAidGltZW91dCIgOiAicXguZXZl
+bnQudHlwZS5FdmVudCIKPiAgIH0sCj4gCj4gICAvKgo+ICAgKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioK
+MTAwYTEzMywxNDEKPiAgICAgICogQSB0aW1lb3V0IHdoZW4gdHJ5aW5nIHRvIGxvYWQgdGhlIGZs
+YXNoIHNvdXJjZS4KPiAgICAgICovCj4gICAgIGxvYWRUaW1lb3V0IDoKPiAgICAgewo+ICAgICAg
+IGNoZWNrIDogIkludGVnZXIiLAo+ICAgICAgIGluaXQgOiAxMDAwMAo+ICAgICB9LAo+IAo+ICAg
+ICAvKioKMjI1YTI2NywzNDMKPiAgICAgICBQUk9URUNURUQgV0lER0VUIEFQSQo+ICAgICAtLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0KPiAgICAgKi8KPiAKPiAgICAgX2xvYWRpbmcgOiBmdW5jdGlvbihlKQo+
+ICAgICB7Cj4gICAgICAgdmFyIHNvdXJjZSA9IHRoaXMuZ2V0U291cmNlKCk7Cj4gCj4gICAgICAg
+aWYoc291cmNlICE9ICIiICYmIHNvdXJjZSAhPSBudWxsICYmIHNvdXJjZSAhPSAidW5kZWZpbmVk
+IikKPiAgICAgICB7Cj4gICAgICAgICBpZighdGhpcy5pc0xvYWRlZCgpKQo+IAkJCQl7Cj4gICAg
+ICAgICAgIGlmKCF0aGlzLl9fdGltZSkKPiAgICAgICAgICAgewo+ICAgICAgICAgICAgIHRoaXMu
+X190aW1lID0gbmV3IERhdGUoKS5nZXRUaW1lKCk7Cj4gICAgICAgICAgIH0KPiAKPiAgICAgICAg
+ICAgdmFyIHRpbWVEaWZmID0gbmV3IERhdGUoKS5nZXRUaW1lKCkgLSB0aGlzLl9fdGltZTsKPiAK
+PiAgICAgICAgICAgaWYodGhpcy5nZXRMb2FkVGltZW91dCgpID4gdGltZURpZmYpCj4gICAgICAg
+ICAgIHsKPiAgICAgICAgICAgICB2YXIgdGltZXIgPSBxeC51dGlsLlRpbWVyTWFuYWdlci5nZXRJ
+bnN0YW5jZSgpOwo+ICAgICAgICAgICAgIHRpbWVyLnN0YXJ0KHRoaXMuX2xvYWRpbmcsIDAsIHRo
+aXMsIG51bGwsIDEwKTsKPiAKPiAgICAgICAgICAgICB0aGlzLmZpcmVFdmVudCgibG9hZGluZyIp
+Owo+ICAgICAgICAgICB9Cj4gICAgICAgICAgIGVsc2UKPiAgICAgICAgICAgewo+ICAgICAgICAg
+ICAgIHRoaXMuZGVidWcoIlRpbWVvdXQgYWZ0ZXI6ICIgKyB0aW1lRGlmZik7Cj4gICAgICAgICAg
+ICAgdGhpcy5maXJlRXZlbnQoInRpbWVvdXQiKTsKPiAgICAgICAgICAgICB0aGlzLl9fdGltZSA9
+IG51bGw7Cj4gICAgICAgICAgIH0KPiAgICAgICAgIH0KPiAgICAgICAgIGVsc2UKPiAgICAgICAg
+IHsKPiAgICAgICAgICAgdGhpcy5maXJlRXZlbnQoImxvYWRlZCIpOwo+ICAgICAgICAgICB0aGlz
+Ll9fdGltZSA9IG51bGw7Cj4gICAgICAgICB9Cj4gICAgICAgfQo+ICAgICB9LAo+IAo+ICAgICBp
+c0xvYWRlZCA6IGZ1bmN0aW9uKCkKPiAgICAgewo+ICAgICAgIHJldHVybiB0aGlzLmdldFBlcmNl
+bnRMb2FkZWQoKSA9PT0gMTAwOwo+ICAgICB9LAo+IAo+ICAgICAvKgo+ICAgICAgKiBJbiB0aGUg
+Zm9sbG93aW5nIG9yZGVyIHRoZSBlcnJvcnMgb2NjdXI6Cj4gICAgICAqIDEuIGZsYXNoIGVsZW1l
+bnQgZXF1YWxzIHVuZGVmaW5lZCwgd2hpY2ggbWVhbnMgdGhhdCB0aGUgZmxhc2ggb2JqZWN0IGhh
+cyBub3QgYmVlbiBhZGRlZCB0byB0aGUgRE9NIHRyZWUuCj4gICAgICAqIDIuIGZsYXNoIG9iamVj
+dCBoYXMgbm90IHJlY2VpdmVkIGFuIGlkZW50aXR5LCB3aGljaCBpcyBhY2Nlc3NpYmxlIHlldC4K
+PiAgICAgICogMy4gdGhlIGZsYXNoIG9iamVjdCBoYXMgbm90IGJlZW4gbG9hZGVkIGVub3VnaCB0
+byBhY2Nlc3MgdGhlIHZpZXdlciBmdW5jdGlvbnMuCj4gICAgICAqLwo+ICAgICBnZXRQZXJjZW50
+TG9hZGVkIDogZnVuY3Rpb24oKQo+ICAgICB7Cj4gICAgICAgdmFyIGZsYXNoRkUgPSB0aGlzLmdl
+dEZsYXNoRWxlbWVudCgpOwo+IAo+ICAgICAgIC8vIEZpcnN0IG1ha2Ugc3VyZSB0aGUgbW92aWUg
+aXMgZGVmaW5lZCBhbmQgaGFzIHJlY2VpdmVkIGEgbm9uLXplcm8gb2JqZWN0IGlkLgo+ICAgICAg
+IGlmKHR5cGVvZihmbGFzaEZFKSAhPSAidW5kZWZpbmVkIiAmJiBmbGFzaEZFICE9IG51bGwpCj4g
+ICAgICAgewo+ICAgICAgICAgdHJ5Cj4gICAgICAgICB7Cj4gICAgICAgICAgIHJldHVybiBmbGFz
+aEZFLlBlcmNlbnRMb2FkZWQoKTsKPiAgICAgICAgIH0KPiAgICAgICAgIGNhdGNoKGVycikKPiAg
+ICAgICAgIHsKPiAgICAgICAgICAgLy8gTm90IGFuIGFjY2Vzc2libGUgZnVuY3Rpb24geWV0Lgo+
+ICAgICAgICAgICByZXR1cm4gMDsKPiAgICAgICAgIH0KPiAgICAgICB9Cj4gICAgICAgZWxzZQo+
+ICAgICAgIHsKPiAgICAgICAgIHJldHVybiAwOwo+ICAgICAgIH0KPiAgICAgfSwKPiAKPiAgICAg
+LyoKPiAgICAgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCjI3MWEzOTAsMzkxCj4gCj4gICAgICAgdGhpcy5f
+bG9hZGluZygpOwo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

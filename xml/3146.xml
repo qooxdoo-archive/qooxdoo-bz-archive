@@ -1,0 +1,115 @@
+<bug>
+          <bug_id>3146</bug_id>
+          
+          <creation_ts>2009-12-01 08:45:00 +0100</creation_ts>
+          <short_desc>Overwriting private member &quot;__iframe&quot; of Class &quot;qx.bom.IframeHistory&quot; is not allowed!</short_desc>
+          <delta_ts>2012-05-16 09:37:19 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>0.8.3</version>
+          <rep_platform>IE 8</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          <cf_browser_version>8</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>15124</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2009-12-01 08:45:43 +0100</bug_when>
+            <thetext>I get the following error when running a Qooxdoo application with IE 8:
+
+-----------------------------------------------------------
+Meldung: Overwriting private member &quot;__iframe&quot; of Class &quot;qx.bom.IframeHistory&quot; is not allowed!
+Zeile: 1293
+Zeichen: 13
+Code: 0
+URI: file:///C:/ustahl/qooxdoo-0.8.3-sdk/framework/source/class/qx/Class.js
+-----------------------------------------------------------
+
+To find the reason for this problem, I have improved the line 1293 as follows:
+
+-- Old code: ---------------------------------
+if (proto[key] !== undefined &amp;&amp; key.charAt(0) == &quot;_&quot; &amp;&amp; key.charAt(1) == &quot;_&quot;) {
+            throw new Error(&#39;Overwriting private member ... is not allowed!&#39;);
+          }
+-- New code: ---------------------------------
+if (proto[key] !== undefined &lt;b&gt;&amp;&amp; proto[key] !== null&lt;/b&gt; &amp;&amp; key.charAt(0) == &quot;_&quot; &amp;&amp; key.charAt(1) == &quot;_&quot;) {
+            throw new Error(&#39;Overwriting private member ... is not allowed!&#39;);
+          }
+--      ---------------------------------
+
+After this change has been made, I now get the following error:
+--------------------------------------------
+Meldung: Overwriting private member &quot;__waitForIFrame&quot; of Class &quot;qx.bom.IframeHistory&quot; is not allowed!
+Zeile: 1293
+Zeichen: 13
+Code: 0
+URI: file:///C:/ustahl/qooxdoo-0.8.3-sdk/framework/source/class/qx/Class.js
+--------------------------------------------
+
+This error message is correct, because the qooxdoo framework contains the following code:
+
+qx.Class.define(&quot;qx.bom.History&quot;,
+{
+    __waitForIFrame : qx.core.Variant.select(&quot;qx.client&quot;,
+    {
+      &quot;mshtml&quot; : function(callback, context)
+      {
+...
+
+qx.Class.define(&quot;qx.bom.IframeHistory&quot;,
+{
+  extend : qx.bom.History,
+  
+  __waitForIFrame : function(callback, context, retry)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15223</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2009-12-03 10:43:46 +0100</bug_when>
+            <thetext>From my point of you, this case could be closed because I have switched to Qooxdoo 1.0-beta1 where this problem does not appear again.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15227</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-12-03 10:54:14 +0100</bug_when>
+            <thetext>I&#39;ll forward this to Alex to know about and close it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15300</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-12-04 11:18:03 +0100</bug_when>
+            <thetext>The history / IframeHistory code was refactored lately be Fabian. This fixed the reported issues.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

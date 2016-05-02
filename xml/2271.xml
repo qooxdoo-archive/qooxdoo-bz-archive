@@ -1,0 +1,145 @@
+<bug>
+          <bug_id>2271</bug_id>
+          
+          <creation_ts>2009-04-21 17:28:00 +0200</creation_ts>
+          <short_desc>Dependency to qx.core.Variant is lost when setting variants for the source version</short_desc>
+          <delta_ts>2014-03-03 15:21:01 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>critical</bug_severity>
+          <target_milestone>1.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9435</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-21 17:28:32 +0200</bug_when>
+            <thetext>A class like qx.List has a load-time dependency on qx.core.Variant in the 
+source version. This is due to the fact that qx.core.Variant.select() is used 
+to initialize static members, as in 
+
+  __allowedKeys : qx.core.Variant.select(&quot;qx.debug&quot;, {..}),
+
+The dependency analysis works on the *variant-optimized* version of the syntax 
+tree. If you specify a variant of {qx.debug:&quot;on&quot;}, the call to 
+qx.core.Variant.select will be replaced by the corresponding block. Therefore, 
+the dependency analyser doesn&#39;t see the qx.core.Variant.select call.
+
+This is fine for the build version, since the build version of the class code 
+will only contain the variant code. The source version, however, will contain 
+the full code, including the call to qx.core.Variant.select. Therefore, there 
+is a load-time dependency to qx.core.Variant for the source version that the 
+dependency analyser doesn&#39;t detect.
+
+It is only by chance that this doesn&#39;t cause issues in the current trunk.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9436</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-21 17:31:26 +0200</bug_when>
+            <thetext>This bug is only faintly related to bug#1455. This bug deals with the detection 
+of the class immediately used in the static initializer, with first-level 
+dependencies so to speak. Bug#1455 deals with dependencies of the called class 
+method, second-level dependencies so to speak.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9437</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-21 17:36:04 +0200</bug_when>
+            <thetext>The fact that this issue doesn&#39;t show more in trunk is also due to the fact 
+that for the source version of our apps there is no &quot;variants&quot; key defined in 
+the Json configs (e.g. base.json doesn&#39;t specify &quot;variants&quot; for the source 
+jobs).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11950</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-08 09:41:22 +0200</bug_when>
+            <thetext>moved from 0.8.3 to 0.9</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13080</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-12 12:27:45 +0200</bug_when>
+            <thetext>up prio, this should be a limited issue</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14766</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:26:18 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0 (for issues with status &quot;NEW&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15703</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-12-11 11:31:22 +0100</bug_when>
+            <thetext>mass move to 1.0.1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16458</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-27 16:30:25 +0100</bug_when>
+            <thetext>moved to target 1.0.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16648</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-02-02 17:12:20 +0100</bug_when>
+            <thetext>I think this has to be solved to properly resolve bug#3365</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16698</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-02-04 16:48:44 +0100</bug_when>
+            <thetext>I added code to DependencyLoader.getCombinedDeps(), to take care of 
+qx.core.Variant in source builds.
+
+The call interface to dependency information could probably be optimized, it 
+seems a bit convoluted (created tool/doc/diagram/deps_calls.graphml for 
+documentation). Maybe in the course of porting this functionality to Class.py.
+
+My tests look good, Playground source is functional again. Waiting for other 
+testers to confirm.
+
+With r21484.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37121</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:01 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

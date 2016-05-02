@@ -1,0 +1,212 @@
+<bug>
+          <bug_id>2501</bug_id>
+          
+          <creation_ts>2009-06-23 10:32:00 +0200</creation_ts>
+          <short_desc>NumberFormat moves to integer when postfix is not entered</short_desc>
+          <delta_ts>2014-03-03 15:20:27 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Cajus Pollmeier">pollmeier</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10499</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2009-06-23 10:32:34 +0200</bug_when>
+            <thetext>The behaviour of NumberFormat (i.e. when using a spinner) is not consistent. Here&#39;s the list of values entered and the results:
+
+6 =&gt; 6
+6,5 =&gt; 6
+6 % =&gt; 6
+6,5 % =&gt; 6,5
+
+8&lt;--------------
+var doc = this.getRoot();
+var button1 = new qx.ui.form.Button(&quot;Show value&quot;);
+
+var spinner = new qx.ui.form.Spinner(0, 0, 100);
+spinner.setSingleStep(0.1);
+spinner.setWidth(85);
+
+spinner.addListener(&quot;changeValue&quot;, function(e) {
+  this.debug(spinner.getValue());
+}, this);
+
+var nf = new qx.util.format.NumberFormat();
+nf.setMinimumFractionDigits(0);
+nf.setMaximumFractionDigits(2);
+nf.setPostfix(&quot; &quot; + this.tr(&quot;%&quot;));
+spinner.setNumberFormat(nf);
+
+doc.add(spinner,
+{
+left : 10,
+top  : 10
+});
+
+doc.add(button1,
+{
+left : 100,
+top  : 10
+});
+
+// Add an event listener
+button1.addListener(&quot;execute&quot;, function(e) {
+alert(spinner.getValue());
+});
+8&lt;--------------
+
+The following patch solves the problem for me:
+
+8&lt;--------------
+--- qooxdoo/framework/source/class/qx/util/format/NumberFormat.js       2009-06-23 09:51:32.000000000 +0200
++++ qooxdoo/framework/source/class/qx/util/format/NumberFormat.js.patched       2009-06-23 10:21:48.000000000 +0200
+@@ -292,11 +292,11 @@
+       var regex = new RegExp(
+         &quot;^&quot; +
+-        qx.lang.String.escapeRegexpChars(this.getPrefix()) +
++        &#39;(&#39; + qx.lang.String.escapeRegexpChars(this.getPrefix()) + &#39;){0,1}&#39; +
+         &#39;([-+]){0,1}&#39;+
+         &#39;([0-9]{1,3}(?:&#39;+ groupSepEsc + &#39;{0,1}[0-9]{3}){0,})&#39; +
+         &#39;(&#39; + decimalSepEsc + &#39;\\d+){0,1}&#39; +
+-        qx.lang.String.escapeRegexpChars(this.getPostfix()) +
++        &#39;(&#39; + qx.lang.String.escapeRegexpChars(this.getPostfix()) + &#39;){0,1}&#39; +
+         &quot;$&quot;
+       );
+
+@@ -306,9 +306,9 @@
+         throw new Error(&quot;Number string &#39;&quot; + str + &quot;&#39; does not match the number format&quot;);
+       }
+
+-      var negative = (hit[1] == &quot;-&quot;);
+-      var integerStr = hit[2];
+-      var fractionStr = hit[3];
++      var negative = (hit[2] == &quot;-&quot;);
++      var integerStr = hit[3];
++      var fractionStr = hit[4];
+
+       // Remove the thousand groupings
+       integerStr = integerStr.replace(new RegExp(groupSepEsc, &quot;g&quot;), &quot;&quot;);
+8&lt;--------------</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10603</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-06-26 16:23:05 +0200</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11042</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-07-23 16:20:57 +0200</bug_when>
+            <thetext>to Daniel</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11109</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-07-28 10:37:17 +0200</bug_when>
+            <thetext>I couldn&#39;t reproduce the behavior when entering a percentage value since the filter added to qx.ui.form.Spinner in r19530 allows only integer and decimal numbers. I did see the problem with decimals getting their fractions chopped off, but that was due to a bug in the Spinner&#39;s filter: It always expected the decimal separator to be a comma, even if the application locale specified a different separator, e.g. a period sign. qx.util.NumberFormat always looks for the locale&#39;s decimal separator, so if that was set to &quot;.&quot;, it didn&#39;t recognize the Spinner&#39;s value as a decimal.
+After using the the locale&#39;s separator in the filter, the Spinner works as it should, even without the patch from the bug description.
+
+To the bug reporter: Did you run into this problem outside if the Spinner as well? If so, please reopen this issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11122</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2009-07-29 11:11:35 +0200</bug_when>
+            <thetext>The posted code produces the bug with 0.8.2. I can reproduce it with trunk, so I cannot confirm that this can be closed.
+
+What do you mean by:
+
+&quot;Did you run into this problem outside if the Spinner as
+well?&quot;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11167</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-07-31 17:19:14 +0200</bug_when>
+            <thetext>Sorry, that was a bit vague. I meant if you&#39;d seen the same behavior when using NumberFormat by itself, e.g. by calling its parse() method.
+I couldn&#39;t reproduce the bug by running your code in the 0.8.2 playground - that is, until I switched the application locale to &quot;en&quot;. In that context it&#39;s expected behavior since English of course uses a dot as the decimal separator. What locale are you using in your application?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11182</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2009-08-04 10:42:37 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Sorry, that was a bit vague. I meant if you&#39;d seen the same behavior when using
+&gt; NumberFormat by itself, e.g. by calling its parse() method.
+&gt; I couldn&#39;t reproduce the bug by running your code in the 0.8.2 playground -
+&gt; that is, until I switched the application locale to &quot;en&quot;. In that context it&#39;s
+&gt; expected behavior since English of course uses a dot as the decimal separator.
+&gt; What locale are you using in your application?
+
+It&#39;s dynamic. de, en and fr in the moment. I need some time to test with the NumberFormat. Too much stuff in the moment :-(</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11783</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-01 17:26:17 +0200</bug_when>
+            <thetext>Could you both give a status update, please. 
+
+@Daniel, if it involves a dynamic locale switch, would that cause any problems due to the switch of dot vs. comma?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11889</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-09-04 15:18:41 +0200</bug_when>
+            <thetext>@ae: qx.util.NumberFormat.parse() gets the decimal separator from the current application locale, so it works with dynamic locales (in 0.8.2, too).
+qx.ui.form.Spinner had a problem with dynamic locales, but that has been fixed as described in comment #3.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11897</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-04 15:54:04 +0200</bug_when>
+            <thetext>Daniel, this sounds like you could mark it as resolved fixed and ask the reporter to verify it? </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11906</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-09-04 18:45:24 +0200</bug_when>
+            <thetext>Done. Caius, if you find the time it would be great if you could verify this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36896</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:27 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

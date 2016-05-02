@@ -1,0 +1,224 @@
+<bug>
+          <bug_id>5516</bug_id>
+          
+          <creation_ts>2011-08-15 09:46:00 +0200</creation_ts>
+          <short_desc>qx.core.Environment Dependencies Get Wrong when using Parts</short_desc>
+          <delta_ts>2014-03-03 15:24:16 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.dependencies</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.5.1</target_milestone>
+          <dependson>5624</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martin Wittemann">martin.wittemann</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>daniel.wagner</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26486</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-08-15 09:46:59 +0200</bug_when>
+            <thetext>I had this issue during some tests for the dependency reduction and gave an example code already to Thomas. The root of this seems to be the dependency calculation of the qx.core.Environment class (useCheck optimization) in combination with the part system. The boot part does not need any qx.bom.client.* class which contain the checks. So no dependency is detected for that in the boot part. But the follow up parts need some of the classes and include those into the boot part which is the cause of the verifying fail.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26521</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-17 20:15:45 +0200</bug_when>
+            <thetext>Tentative commit to re-organize qx.core.Environment dependencies. The 
+dependencies are now registered with the class that *calls* 
+qx.core.Environment, and not qx.core.Environment itself. Thus, feature check 
+classes (like qx.bom.client.Engine etc.) are dependees of the using class, 
+which should make part generation straight forward again. If this works out, 
+the double iteration over the app&#39;s class list to strip unneeded feature checks 
+can be avoided, as well as optimizing the &#39;useCheck&#39; calls in 
+qx.core.Environment.
+
+The information which key requires which check class is currently maintained in 
+qx.core.Environment._checksMap, as a direct key - class map. Thus, it is 
+immediately available at run time, with the Environment class itself. For the 
+generator, this map is extracted, and used through dependency analysis to 
+relate application classes to feature check classes.
+
+With r28497.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26532</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-19 09:08:24 +0200</bug_when>
+            <thetext>There are some issues with the new implementation that Daniel and I spotted and 
+talked about.
+
+1) Some unit tests use the &#39;this.require&#39; idiom to express dependency to a 
+(browser) feature. The implementation MRequirements.require relies on the fact 
+that *all* possible feature checks are available. With the new dependency 
+analysis this is no longer true, and cannot be influenced by setting or 
+unsetting the &#39;variants&#39; optimization. And since an expression like 
+&quot;this.require([&quot;css.boxshadow&quot;]) is not recognized by the Generator, the 
+dependency to &quot;css.boxshadow&quot; is not automatically detected.
+
+The issue here is that the actual check requirements of the tests are not 
+detected, due to their wrapping in &#39;this.require&#39; calls.
+
+Potential remedies would be:
+- The tests use the qx.core.Environment.get() calls with literal arguments.
+- We change the &#39;this.require&#39; idiom in a way that is recognizable by the 
+Generator, so that environment keys are picked up from it.
+
+2) The bom.Environment demo and the FeatureConfigEditor both have the problem 
+that they read the protected qx.core.Environment._checks and ._asyncChecks to 
+iterate over the registered checks and collect their return values. As these 
+members are no longer filled, they cannot display the available check results.
+
+The issue here is twofold:
+- The available checks need to be discovered at run time.
+- Actually, both applications do want *all* checks being available, but there 
+is currently no way to express this.
+
+Potential remedies would be:
+- We add an API to express dependencies to *all* feature checks without the 
+need to list them literally (e.g. &quot;qx.core.Environment.require([&quot;*&quot;]).
+- The generator fills a list of all used feature keys into the loader where 
+q.c.Environment can pick them up, and fill internal data structures accordingly.
+- Add an API to q.c.Environment to return the registered checks.
+- This might also require tagging the checks as &#39;synchronous&#39; or &#39;asynchronous&#39;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26536</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-19 12:04:34 +0200</bug_when>
+            <thetext>I made a *very* preliminary commit, to fix the bom.Environment demo and the 
+FeatureConfigEditor, and restore them to their old functionality. To this end 
+I&#39;ve introduced a &#39;defer&#39; sections in all check classes, to register themselves 
+with qx.core.Environment. This fills the _checks and _asyncChecks members of 
+qx.core.Environment again, so their inspections by the applications yields 
+useful values.
+
+I&#39;ve also added a new &quot;qx.core.Environment.requireAll&quot; fake member, and added 
+it to the bom.Environment demo and FCE. The presence of this member in the code 
+triggers the injection of all feature check classes by the Generator. This way, 
+both applications make sure they get all available checks for testing.
+
+Both changes have to be reviewed in due time.
+
+With r28506.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26565</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-22 19:12:18 +0200</bug_when>
+            <thetext>The builds are now working for the &#39;lib&#39; sample, without the verifier bailing 
+out. The problem eventually was that lib/GetProperty.js referenced 
+&quot;qx.core.MProperties&quot; which doesn&#39;t exist (the valid name is 
+qx.core.MProperty). Changing that fixes the verifier.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26568</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-23 12:04:51 +0200</bug_when>
+            <thetext>adapted summary</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26572</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-23 12:26:59 +0200</bug_when>
+            <thetext>BACKGROUND:
+Here is a quick background summary why the old system of calculating 
+dependencies and optimizing qx.core.Environment failed for parts.
+
+The base issue is that q.c.Env is required in usually *many* parts, but 
+sometimes with very *different* checks. So assume it is needed in the boot 
+part, but no feature check is needed here. Then no check classes will be in the 
+class list for &#39;boot&#39;. But in another part, two checks are used, so the 
+corresponding check classes are dependees and go into the list for this part. 
+This is just associating class names with parts.
+
+When it comes to optimizing q.c.Env *code*, the checks are honored that are 
+used *across all parts*, so the code that references the two checks from the 
+non-boot part remain in q.c.Env class code. But the q.c.Env class code is then 
+added to &#39;boot&#39; where the corresponding check classes were deemed unnecessary 
+and consequently are missing. This discrepancy is then detected by the part 
+verifier.
+
+The solution now is to associate the check classes not to q.c.Environment, but 
+to the classes that actually use the checks (by querying q.c.Env with the 
+corresponding environment key).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26580</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-23 19:44:01 +0200</bug_when>
+            <thetext>Commented out all code that pertained to the old Environment.useCheck 
+optimization of dependencies, both in the generator and in qx.core.Environment. 
+All feature check dependencies now hinge on the new processing based on 
+Environment._checksMap. Now we can check over the next few days that all goes 
+well; I&#39;m also curious about if and how the nightly build times change.
+
+With r28533.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26653</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-09-01 14:30:43 +0200</bug_when>
+            <thetext>Added the qx.core.Environment.requireAll statement to qx.dev.unit.MRequirements (r28584).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26840</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-09-19 18:19:02 +0200</bug_when>
+            <thetext>We decided to replace the qx.core.Environment.requireAll trigger with a 
+specialized #require token (named &#39;feature-checks&#39;). See bug#5624.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26960</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-09-26 19:02:12 +0200</bug_when>
+            <thetext>Providing a coarse fix for this problem in 1.5.x: When building parts, 
+Environment&#39;s dependencies are calculated against all script classes, not just 
+those of the current part. This results in all necessary check classes being 
+included into the boot part; this also fixes bug#5441  in the branch, where the 
+Feedreader broke after adding qx.bom.client.Scroll.
+
+With r28782.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27095</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-10-04 16:59:58 +0200</bug_when>
+            <thetext>It looks like all issues have been settled, so closing this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38324</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:16 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

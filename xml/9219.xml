@@ -1,0 +1,315 @@
+<bug>
+          <bug_id>9219</bug_id>
+          
+          <creation_ts>2015-10-15 17:19:00 +0200</creation_ts>
+          <short_desc>Dynamic Script Execution Order broken by Firefox Debugger</short_desc>
+          <delta_ts>2015-11-19 10:07:58 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>5.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>NEW</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Andreas Ecker">qooxdoo</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>admin</cc>
+    
+    <cc>dietrich.streifert</cc>
+    
+    <cc>john.spackman</cc>
+    
+    <cc>matt.w.davis</cc>
+    
+    <cc>pollmeier</cc>
+    
+    <cc>thron7</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>43593</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-15 17:19:53 +0200</bug_when>
+            <thetext>On behalf of Matt Davis acc. to his post to the mailing list:
+http://qooxdoo.678.n2.nabble.com/Firefox-40-x-Qooxdoo-problems-td7587668.html
+
+
+Hi Qooxdooers,
+
+My team has been investigating a number of problems which have suddenly cropped up with Firefox build &gt; 40.x. I can verify the code base runs fine on the 39.x versions, but is throwing so many errors on the current version I&#39;m not sure where to start. On the good side, it runs perfectly in IE10, Edge, and Chrome.
+
+We have tried the following: complete browser cache removal, generating with qx.debug set to false, and distclean. The problem varies by compilation. Using &#39;source&#39; and &#39;build&#39; seem to be best, although the qx.util.format.DateFormat() class is throwing an error with binding (does not seem to be happening in playground). 
+
+&#39;source-hybrid&#39; is totally failing, with part of a long error listing starting with:
+
+Error: Invalid key &quot;extend&quot; in class &quot;iris.web.Application&quot;! The value is undefined/null! iris.web.fe89f857f086.js:6766:1
+
+TypeError: qx.ui.container is undefined MainController.js:9:2
+
+TypeError: qx.ui.container is undefined StatusBar.js:31:2
+
+TypeError: qx.ui.container is undefined MainInterface.js:39:2
+
+Error: Invalid key &quot;extend&quot; in class &quot;qx.ui.splitpane.Pane&quot;! The value is 
+undefined/null! iris.web.fe89f857f086.js:6766:1
+
+TypeError: qx.ui.container is undefined Login.js:7:2
+
+TypeError: qx.ui.container is undefined AutoComplete.js:12:2
+
+TypeError: qx.ui.form is undefined iris.web.7be41cc97661.js:34:5
+
+TypeError: qx.ui.container is undefined
+
+I encourage everyone to check their apps against the latest Firefox to see if any errors are thrown. Our code base is massive, and it seems like the simpler apps (as in the playground) are better off.
+
+Thanks,
+Matt</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43594</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-15 17:20:40 +0200</bug_when>
+            <thetext>From John Spackman:
+
+Hi Matt
+
+I’ve had a few odd issues when debugging with Firefox and the source/source-hybrid builds that sound similar, although only when under the debugger and not every time.  I couldn’t track it down but it looked at the time as though the scripts were loading in the wrong order, and I suspected that the parallel loading of the boot script could be at fault.  That first error message “invalid key ‘extend’ …” reminds me of that suspicion because the superclass is not defined at the time when the browser ties to load the subclass.
+
+As an experiment, try modifying your boot script to change 
+var isLoadParallel = &#39;async&#39; in document.createElement(&#39;script’);’ 
+
+To just ‘isLoadParallel=false’ and see what happens (your changes will be overwritten each time you run the generator, so you can patch original at qooxdoo/tool/data/generator/loader.tmpl.js)
+
+John</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43595</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-15 17:21:35 +0200</bug_when>
+            <thetext>From John Spackman:
+
+Actually I’ve just confirmed that isLoadParallel is the problem – in my app, I’ve just deleted the qx cache, every generated artefact and recompiled and I immediately get the same list of errors in the console window.  Changing isLoadParallel=false fixes the problem.
+
+Interestingly this only seems to occur when the debugger is open; I can reproduce this every time if the debugger is open, but if it’s closed during app startup then everything’s fine.
+
+I don’t understand how this ever worked because the loader is loading scripts with async=true, but AIUI async scripts are run in the order that they become available, and not in the order that they were added to the document.    This suggests that that if the server happened to return the first script slower than the second script then the order would be wrong regardless of the browser - but the files are relatively similar in size so perhaps the ordering is actually quite predictable in reality and so this problem does not normally crop up.
+
+Perhaps a more likely trigger of the problem is whether the script comes from the browser’s cache, and how activating the debugger might have subtle effects on how the cache operates.  I’ve just cleared Firefox’s cache and refreshed with the debugger open and it worked fine – but refresh once more and it’s immediately broken.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43596</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-15 17:22:27 +0200</bug_when>
+            <thetext>From Matt:
+
+Thanks for the help John! You were exactly right, set isLoadParallel=false fixed our major problem as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43597</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-15 17:23:13 +0200</bug_when>
+            <thetext>From T.  ;-)
+
+Just a quick hint concerning modifying isLoadParallel:
+
+If you don&#39;t want to patch the original loader.tmpl.js, as John suggested, you can always create a copy from it, adapt that, and then set the config.json value
+
+  compile-options/paths/loader-template [1]
+
+to the path of your copy. This is e.g. interesting if you have multiple projects and want to set it on a per-project basis.
+
+T.
+
+[1] http://manual.qooxdoo.org/5.1/pages/tool/generator/generator_config_ref.html#compile-options</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43598</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-15 17:23:45 +0200</bug_when>
+            <thetext>From Matt:
+
+Thanks Thron7. I have an update as well. As written, the fix broke the TestRunner in all browsers, so I wrapped it in a conditional to only use isLoadParallel=false if it was Firefox.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43599</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-15 17:31:31 +0200</bug_when>
+            <thetext>As John suggested, this issue could be reproduced in Firefox only if the &quot;Debugger&quot; tab of the dev tools is open while trying to (re-)load the app. Moreover, it needs to be loaded via file:// protocol; it works fine when loading via local web server.
+
+Could you please confirm or prove wrong the above, quite specific scenario (Debugger &amp;&amp; file://)?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43600</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-15 18:01:21 +0200</bug_when>
+            <thetext>There&#39;s some misunderstanding (e.g. comment #2) why this kind of loading would work at all. It&#39;s due to &quot;Dynamic Script Execution Order&quot;, see for instance https://wiki.whatwg.org/wiki/Dynamic_Script_Execution_Order
+
+In short, async=false is to allow dynamically inserted scripts to still load in parallel, BUT execute in the exact order they were initially inserted.
+
+Very practical browser feature, now apparently unrespected in Firefox debugger.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43608</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2015-10-19 10:18:32 +0200</bug_when>
+            <thetext>Do I read your comment correctly, that it is Firefox-Debug-Tools related? I&#39;m getting back from holidays just right into a customer reported bug that looks 100% like this issue and starts popping up with Firefox 41.
+
+Except that it does not matter if the debugger is on or not. And except the proposed workaround does not help.
+
+If I additionally comment the &quot;throw ex&quot; in qx.data.SingleValueBinding, Firefox does not crash anymore, but the binding is not established and renders parts of the application unusable.
+
+As I&#39;ve just returned to work, I did not do any further tests.
+
+Do you have any additional insights on how we can work around this one?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43609</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2015-10-19 11:03:53 +0200</bug_when>
+            <thetext>I&#39;m currently not aware of any problems with Firefox 41 being reported by our users. I&#39;ve done some tests with our app (build version) under windows 7 without encountering errors even with activated firebug.
+
+The app is a desktop app based on qooxdoo master as of Sep. 18.
+
+This may be because we have a monolithic js file, thus generate.by build creates a single js file.
+
+The single js file of course loads other external js libraries on demand (using qx.bom.request.Script) like highcharts, ckeditor with highcharts using jquery which also work without problems.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43610</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2015-10-19 11:38:13 +0200</bug_when>
+            <thetext>We make heavy use of parts, so the application is split and parts may get loaded when you use certain application features. But I don&#39;t think that is relevant for the source.
+
+I&#39;m on curren master as of today.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43611</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-19 11:49:07 +0200</bug_when>
+            <thetext>@Cajus, w.r.t. the customer reported issues: can you reproduce in your own environment? Is it FF 40 or 41, and what OS?
+
+Do issues really exist in the build version of your parts-based app? That would indeed be strange. What happens for the build version of the desktop feedreader app of qooxdoo, and what for the source version of the playground (served by a local web server)?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43612</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2015-10-19 12:06:41 +0200</bug_when>
+            <thetext>@Andreas: Thanks for the quick reply.
+
+I can reproduce the problem with FF 41.x on Linux. Both source and build. The customers use the build with FF 41.x, mostly on Windows. The problem does not appear with earlier FF versions (tested 40.0.3). The customer build does not have the above tweaks enabled, until I know that they lead to something better than just a page reload.
+
+Give me some time for the playground/feedreader feedback.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43613</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2015-10-19 14:36:11 +0200</bug_when>
+            <thetext>There are no errors visible in the feedreader/playground. But these applications are relative small and do not utilize many bindings.
+
+Digging into. If you comment the try and the catch tree in SingleValueBinding.js, we exit in line 141 with the same error message. That is just before the try/catch would ever happen. Senseless. If you want me to attach the complete stacktraces for both cases, let me know.
+
+Looks like some strange gecko optimization that leads to a race condition.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43616</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2015-10-20 10:17:51 +0200</bug_when>
+            <thetext>Just for reference: Tracked it down to a single changeset in Firefox - at least for my version of the error.
+
+https://bugzilla.mozilla.org/show_bug.cgi?id=1216130</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43618</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-20 10:56:14 +0200</bug_when>
+            <thetext>@Cajus, excellent analysis! Thanks for filing a bug with Mozilla. Lets see if those FF changes are causing all these strange issues.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43622</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2015-10-28 13:42:01 +0100</bug_when>
+            <thetext>@Cajus: Mozilla closed public access to https://bugzilla.mozilla.org/show_bug.cgi?id=1216130
+
+Do you know the reason?
+
+BTW: great bug analysis! Congrats!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43623</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2015-10-28 14:24:54 +0100</bug_when>
+            <thetext>@Dietrich: Looks like they&#39;ve turned it into a security relevant ticket. I can still see it, but the mails sent by bugzilla started to be encrypted. What ever happens: the good news are, that they&#39;ve found (and accepted) the problem and a fix is out for review.
+
+Maybe they&#39;ve tagged it as &quot;security relevant&quot; to get it into the public release more quick, but that&#39;s just a guess.
+
+Will send an update when it&#39;s clear which FF release will get the fix.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43642</commentid>
+            <who name="Patrick Fischer">admin</who>
+            <bug_when>2015-11-13 15:44:05 +0100</bug_when>
+            <thetext>Mozilla has fixed this issue. Really fast response time.
+
+I found this page
+http://statusupdates.dev.mozaws.net/user/jcoppeard@mozilla.com
+
+with that content:
+Bug 1216130 - Tracked down a regression from unboxed objects that broke some real-world sites.
+
+Nice Weekend!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43644</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-11-16 15:31:37 +0100</bug_when>
+            <thetext>Hi Patrick, thanks for the sharing an update. Looks like Mozilla fixed the corresponding FF bug. Unfortunately, FF 42.0 (released early Nov) still has those issues, so we&#39;ll have to wait for another FF release.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43645</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2015-11-16 15:34:38 +0100</bug_when>
+            <thetext>According to their bugzilla, the fix is targeted for FF 43, so we&#39;ll have to wait some additional minutes...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43646</commentid>
+            <who name="Patrick Fischer">admin</who>
+            <bug_when>2015-11-16 16:12:48 +0100</bug_when>
+            <thetext>Try Firefox Developer Edition (Nightly Builds) for checking the fixed bug. At work I use this early version for being prepared of new releases.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43647</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2015-11-19 10:07:58 +0100</bug_when>
+            <thetext>Workaround for current firefoxes &gt;=41:
+
+Go to about:config, enter javascript.options.ion in the search bar and toggle it to &#39;false&#39;.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,200 @@
+<bug>
+          <bug_id>2444</bug_id>
+          
+          <creation_ts>2009-05-29 21:31:00 +0200</creation_ts>
+          <short_desc>Removing child from hidden parent leads to broken appearance and memory leak</short_desc>
+          <delta_ts>2014-03-03 15:25:37 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>0.7.4</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.7.5</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Ivan Furnadjiev">ivan</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>rherrmann</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10242</commentid>
+            <who name="Ivan Furnadjiev">ivan</who>
+            <bug_when>2009-05-29 21:31:36 +0200</bug_when>
+            <thetext>We have the following scenario:
+1. parent with display property set to false.
+2. child widget inside the parent
+3. when try to remove the child (remove, dispose...) child is removed from the parent but not from the DOM. This leads to memory leak and broken appearance.
+
+To workaround this the internal child property _isDisplayable should be set to true before child removal/disposal.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10243</commentid>
+              <attachid>518</attachid>
+            <who name="Ivan Furnadjiev">ivan</who>
+            <bug_when>2009-05-29 21:36:56 +0200</bug_when>
+            <thetext>Created attachment 518
+Simple application to reproduce.
+
+Steps to reproduce:
+1. Click on the &quot;Toggle composite display&quot; - this set the display property to false.
+2. Click on the &quot;Remove child label&quot;
+3. Click on the &quot;Toggle composite display&quot; - this set the display property to true.
+4. The label object is still in the DOM and visible, but not in the composite. It is not possible anymore to remove it from the DOM.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10295</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-06-08 11:43:35 +0200</bug_when>
+            <thetext>Hi Ivan,
+
+have you tried the new &quot;destroy&quot; method instead of remove/dispose? It has been added
+for exactly these kinds of use cases.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10304</commentid>
+            <who name="Ivan Furnadjiev">ivan</who>
+            <bug_when>2009-06-08 12:14:53 +0200</bug_when>
+            <thetext>Hi Fabian,
+the new &quot;destroy&quot; method does not work either without setting this internal isDisplayable property to true.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10373</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-06-15 11:00:28 +0200</bug_when>
+            <thetext>That&#39;s new to me. If you can live with the workaround, I&#39;ll put it on the 0.7.5 roadmap. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17308</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-17 13:30:31 +0100</bug_when>
+            <thetext>to Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17478</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-23 14:56:12 +0100</bug_when>
+            <thetext>Exclusive 0.7.x
+
+Here is the code to reproduce the issue in 1.0.1:
+
+var d = this.getRoot();
+
+var composite = new qx.ui.container.Composite();
+composite.set({
+        layout: new qx.ui.layout.Canvas(),
+	width : 100,
+	height : 100,
+	backgroundColor: &quot;#00FF00&quot;
+});
+d.add(composite, {left: 10, top: 10});
+
+var label = new qx.ui.basic.Label(&quot;Very long text to be wraped!&quot;);
+label.set({
+	width : 90,
+        rich : true,
+	wrap : true
+});	
+composite.add(label, {left: 10, top: 10});
+
+var btnDisplay = new qx.ui.form.Button(&quot;Toggle composite display&quot;);
+btnDisplay.addListener(&quot;execute&quot;, function(e) {
+  composite.isExcluded() ? composite.show() : composite.exclude();
+});
+d.add(btnDisplay, {left: 120, top: 10});
+
+var btnDispose = new qx.ui.form.Button(&quot;Remove child label&quot;);
+btnDispose.addListener(&quot;execute&quot;, function(e) {
+  // label._isDisplayable = true;
+  composite.remove(label);
+});
+d.add(btnDispose, {left: 120, top: 40});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17775</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-14 14:10:26 +0200</bug_when>
+            <thetext>Removed all core developers as assignee from 0.7 only bugs.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18391</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-05-19 09:29:10 +0200</bug_when>
+            <thetext>Set all open 0.7.x-only issues that have no assignee to WONTFIX. This is in accordance with 0.7.x users like the RAP team. If you want to work on such an 0.7.x issue, feel free to reopen it and assign it to you. The issues should only exist in the legacy 0.7.x versions and be already resolved in qooxdoo 0.8 or above.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38811</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:37 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>518</attachid>
+            <date>2009-05-29 21:36:00 +0200</date>
+            <delta_ts>2009-05-29 21:36:56 +0200</delta_ts>
+            <desc>Simple application to reproduce.</desc>
+            <filename>Application.js</filename>
+            <type>application/x-javascript</type>
+            <size>1646</size>
+            <attacher>ivan</attacher>
+            
+              <data encoding="base64">LyogKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqDQoNCiAgIENvcHlyaWdodDoNCg0KICAgTGljZW5zZToNCg0KICAg
+QXV0aG9yczoNCg0KKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqICovDQoNCi8qKg0KICogWW91ciBhcHBsaWNhdGlv
+bg0KICovDQpxeC5DbGFzcy5kZWZpbmUoIkFwcGxpY2F0aW9uIiwNCnsNCiAgZXh0ZW5kIDogcXgu
+YXBwbGljYXRpb24uR3VpLA0KDQogIG1lbWJlcnMgOg0KICB7DQogICAgbWFpbiA6IGZ1bmN0aW9u
+KCkNCiAgICB7ICAgICAgDQogICAgICB0aGlzLmJhc2UoYXJndW1lbnRzKTsNCiAgICAgICAgdmFy
+IGQgPSBxeC51aS5jb3JlLkNsaWVudERvY3VtZW50LmdldEluc3RhbmNlKCk7DQogICAgICAgIA0K
+ICAgICAgICB2YXIgY29tcG9zaXRlID0gbmV3IHF4LnVpLmxheW91dC5DYW52YXNMYXlvdXQoKTsN
+CiAgICAgICAgY29tcG9zaXRlLnNldCh7DQogICAgICAgIAlsZWZ0IDogMTAsDQogICAgICAgIAl0
+b3AgOiAxMCwNCiAgICAgICAgCXdpZHRoIDogMTAwLA0KICAgICAgICAJaGVpZ2h0IDogMTAwLA0K
+ICAgICAgICAJYmFja2dyb3VuZENvbG9yOiAiIzAwRkYwMCINCiAgICAgICAgfSk7DQogICAgICAg
+IGQuYWRkKGNvbXBvc2l0ZSk7DQogICAgICAgIA0KICAgICAgICB2YXIgbGFiZWwgPSBuZXcgcXgu
+dWkuYmFzaWMuTGFiZWwoIlZlcnkgbG9uZyB0ZXh0IHRvIGJlIHdyYXBlZCEiKTsNCiAgICAgICAg
+bGFiZWwuc2V0KHsNCiAgICAgICAgCWxlZnQgOiAxMCwNCiAgICAgICAgCXRvcCA6IDEwLA0KICAg
+ICAgICAJd2lkdGggOiA5MCwNCiAgICAgICAgCXdyYXAgOiB0cnVlDQogICAgICAgIH0pOwkNCiAg
+ICAgICAgY29tcG9zaXRlLmFkZChsYWJlbCk7DQogICAgICAgIA0KICAgICAgICB2YXIgYnRuRGlz
+cGxheSA9IG5ldyBxeC51aS5mb3JtLkJ1dHRvbigiVG9nZ2xlIGNvbXBvc2l0ZSBkaXNwbGF5Iik7
+DQogICAgICAgIGJ0bkRpc3BsYXkuc2V0KHsNCiAgICAgICAgCWxlZnQgOiAxMjAsDQogICAgICAg
+IAl0b3AgOiAxMCAgICAgICAgCQ0KICAgICAgICB9KTsNCiAgICAgICAgYnRuRGlzcGxheS5hZGRF
+dmVudExpc3RlbmVyKCJleGVjdXRlIiwgZnVuY3Rpb24oZSkgew0KICAgICAgICAgIGNvbXBvc2l0
+ZS5zZXREaXNwbGF5KCFjb21wb3NpdGUuZ2V0RGlzcGxheSgpKTsNCiAgICAgICAgfSk7DQogICAg
+ICAgIGQuYWRkKGJ0bkRpc3BsYXkpOw0KICAgICAgICANCiAgICAgICAgdmFyIGJ0bkRpc3Bvc2Ug
+PSBuZXcgcXgudWkuZm9ybS5CdXR0b24oIlJlbW92ZSBjaGlsZCBsYWJlbCIpOw0KICAgICAgICBi
+dG5EaXNwb3NlLnNldCh7DQogICAgICAgIAlsZWZ0IDogMTIwLA0KICAgICAgICAJdG9wIDogNDAg
+ICAgICAgIAkNCiAgICAgICAgfSk7DQogICAgICAgIGJ0bkRpc3Bvc2UuYWRkRXZlbnRMaXN0ZW5l
+cigiZXhlY3V0ZSIsIGZ1bmN0aW9uKGUpIHsNCiAgICAgICAgCS8vIGxhYmVsLl9pc0Rpc3BsYXlh
+YmxlID0gdHJ1ZTsNCiAgICAgICAgICBjb21wb3NpdGUucmVtb3ZlKGxhYmVsKTsNCiAgICAgICAg
+fSk7DQogICAgICAgIGQuYWRkKGJ0bkRpc3Bvc2UpOw0KICAgIH0NCiAgfQ0KfSk7DQo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

@@ -1,0 +1,121 @@
+<bug>
+          <bug_id>1070</bug_id>
+          
+          <creation_ts>2008-07-14 13:32:00 +0200</creation_ts>
+          <short_desc>Opera 9.5.1 breaks TreeVirtual</short_desc>
+          <delta_ts>2012-05-16 10:14:19 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.treevirtual</component>
+          <version>0.7.3</version>
+          <rep_platform>Opera 9.5</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>DUPLICATE</resolution>
+          <dup_id>997</dup_id>
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="John Spackman">john.spackman</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Opera</cf_browser>
+          <cf_browser_version>9.5</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>3880</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2008-07-14 13:32:25 +0200</bug_when>
+            <thetext>The TreeVirtual component (including the Demo Browser#TreeVirtual_1.html) breaks in Opera 9.51 with an exception &quot;Cannot convert undefined or null to Object&quot;.
+
+A bit of investigation shows that this is because in qx.ui.table.columnmodel.resizebehaviour.Default, the this._resizeColumnData[] array is empty.  This array is dimensioned in _setNumColumns(), and adding some debug code shows that calling this._resizeColumnData.splice(numColumns) where numColumns==1 causes the array to be emptied!
+
+For example, I changed the code in _setNumColumns() to this:
+
+      [... snip ...]
+      // Are there now fewer (or the same number of) columns than there were
+      // previously?
+      if (numColumns &lt;= this._resizeColumnData.length)
+      {
+        this.debug(&quot;deleting extras; length=&quot; + this._resizeColumnData.length + 
+            &quot;, numColumns=&quot; + numColumns);
+        // Yup.  Delete the extras.
+        this._resizeColumnData.splice(numColumns);
+        this.debug(&quot;finished deleting extras; length=&quot; + 
+            this._resizeColumnData.length + 
+            &quot;, numColumns=&quot; + numColumns);
+        return;
+      }
+      [...snip...]
+
+the output is :
+deleting extras; length=1, numColumns=1
+finished deleting, now length=0, numColumns=1
+
+I&#39;m using Opera 9.51 build 10081 in WindowsXPSP3</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3881</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2008-07-14 14:09:50 +0200</bug_when>
+            <thetext>This is a bug/issue in Opera regarding support for splice(), where if the length of the deletion is not passed as the second argument it corrupts the array, either not deleting enough or deleting too many.
+
+There is a post dated August 2006 on Opera&#39;s website forums reporting the problem, Opera&#39;s response was: &quot;splice() has two required parameters, the index and the number of elements to remove and one or more optional parameters giving replacements for the removed array elements.&quot;
+
+The post is here: http://my.opera.com/community/forums/topic.dml?id=153457.
+
+Here&#39;s my fix:
+
+    // overloaded
+    _setNumColumns : function(numColumns)
+    {
+      // Are there now fewer (or the same number of) columns than there were
+      // previously?
+      if (numColumns &lt;= this._resizeColumnData.length)
+      {
+        // Yup.  Delete the extras.
+// JHS 2008-07-14 Supply length for Opera
+        if (this._resizeColumnData.length &gt; numColumns)
+           this._resizeColumnData.splice(numColumns, this._resizeColumnData.length - numColumns);
+        return;
+      }
+
+      // There are more columns than there were previously.  Allocate more.
+      for (var i=this._resizeColumnData.length; i&lt;numColumns; i++)
+      {
+        this._resizeColumnData[i] = this.getNewResizeBehaviorColumnData()();
+        this._resizeColumnData[i]._columnNumber = i;
+      }
+    },
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3882</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-07-14 15:11:02 +0200</bug_when>
+            <thetext>
+
+*** This bug has been marked as a duplicate of bug 997 ***</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

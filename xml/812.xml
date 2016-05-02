@@ -1,0 +1,121 @@
+<bug>
+          <bug_id>812</bug_id>
+          
+          <creation_ts>2008-03-27 08:06:00 +0100</creation_ts>
+          <short_desc>Focus handler causing &#39;length&#39; is null or not an object</short_desc>
+          <delta_ts>2014-03-03 15:20:29 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>0.7.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.7.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Hugh Gibson">hgibson</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2918</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-03-27 08:06:28 +0100</bug_when>
+            <thetext>Over the time that we have been using qooxdoo we have had scattered instances of our application causing this error under IE7 in Windows (XP and possibly others):
+
+1819672 ERROR: qx.event.handler.EventHandler[61]: Failed to dispatch key 
+event: TypeError - &#39;length&#39; is null or not an object (#-2146823281)
+
+This was typically with a build version. It caused the debug log window to pop up (normally it&#39;s suppressed for build). It normally occurred when setting focus back to the browser window running the application, perhaps by using the alt-Tab sequence under Windows.
+
+It just happened to me when running a source version so I&#39;ve broken to the VS2003 debugger and spent some time analysing the code.
+
+The call sequence is that a Tab key press has been made on the main qooxdoo document. The code is calling through to qx.event.handler.FocusHandler.getWidgetAfter() with parentContainer set to the qooxdoo document &quot;qx.ui.core.ClientDocument&quot; and widget set to a table control which had focus.
+
+getWidgetAfter() is enumerating all the children of the ClientDocument via _getAllAfter(). This is so it can find the next control to use for focus, based on the position of the controls in the layout.
+
+I had created a number of context menus and they had been disposed. However, similar to bug 693 these were still members of the top level document because they are not automatically removed.
+
+Therefore when the disposed context menu was found in _getAllAfter() the code tried to enumerate children of the menu:
+
+      var children = parent.getChildren();
+      var child;
+      var len = children.length;
+
+In this case children is null, causing the exception.
+
+Clearly I can work around this in my code by proper removal from the document. As I stated in bug 693 removal from the document should be automatic for any widget added to it if it is disposed.
+
+However, I strongly feel that the FocusHandler code should be more robust by adding a check for disposed children in _getAllAfter:
+
+    _getAllAfter : function(parent, widget, arr)
+    {
+      var children = parent.getChildren();
+      var child;
+      var len = children.length;
+
+      for (var i=0; i&lt;len; i++)
+      {
+        child = children[i];
+
+        if (child.isDisposed() || (!(child instanceof qx.ui.core.Parent) &amp;&amp; !(child instanceof qx.ui.basic.Terminator))) {
+          continue;
+        }
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2919</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-03-27 08:25:54 +0100</bug_when>
+            <thetext>Note that an alternative to auto-remove from the document or the explicit checking of disposed children is a debug test for isDisposed() and if so, logging an error message that the child should be removed from the document.
+
+This would have saved me a lot of time and effort.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5319</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-06 15:29:42 +0200</bug_when>
+            <thetext>To Fabian</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6620</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-12-03 14:42:28 +0100</bug_when>
+            <thetext>fixed in rev. 16823</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36908</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:29 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

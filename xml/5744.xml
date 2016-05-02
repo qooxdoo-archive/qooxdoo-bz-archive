@@ -1,0 +1,232 @@
+<bug>
+          <bug_id>5744</bug_id>
+          
+          <creation_ts>2011-10-25 17:06:00 +0200</creation_ts>
+          <short_desc>Allow classes above namespace in libraries</short_desc>
+          <delta_ts>2014-03-03 15:21:10 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.system</component>
+          <version>1.6</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>2.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martin Wittemann">martin.wittemann</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>27320</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-10-25 17:06:15 +0200</bug_when>
+            <thetext>Currently it is not possible to have a class which is *not* in the libraries name space. That could be needed for a good API design for a standalone website.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27722</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-30 17:37:38 +0100</bug_when>
+            <thetext>-&gt; 2.0</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28347</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-01-23 18:53:11 +0100</bug_when>
+            <thetext>Namespace-less classes are now supported in source and build generation.
+
+One thing that is an open issue is API generation; NSL classes are omitted, and 
+show up only in the list of child classes of their parent class (but the link 
+is defunct).
+
+master: d5cbca8b461</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28373</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-01-26 13:14:33 +0100</bug_when>
+            <thetext>NSL classes are now added to the apidata.json (JS built-ins like Object, Array, 
+... are filtered). apidata.json has been adapted so that the  root package has 
+std. package attributes with empty string values {name=&quot;&quot;, fullName=&quot;&quot;, 
+packageName=&quot;&quot;}. Top-level packages like &#39;qx&#39; have packageName=&quot;&quot; which 
+reflects the hierarchy better (rather than repeating the package&#39;s name here).
+
+The Apiviewer still freezes when selecting some classes (order of actions 
+matter!), displaying the loading indicator, without showing an error in the 
+console. -&gt; Daniel
+
+th_namespaceless: 01dc809</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28413</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2012-02-01 17:31:25 +0100</bug_when>
+            <thetext>I made a very small change in the API Viewer to allow packages with empty strings as names (86d62902 in th_namespaceless). However, the structure of apidata.json needs to be modified so the API Viewer can display namespaceless classes right below the tree root. Such classes must be enclosed in a &quot;classes&quot; block in the doctree&#39;s children list, e.g.:
+
+{
+  &quot;type&quot; : &quot;doctree&quot;,
+
+  &quot;children&quot; : 
+  [
+    {
+      &quot;type&quot; : &quot;packages&quot;,
+      &quot;children&quot; : 
+      [
+        /* [...] */
+      ]
+    },
+      
+    {
+      &quot;type&quot; : &quot;classes&quot;,
+      &quot;children&quot; :
+      [
+        {
+          &quot;type&quot; : &quot;class&quot;,
+          &quot;attributes&quot; : 
+          {
+            &quot;externalRef&quot; : true,
+            &quot;fullName&quot; : &quot;Foo&quot;,
+            &quot;hasError&quot; : true,
+            &quot;hasWarning&quot; : true,
+            &quot;name&quot; : &quot;Foo&quot;,
+            &quot;packageName&quot; : &quot;&quot;,
+            &quot;superClass&quot; : &quot;qx.core.Object&quot;,
+            &quot;type&quot; : &quot;class&quot;
+          }
+        }
+      ]
+    }
+  ]
+}</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28415</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-02-01 18:43:42 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; {
+&gt;   &quot;type&quot; : &quot;doctree&quot;,
+&gt; 
+&gt;   &quot;children&quot; : 
+&gt;   [
+&gt;     {
+&gt;       &quot;type&quot; : &quot;packages&quot;,
+&gt;       &quot;children&quot; : 
+&gt;       [
+&gt;         /* [...] */
+&gt;       ]
+&gt;     },
+&gt; 
+&gt;     {
+&gt;       &quot;type&quot; : &quot;classes&quot;,
+&gt;       &quot;children&quot; :
+&gt;       [
+
+Daniel, this is already the structure that is being generated as apidata.json. I pulled your change to the Apiviewer, and re-generated two test apps. The API for &quot;Foo&quot; is showing nicely in both.
+(One app defines the NSL class Foo, the other is using it, using the first app as a library. Generating &#39;api&#39; in both lets me browse Foo with no problems in the resulting Apiviewer!?)
+
+Could you re-check if generating the Apiviewer with your current code base is really insufficient to display NSL classes?!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28416</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-02-01 18:48:16 +0100</bug_when>
+            <thetext>We probably need also to think of API_INCLUDE, as it is currently namespace-oriented. That means, if a NSL class is not used in the current library (not instantiated or being extended by a subclass), the class will not show in the generated api-data.
+But the API documentation for a library should by default also include classes not currently used, including NSL classes.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28419</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2012-02-02 16:01:29 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Daniel, this is already the structure that is being generated as apidata.json.
+&gt; I pulled your change to the Apiviewer, and re-generated two test apps. The API
+&gt; for &quot;Foo&quot; is showing nicely in both.
+&gt; (One app defines the NSL class Foo, the other is using it, using the first app
+&gt; as a library. Generating &#39;api&#39; in both lets me browse Foo with no problems in
+&gt; the resulting Apiviewer!?)
+&gt; 
+&gt; Could you re-check if generating the Apiviewer with your current code base is
+&gt; really insufficient to display NSL classes?!
+
+It works for me, too, after clearing the cache and re-generating the API Viewer. Not sure what went wrong before.
+
+Back to you for the API_INCLUDE issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28476</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-02-09 15:55:59 +0100</bug_when>
+            <thetext>(In reply to comment #6)
+
+As for the API_INCLUDE issue:
+I currently don&#39;t see a chance to solve this generically. You cannot just say
+   &quot;API_INCLUDE&quot; : [&quot;*&quot;]
+This works, but will include *all* classes from *all* involved libraries. 
+
+And as libraries are identified with their namespaces, we currently have no way 
+of saying
+   &quot;API_INCLUDE&quot; : [&quot;lib1:*&quot;, ...]
+This would principally be possible, but would require the introduction of 
+unique names for libraries, apart from their namespace.
+
+For the time being, the only way to include the NSL classes into the Apiviewer 
+is to list them explicitly in the config:
+
+&quot;jobs&quot; : {
+  &quot;api&quot; : {
+      &quot;API_INCLUDE&quot; : [&quot;Foo&quot;, &quot;Bar&quot;, &quot;Baz&quot;, &quot;qx.*&quot;, &quot;${APPLICATION}.*&quot;]
+  }
+}
+
+and the same for the (independent) &quot;api-data&quot; job.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28479</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2012-02-09 16:16:05 +0100</bug_when>
+            <thetext>There was still a bug in the API Viewer where it would break if a top-level class was selected after any other class. This was due to the ClassViewer, which creates empty dao.Class objects that replace the &quot;&quot; package in the internal registry so that no further top-level classes can be added.
+
+Fixed with d09e3266 on th_namespaceless.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28510</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-02-10 18:42:57 +0100</bug_when>
+            <thetext>Merged branch th_namespaceless into master, and deleted branch.
+
+master: 9fdf2de</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37184</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:10 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

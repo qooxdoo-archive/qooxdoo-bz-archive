@@ -1,0 +1,254 @@
+<bug>
+          <bug_id>1051</bug_id>
+          
+          <creation_ts>2008-07-10 17:33:00 +0200</creation_ts>
+          <short_desc>qx.ui.container.SlideBar._scrollForward/Back made public</short_desc>
+          <delta_ts>2014-03-03 15:28:02 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>0.8-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Florian Giesen">giesen.florian</reporter>
+          <assigned_to name="Sebastian Werner">info</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>3746</commentid>
+            <who name="Florian Giesen">giesen.florian</who>
+            <bug_when>2008-07-10 17:33:38 +0200</bug_when>
+            <thetext>In order to implement the scroll functionality of &quot;next&quot; and &quot;previous picture&quot; buttons (for a gallery) I had to make the methods 
+qx.ui.container.SlideBar._scrollForward/Back public and modify them a 
+little. Here is the diff:
+
+Index: SlideBar.js
+===================================================================
+--- SlideBar.js	(Revision 14067)
++++ SlideBar.js	(Arbeitskopie)
+@@ -113,13 +113,13 @@
+       {
+         case &quot;button-forward&quot;:
+           control = new qx.ui.form.RepeatButton(&quot;&gt;&quot;);
+-          control.addListener(&quot;execute&quot;, this._scrollForward, this);
++          control.addListener(&quot;execute&quot;, function(){this.scrollForward(20);}, this);
+           this._add(control);
+           break;
+ 
+         case &quot;button-back&quot;:
+           control = new qx.ui.form.RepeatButton(&quot;&lt;&quot;);
+-          control.addListener(&quot;execute&quot;, this._scrollBack, this);
++          control.addListener(&quot;execute&quot;, function(){this.scrollBack(20);}, this);
+           this._addAt(control, 0);
+           break;
+ 
+@@ -204,14 +204,15 @@
+      * Scroll handler for left scrolling
+      *
+      * @type member
++     * @param scrollBy {var} Number of pixels to scroll.
+      * @return {void}
+      */
+-    _scrollBack : function()
++    scrollBack : function(scrollBy)
+     {
+       if (this._isHorizontal) {
+-        this._scrollPane.scrollByX(-20);
++        this._scrollPane.scrollByX(-scrollBy);
+       } else {
+-        this._scrollPane.scrollByY(-20);
++        this._scrollPane.scrollByY(-scrollBy);
+       }
+     },
+ 
+@@ -220,14 +221,15 @@
+      * Scroll handler for right scrolling
+      *
+      * @type member
++     * @param scrollBy {var} Number of pixels to scroll.
+      * @return {void}
+      */
+-    _scrollForward : function() {
++    scrollForward : function(scrollBy) {
+       if (this._isHorizontal) {
+-        this._scrollPane.scrollByX(20);
++        this._scrollPane.scrollByX(scrollBy);
+       } else {
+-        this._scrollPane.scrollByY(20);
+-      }
++        this._scrollPane.scrollByY(scrollBy);
++      }	
+     }
+   }
+ });</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3748</commentid>
+              <attachid>318</attachid>
+            <who name="Florian Giesen">giesen.florian</who>
+            <bug_when>2008-07-10 17:46:37 +0200</bug_when>
+            <thetext>Created attachment 318
+diff for this bug</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3756</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-07-11 11:55:41 +0200</bug_when>
+            <thetext>Sorry, I do not like this one. Better would be to keep the current 
+implementation as is and add forwarder methods for scrollToX/scrollToY and 
+scrollByX/scrollByY to the SlideBar.
+
+Can you update your patch for this?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3757</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-07-11 11:56:45 +0200</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3765</commentid>
+            <who name="Florian Giesen">giesen.florian</who>
+            <bug_when>2008-07-11 12:37:09 +0200</bug_when>
+            <thetext>No problem, I can update the patch. But if you just forward to the methods qx.ui.core.ScrollPane.scrollByX/scrollByY, then you loose the cool auto-orientation feature of scrollBack/Forward. Shall I change the patch anyway?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3768</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-07-11 13:23:47 +0200</bug_when>
+            <thetext>I don&#39;t think we should expose scrollByX and scrollByY because the user would always have to check the orientation of the widget. This is exactly, what scrollForwad and scrollBackward already does.
+
+One change I would like to see is extracting this closure into its own protected member method. This would allow overriding the bahaviour in sub classes.
+
++          control.addListener(&quot;execute&quot;, function(){this.scrollBack(20);}, this);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3770</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-07-11 13:38:13 +0200</bug_when>
+            <thetext>The idea is not to expose both, but to swap them internally. Some pseudo code:
+
+scrollBy : function(value) 
+{
+  if (this.getOrientation() == &quot;horizontal&quot;) {
+     this._getChildControl(&quot;pane&quot;).scrollByX(value);
+  } else {
+     this._getChildControl(&quot;pane&quot;).scrollByY(value);
+  }
+}
+
+This was what I meant. Maybe I wasn&#39;t exactly enough.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3845</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-07-11 15:54:21 +0200</bug_when>
+            <thetext>Now I get it :-)
+
+
+scrollBy -&gt; as you suggested
+_scrollForward -&gt; scrollBy(20);
+_scrollBackward -&gt; scrollBy(-20)
+
+
+right?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3846</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-07-11 15:56:50 +0200</bug_when>
+            <thetext>I will simply add my changes and close this bug :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3851</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-07-11 16:11:10 +0200</bug_when>
+            <thetext>Fixed in rev 14513.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3913</commentid>
+            <who name="Florian Giesen">giesen.florian</who>
+            <bug_when>2008-07-16 12:16:53 +0200</bug_when>
+            <thetext>Sorry, that I did not react since Friday, but I have been on vacation for a few days.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39673</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:28:02 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>318</attachid>
+            <date>2008-07-10 17:46:00 +0200</date>
+            <delta_ts>2008-07-10 17:46:37 +0200</delta_ts>
+            <desc>diff for this bug</desc>
+            <filename>scrollForwardBack_public.diff</filename>
+            <type>text/plain</type>
+            <size>1800</size>
+            <attacher>giesen.florian</attacher>
+            
+              <data encoding="base64">SW5kZXg6IFNsaWRlQmFyLmpzDQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09DQotLS0gU2xpZGVCYXIuanMJKFJldmlzaW9u
+IDE0MDY3KQ0KKysrIFNsaWRlQmFyLmpzCShBcmJlaXRza29waWUpDQpAQCAtMTEzLDEzICsxMTMs
+MTMgQEANCiAgICAgICB7CiAgICAgICAgIGNhc2UgImJ1dHRvbi1mb3J3YXJkIjoKICAgICAgICAg
+ICBjb250cm9sID0gbmV3IHF4LnVpLmZvcm0uUmVwZWF0QnV0dG9uKCI+Iik7Ci0gICAgICAgICAg
+Y29udHJvbC5hZGRMaXN0ZW5lcigiZXhlY3V0ZSIsIHRoaXMuX3Njcm9sbEZvcndhcmQsIHRoaXMp
+OworICAgICAgICAgIGNvbnRyb2wuYWRkTGlzdGVuZXIoImV4ZWN1dGUiLCBmdW5jdGlvbigpe3Ro
+aXMuc2Nyb2xsRm9yd2FyZCgyMCk7fSwgdGhpcyk7CiAgICAgICAgICAgdGhpcy5fYWRkKGNvbnRy
+b2wpOwogICAgICAgICAgIGJyZWFrOwogCiAgICAgICAgIGNhc2UgImJ1dHRvbi1iYWNrIjoKICAg
+ICAgICAgICBjb250cm9sID0gbmV3IHF4LnVpLmZvcm0uUmVwZWF0QnV0dG9uKCI8Iik7Ci0gICAg
+ICAgICAgY29udHJvbC5hZGRMaXN0ZW5lcigiZXhlY3V0ZSIsIHRoaXMuX3Njcm9sbEJhY2ssIHRo
+aXMpOworICAgICAgICAgIGNvbnRyb2wuYWRkTGlzdGVuZXIoImV4ZWN1dGUiLCBmdW5jdGlvbigp
+e3RoaXMuc2Nyb2xsQmFjaygyMCk7fSwgdGhpcyk7CiAgICAgICAgICAgdGhpcy5fYWRkQXQoY29u
+dHJvbCwgMCk7CiAgICAgICAgICAgYnJlYWs7CiAKQEAgLTIwNCwxNCArMjA0LDE1IEBADQogICAg
+ICAqIFNjcm9sbCBoYW5kbGVyIGZvciBsZWZ0IHNjcm9sbGluZwogICAgICAqCiAgICAgICogQHR5
+cGUgbWVtYmVyCisgICAgICogQHBhcmFtIHNjcm9sbEJ5IHt2YXJ9IE51bWJlciBvZiBwaXhlbHMg
+dG8gc2Nyb2xsLgogICAgICAqIEByZXR1cm4ge3ZvaWR9CiAgICAgICovCi0gICAgX3Njcm9sbEJh
+Y2sgOiBmdW5jdGlvbigpCisgICAgc2Nyb2xsQmFjayA6IGZ1bmN0aW9uKHNjcm9sbEJ5KQogICAg
+IHsKICAgICAgIGlmICh0aGlzLl9pc0hvcml6b250YWwpIHsKLSAgICAgICAgdGhpcy5fc2Nyb2xs
+UGFuZS5zY3JvbGxCeVgoLTIwKTsKKyAgICAgICAgdGhpcy5fc2Nyb2xsUGFuZS5zY3JvbGxCeVgo
+LXNjcm9sbEJ5KTsKICAgICAgIH0gZWxzZSB7Ci0gICAgICAgIHRoaXMuX3Njcm9sbFBhbmUuc2Ny
+b2xsQnlZKC0yMCk7CisgICAgICAgIHRoaXMuX3Njcm9sbFBhbmUuc2Nyb2xsQnlZKC1zY3JvbGxC
+eSk7CiAgICAgICB9CiAgICAgfSwKIApAQCAtMjIwLDE0ICsyMjEsMTUgQEANCiAgICAgICogU2Ny
+b2xsIGhhbmRsZXIgZm9yIHJpZ2h0IHNjcm9sbGluZwogICAgICAqCiAgICAgICogQHR5cGUgbWVt
+YmVyCisgICAgICogQHBhcmFtIHNjcm9sbEJ5IHt2YXJ9IE51bWJlciBvZiBwaXhlbHMgdG8gc2Ny
+b2xsLgogICAgICAqIEByZXR1cm4ge3ZvaWR9CiAgICAgICovCi0gICAgX3Njcm9sbEZvcndhcmQg
+OiBmdW5jdGlvbigpIHsKKyAgICBzY3JvbGxGb3J3YXJkIDogZnVuY3Rpb24oc2Nyb2xsQnkpIHsK
+ICAgICAgIGlmICh0aGlzLl9pc0hvcml6b250YWwpIHsKLSAgICAgICAgdGhpcy5fc2Nyb2xsUGFu
+ZS5zY3JvbGxCeVgoMjApOworICAgICAgICB0aGlzLl9zY3JvbGxQYW5lLnNjcm9sbEJ5WChzY3Jv
+bGxCeSk7CiAgICAgICB9IGVsc2UgewotICAgICAgICB0aGlzLl9zY3JvbGxQYW5lLnNjcm9sbEJ5
+WSgyMCk7Ci0gICAgICB9CisgICAgICAgIHRoaXMuX3Njcm9sbFBhbmUuc2Nyb2xsQnlZKHNjcm9s
+bEJ5KTsKKyAgICAgIH0JCiAgICAgfQogICB9CiB9KTsK
+</data>
+
+          </attachment>
+      
+
+    </bug>

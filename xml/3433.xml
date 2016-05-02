@@ -1,0 +1,185 @@
+<bug>
+          <bug_id>3433</bug_id>
+          
+          <creation_ts>2010-02-09 20:08:00 +0100</creation_ts>
+          <short_desc>Universal function call alternatively to one function call for every method.</short_desc>
+          <delta_ts>2010-02-10 09:05:38 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>contrib</product>
+          <component>RpcPhp</component>
+          <version>1.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter>ml</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>info</cc>
+          <qa_contact name="Derrell Lipman">derrell.lipman</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>16767</commentid>
+            <who name="">ml</who>
+            <bug_when>2010-02-09 20:08:48 +0100</bug_when>
+            <thetext>Currently one function &quot;method_&lt;name&gt;($params, $error)&quot; is called per method, which is quite convenient if you want to implement the methods in PHP.
+
+But if you want to pass the methods to another system (e.g. SQL Stored Procedures) you have to create a PHP-signature for each procedure. Overloading with &quot;__call()&quot; doesn&#39;t work either as &quot;__call()&quot; does not allow call-by-reference.
+
+So I suggest a alternative mode using a function call like &quot;method($name, $params, $error)&quot;, which allows to concatenate $name and $params (e.g. for a SQL-query). That way only one signature is necessary to pass ALL methods to another system.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16768</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-02-09 20:15:09 +0100</bug_when>
+            <thetext>Christian, doesn&#39;t your object-oriented interface change allow something like this fairly easily?
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16769</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2010-02-09 22:30:32 +0100</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Christian, doesn&#39;t your object-oriented interface change allow something like
+&gt; this fairly easily?
+&gt; 
+&gt; Derrell
+&gt; 
+
+Hi,
+
+yes, you only need to extend the JsonRpcServer class and override the callServiceMethod() method (defined in AbstractServer.php), for example like so:
+
+ function callServiceMethod( $serviceObject, $method, $params )
+  {
+    $errorBehavior =&amp; $this-&gt;getErrorBehavior();
+
+try {
+
+      $result = $serviceObject-&gt;method(
+        $method, /* the method name */
+        $params,        /* parameters */
+        $errorBehavior  /* the error object */
+      );
+
+}
+catch ( JsonRpcError $exception)
+{
+  $result = $exception;
+  $result-&gt;SetId( $this-&gt;getId() );
+}
+catch ( Exception $exception )
+{
+  $result = new JsonRpcError(
+    JsonRpcError_ScriptError,
+    &quot;PHP Script Error: &quot;  . $exception-&gt;getMessage() . &quot;in &quot; . $exception-&gt;getFile() . &quot;, line &quot; . $exception-&gt;getLine(),
+    JsonRpcError_Origin_Server
+  );
+  $result-&gt;SetId( $this-&gt;getId() );
+  $this-&gt;log( $exception-&gt;getTraceAsString() );
+}  
+  }
+
+(not tested).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16770</commentid>
+            <who name="">ml</who>
+            <bug_when>2010-02-09 23:54:19 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; yes, you only need to extend the JsonRpcServer class and override the
+&gt; callServiceMethod() method (defined in AbstractServer.php), for example like
+&gt; so:
+
+Maybe you can add this as a configurable option. You can e.g. check if a constant like &quot;singlemode = true&quot; is defined in a user&#39;s class.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16771</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2010-02-10 00:01:52 +0100</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; 
+&gt; Maybe you can add this as a configurable option. You can e.g. check if a
+&gt; constant like &quot;singlemode = true&quot; is defined in a user&#39;s class.
+&gt; 
+
+If you submit a patch which does what you want, we can consider including it into the next release. However, since it is so easy just to subclass the Server class and override the said method to implement whatever you want, I wonder whether this needs to be a standard feature. On the other hand, I don&#39;t mind including it. Derrell?
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16772</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-02-10 04:33:59 +0100</bug_when>
+            <thetext>Well, for a couple of reasons, I don&#39;t think it&#39;s necessary nor appropriate to add this as a configurable option.
+
+1. Everyone has their own particular needs, so the server is &quot;generic&quot; in its attempt to fill the typical need. Since the server is deployed by each developer separately, it&#39;s reasonable to make small changes to it as needed.
+
+2. With Christian&#39;s rework of the server, it is now fairly easy to make customizations without even modifying server code. Rather, extending the server classes can provide for user-specific requirements. That has been shown to be the case here.
+
+I would opt against putting lots of options into the generic server code, particularly when it&#39;s easy to add that functionality externally.
+
+Christian, you&#39;re maintaining this version of the server, so I&#39;ll leave it to you to close this bug report, or make changes as you see fit.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16773</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2010-02-10 09:05:38 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Well, for a couple of reasons, I don&#39;t think it&#39;s necessary nor appropriate to
+&gt; add this as a configurable option.
+&gt; 
+&gt; 1. Everyone has their own particular needs, so the server is &quot;generic&quot; in its
+&gt; attempt to fill the typical need. Since the server is deployed by each
+&gt; developer separately, it&#39;s reasonable to make small changes to it as needed.
+&gt; 
+&gt; 2. With Christian&#39;s rework of the server, it is now fairly easy to make
+&gt; customizations without even modifying server code. Rather, extending the server
+&gt; classes can provide for user-specific requirements. That has been shown to be
+&gt; the case here.
+&gt; 
+&gt; I would opt against putting lots of options into the generic server code,
+&gt; particularly when it&#39;s easy to add that functionality externally.
+&gt; 
+&gt; Christian, you&#39;re maintaining this version of the server, so I&#39;ll leave it to
+&gt; you to close this bug report, or make changes as you see fit.
+&gt; 
+&gt; Derrell
+&gt; 
+
+Derrell, after reading your arguments, I agree. I&#39;d like to ask the bug submitter to use the subclassing &amp; overriding method to implement the desired behavior.
+
+Thanks,
+
+Christian </thetext>
+          </long_desc>
+      
+      
+
+    </bug>

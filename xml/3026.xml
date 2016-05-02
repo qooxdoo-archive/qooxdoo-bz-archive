@@ -1,0 +1,275 @@
+<bug>
+          <bug_id>3026</bug_id>
+          
+          <creation_ts>2009-11-03 18:16:00 +0100</creation_ts>
+          <short_desc>qx.io.remote.RequestQueue stops sending when too many requestHandler thow an exception</short_desc>
+          <delta_ts>2014-03-03 15:26:41 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>0.8.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Michael Olbrich">m.olbrich</reporter>
+          <assigned_to name="Derrell Lipman">derrell.lipman</assigned_to>
+          <cc>andreas.junghans</cc>
+    
+    <cc>christian.hagendorn</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>13841</commentid>
+            <who name="Michael Olbrich">m.olbrich</who>
+            <bug_when>2009-11-03 18:16:40 +0100</bug_when>
+            <thetext>If a request handler throws an exception (in my case an rpc server produced invalid json) the request is not removed from the __active list. As a result no more async request are sent when these request reach the concurrency limit.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13842</commentid>
+              <attachid>643</attachid>
+            <who name="Michael Olbrich">m.olbrich</who>
+            <bug_when>2009-11-03 18:17:37 +0100</bug_when>
+            <thetext>Created attachment 643
+patch to fix the problem</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13852</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-04 10:37:14 +0100</bug_when>
+            <thetext>Derrell, would be great you reviewed/applied the patch, thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13902</commentid>
+              <attachid>644</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-11-04 23:18:31 +0100</bug_when>
+            <thetext>Created attachment 644
+Alternate patch
+
+Michael, would you please try this alternate patch. Rather than simply ignoring the error, this patch logs an error and then issues a local &quot;aborted&quot; event to the application to let someone handle it a bit more nicely. Watchathink?
+
+Thanks,
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13946</commentid>
+            <who name="Michael Olbrich">m.olbrich</who>
+            <bug_when>2009-11-05 10:58:47 +0100</bug_when>
+            <thetext>I had to modify the patch to apply it, but I guess that&#39;s probably because I&#39;m using 0.8.3 and not trunk.
+I can&#39;t test it right now but it looks good to me. Issuing an event is much better than ignoring the error. Any reason for choosing &quot;aborted&quot; instead of &quot;failed&quot;?
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13954</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-11-05 14:22:03 +0100</bug_when>
+            <thetext>Yes. Without changing a bunch of other code, &quot;failed&quot; requires that there be response text available from the transport. I can&#39;t guarantee that that will always be the case (and it&#39;s difficult code to weave through). Also, &quot;failed&quot; indicates a problem at the server side, while &quot;aborted&quot; indicates a problem at the client side. The latter is actually the more appropriate error, although it would be nice to have more detail as to what the problem was.
+
+What changes did you need to make to apply the patch?
+
+Please let me know when you&#39;ve confirmed that this works, and I&#39;ll commit it.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13967</commentid>
+            <who name="Michael Olbrich">m.olbrich</who>
+            <bug_when>2009-11-06 14:20:36 +0100</bug_when>
+            <thetext>&gt; What changes did you need to make to apply the patch?
+
+in 0.8.3 its &quot;request[requestHandler](e.clone());&quot; and not &quot;request[requestHandler](e);&quot;
+ 
+&gt; Please let me know when you&#39;ve confirmed that this works, and I&#39;ll commit it.
+
+It works. Please commit.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13970</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-11-06 15:07:13 +0100</bug_when>
+            <thetext>Fixed with r20580.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14256</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-11-20 15:13:17 +0100</bug_when>
+            <thetext>Michael, would you please confirm that you actually verified that the &quot;aborted&quot; handler got called? Looking at my patch right now, it appears to me that it will not be called because it should have been calling the &quot;_onaborted&quot; method, not the &quot;aborted&quot; method...???
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14257</commentid>
+              <attachid>657</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-11-20 15:33:55 +0100</bug_when>
+            <thetext>Created attachment 657
+Probable appropriate change
+
+I _believe_ this is the appropriate change to properly correct this problem. I don&#39;t have the setup or time to test it at the moment. Comments welcome.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14259</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-11-20 15:56:35 +0100</bug_when>
+            <thetext>Derrell, I will test you patch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14263</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-11-20 16:43:59 +0100</bug_when>
+            <thetext>Applied patch and added unit test on trunk with rev. 20715. Thanks Derrell.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14674</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:16:31 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39198</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:41 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="1" ispatch="1" isprivate="0" isurl="0">
+            <attachid>643</attachid>
+            <date>2009-11-03 18:17:00 +0100</date>
+            <delta_ts>2009-11-04 23:18:31 +0100</delta_ts>
+            <desc>patch to fix the problem</desc>
+            <filename>fix-rpc-bug.diff</filename>
+            <type>text/plain</type>
+            <size>929</size>
+            <attacher>m.olbrich</attacher>
+            
+              <data encoding="base64">LS0tCiBmcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2lvL3JlbW90ZS9SZXF1ZXN0UXVldWUuanMg
+fCAgIDExICsrKysrKystLS0tCiAxIGZpbGUgY2hhbmdlZCwgNyBpbnNlcnRpb25zKCspLCA0IGRl
+bGV0aW9ucygtKQoKSW5kZXg6IGIvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9pby9yZW1vdGUv
+UmVxdWVzdFF1ZXVlLmpzCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT0KLS0tIGEvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9x
+eC9pby9yZW1vdGUvUmVxdWVzdFF1ZXVlLmpzCisrKyBiL2ZyYW1ld29yay9zb3VyY2UvY2xhc3Mv
+cXgvaW8vcmVtb3RlL1JlcXVlc3RRdWV1ZS5qcwpAQCAtMzI4LDExICszMjgsMTQgQEAgcXguQ2xh
+c3MuZGVmaW5lKCJxeC5pby5yZW1vdGUuUmVxdWVzdFF1ZQogICAgICAgLy8gb24gdGhlIGN1cnJl
+bnQgdHlwZSBvZiB0aGUgZXZlbnQgKCBjb21wbGV0ZWR8YWJvcnRlZHx0aW1lb3V0fGZhaWxlZCAp
+CiAgICAgICB2YXIgcmVxdWVzdCA9IGUuZ2V0VGFyZ2V0KCkuZ2V0UmVxdWVzdCgpOwogICAgICAg
+dmFyIHJlcXVlc3RIYW5kbGVyID0gIl9vbiIgKyBlLmdldFR5cGUoKTsKLSAgICAgIGlmIChyZXF1
+ZXN0W3JlcXVlc3RIYW5kbGVyXSkgewotICAgICAgICByZXF1ZXN0W3JlcXVlc3RIYW5kbGVyXShl
+LmNsb25lKCkpOworICAgICAgdHJ5IHsKKyAgICAgICAgaWYgKHJlcXVlc3RbcmVxdWVzdEhhbmRs
+ZXJdKSB7CisgICAgICAgICAgcmVxdWVzdFtyZXF1ZXN0SGFuZGxlcl0oZS5jbG9uZSgpKTsKKyAg
+ICAgICAgfQorICAgICAgfQorICAgICAgZmluYWxseSB7CisgICAgICAgIHRoaXMuX3JlbW92ZShl
+LmdldFRhcmdldCgpKTsKICAgICAgIH0KLQotICAgICAgdGhpcy5fcmVtb3ZlKGUuZ2V0VGFyZ2V0
+KCkpOwogICAgIH0sCiAKIAo=
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>644</attachid>
+            <date>2009-11-04 23:18:00 +0100</date>
+            <delta_ts>2009-11-04 23:18:31 +0100</delta_ts>
+            <desc>Alternate patch</desc>
+            <filename>x.patch</filename>
+            <type>text/plain</type>
+            <size>1624</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9pby9yZW1vdGUv
+UmVxdWVzdFF1ZXVlLmpzIGIvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2lvL3Jl
+bW90ZS9SZXF1ZXN0UXVldWUuanMKaW5kZXggODQ1ZmY1OS4uYjVmMDU0YSAxMDA2NDQKLS0tIGEv
+cW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2lvL3JlbW90ZS9SZXF1ZXN0UXVldWUu
+anMKKysrIGIvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2lvL3JlbW90ZS9SZXF1
+ZXN0UXVldWUuanMKQEAgLTMzMCwxMSArMzMwLDQwIEBAIHF4LkNsYXNzLmRlZmluZSgicXguaW8u
+cmVtb3RlLlJlcXVlc3RRdWV1ZSIsCiAgICAgICAvLyBvbiB0aGUgY3VycmVudCB0eXBlIG9mIHRo
+ZSBldmVudCAoIGNvbXBsZXRlZHxhYm9ydGVkfHRpbWVvdXR8ZmFpbGVkICkKICAgICAgIHZhciBy
+ZXF1ZXN0ID0gZS5nZXRUYXJnZXQoKS5nZXRSZXF1ZXN0KCk7CiAgICAgICB2YXIgcmVxdWVzdEhh
+bmRsZXIgPSAiX29uIiArIGUuZ2V0VHlwZSgpOwotICAgICAgaWYgKHJlcXVlc3RbcmVxdWVzdEhh
+bmRsZXJdKSB7Ci0gICAgICAgIHJlcXVlc3RbcmVxdWVzdEhhbmRsZXJdKGUpOworCisgICAgICAv
+LyBJdCdzIHBvc3NpYmxlIHRoYXQgdGhlIHJlcXVlc3QgaGFuZGxlciBjYW4gZmFpbCwgcG9zc2li
+bHkgZHVlIHRvCisgICAgICAvLyBiZWluZyBzZW50IGdhcmJhZ2UgZGF0YS4gV2Ugd2FudCB0byBw
+cmV2ZW50IHRoYXQgZnJvbSBjcmFzaGluZworICAgICAgLy8gdGhlIHByb2dyYW0sIGJ1dCBpbnN0
+ZWFkICBkaXNwbGF5IGFuIGVycm9yLCBhbmQsIGltcG9ydGFudGx5CisgICAgICAvLyAocmVnYXJk
+bGVzcyBvZiBlcnJvcikgcmVtb3ZlIHRoZSByZXF1ZXN0IGZyb20gdGhlIHF1ZXVlLgorICAgICAg
+dHJ5CisgICAgICB7CisgICAgICAgIGlmIChyZXF1ZXN0W3JlcXVlc3RIYW5kbGVyXSkKKyAgICAg
+ICAgeworICAgICAgICAgIHJlcXVlc3RbcmVxdWVzdEhhbmRsZXJdKGUpOworICAgICAgICB9CiAg
+ICAgICB9CisgICAgICBjYXRjaChlKQorICAgICAgeworICAgICAgICB0aGlzLmVycm9yKCJSZXF1
+ZXN0ICIgKyByZXF1ZXN0ICsgIiBoYW5kbGVyICIgKyByZXF1ZXN0SGFuZGxlciArCisgICAgICAg
+ICAgICAgICAgICAgIiB0aHJldyBhbiBlcnJvci4iKTsKIAotICAgICAgdGhpcy5fcmVtb3ZlKGUu
+Z2V0VGFyZ2V0KCkpOworICAgICAgICAvLyBJc3N1ZSBhbiAiYWJvcnRlZCIgZXZlbnQgc28gdGhl
+IGFwcGxpY2F0aW9uIGdldHMgbm90aWZpZWQuCisgICAgICAgIC8vIElmIHRoYXQgdG9vIGZhaWxz
+LCBvciBpZiB0aGVyZSdzIG5vICJhYm9ydGVkIiBoYW5kbGVyLCBpZ25vcmUgaXQuCisgICAgICAg
+IHRyeQorICAgICAgICB7CisgICAgICAgICAgaWYgKHJlcXVlc3RbImFib3J0ZWQiXSkKKyAgICAg
+ICAgICB7CisgICAgICAgICAgICByZXF1ZXN0WyJhYm9ydGVkIl0oZSk7CisgICAgICAgICAgfQor
+ICAgICAgICB9CisgICAgICAgIGNhdGNoKGUpCisgICAgICAgIHsKKyAgICAgICAgfQorICAgICAg
+fQorICAgICAgZmluYWxseQorICAgICAgeworICAgICAgICB0aGlzLl9yZW1vdmUoZS5nZXRUYXJn
+ZXQoKSk7CisgICAgICB9CiAgICAgfSwKIAogCg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>657</attachid>
+            <date>2009-11-20 15:33:00 +0100</date>
+            <delta_ts>2009-11-20 15:33:55 +0100</delta_ts>
+            <desc>Probable appropriate change</desc>
+            <filename>x.patch</filename>
+            <type>text/plain</type>
+            <size>1252</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9pby9yZW1vdGUv
+UmVxdWVzdFF1ZXVlLmpzIGIvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2lvL3Jl
+bW90ZS9SZXF1ZXN0UXVldWUuanMKaW5kZXggNmViYTZhYi4uMDc3NWU5OCAxMDA2NDQKLS0tIGEv
+cW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2lvL3JlbW90ZS9SZXF1ZXN0UXVldWUu
+anMKKysrIGIvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2lvL3JlbW90ZS9SZXF1
+ZXN0UXVldWUuanMKQEAgLTM0NCwxOSArMzQ0LDIyIEBAIHF4LkNsYXNzLmRlZmluZSgicXguaW8u
+cmVtb3RlLlJlcXVlc3RRdWV1ZSIsCiAgICAgICB9CiAgICAgICBjYXRjaChleCkKICAgICAgIHsK
+KyAgICAgICAgdmFyIHN0YWNrdHJhY2UgPSBxeC5kZXYuU3RhY2tUcmFjZS5nZXRTdGFja1RyYWNl
+RnJvbUVycm9yKGV4KTsKKwogICAgICAgICB0aGlzLmVycm9yKAogICAgICAgICAgICJSZXF1ZXN0
+ICIgKyByZXF1ZXN0ICsgIiBoYW5kbGVyICIgKyByZXF1ZXN0SGFuZGxlciArICIgdGhyZXcgYW4g
+ZXJyb3I6ICIgKyBleCArCi0gICAgICAgICAgIlxuU3RhY2sgVHJhY2U6XG4iICsgCi0gICAgICAg
+ICAgcXguZGV2LlN0YWNrVHJhY2UuZ2V0U3RhY2tUcmFjZUZyb21FcnJvcihleCkKKyAgICAgICAg
+ICAiXG5TdGFjayBUcmFjZTpcbiIgKyBzdGFja3RyYWNlCiAgICAgICAgICk7CiAKICAgICAgICAg
+Ly8gSXNzdWUgYW4gImFib3J0ZWQiIGV2ZW50IHNvIHRoZSBhcHBsaWNhdGlvbiBnZXRzIG5vdGlm
+aWVkLgogICAgICAgICAvLyBJZiB0aGF0IHRvbyBmYWlscywgb3IgaWYgdGhlcmUncyBubyAiYWJv
+cnRlZCIgaGFuZGxlciwgaWdub3JlIGl0LgogICAgICAgICB0cnkKICAgICAgICAgewotICAgICAg
+ICAgIGlmIChyZXF1ZXN0WyJhYm9ydGVkIl0pCisgICAgICAgICAgaWYgKHJlcXVlc3RbIl9vbmFi
+b3J0ZWQiXSkKICAgICAgICAgICB7Ci0gICAgICAgICAgICByZXF1ZXN0WyJhYm9ydGVkIl0oZXgp
+OworICAgICAgICAgICAgdmFyIGUgPSBxeC5ldmVudC5SZWdpc3RyYXRpb24uY3JlYXRlRXZlbnQo
+ImFib3J0ZWQiLAorICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgcXguZXZlbnQudHlwZS5FdmVudCk7CisgICAgICAgICAgICByZXF1ZXN0WyJfb25h
+Ym9ydGVkIl0oZSk7CiAgICAgICAgICAgfQogICAgICAgICB9CiAgICAgICAgIGNhdGNoKGUpCg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

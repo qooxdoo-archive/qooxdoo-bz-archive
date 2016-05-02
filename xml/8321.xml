@@ -1,0 +1,285 @@
+<bug>
+          <bug_id>8321</bug_id>
+          
+          <creation_ts>2014-05-12 10:31:00 +0200</creation_ts>
+          <short_desc>Dragging of elements inside the table stops on rerendering</short_desc>
+          <delta_ts>2014-12-16 11:44:20 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mustafa Sak">mustafa.sak</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>40187</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-05-12 10:31:12 +0200</bug_when>
+            <thetext>If provoke a redraw of the table (e.g. on resize) on a drag session, the cursor will stop following the the mouse and no drop event will be fired on releasing mouse key.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40678</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-03 15:41:06 +0200</bug_when>
+            <thetext>Please supply a demo or some more details how to reproduce. With the current amount of information, it is hard to reproduce the issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40700</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-07-04 14:58:40 +0200</bug_when>
+            <thetext>As I could analyze trackend event handler of qx.event.handler.DragDrop won&#39;t be called if an content update of table widget was triggered at or after dragstart.
+
+Here is a playground example:
+http://tinyurl.com/oyc28el</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40703</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-07 08:13:20 +0200</bug_when>
+            <thetext>Here is the code to reproduce (tinyurl links to a local machine)
+
+
+function createRandomRows(rowCount) {
+  var rowData = [];
+  var now = new Date().getTime();
+  var dateRange = 400 * 24 * 60 * 60 * 1000; // 400 days
+  var nextId = 0;
+  for (var row = 0; row &lt; rowCount; row++) {
+    var date = new Date(now + Math.random() * dateRange - dateRange / 2);
+    rowData.push([ nextId++, Math.random() * 10000, date, (Math.random() &gt; 0.5) ]);
+  }
+  return rowData;
+}
+
+
+// window
+var win = new qx.ui.window.Window(&quot;Table&quot;).set({
+  layout : new qx.ui.layout.Grow(),
+  allowClose: false,
+  allowMinimize: false,
+  contentPadding: 0
+});
+this.getRoot().add(win);
+win.moveTo(30, 40);
+win.open();
+
+// table model
+var tableModel = new qx.ui.table.model.Simple();
+tableModel.setColumns([ &quot;ID&quot;, &quot;A number&quot;, &quot;A date&quot;, &quot;Boolean&quot; ]);
+tableModel.setData(createRandomRows(1000));
+
+// make second column editable
+tableModel.setColumnEditable(1, true);
+
+// table
+var table = new qx.ui.table.Table(tableModel).set({
+  decorator: null
+});
+win.add(table);
+
+var tcm = table.getTableColumnModel();
+
+// Display a checkbox in column 3
+tcm.setDataCellRenderer(3, new qx.ui.table.cellrenderer.Boolean());
+
+// use a different header renderer
+tcm.setHeaderCellRenderer(2, new qx.ui.table.headerrenderer.Icon(&quot;icon/16/apps/office-calendar.png&quot;, &quot;A date&quot;));
+
+
+//########### ISSUE EXAMPLE CODE  ##################
+
+table.setDraggable(true);
+
+table.addListener(&quot;dragstart&quot;, function(e){
+  this.debug(e.getType(), e.getTarget().classname);
+  e.getTarget().updateContent();
+}, this);
+
+table.addListener(&quot;dragend&quot;, function(e){
+  this.debug(e.getType());
+}, this);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40704</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-07 08:38:56 +0200</bug_when>
+            <thetext>Here is the reduced code to reproduce: 
+
+
+var data = [];
+for (var i = 0; i &lt; 100; i++) {
+  data.push(i + &quot;&quot;);
+}
+
+var tableModel = new qx.ui.table.model.Simple();
+tableModel.setColumns([&quot;ID&quot;]);
+tableModel.setData(data);
+
+var table = new qx.ui.table.Table(tableModel);
+this.getRoot().add(table);
+
+//########### ISSUE EXAMPLE CODE  ##################
+
+table.setDraggable(true);
+
+table.addListener(&quot;dragstart&quot;, function(e){
+  e.getTarget().updateContent();
+}, this);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40709</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-07 13:34:26 +0200</bug_when>
+            <thetext>The reason for this issue is in the nature of the virtuality of the table. We start a drag (and with that a track) session on a DOM element. Calling &#39;updateContent&#39; triggers a new rendering of the content and the target DOM element will be replaced with a new one. Thats why the events did not get to the table as soon as a new rendering has been triggered.
+Fixed it by redirection the track events to the table pane instead of the cell.
+
+master: f3768b8c0d392102e6da57e700c6b501d116c7d5
+4.0.x: 78a8821f45ddbc81ccd2ee18195ad93d7ece58b6</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40720</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-08 11:57:54 +0200</bug_when>
+            <thetext>The last fix broke the table selection. Fixed that by starting the retargeting of the track session as soon as drag &amp; drop starts.
+
+master: aa7fc58a7a492dfa02d359169d11957ced5dcade
+4.0.x: 552cb836965c3a1f839f62f78ce16ce3b4082580</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40733</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-07-09 14:53:19 +0200</bug_when>
+            <thetext>Your solution works fine if table widget is set drag able. But it disregarded the if the draggable property is set to a parent of the table.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40747</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-11 08:42:01 +0200</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; Your solution works fine if table widget is set drag able. But it disregarded
+&gt; the if the draggable property is set to a parent of the table.
+
+So why don&#39;t you set the table to draggable?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40751</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-07-11 09:13:08 +0200</bug_when>
+            <thetext>(In reply to comment #8)
+&gt; (In reply to comment #7)
+&gt; &gt; Your solution works fine if table widget is set drag able. But it disregarded
+&gt; &gt; the if the draggable property is set to a parent of the table.
+&gt; 
+&gt; So why don&#39;t you set the table to draggable?
+
+Because of the drag target. On drop side events the related target would be the table, which is not the behavior I expected.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40779</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-16 11:00:18 +0200</bug_when>
+            <thetext>Tried to reproduce the issue but fail to do so. Here is the code I used:
+
+var data = [];
+for (var i = 0; i &lt; 100; i++) {
+  data.push(i + &quot;&quot;);
+}
+
+var c = new qx.ui.container.Composite(new qx.ui.layout.Canvas());
+c.set({
+  width: 150,
+  height: 500,
+  backgroundColor: &quot;#eee&quot;
+});
+var tableModel = new qx.ui.table.model.Simple();
+tableModel.setColumns([&quot;ID&quot;]);
+tableModel.setData(data);
+
+var table = new qx.ui.table.Table(tableModel);
+c.add(table);
+this.getRoot().add(c);
+
+//########### ISSUE EXAMPLE CODE  ##################
+
+c.setDraggable(true);
+
+table.addListener(&quot;dragstart&quot;, function(e){
+  e.getTarget().updateContent();
+}, this);
+
+
+It&#39;s basically the same sample as before but with a container between the table and the root having the draggable set. Could you update the sample to reproduce the issue?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40781</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-07-16 11:07:38 +0200</bug_when>
+            <thetext>Please add the dragstart listener to the &quot;c&quot; container.
+
+
+...
+//########### ISSUE EXAMPLE CODE  ##################
+
+c.setDraggable(true);
+
+c.addListener(&quot;dragstart&quot;, function(e){
+  table.updateContent();
+}, this);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40785</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-16 11:40:06 +0200</bug_when>
+            <thetext>Thanks for the demo. Checked the parent chain which solved the problem.
+
+master: 0a4bbf18f440d691dac2fa4b1d27496af482679c
+4.0.x: 9021624bd432712cc92d7b707323e1a308ff0222</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40795</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-07-17 16:48:35 +0200</bug_when>
+            <thetext>There is a minor bug. Local variable draggable will always be false.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40797</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-07-17 16:59:20 +0200</bug_when>
+            <thetext>Fixed on
+
+master : de7236373edaea0115b3fc0945e3ceeac83bd3f5
+branch_4_0_x : 5ef6f40ddf281f665d5085380c1eb35ec6332ad8</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

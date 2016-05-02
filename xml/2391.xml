@@ -1,0 +1,452 @@
+<bug>
+          <bug_id>2391</bug_id>
+          
+          <creation_ts>2009-05-15 22:44:00 +0200</creation_ts>
+          <short_desc>Privateoptimizer: Variable capture in derived class</short_desc>
+          <delta_ts>2014-03-03 15:24:15 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>critical</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>christian.hagendorn</cc>
+    
+    <cc>daniel.wagner</cc>
+    
+    <cc>info</cc>
+    
+    <cc>werner.still</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9988</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-05-15 22:44:02 +0200</bug_when>
+            <thetext>It appears that a sort of variable capture can happen accross classes when optimizing privates. If one class has a private member that is optimized to, say, __a, and per accident another private member in a derived class is also optimized to __a, the old meaning of __a in the superclass is lost. When methods of the superclass get called that make use of __a, they fail.
+
+This has been observed in the method qx.core.Object#addListener, which makes use of a private member of qx.event.Registry type. This member got overridden by private optimization in qx.event.Timer, and addListener could not be executed anymore.
+
+This has been observed when compiling all classes of an application separately, and then &quot;glueing&quot; the compile results together. Switching off private optimization fixes it. In the generator/TreeCompiler, privates get cached and re-loaded into the privateoptimizer. This might play a part.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9991</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-05-18 09:37:26 +0200</bug_when>
+            <thetext>The private optimizer builds unique keys for the combination of the classname and the member name e.g. &quot;qx.Class.__foo&quot; maps to &quot;__a&quot;. There should not be any issues with classes getting the same &quot;compressed&quot; name. This may though, be happen when something in the handling of class compilation is modified. The current code there is not really nice and depends on the correct loading and saving of the cache file. When there might be changes to allow &quot;threaded&quot; class compilation, this concept may break.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9994</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-05-18 10:11:47 +0200</bug_when>
+            <thetext>Ah, right, thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10343</commentid>
+            <who name="Stefan Volbers">volbers</who>
+            <bug_when>2009-06-10 05:16:27 +0200</bug_when>
+            <thetext>I believe I just stumbled over this bug.
+It appeared when the build optimizer changed an object&#39;s var name to &quot;e&quot;.
+A listener following in the script uses an event data variable named e, which seems to not get checked or renamed by the optimizer if it is a one character name; so the names collide in the listener&#39;s callback:
+
+var e=new Z.a();
+var Y=ba.addListener(x,function(e){f.removeAll();
+f.add(e.getWidget(),{left:100,top:50});
+},this);
+// grep &quot;e&quot; *
+
+I guess that would be resolved if one character variable names there would be managed/renamed too. Btw are these never renamed?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10344</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-06-10 07:39:19 +0200</bug_when>
+            <thetext>@Stefan: What you seem to mean is the variableoptimizer, not the privateoptimizer. Privates are direct entries in &quot;members&quot; or &quot;statics&quot; and start with a double underscore &quot;__&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10345</commentid>
+            <who name="Stefan Volbers">volbers</who>
+            <bug_when>2009-06-10 07:51:02 +0200</bug_when>
+            <thetext>@Sebastian
+Ouch. Indeed.
+I came here searching bugzilla for variable optimization issues. &quot;addListener&quot; and stuff sounded so well known... seems like I was not paying that much attention to details at 5am...
+- sorry 4 the noise -
+Plz redirect me if there is an open bug for what I found; or is that new so I should open a fresh one?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10346</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-06-10 09:42:36 +0200</bug_when>
+            <thetext>@Stefan: Yes, please open a new bug for this. Please also attach a suitable 
+part of the original source code, together with the optimized version of it. It 
+would be ideal if you could provide a stripped down version of a skeleton file 
+that reproduces the issue, but this is often not possible with optimization 
+bugs. Make sure you select the qooxdoo version you are working with, and assign 
+it to me.
+
+Which qooxdoo version are you working with? Current qooxdoo (0.8.2) doesn&#39;t 
+have a .getWidget() method, but 0.7 used to have!? Or are you using legacy 
+classes in 0.8?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10361</commentid>
+            <who name="Stefan Volbers">volbers</who>
+            <bug_when>2009-06-10 18:36:15 +0200</bug_when>
+            <thetext>@Thomas
+done, http://bugzilla.qooxdoo.org/show_bug.cgi?id=2469
+It is 0.8.2 SDK.
+The getWidget method is the getter to a widget property in a custom class.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10492</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-06-22 19:07:41 +0200</bug_when>
+            <thetext>*** Bug 2442 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10493</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-06-22 19:11:08 +0200</bug_when>
+            <thetext>Increased priority and severity.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10847</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-10 16:51:05 +0200</bug_when>
+            <thetext>*** Bug 2574 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10848</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-07-10 16:53:46 +0200</bug_when>
+            <thetext>As mentioned in the other bug it seems that the call to load() of the privateoptimizer is completely missing.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10849</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-10 17:16:33 +0200</bug_when>
+            <thetext>(In reply to comment #11)
+&gt; As mentioned in the other bug it seems that the call to load() of the 
+privateoptimizer is completely missing.
+
+Good point! The call to load() was always there, but due to inconsistent cache 
+id&#39;s the privates cache object was never found in load().
+
+Fixed with r19567.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10856</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-13 11:53:59 +0200</bug_when>
+            <thetext>Private optimization has been re-enabled in the demos (table/Table was failing 
+recently due to this issue), in order to test the reported fix.
+
+But I&#39;m not closing this bug, since it was reported on May 15, whereas the fix 
+concerns a change introduced on May 26, so this can hardly be the (only) cure. 
+We&#39;ll have to see if the bug re-appears in the near future...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10858</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-13 11:58:21 +0200</bug_when>
+            <thetext>(In reply to comment #13)
+&gt; But I&#39;m not closing this bug, since it was reported on May 15, whereas the 
+fix  concerns a change introduced on May 26, so this can hardly be the (only) 
+cure.  We&#39;ll have to see if the bug re-appears in the near future...
+
+The mentioned change is documented in bug#2398 (adding uniqueness features to 
+cache objects).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11000</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-07-22 16:53:41 +0200</bug_when>
+            <thetext>Thomas, I think you misinterpret the dependency on the date of the initial bug report: on May 15 another bug was reported and was moved to bug #2469, so I guess we could close this one? If not, feel free to reopen.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11008</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-22 18:28:39 +0200</bug_when>
+            <thetext>(In reply to comment #15)
+&gt; Thomas, I think you misinterpret the dependency on the date of the initial 
+bug report: on May 15 another bug was reported and was moved to bug #2469, ...
+
+I don&#39;t think so. The entry that resulted in bug#2469 was from Jun 10. But 
+anyway, I think closing is ok since I haven&#39;t had any new reports of this bug 
+since committing the fix 12 days ago.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11157</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-31 10:29:55 +0200</bug_when>
+            <thetext>I&#39;ve added a test script (grep_privates.py) to qooxdoo-contrib/Bugs/2391 that 
+can be used to detect suspicious re-definitions of privates in build .js files.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12707</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-09-28 16:30:21 +0200</bug_when>
+            <thetext>Seems like this problem still exists in 0.8.3. See bug #2832.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12708</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-09-28 16:33:25 +0200</bug_when>
+            <thetext>Set target milestone to 0.9</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12710</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-09-28 16:35:52 +0200</bug_when>
+            <thetext>*** Bug 2832 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12730</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-30 10:01:11 +0200</bug_when>
+            <thetext>Too bad this shows up again, raised relevancy. But good to have a real-life example (Daniel/Werner should have all the info).
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13451</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-23 13:11:14 +0200</bug_when>
+            <thetext>Just to add another scenario where the variable capture can happen:
+
+It&#39;s not only if a derived class captures a private of a super-class. It 
+happens also when a derived class includes a mixin, and that mixin overwrites a 
+private of the including class&#39; super-class. 
+
+Seen in qx.ui.tree.Tree, which inlcudes qx.ui.core.MContentPadding, which 
+overwrites a private in qx.core.Object, which is a super-class of 
+qx.ui.tree.Tree.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13454</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-23 14:07:08 +0200</bug_when>
+            <thetext>I think I now better understand how variable capture of private-optimized 
+classes can occure. Basically, it is because of using the cache across multiple 
+applications.
+
+Take a framework class. It&#39;s been used in the build of application A (like the 
+Feedreader). The compiled version, including private optimization, is written 
+to the cache. When the next application B (e.g. the Demobrowser) needs this 
+class in its build, the cache version is used, as it is still fresh. But other 
+classes of application B have to be compiled and private-optimized, so the 
+privateoptimzier only sees their privates as they are being optimized, and 
+takes care not to assign a replacement identifier twice. But it cannot regard 
+the private replacements that have been used for the already compiled classes. 
+The privated cache db that is being used is specific to the application, and 
+those classes have been optimized in the context of another application (namely 
+application A).
+
+I see roughly two directions to address this issue:
+
+- Continue to use cached private-optimized classes for builds across 
+applications. This ensures a maximum of cache reuse. But to battle the privates 
+variable capture, you would have to do probably a lot of variable replacement 
+on the cached objects, to replace private identifiers used in a previous build 
+run with those compatible with the current. In short, you&#39;d have to 
+post-process the compiled classes. To achieve that, you would have to scan all 
+involved cache objects prior to using them, and check their privates against a 
+current privates db and replace them as necessary, so there is some linear 
+overhead for cached objects.
+
+- Or, don&#39;t cache private optimization at all, but do it afresh whenever a 
+class is used for a build. You could still cache the compiled version of the 
+class, including all other optimizations *except* for the private optimization. 
+Private-optimization would then be done repetitively, always when the current 
+build requires it, and the result will not be cached. This would incure a 
+linear overhead in the number of cached objects, as they have to be 
+re-optimized for privates every time. But the optimization itself has no 
+overhead over the replacement necessary in the first alternative in the case 
+that you really have to replace an already optimized symbol; if you don&#39;t have 
+to replace it, the first alternative is cheaper.
+
+My gut feeling is that the penality for the second alternative is not much more 
+than that for the first on average, so I would opt for the second solution. It 
+seems cleaner and would be easier to implement in the current generator.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13458</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-23 15:06:32 +0200</bug_when>
+            <thetext>I would opt for the second option. Private optimization is in essence a global optimization. I think we will always have problems if we pretend we could do it on a per file level.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13459</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-23 15:18:56 +0200</bug_when>
+            <thetext>(In reply to comment #24)
+&gt; I would opt for the second option. Private optimization is in essence a 
+global optimization. I think we will always have problems if we pretend we 
+could do it on a per file level.
+
+Thanks. Both alternatives actually acknowledge that it is a global operation. 
+They just attack the issue from different angles (fixing an existing 
+optimization or always optimize from scratch).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13460</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-10-23 15:29:02 +0200</bug_when>
+            <thetext>One moment please. Private optimization works globally. It uses a global
+dictionary of used words where these are build from the name of the private
+plus the class name where it happens. This is afterwards renamed to some random
+name. If this file access works, there should not be any problem. Every private
+field in every class should be seen as unique and should result into a unique
+crypted private name.
+
+In the source version overwriting of privates should not be allowed. This is
+easily doable in the Class.define and is as far as I know already implemented.
+
+It seems I still not understand what the issue here is.
+
+I think this from comment #23 these are basically not right: &quot;so the
+privateoptimzier only sees their privates as they are being optimized&quot; and &quot;But
+it cannot regard the private replacements that have been used for the already
+compiled classes.&quot;. The privates are cached cache-wide. So even if you have
+multiple applications using the same cache there should not be any issue.
+
+Normally the privates are cached the same way as the compiled classes. It is already a global operation - just to use the same wording. If the
+compiler compiles a class it directly refreshes the privates file in the cache.
+This was the original implementation as far as I remember. The privates are
+respected for every class which is ever compiled. It do not see only one
+library and not only one application. It works on a per-cache folder basis.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13462</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-10-23 15:31:18 +0200</bug_when>
+            <thetext>We do not operate on a per-file level. We use a global dictionary of names which works cache-wide. So this is also not an issue: &quot;I think we will always have problems if we pretend we could do it on a per file level.&quot;
+
+It would be sure an issue if the implementation would work that way. Logical.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13464</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-10-23 15:43:19 +0200</bug_when>
+            <thetext>I just downloaded qooxdoo-0.8 SDK. In this release for example it was the case that privates where stored under the globally unique name &quot;privates&quot; directly inside the cache folder.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13465</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-23 15:45:22 +0200</bug_when>
+            <thetext>As a temporary fix, I did something completely different:
+
+I resolved the application-specific (actually, config.json-specific) privates 
+cache db&#39;s, and now there&#39;s only one, cache-wide privates db. Now *all* 
+applications using the same cache will share the same privates db, and all 
+their privates will be registered therein. This should assure a clash-free 
+generation of new private replacements, without any need to process existing 
+cached classes in any way.
+
+The downside is in the size of the compiled apps: As more classes are 
+registered in the privates db, even classes entirely irrelevant for the current 
+build, replacement strings get longer, to ensure uniqueness. We&#39;ll have to see 
+how hard this penalty is.
+
+With r20474.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13467</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-23 16:04:23 +0200</bug_when>
+            <thetext>(In reply to comment #28)
+&gt; I just downloaded qooxdoo-0.8 SDK. In this release for example it was the 
+case that privates where stored under the globally unique name &quot;privates&quot; 
+directly inside the cache folder.
+
+Which was changed when we introduced a system-wide cache, and has now been 
+reverted (see my other comment).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13468</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-10-23 16:06:29 +0200</bug_when>
+            <thetext>Thomas, that was exactly the implementation of 0.8 where a file &quot;privates&quot; was used globally for all applications.
+
+I also don&#39;t see a major issue here: For optimal size use separate caches for each application. For optimization build performance use only one cache for multiple applications. Even if you have many many private fields it needs a lot of time to get 4 character long cryptic names. So the size penalty should not be that problematic.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13469</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-23 16:06:45 +0200</bug_when>
+            <thetext>Also cf. bug#2398.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13471</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-23 16:20:11 +0200</bug_when>
+            <thetext>(In reply to comment #31)
+&gt; I also don&#39;t see a major issue here: For optimal size use separate caches for 
+each application. For optimization build performance use only one cache for 
+multiple applications. Even if you have many many private fields it needs a lot 
+of time to get 4 character long cryptic names. So the size penalty should not 
+be that problematic.
+
+Good point.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13481</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-23 18:12:43 +0200</bug_when>
+            <thetext>assign to watch status in the next couple of days</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13504</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-26 11:21:08 +0100</bug_when>
+            <thetext>I&#39;m tentatively closing this bug again (see comment from 7/13/09). The last 
+fix, implementing a &quot;third&quot; solution by reverting back to a cache-global 
+privates db, is certainly a step towards eliminating the issue. But again, I&#39;m 
+not entirely sure as the fix undoes a change introduced later than this bug was 
+reported (May 26 vs. May 15). So there might be something still lurking...
+
+Re-open the bug if the problem shows up again.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14502</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:15:05 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38319</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:15 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

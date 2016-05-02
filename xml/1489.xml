@@ -1,0 +1,134 @@
+<bug>
+          <bug_id>1489</bug_id>
+          
+          <creation_ts>2008-10-20 15:38:00 +0200</creation_ts>
+          <short_desc>generate.py should exit with non-zero status upon error</short_desc>
+          <delta_ts>2014-03-03 15:19:32 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.system</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>5897</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-10-20 15:38:31 +0200</bug_when>
+            <thetext>If an error was encountered while running generate.py, it should explicitly exit with an exit code other than zero so that simple scripts such as this one work properly.  If the build didn&#39;t succeed, we don&#39;t want to copy the improperly generated or incomplete code:
+
+#!/bin/bash
+./generate.py build &amp;&amp; rsync -av build/ /var/www</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6439</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-11-24 13:59:04 +0100</bug_when>
+            <thetext>This is generally the case. In which case did you get an exit code of 0 after an error? - I cannot reproduce this behaviour.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6442</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-11-24 14:21:44 +0100</bug_when>
+            <thetext>At the time that I reported this, what the generator considered parse errors (e.g. a comma after the last element in a map) that prevented running to completion did not fail with a non-zero exit code.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8735</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-03-19 01:33:30 +0100</bug_when>
+            <thetext>It seems the issue is that uncaught exceptions will terminate a Python program, but will not cause the $? exit status be set to something not equal 0. This can be observed e.g. with exceptions from parse errors, as Derrell pointed out, or &quot;Expressions gives no result&quot; errors from malformed config entries.
+
+To me.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8755</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-03-19 12:54:56 +0100</bug_when>
+            <thetext>Implementation hint:
+
+try:
+  main()
+except Error, e:
+  print e.stack_trace  # there&#39;s a way to get at it, s. exceptions module
+  ...
+  sys.exit(1)               # so I can have both the stack trace and the sys.exit</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8757</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-03-19 13:06:17 +0100</bug_when>
+            <thetext>There is a Python bug for this, along with work-around code (thanks, Gene):
+
+http://bugs.python.org/issue1257</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8758</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-03-19 13:14:17 +0100</bug_when>
+            <thetext>mshillin reports on the mailing list:
+
+Actually found a solution - at least to my problem.
+
+If I change the last line in my generate.py to the following
+
+
+result = subprocess.call(cmd, shell=True)
+sys.exit(result)
+
+
+The sub process return code is used as the exit code.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8759</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-03-19 13:22:42 +0100</bug_when>
+            <thetext>Ah, I think that&#39;s it, at least in our context. The wrapper script &#39;generate.py&#39; is &#39;swallowing&#39; the exit code of the actual generator.py. This also explains why I couldn&#39;t repro the issue at first (see comment#1), because I usually work with generator.py directly. I will still take a closer look, but Mike&#39;s patch for generate.py should solve it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10875</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-14 10:56:11 +0200</bug_when>
+            <thetext>Applied patch with r19577.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36529</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:32 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

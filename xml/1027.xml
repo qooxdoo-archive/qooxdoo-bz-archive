@@ -1,0 +1,120 @@
+<bug>
+          <bug_id>1027</bug_id>
+          
+          <creation_ts>2008-07-02 19:24:00 +0200</creation_ts>
+          <short_desc>Json.js: parse() rejects valid JSON</short_desc>
+          <delta_ts>2014-03-03 15:27:16 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>derrell.lipman</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>3632</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-07-02 19:24:40 +0200</bug_when>
+            <thetext>Here is the current implementation. This holds for both trunk and legacy_0_7_x:
+
+    parse : function(text)
+    {
+      if (!(/[^,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]/.test(text.replace(/&quot;(\\.|[^&quot;\\])*&quot;/g, &quot;&quot;)))) {
+        throw new Error(&quot;Could not parse JSON string!&quot;);
+      }
+
+      try {
+        return eval(&quot;(&quot; + text + &quot;)&quot;);
+      } catch(ex) {
+        throw new Error(&quot;Could not evaluate JSON string: &quot; + ex.message);
+      }
+    }
+
+
+There are a couple of issues with this code. I&#39;ll try to summarize here and provide a couple of pointers for the fix:
+
+1) Inverted Logic
+
+The expression in the &#39;if&#39; condition specifies (i.e.: approximates) a valid Json expression. If the expression holds true, the argument should be eval&#39;ed, not an exception be thrown.
+
+Proof for this is the corresponding RFC (http://www.ietf.org/rfc/rfc4627.txt), which uses the exact expression and&#39;ed (&amp;&amp;) with the call to eval:
+      var my_JSON_object = !(/[^,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]/.test(
+             text.replace(/&quot;(\\.|[^&quot;\\])*&quot;/g, &#39;&#39;))) &amp;&amp;
+         eval(&#39;(&#39; + text + &#39;)&#39;);
+
+(jQuery uses the same idiom, see http://code.google.com/p/jqueryjs/source/browse/trunk/jquery/build/js/json.js)
+
+
+2) Newer RegExp&#39;s
+
+It appears there are newer versions for the detecting expression. Samples:
+
+http://tobielangel.com/2007/4/19/sanitize-json-regex-bug
+http://www.devpro.it/code/149.html
+(look for &quot;Eaeflnr-u&quot;)
+
+So it seems beneficial to improve the regexp.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3633</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-07-02 19:39:49 +0200</bug_when>
+            <thetext>Handled 1) Inverted Logic issue (r14263).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3634</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-07-02 19:40:53 +0200</bug_when>
+            <thetext>add andreas junghans to cc:</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3635</commentid>
+            <who name="Andreas Junghans">andreas.junghans</who>
+            <bug_when>2008-07-02 20:49:55 +0200</bug_when>
+            <thetext>The original expression was taken from the json.org implementation (which is public domain), but this was quite some time ago. Replacing it with a more modern (and most importantly valid) expression is a good idea.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3806</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-07-11 14:40:28 +0200</bug_when>
+            <thetext>Replaced by #1057.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39411</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:16 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

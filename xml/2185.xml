@@ -1,0 +1,174 @@
+<bug>
+          <bug_id>2185</bug_id>
+          
+          <creation_ts>2009-03-31 17:26:00 +0200</creation_ts>
+          <short_desc>IE8: Performance issues with decorators</short_desc>
+          <delta_ts>2012-05-16 09:37:17 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>IE 8</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Alexander Steitz">alexander.steitz</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          <cc>daniel.titze</cc>
+    
+    <cc>fabian.jakobs</cc>
+    
+    <cc>info</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          <cf_browser_version>8</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9042</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-03-31 17:26:17 +0200</bug_when>
+            <thetext>IE8 in &quot;IE8 Standards Mode&quot; is significantly slower when updating decorators than IE8 in &quot;IE7 Standards Mode&quot; or IE7.
+The reason for this is that the DOM structure is a different one. Overall 7 DOM elements are used to display a decorator. 
+
+If the so-called &quot;alpha image loader fix&quot; is enabled (for IE7 and older) there are only DIV elements which are equipped with background-images / AlphaImageLoader to display the decorator elements. 
+
+For IE8 there are 3 IMG and 4 DIV elements used without the AlphaImageLoader. It seems that IE8 has a performance issue when modifying the source of an IMG element. Using the alternative DOM structure (7 DIV elements) and additionally the AlphaImageLoader IE8 shows no performance issues compared to the &quot;IE7 standards Mode&quot;.
+
+We have to decide how to react at this performance issue in &quot;IE8 Standards Mode&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9050</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-01 10:34:09 +0200</bug_when>
+            <thetext>Just a small note: Images are never updated for decorators normally. Decorator instances are basically immutable and are only moved around to another widget or an internal cache. So the update may not be a problem at all.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9079</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-04-02 10:14:24 +0200</bug_when>
+            <thetext>@Alex, please drive this one, maybe involving Chris/Sebastian for rather IE8-specific know-how. If we cannot workaround any IE8 specific issues (which I doubt), we should clearly state the preference of IE7 Standards Mode to qooxdoo users.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9087</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-02 13:47:43 +0200</bug_when>
+            <thetext>Another question: why does the IE8 do not use the alpha image loader? We may still have the same issue in IE8 as in IE7 that the PNG images looks bad together with opacity (disabled state). This was the original reason as far as I remember for using AlphaImageLoader in IE7. I don&#39;t know of any fixes regarding this issue in IE8 though, so it might be the best to use the same code-branch as in IE7 here.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9105</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-04-02 17:57:45 +0200</bug_when>
+            <thetext>@Sebastian
+You&#39;re right the images are never updated, I mixed things up here. What the real performance issue seems to be is that IE8 is slow at re-arranging IMG elements in the DOM. Whether we use the alpha image loader for the background images or not. It&#39;s the different DOM structure which seems to cause the performance problems.
+
+Concerning the alpha image loader: I guess we can also use it for IE8 browsers since it does significantly improve the performance for decorators because of the DOM structure (using 7 DIV elements).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9107</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-04-02 18:10:12 +0200</bug_when>
+            <thetext>I&#39;ve committed a change with Revision #18639 which enabled the alpha image loader for IE8.
+
+@Sebastian
+This change is minor, but can take a short look at it anyway?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9114</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-03 10:47:20 +0200</bug_when>
+            <thetext>That seems to be a huge mistake: &quot;we should clearly state the preference of IE7 Standards Mode&quot;:
+
+Remember that this change would also mean you disable all the nice new stuff IE8 doing right:
+* Native JSON
+* querySelectorAll
+* CSS2 Fixes
+* etc.
+
+Not a good choice IMHO
+
+Just wondering. What is the effect you have exactly with the decorators. I have IE8 on my machine as well and the applications looked quite good. Are you sure that this isn&#39;t just a local phenomen?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9115</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-03 10:53:32 +0200</bug_when>
+            <thetext>Alex your modifications looks good so far.
+
+0.8.2 api viewer and other apps really feel ok in IE8 here. Still wondering what the issue is ;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9116</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-04-03 10:58:40 +0200</bug_when>
+            <thetext>Christian did make me think over this stuff and I think we should check if we can get rid off the alpha image loader in IE8.
+If the performance issue is related to the IMG elements which are lacking speed when moved around the DOM then we can use the DIV element structure but *without* the alpha image loader since IE8 does support alpha PNG images.
+At least we should give a try.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9117</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-04-03 11:00:54 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; Just wondering. What is the effect you have exactly with the decorators. I have
+&gt; IE8 on my machine as well and the applications looked quite good. Are you sure
+&gt; that this isn&#39;t just a local phenomen?
+No, it can be easily reproduced at several machines. The performance lack is *really* noticable when you have e.g. a List and the list item do use decorators when hovering over them.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9145</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-03 16:12:47 +0200</bug_when>
+            <thetext>Even in lists or trees with hover effects it seems to work well for me. The same for menus. Looks like in Firefox with same performance. Mhh, maybe my machine is just fast enough :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11519</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-08-25 14:03:21 +0200</bug_when>
+            <thetext>Back to status &quot;NEW&quot; since I&#39;m not working on this at the moment.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11927</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-09-07 16:54:28 +0200</bug_when>
+            <thetext>accepting</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11928</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-09-07 17:02:46 +0200</bug_when>
+            <thetext>After a look at the current implementation, some (already fixed) issues with IE8 and a short talk with Christian I decided to keep the current state.
+
+So we are using the AlphaImageLoader also for IE8 and this way IE8 is using only DIV elements to generate the decorators.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12065</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-09-09 11:53:24 +0200</bug_when>
+            <thetext>Closing.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

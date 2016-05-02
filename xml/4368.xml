@@ -1,0 +1,126 @@
+<bug>
+          <bug_id>4368</bug_id>
+          
+          <creation_ts>2010-11-25 14:32:00 +0100</creation_ts>
+          <short_desc>Adding two AsyncValidators to a validation manager fires &quot;complete&quot; event after each one</short_desc>
+          <delta_ts>2010-12-13 08:34:56 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>1.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.2.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Omri Har-Shemesh">omrihar</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21561</commentid>
+            <who name="Omri Har-Shemesh">omrihar</who>
+            <bug_when>2010-11-25 14:32:14 +0100</bug_when>
+            <thetext>When adding more than one AsyncValidator functions to a validation manager, the &quot;complete&quot; event fires more than once, after each validator is finished and not only after the entire validation procedure is done.
+
+An example in the playground is: http://tinyurl.com/396bney</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21568</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-26 07:51:09 +0100</bug_when>
+            <thetext>Thanks for the report. Will take care of that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21611</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-29 10:39:49 +0100</bug_when>
+            <thetext>Hello,
+Thanks for the example. It showed me that the bug was not in the framework code. It was the usage of the async validators. As your example shows, you are not using the validators asynchronously. Let me explain you in an example:
+
+var async1 = new qx.ui.form.validation.AsyncValidator(function(validator1, value){
+  console.log(&quot;validator 1 running&quot;);
+  if (value == &quot;test&quot;) {
+    validator1.setValid(true);
+  } else {
+    validator1.setValid(false);
+  }
+});
+
+The time that validator is called, it runs the console.log and sets the validator to valid or invalid. This is all synchronously. The right way to use it would be:
+
+var async1 = new qx.ui.form.validation.AsyncValidator(function(validator1, value){
+  window.setTimeout(function() {
+    console.log(&quot;validator 1&quot;);
+    validator1.setValid(value == &quot;test&quot;);
+  }, 300);
+});
+
+The window.setTimeout functions brings in the asynchronous behavior for testing. The same should be true for your server using code. You should request the server and set the valid property on the response handler. If thats a synchronous request, you can&#39;t use the async validator. Instead, just add a function to validate.
+I hope that helps to fix your problem,
+Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21612</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-29 10:42:32 +0100</bug_when>
+            <thetext>Btw. here is the rewritten and working example:
+http://tinyurl.com/23d92v7</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21615</commentid>
+            <who name="Omri Har-Shemesh">omrihar</who>
+            <bug_when>2010-11-29 11:06:46 +0100</bug_when>
+            <thetext>Thanks for your reply and corrected example.
+
+My code was too complicated to write it in itself in the code example I gave, but the way it works is the following (which could have caused the problem):
+
+I have built a compound validation function whose job is to check three things:
+1) Check if the field is empty - and make it invalid if it is.
+2) If it is not empty, but is equal to some value stored on the client then set to valid.
+3) If not empty and not equal to a client-stored value (or there isn&#39;t any value stored yet), check the server for duplicates. 
+
+I perform the first two checks in order to minimize the calls to the server and because it is unnecessary to perform the last call unless the other two pass.
+I think my bug only happens when a comparison with the client stored value passes for the first field, and the second must be asynchronously checked. 
+
+Is there a different way to do that? I need to perform both Synchronous and Asynchronous validations in one function (or else - is there a way to add two validation functions for the same component to the validation manager?)
+
+Thanks!
+Omri</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21616</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-29 11:38:12 +0100</bug_when>
+            <thetext>Hey,
+just wrap the first tow cases in a timeout and your good with it. A timeout of 0 ms is good here so you won&#39;t get any delay in validation.
+Best,
+Martin</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

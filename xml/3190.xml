@@ -1,0 +1,142 @@
+<bug>
+          <bug_id>3190</bug_id>
+          
+          <creation_ts>2009-12-07 12:05:00 +0100</creation_ts>
+          <short_desc>Windows cannot handle Unicode name spaces</short_desc>
+          <delta_ts>2014-03-03 08:47:23 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.0-beta1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>15350</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-12-07 12:05:32 +0100</bug_when>
+            <thetext>This is a follow-up bug from bug#1589, and is parallel to some issue on Mac OSX 
+(bug#3180):
+
+The sample apps under qooxdoo-contrib/Bugs/1589 cannot be built on Windows, for 
+probably differing reasons, e.g.
+
+C:\Qooxdoo\workspace\qooxdoo-contrib\Bugs\1589\öäüΩΩßÆø&gt;generate.py source
+C:\PROGRA~1\ACTIVE~1\python.exe: can&#39;t open file &#39;C:\Qooxdoo\workspace\qooxdoo-c
+ontrib\Bugs\1589\÷õ³OO▀ã°\generate.py&#39;: [Errno 2] No such file or directory</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26595</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-25 17:37:47 +0200</bug_when>
+            <thetext>This seems to work fine if you use Cygwin&#39;s bash on Windows. You can create a 
+skeleton alright, and generate the source version:
+
+$ qooxdoo.trunk/tool/bin/create-application.py -n &quot;äÜÖß&quot;
+&gt;&gt;&gt; Copy skeleton into the output directory: ./äÜÖß
+&gt;&gt;&gt; Patching file &#39;./äÜÖß/config.json&#39;
+&gt;&gt;&gt; Patching file &#39;./äÜÖß/generate.py&#39;
+&gt;&gt;&gt; Patching file &#39;./äÜÖß/Manifest.json&#39;
+&gt;&gt;&gt; Patching file &#39;./äÜÖß/source/index.html&#39;
+&gt;&gt;&gt; Patching file &#39;./äÜÖß/source/class/äüöß/Application.js&#39;
+&gt;&gt;&gt; Patching file &#39;./äÜÖß/source/class/äüöß/simulation/DemoSimulation.js&#39;
+&gt;&gt;&gt; Patching file &#39;./äÜÖß/source/class/äüöß/test/DemoTest.js&#39;
+&gt;&gt;&gt; Patching file &#39;./äÜÖß/source/class/äüöß/theme/Appearance.js&#39;
+&gt;&gt;&gt; Patching file &#39;./äÜÖß/source/class/äüöß/theme/Color.js&#39;
+&gt;&gt;&gt; Patching file &#39;./äÜÖß/source/class/äüöß/theme/Decoration.js&#39;
+&gt;&gt;&gt; Patching file &#39;./äÜÖß/source/class/äüöß/theme/Font.js&#39;
+&gt;&gt;&gt; Patching file &#39;./äÜÖß/source/class/äüöß/theme/Theme.js&#39;
+&gt;&gt;&gt; DONE
+
+testuser@c94b03j /cygdrive/c/qooxdoo
+$ cd äÜÖß
+
+testuser@c94b03j /cygdrive/c/qooxdoo/äÜÖß
+$ ./generate.py source
+
+---------------------------------------------------
+    Initializing: äÜÖß
+---------------------------------------------------
+&gt;&gt;&gt; Processing configuration
+
+---------------------------------------------------
+    Executing: source::source-script
+---------------------------------------------------
+&gt;&gt;&gt; Scanning libraries
+
+&gt;&gt;&gt; Collecting classes
+  - Sorting 221 classes
+&gt;&gt;&gt; Generate application
+  - Processing 2 locales
+  - Generate packages
+  - Generate loader script
+&gt;&gt;&gt; Done (2m27.59)
+
+So the problem seems to be specific to Window&#39;s Cmd shell.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26598</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-26 10:35:16 +0200</bug_when>
+            <thetext>There are a whole bunch of issues related to unicode names for directory and 
+name space of skeleton. Looking at the debugger how the arguments are passed in 
+to Python, it shows:
+
+- I set the Cmd code page to &#39;chcp 65001&#39; which is supposed to be Utf-8.
+- Later, it shows that Python cannot handle this code page when e.g. printing 
+to the screen; I haven&#39;t followed up on this one.
+- What is passed to the python script in sys.argv is a unicode string, but in a 
+str() buffer type instead of  unicode(): &#39;\xe4\xdc\xd6\xdf&#39;
+- So instead of 
+      options.name = options.name.decode(&#39;utf-8&#39;)
+  in create-application.py#main, this
+      options.name = options.name.decode(&#39;unicode_escape&#39;)
+  yields a usable unicode string on the Cmd shell.
+- But there are then further errors downstream, pot. related to printing to the 
+terminal (s.above).
+- I haven&#39;t checked with Cmd&#39;s default code page 850; I also don&#39;t want to go 
+down the road with cp1250 or something like that, as this all doesn&#39;t cover the 
+whole unicode range and would only work in western/european/east-european 
+scripts.
+- Powershell v1 is not free of issues (though I didn&#39;t have the patience to 
+check if they are exactly the same).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35886</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:47:23 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

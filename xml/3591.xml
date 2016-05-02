@@ -1,0 +1,127 @@
+<bug>
+          <bug_id>3591</bug_id>
+          
+          <creation_ts>2010-04-16 15:12:00 +0200</creation_ts>
+          <short_desc>Omit resources from being indexed to JavaScript</short_desc>
+          <delta_ts>2014-03-03 08:46:24 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Sebastian Werner">info</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>17819</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2010-04-16 15:12:57 +0200</bug_when>
+            <thetext>We have a new mobile application based on qooxdoo. One issue we have is that we put images into the resource folder for copying them from source to build like in normal qooxdoo applications. This is really useful. One thing which is not that useful, though, is that all of these images are indexed in JavaScript as well.
+
+There are resources in the folder which are exclusively used by a CSS file also placed in this folder. There are even resources which are inlined using SASS into a compiled CSS file. In this case we also don&#39;t need the copy-process.
+
+Maybe it would be useful to discuss based on those new needs what&#39;s needs exist outthere. Currently I see that in non qooxdoo GUI apps which more rely on classical technologies like CSS the need of resource handling is somewhat different.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17831</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-19 10:22:50 +0200</bug_when>
+            <thetext>--&gt; Thomas</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17839</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-04-19 11:06:32 +0200</bug_when>
+            <thetext>This can all be achieved with existing mechanisms. Resources are only indexed 
+(ie. added to qx.$$resources) if there is a #asset hint requesting them. Remove 
+the corresponding #asset hint and the resources are no longer indexed. If the 
+only thing you want for certain files is the copying between source and build, 
+this can be achieved using the &quot;copy-files&quot; config key.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17854</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2010-04-19 19:35:07 +0200</bug_when>
+            <thetext>I want to copy files as supported by the resource handling but want to have a possibility to define a exclude list of extensions, file names, sub-paths etc. This could not easily be archived without defining a lot of resources manually which is nothing which would work in our scenario.
+
+BTW: Omitting files from being indexed also omits them being copied. Just copy without indexing is not possible without another manual list of files in the copy-files section. Somehow the current system works great for typical qooxdoo applications, but not in our case. It&#39;s just not flexible enough.
+
+Maybe there should be some variant of #asset e.g. #asset(resourceId, indexAndCopy OR justCopy OR inline).
+
+By inline I mean to make it possible to read the source inline from BASE64 e.g. include the whole image with the compiled class for example.
+
+I know that these suggestions are a bit out of context of the original bug, but I wanted to clarify my needs. Hope this helps.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17855</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-04-19 22:21:47 +0200</bug_when>
+            <thetext>Why should we confuse copy-files and #asset semantics?! It&#39;s so easy to achieve what you want, just by applying a bit of organisation to your resource files. In &#39;source/resource&#39;, just add another subfolder besides the application name space, e.g. &#39;source/resource/stuff&#39; and put all resources there that should only be copied. Then, add the following key to a suitable job in your config.json:
+
+  &quot;copy-files&quot; : {
+    &quot;source&quot; : &quot;source/resource&quot;,
+    &quot;target&quot;  : &quot;build/resource&quot;,
+    &quot;files&quot;     : [ &quot;stuff&quot; ]
+  }
+
+This easy key will copy all the non-index resources to the build version. You can keep all your #asset hints, even if you made gratuitous use of wild cards, as there will only be index-relevant files under the source/resource/&lt;namespace&gt; path.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17892</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2010-04-20 19:00:28 +0200</bug_when>
+            <thetext>See, we have organized our files, but not according your idea of &quot;usage model&quot; in the application, but to a &quot;semantic structure&quot; of where they are used in the app. The model you suggest will not work for us as this would mean that we need to manually restructure all the files after we got an update from our designers. 
+
+Sorry, if I communicated not clearly enough, but I don&#39;t asked for an explanation of the current feature set, but reported an issue because of the current feature set. The generator is configurable with so many options, but in this case it seems to be quite limited where nearly nothing more is configurable than the through the #asset hints.
+
+Another issue with the copy-files directive is that it does NOT have the same logic as the resource handling which does a smart merge of a framework and application resources. It might also copy a whole bunch of internal files aka &quot;.svn&quot;, &quot;.git&quot;, ...
+
+What&#39;s about at least of having some kind of extension list for filtering files? You may already have something like this internally (in the resource handling) to filter &quot;.svn&quot;, &quot;.git&quot; etc. but there are still some system generated files which should also not be copied. Wouldn&#39;t it be useful to have a least this list available for configuration?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17907</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-04-21 16:11:50 +0200</bug_when>
+            <thetext>I&#39;ve added .git and .DS_Store to the directories to be skipped. This should 
+work in both copy-files and copy-resources jobs.
+
+I&#39;ve added concrete bug#3603 to make the skip list configurable.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35517</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:24 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

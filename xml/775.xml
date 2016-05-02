@@ -1,0 +1,94 @@
+<bug>
+          <bug_id>775</bug_id>
+          
+          <creation_ts>2008-01-28 16:55:00 +0100</creation_ts>
+          <short_desc>Reused table remembers old scroll position</short_desc>
+          <delta_ts>2008-06-06 18:00:00 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>0.7.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Hugh Gibson">hgibson</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2808</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-01-28 16:55:17 +0100</bug_when>
+            <thetext>As proposed by qooxdoo core developers, I have been attempting to reuse table instances.
+
+However, there is one circumstance that causes us problems.
+
+The data for the tables is loaded remotely. I&#39;m having great difficulty in getting the table to display cleanly. What has been happening is that wrong data is shown first, then new data. It all appears to be due to the table preventing updates when it is not visible.
+
+We had a problem with browser cached innerHTML data for the widget, which was logged with bug 770.
+
+There is another issue along this vein. In particular, Pane.js keeps a record of the current scroll position in the firstVisibleRow property. This is only reset via scroller.js in _updateContent - but crucially, only if the table is visible. 
+
+However, there are other routes through to Pane.js _updateAllRows which occur when loading data - for example, a data changed event is created when the row count is set to the new value (which is the first part of loading new data remotely).
+
+Therefore I&#39;m seeing the following, for example:
+
+1. 3000 entry table loaded, selection is 2980.
+2. Blanked while loading new table content with 5000 entries and automatic selection of entry 4980
+3. Entries around 2980 appear momentarily (along with a request for data around 2980).
+4. Entries around 4980 appear.
+
+The old value of the pane&#39;s firstVisibleRow, 2980, is retained during the reload of the data and actually forces a pre-fetch of data around that point. The final proper selection of data at 4980 occurs after an update occurs while the table is visible.
+
+A fix for this is to change the first part of table.pane.Scroller.js, _updateContent from :
+
+      if (!this.isSeeable()) {
+        return;
+
+to:
+
+      if (!this.isCreated()) {
+        return;
+
+which is along the lines of the fix for bug 770. In other words, let the table update things &quot;under the hood&quot; before actually being displayed.
+
+Actually, I would prefer a less &quot;serial&quot; way of remote loading data. Ideally this would be a complete package of data requested which would result in a consistent internal update of the table. 
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3215</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-06-06 18:00:00 +0200</bug_when>
+            <thetext>Fixed with r13886
+</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

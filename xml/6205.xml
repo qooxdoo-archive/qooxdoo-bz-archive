@@ -1,0 +1,349 @@
+<bug>
+          <bug_id>6205</bug_id>
+          
+          <creation_ts>2012-03-09 13:35:00 +0100</creation_ts>
+          <short_desc>Make generate.py honor OS environment setting for QOOXDOO_PATH</short_desc>
+          <delta_ts>2014-03-03 15:22:19 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.6</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>https://github.com/sadig/qooxdoo/commit/920ee3e71c949ced8d16f352989d186b186b6b8b</bug_file_loc>
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>2.0</target_milestone>
+          
+          
+          <votes>1</votes>
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stephan Adig">sh</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>derrell.lipman</cc>
+    
+    <cc>john.spackman</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>28786</commentid>
+            <who name="Stephan Adig">sh</who>
+            <bug_when>2012-03-09 13:35:45 +0100</bug_when>
+            <thetext>Dear Colleagues,
+
+during my work on DC² (http://launchpad.net/dc2) I was in need of a qooxdoo package to build the DC² qooxdoo frontend from source inside a debian sbuild chroot.
+
+This was not trivial, because I think the generator.py is a bit simple.
+It checks automatically the config.json file, and even with the -m QOOXDOO_PATH:... switch it takes only the data from config.json.
+
+I adjusted the generate.tmpl.py template to honour an environment variable QOOXDOO_PATH first.
+So you can have a shell construct like this:
+
+QOOXDOO_PATH=/whenever/whereever/whatever/ ./generate.py -m QOOXDOO_PATH:/whenever/whereever/whatever
+
+so generate.py can find the real generator script first.
+
+If you are ok, just pull from my repo.
+
+Kind regards,
+
+Stephan Adig
+
+See url for the diff on github.
+There is also a pull request from</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28792</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-03-12 07:42:12 +0100</bug_when>
+            <thetext>Thanks for the report and the pull request.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28844</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2012-03-15 18:21:22 +0100</bug_when>
+            <thetext>This would be really useful when working on contribs - you have to edit the config.json in order to work on code for the demo browser, and more than once I&#39;ve forgotten to change it back before committing it back (ie my commit broke the demo browser build)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28845</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-03-15 18:55:07 +0100</bug_when>
+            <thetext>This has already been implemented (and shipped with 1.6), in the course of working on a larger enhancement (bug#5632). If QOOXDOO_PATH is set in the os environment, it is honored, and overrides any settings of this macro in config files.
+
+Please check, it should work out of the box. If not, re-open this bug</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28852</commentid>
+            <who name="Stephan Adig">sh</who>
+            <bug_when>2012-03-16 13:40:47 +0100</bug_when>
+            <thetext>Hey Thomas,
+
+
+(In reply to comment #3)
+&gt; This has already been implemented (and shipped with 1.6), in the course of
+&gt; working on a larger enhancement (bug#5632). If QOOXDOO_PATH is set in the os
+&gt; environment, it is honored, and overrides any settings of this macro in config
+&gt; files.
+&gt; 
+&gt; Please check, it should work out of the box. If not, re-open this bug
+
+But this is only true when you generate a new project.
+
+I read the report you mentioned, what is the correct upgrade path to a new generator.py stub?
+
+Regards,
+
+\sh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28853</commentid>
+            <who name="Stephan Adig">sh</who>
+            <bug_when>2012-03-16 13:48:15 +0100</bug_when>
+            <thetext>Thomas,
+
+again it&#39;s me:
+
+(In reply to comment #3)
+&gt; This has already been implemented (and shipped with 1.6), in the course of
+&gt; working on a larger enhancement (bug#5632). If QOOXDOO_PATH is set in the os
+&gt; environment, it is honored, and overrides any settings of this macro in config
+&gt; files.
+&gt; 
+&gt; Please check, it should work out of the box. If not, re-open this bug
+
+I just used qooxdoo 1.6 to create a new application and still the culprit of the generate.py stub is in.
+
+The bugger itself is in the resulting generate.py whcih comes from the template of generate.py
+
+CMD_PYTHON = sys.executable
+QOOXDOO_PATH = &#39;../../workspace/qooxdoo&#39;
+
+def getQxPath():
+    path = QOOXDOO_PATH
+    # try updating from config file
+    if os.path.exists(&#39;config.json&#39;):
+        # &quot;using QOOXDOO_PATH from config.json&quot;
+        qpathr=re.compile(r&#39;&quot;QOOXDOO_PATH&quot;\s*:\s*&quot;([^&quot;]*)&quot;\s*,?&#39;)
+        conffile = open(&#39;config.json&#39;)
+        aconffile = conffile.readlines()
+        for line in aconffile:
+            mo = qpathr.search(line)
+            if mo:
+                path = mo.group(1)
+                break # assume first occurrence is ok
+    path = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), path))
+
+    return path
+
+os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))  # switch to skeleton dir
+qxpath = getQxPath()
+REAL_GENERATOR = os.path.join(qxpath, &#39;tool&#39;, &#39;bin&#39;, &#39;generator.py&#39;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28854</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-03-16 15:25:14 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Thomas,
+&gt; 
+&gt; again it&#39;s me:
+&gt; 
+&gt; (In reply to comment #3)
+&gt; &gt; This has already been implemented (and shipped with 1.6), in the course of
+&gt; &gt; working on a larger enhancement (bug#5632). If QOOXDOO_PATH is set in the os
+&gt; &gt; environment, it is honored, and overrides any settings of this macro in config
+&gt; &gt; files.
+&gt; &gt; 
+&gt; &gt; Please check, it should work out of the box. If not, re-open this bug
+&gt; 
+&gt; I just used qooxdoo 1.6 to create a new application and still the culprit of
+&gt; the generate.py stub is in.
+&gt; 
+&gt; The bugger itself is in the resulting generate.py whcih comes from the template
+&gt; of generate.py
+&gt; 
+&gt; ...
+
+Now I get what you&#39;re saying. Yes, generate.py is simplistic and could use some enhancements, honoring the os environment being one of them. The way it is now the os environment will only be respected starting with the config parsing, so framework paths are adapted, but the tool chain path is not. I agree this is insufficient.
+
+(BTW: No need to paste the entire generate.py into your comment; I know generate.py and know where it comes from ;-).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28855</commentid>
+              <attachid>1135</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2012-03-16 15:37:19 +0100</bug_when>
+            <thetext>Created attachment 1135
+Alternative generate.py with external qooxdoo_path definition
+
+This version of generate.py looks for a file called ~/.qooxdoo/qooxdoo_path and reads from it a single line which is the full path to the qooxdoo directory. It also add &quot;-m QOOXDOO_PATH &lt;path&gt;&quot; as an argument to the real generator.
+
+Maybe this will help in the interim before a standard solution is implemented.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28857</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-03-16 18:30:12 +0100</bug_when>
+            <thetext>I re-worked Stefan&#39;s patch, and most of the getQxPath() function. The os environ setting now is honored and takes precedence. Failing this, config.json is tried, and is actually Json-parsed, so QOOXDOO_PATH mentionings in comments or elsewhere are ignored. Only if this yields nothing, the ugly regex parsing is tried. The path from running create-application.py is retained as the last resort.
+
+I also made create-application.py use the central generate.tmpl.py (from tool/data/generator), so all the generate.tmpl.py in the various skeletons could be removed (finally, sigh!).
+
+@Derrell: I&#39;m respectfully declining your patch. I don&#39;t want to overdo with different ways of specifying QOOXDOO_PATH, and your approach seems too idiosyncratic to me. I think now with a consequent implementation for the os environment most use cases should be covered (You also don&#39;t have to add -m QOOXDOO_PATH on the cmd line in this case). No offense.
+
+master: aa0ab62</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28858</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2012-03-16 18:55:46 +0100</bug_when>
+            <thetext>(In reply to comment #8)
+ 
+&gt; @Derrell: I&#39;m respectfully declining your patch. I don&#39;t want to overdo with
+&gt; different ways of specifying QOOXDOO_PATH, and your approach seems too
+&gt; idiosyncratic to me. I think now with a consequent implementation for the os
+&gt; environment most use cases should be covered (You also don&#39;t have to add -m
+&gt; QOOXDOO_PATH on the cmd line in this case). No offense.
+
+No offense taken. Mine was a hack to accomplish what I needed at the time, and it would have done for others until the &quot;proper&quot; way to do it was completed. My patch can be non-guiltily ignored. :-)
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28869</commentid>
+            <who name="Stephan Adig">sh</who>
+            <bug_when>2012-03-17 19:30:56 +0100</bug_when>
+            <thetext>Good Evening Thomas,
+
+thanks a lot for the fix :)
+
+as I&#39;m also working on the packaging of qooxdoo for ubuntu/debian I would like to see this improvment landing in 1.6.1 :)
+I&#39;ll have now some troubles to find all copyrights for the internally used sources of qooxdoo :) 
+
+Thanks again,
+
+\sh
+
+(In reply to comment #8)
+&gt; I re-worked Stefan&#39;s patch, and most of the getQxPath() function. The os
+&gt; environ setting now is honored and takes precedence. Failing this, config.json
+&gt; is tried, and is actually Json-parsed, so QOOXDOO_PATH mentionings in comments
+&gt; or elsewhere are ignored. Only if this yields nothing, the ugly regex parsing
+&gt; is tried. The path from running create-application.py is retained as the last
+&gt; resort.
+&gt; 
+&gt; I also made create-application.py use the central generate.tmpl.py (from
+&gt; tool/data/generator), so all the generate.tmpl.py in the various skeletons
+&gt; could be removed (finally, sigh!).
+&gt; 
+&gt; @Derrell: I&#39;m respectfully declining your patch. I don&#39;t want to overdo with
+&gt; different ways of specifying QOOXDOO_PATH, and your approach seems too
+&gt; idiosyncratic to me. I think now with a consequent implementation for the os
+&gt; environment most use cases should be covered (You also don&#39;t have to add -m
+&gt; QOOXDOO_PATH on the cmd line in this case). No offense.
+&gt; 
+&gt; master: aa0ab62</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28870</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-03-17 22:08:08 +0100</bug_when>
+            <thetext>(In reply to comment #10)
+&gt; as I&#39;m also working on the packaging of qooxdoo for ubuntu/debian I would like
+&gt; to see this improvment landing in 1.6.1 :)
+
+Then you have to re-open the bug, and we would need to consider. Generally we don&#39;t apply a new feature to the maintenance branch, but maybe this could be regarded an edge case, as environment support for QOOXDOO_PATH was already released with 1.6. - What is so particular about the 1.6.x line?
+
+&gt; I&#39;ll have now some troubles to find all copyrights for the internally used
+&gt; sources of qooxdoo :) 
+
+What&#39;s the problem? Are there files which are not attributed to their copyright holder? - If there are issues, please open a dedicated bug for it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37632</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:19 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1135</attachid>
+            <date>2012-03-16 15:37:00 +0100</date>
+            <delta_ts>2012-03-16 15:37:19 +0100</delta_ts>
+            <desc>Alternative generate.py with external qooxdoo_path definition</desc>
+            <filename>generate.py</filename>
+            <type>text/plain</type>
+            <size>2660</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">IyEvdXNyL2Jpbi9lbnYgcHl0aG9uCiMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjCiMKIyAgcW9veGRv
+byAtIHRoZSBuZXcgZXJhIG9mIHdlYiBkZXZlbG9wbWVudAojCiMgIGh0dHA6Ly9xb294ZG9vLm9y
+ZwojCiMgIENvcHlyaWdodDoKIyAgICAyMDA4IC0gMjAxMCAxJjEgSW50ZXJuZXQgQUcsIEdlcm1h
+bnksIGh0dHA6Ly93d3cuMXVuZDEuZGUKIwojICBMaWNlbnNlOgojICAgIExHUEw6IGh0dHA6Ly93
+d3cuZ251Lm9yZy9saWNlbnNlcy9sZ3BsLmh0bWwKIyAgICBFUEw6IGh0dHA6Ly93d3cuZWNsaXBz
+ZS5vcmcvb3JnL2RvY3VtZW50cy9lcGwtdjEwLnBocAojICAgIFNlZSB0aGUgTElDRU5TRSBmaWxl
+IGluIHRoZSBwcm9qZWN0J3MgdG9wLWxldmVsIGRpcmVjdG9yeSBmb3IgZGV0YWlscy4KIwojICBB
+dXRob3JzOgojICAgICogVGhvbWFzIEhlcmNoZW5yb2VkZXIgKHRocm9uNykKIwojIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIwoKIyMKIyBUaGlzIGlzIGEgc3R1YiBwcm94eSBmb3IgdGhlIHJlYWwgZ2Vu
+ZXJhdG9yLnB5CiMjCgoKaW1wb3J0IHN5cywgb3MsIHJlLCBzdWJwcm9jZXNzCgpDTURfUFlUSE9O
+ID0gc3lzLmV4ZWN1dGFibGUKUU9PWERPT19QQVRIID0gJy4uLy4uLy4uLycKCiMgSWYgd2UgZmlu
+ZCBhIHFvb3hkb29fcGF0aCBmaWxlLCB3ZSdsbCB1c2UgaXRzIGNvbnRlbnRzIGFzIFFPT1hET09f
+UEFUSApxeHBhdGhSZWFkID0gTm9uZQoKZGVmIGdldFF4UGF0aCgpOgogICAgZ2xvYmFsIHF4cGF0
+aFJlYWQKICAgIHBhdGggPSBRT09YRE9PX1BBVEgKICAgIHF4VXNlckhvbWUgPSBvcy5wYXRoLmV4
+cGFuZHVzZXIob3MucGF0aC5qb2luKCJ+IiwgIi5xb294ZG9vIikpCgogICAgIyB0cnkgZ2V0dGlu
+ZyB0aGUgcW9veGRvb19wYXRoIGZpbGUKICAgIHF4UGF0aCA9IG9zLnBhdGguam9pbihxeFVzZXJI
+b21lLCAicW9veGRvb19wYXRoIikKICAgIGlmIG9zLmFjY2VzcyhxeFBhdGgsIG9zLlJfT0spOgog
+ICAgICAgIHdpdGggb3BlbihxeFBhdGgpIGFzIGZwOgogICAgICAgICAgICBxeHBhdGhSZWFkID0g
+cGF0aCA9IGZwLnJlYWQoKS5yc3RyaXAoKQogICAgZWxzZToKICAgICAgICAjIHRyeSB1cGRhdGlu
+ZyBmcm9tIGNvbmZpZyBmaWxlCiAgICAgICAgaWYgb3MucGF0aC5leGlzdHMoJ2NvbmZpZy5qc29u
+Jyk6CiAgICAgICAgICAgICMgInVzaW5nIFFPT1hET09fUEFUSCBmcm9tIGNvbmZpZy5qc29uIgog
+ICAgICAgICAgICBxcGF0aHI9cmUuY29tcGlsZShyJyJRT09YRE9PX1BBVEgiXHMqOlxzKiIoW14i
+XSopIlxzKiw/JykKICAgICAgICAgICAgY29uZmZpbGUgPSBvcGVuKCdjb25maWcuanNvbicpCiAg
+ICAgICAgICAgIGFjb25mZmlsZSA9IGNvbmZmaWxlLnJlYWRsaW5lcygpCiAgICAgICAgICAgIGZv
+ciBsaW5lIGluIGFjb25mZmlsZToKICAgICAgICAgICAgICAgIG1vID0gcXBhdGhyLnNlYXJjaChs
+aW5lKQogICAgICAgICAgICAgICAgaWYgbW86CiAgICAgICAgICAgICAgICAgICAgcGF0aCA9IG1v
+Lmdyb3VwKDEpCiAgICAgICAgICAgICAgICAgICAgYnJlYWsgIyBhc3N1bWUgZmlyc3Qgb2NjdXJy
+ZW5jZSBpcyBvawogICAgcGF0aCA9IG9zLnBhdGgubm9ybXBhdGgob3MucGF0aC5qb2luKG9zLnBh
+dGguZGlybmFtZShvcy5wYXRoLmFic3BhdGgoc3lzLmFyZ3ZbMF0pKSwgcGF0aCkpCgogICAgcmV0
+dXJuIHBhdGgKCm9zLmNoZGlyKG9zLnBhdGguZGlybmFtZShvcy5wYXRoLmFic3BhdGgoc3lzLmFy
+Z3ZbMF0pKSkgICMgc3dpdGNoIHRvIHNrZWxldG9uIGRpcgpxeHBhdGggPSBnZXRReFBhdGgoKQpS
+RUFMX0dFTkVSQVRPUiA9IG9zLnBhdGguam9pbihxeHBhdGgsICd0b29sJywgJ2JpbicsICdnZW5l
+cmF0b3IucHknKQoKaWYgbm90IG9zLnBhdGguZXhpc3RzKFJFQUxfR0VORVJBVE9SKToKICAgIHBy
+aW50ICJDYW5ub3QgZmluZCByZWFsIGdlbmVyYXRvciBzY3JpcHQgdW5kZXI6IFwiJXNcIjsgYWJv
+cnRpbmciICUgUkVBTF9HRU5FUkFUT1IKICAgIHN5cy5leGl0KDEpCgphcmdMaXN0ID0gW10KYXJn
+TGlzdC5hcHBlbmQoQ01EX1BZVEhPTikKYXJnTGlzdC5hcHBlbmQoUkVBTF9HRU5FUkFUT1IpCmFy
+Z0xpc3QuZXh0ZW5kKHN5cy5hcmd2WzE6XSkKaWYgcXhwYXRoUmVhZCAhPSBOb25lOgogICAgYXJn
+TGlzdC5hcHBlbmQoIi1tIikKICAgIGFyZ0xpc3QuYXBwZW5kKCJRT09YRE9PX1BBVEg6IiArIHF4
+cGF0aFJlYWQpCmlmIHN5cy5wbGF0Zm9ybSA9PSAid2luMzIiOgogICAgYXJnTGlzdDE9W10KICAg
+IGZvciBhcmcgaW4gYXJnTGlzdDoKICAgICAgICBpZiBhcmcuZmluZCgnICcpPi0xOgogICAgICAg
+ICAgICBhcmdMaXN0MS5hcHBlbmQoJyIlcyInICUgYXJnKQogICAgICAgIGVsc2U6CiAgICAgICAg
+ICAgIGFyZ0xpc3QxLmFwcGVuZChhcmcpCiAgICBhcmdMaXN0ID0gYXJnTGlzdDEKZWxzZToKICAg
+IGFyZ0xpc3QgPSBbJyIlcyInICUgeCBmb3IgeCBpbiBhcmdMaXN0XSAgIyBxdW90ZSBhcmd2IGVs
+ZW1lbnRzCiAgICAKY21kID0gIiAiLmpvaW4oYXJnTGlzdCkKcmV0dmFsID0gc3VicHJvY2Vzcy5j
+YWxsKGNtZCwgc2hlbGw9VHJ1ZSkKc3lzLmV4aXQocmV0dmFsKQo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

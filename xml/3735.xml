@@ -1,0 +1,698 @@
+<bug>
+          <bug_id>3735</bug_id>
+          
+          <creation_ts>2010-05-27 18:26:00 +0200</creation_ts>
+          <short_desc>form with multiple async validators triggers &#39;complete&#39; incorrectly</short_desc>
+          <delta_ts>2010-07-22 08:14:00 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>1.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Andy White">awhite</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>18513</commentid>
+            <who name="Andy White">awhite</who>
+            <bug_when>2010-05-27 18:26:28 +0200</bug_when>
+            <thetext>When a form has multiple async validators involved in validation it  triggers &#39;complete&#39; incorrectly.  This happens when the first validator passes, but subsequent do not.
+
+The first validator passes and calls setValid(true) - conforming to the documentation:
+
+&gt;setValid(boolean valid, String message)
+&gt;
+&gt;This method should be called within the asynchron callback to tell the validator the result of the validation.
+
+
+The issue is found in qx.ui.form.validation.Manager.
+
+in validate method, imagine the first time through:
+
+
+      // check all validators for the added form items
+      for (var i = 0; i &lt; this.__formItems.length; i++) {
+        var formItem = this.__formItems[i].item;
+        var validator = this.__formItems[i].validator;
+
+        // store the items in case of form validation
+        items.push(formItem);
+
+        // ignore all form items without a validator
+        if (validator == null) {
+          // check for the required property
+          var validatorResult = this.__validateRequired(formItem);
+
+
+Now check out __validateRequired
+
+      if (this.__isAsyncValidator(validator)) {
+        // used to check if all async validations are done
+        this.__asyncResults[formItem.toHashCode()] = null;
+        validator.validate(formItem, formItem.getValue(), this);
+
+so far only one entry in &quot;this.__asyncResults&quot;, but the validator has just been called.  if that validator is running in a background thread (HTML5 Worker) it is possible (not likely, but still) for &#39;setItemValid&#39; to be run from that thread before any additional entries get set into &quot;this.__asyncResults&quot;.   Thus when setItemValid calls &quot;__checkValidationComplete&quot; it looks like the form has passed when it has not.  
+
+I plan on writing a fix for this today and will post an update with the fix later.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18514</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-05-27 18:37:17 +0200</bug_when>
+            <thetext>Andy,
+
+thanks for the excellent analysis and your offer to dig into this. I also assign this to Martin, who&#39;ll be back tomorrow to have a look at this as well and/or review your code.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18516</commentid>
+            <who name="Andy White">awhite</who>
+            <bug_when>2010-05-27 21:37:41 +0200</bug_when>
+            <thetext>Following is my proposed solution to the problem.  The gist of it is to use &#39;__checkValidationComplete&#39; for all validation - sync, async or combo.  To that end &#39;__asyncResults&#39; is renamed &#39;__validationResults&#39; and &#39;__syncValid&#39; is removed.
+
+
+Based off of revision 22066:
+
+/* ************************************************************************
+
+   qooxdoo - the new era of web development
+
+   http://qooxdoo.org
+
+   Copyright:
+     2004-2009 1&amp;1 Internet AG, Germany, http://www.1und1.de
+
+   License:
+     LGPL: http://www.gnu.org/licenses/lgpl.html
+     EPL: http://www.eclipse.org/org/documents/epl-v10.php
+     See the LICENSE file in the project&#39;s top-level directory for details.
+
+   Authors:
+     * Martin Wittemann (martinwittemann)
+
+************************************************************************ */
+/**
+ * This validation manager is responsible for validation of forms.
+ */
+qx.Class.define(&quot;qx.ui.form.validation.Manager&quot;,
+{
+  extend : qx.core.Object,
+
+  construct : function()
+  {
+    this.base(arguments);
+
+    // storage for all form items
+    this.__formItems = [];
+    // storage for all results of async validation calls
+    this.__validationResults = {};
+    // set the default required field message
+    this.setRequiredFieldMessage(qx.locale.Manager.tr(&quot;This field is required&quot;));
+  },
+
+
+  events :
+  {
+    /**
+     * Change event for the valid state.
+     */
+    &quot;changeValid&quot; : &quot;qx.event.type.Data&quot;,
+
+    /**
+     * Signals that the validation is done. This is not needed on synchronous
+     * validation (validation is done right after the call) but very important
+     * in the case an asynchronous validator will be used.
+     */
+    &quot;complete&quot; : &quot;qx.event.type.Event&quot;
+  },
+
+
+  properties :
+  {
+    /**
+     * {Function | AsyncValidator}
+     * The validator of the form itself. You can set a function (for
+     * synchronous validation) or a {@link qx.ui.form.validation.AsyncValidator}.
+     * In both cases, the function can have all added form items as first
+     * argument and the manager as a second argument. The manager should be used
+     * to set the {@link #invalidMessage}.
+     *
+     * Keep in mind that the validator is optional if you don&#39;t need the
+     * validation in the context of the whole form.
+     */
+    validator :
+    {
+      check : &quot;value instanceof Function || qx.Class.isSubClassOf(value.constructor, qx.ui.form.validation.AsyncValidator)&quot;,
+      init : null,
+      nullable : true
+    },
+
+    /**
+     * The invalid message should store the message why the form validation
+     * failed. It will be added to the array returned by
+     * {@link #getInvalidMessages}.
+     */
+    invalidMessage :
+    {
+      check : &quot;String&quot;,
+      init: &quot;&quot;
+    },
+
+
+    /**
+     * This message will be shown if a required field is empty.
+     */
+    requiredFieldMessage :
+    {
+      check : &quot;String&quot;,
+      init : &quot;&quot;
+    }
+  },
+
+
+  members :
+  {
+    __formItems : null,
+    __valid : null,
+    __validationResults : null,
+
+
+    /**
+     * Add a form item to the validation manager.
+     *
+     * The form item has to implement at least two interfaces:
+     * &lt;ol&gt;
+     *   &lt;li&gt;The {@link qx.ui.form.IForm} Interface&lt;/li&gt;
+     *   &lt;li&gt;One of the following interfaces:
+     *     &lt;ul&gt;
+     *       &lt;li&gt;{@link qx.ui.form.IBooleanForm}&lt;/li&gt;
+     *       &lt;li&gt;{@link qx.ui.form.IColorForm}&lt;/li&gt;
+     *       &lt;li&gt;{@link qx.ui.form.IDateForm}&lt;/li&gt;
+     *       &lt;li&gt;{@link qx.ui.form.INumberForm}&lt;/li&gt;
+     *       &lt;li&gt;{@link qx.ui.form.IStringForm}&lt;/li&gt;
+     *     &lt;/ul&gt;
+     *   &lt;/li&gt;
+     * &lt;/ol&gt;
+     * The validator can be a synchronous or asynchronous validator. In
+     * both cases the validator can either returns a boolean or fire an
+     * {@link qx.core.ValidationError}. For synchronous validation, a plain
+     * JavaScript function should be used. For all asynchronous validations,
+     * a {@link qx.ui.form.validation.AsyncValidator} is needed to wrap the
+     * plain function.
+     *
+     * @param formItem {qx.ui.core.Widget} The form item to add.
+     * @param validator {Function | qx.ui.form.validation.AsyncValidator}
+     *   The validator.
+     */
+    add: function(formItem, validator) {
+      // check for the form API
+      if (!this.__supportsInvalid(formItem)) {
+        throw new Error(&quot;Added widget not supported.&quot;);
+      }
+      // check for the data type
+      if (this.__supportsSingleSelection(formItem)) {
+        // check for a validator
+        if (validator != null) {
+          throw new Error(&quot;Widgets suporting selection can only be validated &quot; +
+          &quot;in the form validator&quot;);
+        }
+      }
+      var dataEntry =
+      {
+        item : formItem,
+        validator : validator,
+        valid : null
+      };
+      this.__formItems.push(dataEntry);
+    },
+
+
+    /**
+     * Invokes the validation. If only synchronous validators are set, the
+     * result of the whole validation is available at the end of the method
+     * and can be returned. If an asynchronous validator is set, the result
+     * is still unknown at the end of this method so nothing will be returned.
+     * In both cases, a {@link #complete} event will be fired if the validation
+     * has ended. The result of the validation can then be accessed with the
+     * {@link #getValid} method.
+     *
+     * @return {Boolean | void} The validation result, if available.
+     */
+    validate : function() {
+      var valid = true;
+      var items = [];
+	  
+      // prepare validation results hash, used to check if all validations are complete (useful if any async validation occurs)
+	  // add an entry for each form item
+      for (var i = 0; i &lt; this.__formItems.length; i++) {
+        var formItem = this.__formItems[i].item;
+        // used to check if all validations are done
+        this.__validationResults[formItem.toHashCode()] = null;
+      }
+	  
+	  // and add an entry for the form also
+      this.__validationResults[this.toHashCode()] = null;
+
+      // check all validators for the added form items
+      for (var i = 0; i &lt; this.__formItems.length; i++) {
+        var formItem = this.__formItems[i].item;
+        var validator = this.__formItems[i].validator;
+
+        // store the items in case of form validation
+        items.push(formItem);
+
+        var itmValid = (validator == null) 
+			// if no validator then check for the required property
+			? this.__validateRequired(formItem)
+			// otherwise, call the validator code
+			: this.__validateItem(this.__formItems[i], formItem.getValue());
+			
+        // keep that order to ensure that null is returned on async cases
+        valid = itmValid &amp;&amp; valid;
+      }
+
+      // check the form validator (be sure to invoke it even if the form
+      // items are already false, so keep the order!)
+      var frmValid = this.__validateForm(items);
+	  
+      // keep that order to ensure that null is returned on async cases
+      valid = frmValid &amp;&amp; valid;
+
+	  this.__checkValidationComplete();
+	  
+      return valid;
+    },
+
+
+    /**
+     * Checks if the form item is required. If so, the value is checked
+     * and the result will be returned. If the form item is not required, true
+     * will be returned.
+     *
+     * @param formItem {qx.ui.core.Widget} The form item to check.
+     */
+    __validateRequired : function(formItem) {
+      if (formItem.getRequired()) {
+        // if its a widget supporting the selection
+        if (this.__supportsSingleSelection(formItem)) {
+          var validatorResult = !!formItem.getSelection()[0];
+        // otherwise, a value should be supplied
+        } else {
+          var validatorResult = !!formItem.getValue();
+        }
+        formItem.setValid(validatorResult);
+        formItem.setInvalidMessage(this.getRequiredFieldMessage());
+		
+	    this.__validationResults[formItem.toHashCode()] = validatorResult;
+        return validatorResult;
+      }
+	  
+	  this.__validationResults[formItem.toHashCode()] = true;
+      return true;
+    },
+
+
+    /**
+     * Validates a form item. This method handles the differences of
+     * synchronous and asynchronous validation and returns the result of the
+     * validation if possible (synchronous cases). If the validation is
+     * asynchronous, null will be returned.
+     *
+     * @param dataEntry {Object} The map stored in {@link #add}
+     * @param value {var} The currently set value
+     */
+    __validateItem : function(dataEntry, value) {
+      var formItem = dataEntry.item;
+      var validator = dataEntry.validator;
+
+      // check for asynchronous validation
+      if (this.__isAsyncValidator(validator)) {
+        validator.validate(formItem, formItem.getValue(), this);
+        return null;
+      }
+
+      var validatorResult = null;
+
+      try {
+        var validatorResult = validator(value, formItem);
+        if (validatorResult === undefined) {
+          validatorResult = true;
+        }
+
+      } catch (e) {
+        if (e instanceof qx.core.ValidationError) {
+          validatorResult = false;
+          if (e.message &amp;&amp; e.message != qx.type.BaseError.DEFAULTMESSAGE) {
+            var invalidMessage = e.message;
+          } else {
+            var invalidMessage = e.getComment();
+          }
+          formItem.setInvalidMessage(invalidMessage);
+        } else {
+          throw e;
+        }
+      }
+
+      formItem.setValid(validatorResult);
+      dataEntry.valid = validatorResult;
+
+	  this.__validationResults[formItem.toHashCode()] = validatorResult;
+      return validatorResult;
+    },
+
+
+    /**
+     * Validates the form. It checks for asynchronous validation and handles
+     * the differences to synchronous validation. If no form validator is given,
+     * true will be returned. If a synchronous validator is given, the
+     * validation result will be returned. In asynchronous cases, null will be
+     * returned cause the result is not available.
+     *
+     * @param items {qx.ui.core.Widget[]} An array of all form items.
+     * @return {Boolean|null} description
+     */
+    __validateForm: function(items) {
+      var formValidator = this.getValidator();
+
+      if (formValidator == null) {
+	    this.__validationResults[this.toHashCode()] = true;
+        return true;
+      }
+
+      // reset the invalidMessage
+      this.setInvalidMessage(&quot;&quot;);
+
+      if (this.__isAsyncValidator(formValidator)) {
+        formValidator.validateForm(items, this);
+        return null;
+      }
+
+      try {
+        var formValid = formValidator(items, this);
+        if (formValid === undefined) {
+          formValid = true;
+        }
+      } catch (e) {
+        if (e instanceof qx.core.ValidationError) {
+          formValid = false;
+
+          if (e.message &amp;&amp; e.message != qx.type.BaseError.DEFAULTMESSAGE) {
+            var invalidMessage = e.message;
+          } else {
+            var invalidMessage = e.getComment();
+          }
+          this.setInvalidMessage(invalidMessage);
+        } else {
+          throw e;
+        }
+      }
+	  
+	  this.__validationResults[this.toHashCode()] = formValid;
+      return formValid;
+    },
+
+
+    /**
+     * Helper function which checks, if the given validator is synchronous
+     * or asynchronous.
+     *
+     * @param validator {Function||qx.ui.form.validation.Asyncvalidator}
+     *   The validator to check.
+     * @return {Boolean} True, if the given validator is asynchronous.
+     */
+    __isAsyncValidator : function(validator) {
+      var async = false;
+      if (!qx.lang.Type.isFunction(validator)) {
+        async = qx.Class.isSubClassOf(
+          validator.constructor, qx.ui.form.validation.AsyncValidator
+        );
+      }
+      return async;
+    },
+
+
+    /**
+     * Returns true, if the given item implements the {@link qx.ui.form.IForm}
+     * interface.
+     *
+     * @param formItem {qx.core.Object} The item to check.
+     * @return {boolean} true, if the given item implements the
+     *   necessary interface.
+     */
+    __supportsInvalid : function(formItem) {
+      var clazz = formItem.constructor;
+      return qx.Class.hasInterface(clazz, qx.ui.form.IForm);
+    },
+
+
+    /**
+     * Returns true, if the given item implements the
+     * {@link qx.ui.core.ISingleSelection} interface.
+     *
+     * @param formItem {qx.core.Object} The item to check.
+     * @return {boolean} true, if the given item implements the
+     *   necessary interface.
+     */
+    __supportsSingleSelection : function(formItem) {
+      var clazz = formItem.constructor;
+      return qx.Class.hasInterface(clazz, qx.ui.core.ISingleSelection);
+    },
+
+
+    /**
+     * Returns true, if the value property is supplied by the form item.
+     *
+     * @param formItem {qx.core.Object} The item to check.
+     * @return {boolean} true, if the given item implements the
+     *   necessary interface.
+     */
+    __supportsValue : function(formItem) {
+      var clazz = formItem.constructor;
+      return (
+        qx.Class.hasInterface(clazz, qx.ui.form.IBooleanForm) ||
+        qx.Class.hasInterface(clazz, qx.ui.form.IColorForm) ||
+        qx.Class.hasInterface(clazz, qx.ui.form.IDateForm) ||
+        qx.Class.hasInterface(clazz, qx.ui.form.INumberForm) ||
+        qx.Class.hasInterface(clazz, qx.ui.form.IStringForm)
+      );
+    },
+
+
+    /**
+     * Internal setter for the valid member. It generates the event if
+     * necessary and stores the new value
+     *
+     * @param value {Boolean|null} The new valid value of the manager.
+     */
+    __setValid: function(value) {
+      var oldValue = this.__valid;
+      this.__valid = value;
+      // check for the change event
+      if (oldValue != value) {
+        this.fireDataEvent(&quot;changeValid&quot;, value, oldValue);
+      }
+    },
+
+
+    /**
+     * Returns the valid state of the manager.
+     *
+     * @return {Boolean|null} The valid state of the manager.
+     */
+    getValid: function() {
+      return this.__valid;
+    },
+
+
+    /**
+     * Returns the valid state of the manager.
+     *
+     * @return {Boolean|null} The valid state of the manager.
+     */
+    isValid: function() {
+      return this.getValid();
+    },
+
+
+    /**
+     * Returns an array of all invalid messages of the invalid form items and
+     * the form manager itself.
+     *
+     * @return {String[]} All invalid messages.
+     */
+    getInvalidMessages: function() {
+      var messages = [];
+      // combine the messages of all form items
+      for (var i = 0; i &lt; this.__formItems.length; i++) {
+        var formItem = this.__formItems[i].item;
+        if (!formItem.getValid()) {
+          messages.push(formItem.getInvalidMessage());
+        }
+      }
+      // add the forms fail message
+      if (this.getInvalidMessage() != &quot;&quot;) {
+        messages.push(this.getInvalidMessage());
+      }
+
+      return messages;
+    },
+
+
+    /**
+     * Resets the validator.
+     */
+    reset: function() {
+      // reset all form items
+      for (var i = 0; i &lt; this.__formItems.length; i++) {
+        var dataEntry = this.__formItems[i];
+        // set the field to valid
+        dataEntry.item.setValid(true);
+      }
+      // set the manager to its inital valid value
+      this.__valid = null;
+    },
+
+
+    /**
+     * Internal helper method to set the given item to valid for asynchronous
+     * validation calls. This indirection is used to determinate if the
+     * validation process is completed or if other asynchronous validators
+     * are still validating. {@link #__checkValidationComplete} checks if the
+     * validation is complete and will be called at the end of this method.
+     *
+     * @param formItem {qx.ui.core.Widget} The form item to set the valid state.
+     * @param valid {Boolean} The valid state for the form item.
+     *
+     * @internal
+     */
+    setItemValid: function(formItem, valid) {
+      // store the result
+      this.__validationResults[formItem.toHashCode()] = valid;
+      formItem.setValid(valid);
+      this.__checkValidationComplete();
+    },
+
+
+    /**
+     * Internal helper method to set the form manager to valid for asynchronous
+     * validation calls. This indirection is used to determinate if the
+     * validation process is completed or if other asynchronous validators
+     * are still validating. {@link #__checkValidationComplete} checks if the
+     * validation is complete and will be called at the end of this method.
+     *
+     * @param valid {Boolean} The valid state for the form manager.
+     *
+     * @internal
+     */
+    setFormValid : function(valid) {
+      this.__validationResults[this.toHashCode()] = valid;
+      this.__checkValidationComplete();
+    },
+
+
+    /**
+     * Checks if all asynchronous validators have validated so the result
+     * is final and the {@link #complete} event can be fired. If that&#39;s not
+     * the case, nothing will happen in the method.
+     */
+    __checkValidationComplete : function() {
+      var valid = true;
+	  
+      // check if all async validators are done
+      for (var hash in this.__validationResults) {
+        var currentResult = this.__validationResults[hash];		
+        valid = currentResult &amp;&amp; valid;
+		
+        // the validation is not done so just do nothing
+        if (currentResult == null) {
+          return;
+        }
+      }
+	  
+      // set the actual valid state of the manager
+      this.__setValid(valid);
+      // reset the results
+      this.__validationResults = {};
+      // fire the complete event (no entry in the results with null)
+      this.fireEvent(&quot;complete&quot;);
+    }
+  },
+
+
+  /*
+  *****************************************************************************
+     DESTRUCTOR
+  *****************************************************************************
+  */
+  destruct : function()
+  {
+    this.__formItems = null;
+  }
+});
+
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18521</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-05-28 09:38:48 +0200</bug_when>
+            <thetext>Hey Andy,
+thanks for the detailed report and fix. I take care of it as soon as I have time.
+Regards,
+Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18729</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-06-16 15:23:55 +0200</bug_when>
+            <thetext>Accept</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18916</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-06-25 10:33:38 +0200</bug_when>
+            <thetext>Hello Andy,
+I&#39;m currently working on that issue and trying to build a unit test based on your description. But sadly I can&#39;t get it done and reproduce your wrong behavior. I set up a test which has tree async validators. The first one validates to true within 100ms. The second validates to false within 300ms and the last one validates to true in 500ms. I also tried the combination of haven the last two validators fail but without success. (see r22494, qx.test.ui.form.FormValidator:testAsyncSelfContained2NotNullFailMixed)
+Maybe you can help me out? 
+
+You talked about calling the setItemValid method? Did you see that this method is marked as internal and should not be used? ;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19317</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-07-15 08:03:39 +0200</bug_when>
+            <thetext>If I can&#39;t reproduce the bug I will close it as &quot;wroksforme&quot;.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,165 @@
+<bug>
+          <bug_id>4480</bug_id>
+          
+          <creation_ts>2010-12-13 12:31:00 +0100</creation_ts>
+          <short_desc>Generator only warns about the first occurring global variable</short_desc>
+          <delta_ts>2013-12-16 12:46:40 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>trivial</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21928</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-12-13 12:31:09 +0100</bug_when>
+            <thetext>If a variable with name myvar is defined/used in two different places in code, i.e. in two different lines, the generator only prints out the warning for the first occurring one. It means that the developer needs to rerun the generator to find all.
+
+I think it would be advisable to warn for all lines with global variables even with a previous occurring name, which could be the same or different by mistake.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21956</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-12-14 16:10:35 +0100</bug_when>
+            <thetext>Thanks for the report. Can you supply an example? I just checked my lint which warns me for every occurrence.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22013</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-12-16 20:36:53 +0100</bug_when>
+            <thetext>qx.Class.define(&quot;com.Application&quot;,
+{
+  extend : qx.application.Inline,
+
+  members :
+  {
+    main : function()
+    {
+      this.base(arguments);
+
+      var htmlElement = document.getElementById(&quot;test&quot;);
+      var inlineIsle = new qx.ui.root.Inline(htmlElement, true, true);
+
+      var knownParts = qx.Part.getInstance().getParts();
+
+      if (knownParts[lang])
+      {
+        qx.io.PartLoader.require([lang], function() {
+          qx.locale.Manager.getInstance().setLocale(lang);
+          this.constructComponent();
+        }, this);
+      }
+      else
+      {
+        this.warn(&quot;Cannot load locale part for current language &quot; + lang + &quot;, falling back to English.&quot;);
+        this.constructComponent();
+      }
+    },
+
+    constructComponent : function()
+    {
+       lang = &quot;anything&quot;;
+    }
+  }
+});
+
+
+Only the first one (lang)
+
+      if (knownParts[lang])
+
+is recognized by the generator and warned! Should have printed out info about the other 3 too.
+
+./generate.py lint :
+-&gt; recognizes ALL 4</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22014</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-12-17 08:38:21 +0100</bug_when>
+            <thetext>Thanks for the example but again, its working for me. It finds all 5 usages of lang.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22026</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-12-17 11:51:20 +0100</bug_when>
+            <thetext>Do you mean:
+
+./generate.py lint
+
+or
+
+./generate.py
+
+The first does for me, but not the second! Are you doing both?
+
+Can anyone else try it? Because this is strange or is here a miscommunication?
+
+I am using FC14 with latest updates.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22029</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-12-17 12:25:14 +0100</bug_when>
+            <thetext>As you mentioned in your comment,
+
+  generate.py lint /= generate.py (source|build)
+
+and Martin was referring to &#39;lint&#39;. Run &#39;lint&#39; in case you want refined output.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22032</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-12-17 16:24:40 +0100</bug_when>
+            <thetext>Am I interpreting you right now: You don&#39;t want to show all by using:
+
+./generate.py
+
+instead, you refer to use 
+
+./generate.py lint
+
+lint if one item comes up to refine it.
+
+----------------
+
+But the one, lang, presented by line number and column number, is a specific occassion of the 5 in the code example. To be consequent then I would propose the following:
+
+- don&#39;t print out line number and column number, just tell that the variable has been referred to. Cause else it can be misunderstood as the only occurrence.
+- add also a text with the printout of &quot;lang&quot; like &quot;For refining output, use ./generate.py lint&quot;</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

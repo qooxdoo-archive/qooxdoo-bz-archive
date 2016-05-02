@@ -1,0 +1,158 @@
+<bug>
+          <bug_id>9212</bug_id>
+          
+          <creation_ts>2015-09-19 03:58:00 +0200</creation_ts>
+          <short_desc>Feature detect the creation of mouse events (was: window resize broken in browsers based on Qt Webkit)</short_desc>
+          <delta_ts>2015-10-30 16:26:48 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>5.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Linux</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Pavol Federl">federl</reporter>
+          <assigned_to name="Andreas Ecker">qooxdoo</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>43559</commentid>
+            <who name="Pavol Federl">federl</who>
+            <bug_when>2015-09-19 03:58:51 +0200</bug_when>
+            <thetext>When using a Qt WebKit based widgets to view qooxdoo desktop applications, certain features don&#39;t work. For example, resizing windows does not work at all. It still works with qooxdoo 3.5, but is broken since qooxdoo 4.0, including 5.0.1.
+
+If you want to reproduce the bug, you will have to install Qt, e.g. from
+
+  http://www.qt.io/download-open-source/
+
+Then compile a sample demo app, e.g.
+
+  http://doc.qt.io/qt-5/qtwebkitexamples-webkitwidgets-fancybrowser-example.html
+
+Then run the &#39;fancybrowser&#39; app, and point it to:
+
+  http://demo.qooxdoo.org/current/widgetbrowser/
+
+In the &#39;Window&#39; tab of the demo, the window will appear, you can move it around, but you will not be able to resize windows. I believe that anything that is based on MResizable will be broken.
+
+Please note I only tested this under Ubuntu 12.04 and 14.04, with Qt 5.3 and 5.4.
+
+I tried to debug the problem, and the culprit seems to be that getDocumentLeft() on pointermove events seems to always return 0 when listening directly on getContentElement() of a widget. Interestingly, it does return proper values when attached to widgets directly. I.e.
+
+	var w = new qx.ui.core.Widget();
+        w.addListener( &quot;pointermove&quot;, callback); // getDocumentLeft() works
+        w.getContentElement( &quot;pointermove&quot;, callback); // getDocumentLeft() is always 0
+
+This naturally breaks the functionality of MResizable as it uses getDocumentLeft/Top() a lot.
+
+After spending few hours trying to find a workaround for this, I think I found what the problem is: the way _createEvent() is implemented in qx.event.type.dom.Pointer (qooxdoo 5.0.1):
+
+    _createEvent : function() {
+      var evt;
+      if (qx.core.Environment.get(&quot;event.mouseevent&quot;)) {
+        evt = new window.MouseEvent(this._type);
+      } else if (typeof document.createEvent == &quot;function&quot;) {
+        /* In IE9, the pageX property of synthetic MouseEvents is always 0
+         and cannot be overriden, so we create a plain UIEvent and add
+         the mouse event properties ourselves. */
+        evt = document.createEvent(&quot;UIEvents&quot;);
+      } else if (typeof document.createEventObject == &quot;object&quot;) {
+        // IE8 doesn&#39;t support custom event types
+        evt = {};
+        evt.type = this._type;
+      }
+      return evt;
+    },
+
+Since in Qt WebKit:
+
+        qx.core.Environment.get(&quot;event.mouseevent&quot;) == false
+
+_createEvent() resorts to calling
+
+        evt = document.createEvent(&quot;UIEvents&quot;);
+
+But this type of object does not have initMouseEvent, and many(all?) modifications to it later in _initEvent (in particular pageX) are lost (i.e. it looks like some/all of its properties are immutable).
+
+I found a solution by looking at the example at:
+
+  https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/initMouseEvent
+
+I.e. if the event object is created like this:
+
+        evt = document.createEvent(&quot;MouseEvents&quot;);
+
+Then everything works fine. So my temporary workaround involves patching the Pointer class:
+
+	qx.Class.patch(qx.event.type.dom.Pointer, qxdebug.MyPointerPatch);
+
+Where MyPointerPatch is a mixin:
+
+  qx.Mixin.define( &quot;qxdebug.MyPointerPatch&quot;, {
+      members: {
+          _createEvent : function() {
+              var evt;
+              if (qx.core.Environment.get(&quot;event.mouseevent&quot;)) {
+                  evt = new window.MouseEvent(this._type);
+              } else if (typeof document.createEvent == &quot;function&quot;) {
+                  if( window.patchPointer) {
+                      evt = document.createEvent(&quot;MouseEvents&quot;);
+                  } else {
+                      evt = document.createEvent(&quot;UIEvents&quot;);
+                  }  
+              } else if (typeof document.createEventObject == &quot;object&quot;) {
+                  evt = {};
+                  evt.type = this._type;
+              }
+              return evt;
+          }
+      }
+  });
+
+Naturally window.patchPointer is an ugly global variable hack, which I set only when loading things inside a Qt WebKit based browser. It should be replaced by proper feature detection...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43562</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-09-22 09:21:15 +0200</bug_when>
+            <thetext>Thanks for your report and the in-depth analysis. Very well done!
+
+It&#39;s indeed strange that the current Qt webview is still based on such an old mouse event API? On the other hand, IE9 isn&#39;t less strange in supporting the older API only half-heartedly ...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43628</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-30 16:26:48 +0100</bug_when>
+            <thetext>Added feature detection for creating mouse events into master with f1bca02.
+
+Feel free to verify it to work fine in your environment.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

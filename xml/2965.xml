@@ -1,0 +1,365 @@
+<bug>
+          <bug_id>2965</bug_id>
+          
+          <creation_ts>2009-10-22 10:21:00 +0200</creation_ts>
+          <short_desc>Replacement for add/remove of qx.bom.element.Class for multi class support</short_desc>
+          <delta_ts>2014-03-03 15:27:37 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Sebastian Werner">info</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          <cc>gradinf</cc>
+    
+    <cc>mail</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>13408</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-10-22 10:21:27 +0200</bug_when>
+            <thetext>Hi, I have written replacement methods for &quot;add&quot; and &quot;remove&quot; of qx.bom.element.Class to support multiple adds/removes per method call. This should not have a major effect on performance. Would be happy to see this in qooxdoo some time.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13409</commentid>
+              <attachid>630</attachid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-10-22 10:22:21 +0200</bug_when>
+            <thetext>Created attachment 630
+The new methods and a few new static members.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13446</commentid>
+              <attachid>631</attachid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-10-23 10:42:33 +0200</bug_when>
+            <thetext>Created attachment 631
+Replacement for old solution. This one works more stable.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13447</commentid>
+              <attachid>632</attachid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-10-23 10:47:09 +0200</bug_when>
+            <thetext>Created attachment 632
+Sorry, this one is correct.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13510</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-26 12:24:02 +0100</bug_when>
+            <thetext>to alex</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13711</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-10-29 17:14:13 +0100</bug_when>
+            <thetext>Does not yet includes support for class list as seen in report #2697. This is maybe the next update which makes sense.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13822</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-03 15:12:35 +0100</bug_when>
+            <thetext>Sebastian, still happy with this proposal? While it is more convenient when working with many classes at once, there is likely some impact for the single class case (might be the most common). 
+
+Often in qooxdoo we trade convenience for speed (and a more explicit API). If opening up the API here for convenience, is this consistent with the other regular low-level API? Sebastian, Alex, comments welcome.
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13843</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-11-03 19:47:38 +0100</bug_when>
+            <thetext>Andreas, I am not exactly sure if this is really more expensive than the previous solution. Though I have not tested it against. 
+
+The thing is that this class is most often used in DOM only apps. It has nearly zero relevance for qooxdoo GUI apps. In DOM cases you have quite often the case of adding/removing a few classes. The overhead produced by calling this method two or three times is much higher.
+
+The question to answer here is, what is more important:
+* performance for doing single class modifications
+* performance for doing multiple class modifications
+
+I tend to the second one.
+
+As &quot;classList&quot; is currently only supported in Firefox, I do not would like to add support for this at the moment as it leads to more code to maintain and maybe other issues with dual-implementing code. This one is clean, nice and works :) So yes, I am happy with it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13966</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-11-06 12:58:37 +0100</bug_when>
+            <thetext>I tend to keep the current API as is, since throughout the low-level classes we have explicit method names. E.g. &quot;qx.bom.element.Style&quot; does offer a &quot;set&quot; and a &quot;setStyles&quot; method to reflect that the latter one is for setting multiple styles at once.
+
+I would keep this concept and would offer the new methods as
+
+  * addClasses
+  * removeClasses
+
+to have an explicit API and to keep the API consistent regarding the other classes.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13984</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-11-06 17:57:17 +0100</bug_when>
+            <thetext>setStyles or setAttributes is somewhat special as you have key-value pairs and not just adding stuff to a list.
+
+As this produces a major overhead to have both things implemented. What&#39;s about to go the transition in a direction like the following:
+
+* Adding methods: addClasses and removeClasses
+* Deprecating addClass and removeClass with calls to the new methods
+
+This way you have:
+
+* Explicit and correct names
+* Lowest possible overhead
+* Comparable functionality to other libs
+* Compatibility to old implementation</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15315</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-12-04 17:18:24 +0100</bug_when>
+            <thetext>I still want to keep both implementations for a more consistent API and I don&#39;t see a &quot;major&quot; overhead here. There is an overhead, but I think it&#39;s acceptable and worth it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15317</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-12-04 18:53:10 +0100</bug_when>
+            <thetext>Come on, nearly doubling the size is a major overhead. Sure it may not have large influences on the qooxdoo ui applications, but on low-level apps every byte counts. Especially when the functionality is so damn comparable. I really hope I am not the only one seeing an issue here. Can you please ask around in your team if this is common-sense. Hope not.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15319</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2009-12-05 00:34:52 +0100</bug_when>
+            <thetext>The size for a normal low level qooxdoo js file is more than 200kb. I think it&#39;s bigger than it should be already. So I&#39;m voting to use just one pair of methods.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15325</commentid>
+            <who name="Sebastian Fastner">mail</who>
+            <bug_when>2009-12-05 13:04:37 +0100</bug_when>
+            <thetext>I also think it would be of great help to reduce qooxdoo low level as much as possible. The big advantage of using qooxdoos class system in non-ria applications could be destroyed with long loading times. On the other hand, if the low level stuff is fast, qooxdoo ui level stuff would be also faster (okay, I understand that this one is not an big issue for ui level, but it&#39;s an general design rule)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15340</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-12-07 10:29:00 +0100</bug_when>
+            <thetext>At the moment we always distinguish between singular and plural API in the low level layer. I think we should remain consistent and add &quot;addClasses&quot; in addition to &quot;addClass&quot;.
+
+I do see the the point of keeping the BOM layer as small as possible but the overhead of having two methods is really minimal.
+
+In the future we should evaluate whether we should deprecate all singular methods. In most cases it is even more efficient to use the plural API. But this is definitely something for a new bug and after the 1.0 release.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15341</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-12-07 10:29:41 +0100</bug_when>
+            <thetext>BTW It would be nice to have unit tests for the new functionality.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15396</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-12-07 18:42:55 +0100</bug_when>
+            <thetext>I still don&#39;t get what let&#39;s you fight so strong for such a minor change. Why do one want to add another set of functions if we could simple extend the functionality of the old methods to make them more flexible. To introduce new methods like addClasses/removeClasses helps nobody. It&#39;s another type of naming which is currently nowhere found in the low-level API.
+
+My ambition on the thing was to have a more flexible API in qooxdoo to reduce the footprint in our applications. So I created a bug report and attached the implementation. 
+
+I really want to go sure that this do not happen with every piece of new code one submits. Just append it somewhere and keep the old API is IMHO no solution.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15870</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-12-14 17:07:00 +0100</bug_when>
+            <thetext>Target it for 1.1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16794</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-02-11 15:50:52 +0100</bug_when>
+            <thetext>accepting</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16799</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-02-12 13:38:40 +0100</bug_when>
+            <thetext>Fixed with Revision #21557
+
+Added &quot;addClasses&quot; and &quot;removeClasses&quot; methods to &quot;qx.bom.element.Class&quot; which minor changes compared to the provided patch.
+
+In future releases we may deprecate the singular methods in favor for the plural ones, but this has to be targeted for the whole BOM layer and is worth an own bug report.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39530</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:37 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="1" ispatch="0" isprivate="0" isurl="0">
+            <attachid>630</attachid>
+            <date>2009-10-22 10:22:00 +0200</date>
+            <delta_ts>2009-10-23 10:42:33 +0200</delta_ts>
+            <desc>The new methods and a few new static members.</desc>
+            <filename>class.txt</filename>
+            <type>text/plain</type>
+            <size>1945</size>
+            <attacher>info</attacher>
+            
+              <data encoding="base64">ICAgIC8qKiB7UmVnRXhwfSBSZWd1bGFyIGV4cHJlc3Npb25zIHRvIHNwbGl0IGNsYXNzIG5hbWVz
+ICovCiAgICBfX3NwbGl0dGVyIDogL1xzKy8sCiAgICAKICAgIC8qKiB7U3RyaW5nfSBVc2VkIGFz
+IGRpdmlkZXIgYmV0d2VlbiBjbGFzcyBuYW1lcyB0byByZW1vdmUgKi8KICAgIF9fZGl2aWRlciA6
+ICIoXFxzK3xcXGIpfChcXHMrfFxcYikiLAogICAgCiAgICAvKioge1N0cmluZ30gVXNlZCBhdCBi
+ZWdpbm5pbmcvZW5kIG9mIHJlZ3VsYXIgZXhwcmVzc2lvbiB0byByZW1vdmUgY2xhc3NlcyAqLwog
+ICAgX19lZGdlIDogIihcXHMrfFxcYikiLAogICAgCiAgICAKICAgIC8qKgogICAgICogQWRkcyBv
+bmUgb3IgbXVsdGlwbGUgY2xhc3NlcyB0byB0aGUgZ2l2ZW4gZWxlbWVudAogICAgICogCiAgICAg
+KiBAcGFyYW0gZWxlbSB7RWxlbWVudH0gRE9NIGVsZW1lbnQgdG8gbW9kaWZ5CiAgICAgKiBAcGFy
+YW0gY2xhc3NlcyB7U3RyaW5nW118dmFyYXJnc30gTGlzdCBvZiBjbGFzc2VzIHRvIGFkZC4gQ291
+bGQgYmUgCiAgICAgKiAgICBhbiBhcnJheSBvciBhIGxpc3Qgb3IgYXJndW1lbnRzLiAKICAgICAq
+IEByZXR1cm4ge1N0cmluZ30gVGhlIHJlc3VsdGluZyBjbGFzcyBuYW1lIHdoaWNoIHdhcyBhcHBs
+aWVkCiAgICAgKi8KICAgIGFkZCA6IGZ1bmN0aW9uKGVsZW0sIGNsYXNzZXMpCiAgICB7CiAgICAg
+IGlmICh0eXBlb2YgY2xhc3NlcyAhPT0gIm9iamVjdCIpIHsKICAgICAgICBjbGFzc2VzID0gQXJy
+YXkucHJvdG90eXBlLnNsaWNlLmNhbGwoYXJndW1lbnRzLCAxKTsKICAgICAgfQogICAgICAKICAg
+ICAgdmFyIG9sZD1lbGVtLmNsYXNzTmFtZSwga2V5cz17fSwgcmVzdWx0OwogICAgICBpZiAob2xk
+KQogICAgICB7CiAgICAgICAgcmVzdWx0ID0gb2xkLnNwbGl0KHRoaXMuX19zcGxpdHRlcik7CiAg
+ICAgICAgZm9yICh2YXIgaT0wLCBsPXJlc3VsdC5sZW5ndGg7IGk8bDsgaSsrKSB7CiAgICAgICAg
+ICBrZXlzW3Jlc3VsdFtpXV0gPSB0cnVlOwogICAgICAgIH0KCiAgICAgICAgZm9yICh2YXIgaT0w
+LCBsPWNsYXNzZXMubGVuZ3RoOyBpPGw7IGkrKykgCiAgICAgICAgewogICAgICAgICAgaWYgKCFr
+ZXlzW2NsYXNzZXNbaV1dKSB7CiAgICAgICAgICAgIHJlc3VsdC5wdXNoKGNsYXNzZXNbaV0pOwog
+ICAgICAgICAgfQogICAgICAgIH0KICAgICAgfQogICAgICBlbHNlCiAgICAgIHsKICAgICAgICBy
+ZXN1bHQgPSBjbGFzc2VzOwogICAgICB9ICAgIAoKICAgICAgcmV0dXJuIGVsZW0uY2xhc3NOYW1l
+ID0gcmVzdWx0LmpvaW4oIiAiKTsKICAgIH0sCiAgICAKICAgIAogICAgLyoqCiAgICAgKiBSZW1v
+dmVzIG9uZSBvciBtdWx0aXBsZSBjbGFzc2VzIGZyb20gdGhlIGdpdmVuIGVsZW1lbnQKICAgICAq
+IAogICAgICogQHBhcmFtIGVsZW0ge0VsZW1lbnR9IERPTSBlbGVtZW50IHRvIG1vZGlmeQogICAg
+ICogQHBhcmFtIGNsYXNzZXMge1N0cmluZ1tdfHZhcmFyZ3N9IExpc3Qgb2YgY2xhc3NlcyB0byBy
+ZW1vdmUuIENvdWxkIGJlIAogICAgICogICAgYW4gYXJyYXkgb3IgYSBsaXN0IG9yIGFyZ3VtZW50
+cy4gCiAgICAgKiBAcmV0dXJuIHtTdHJpbmd9IFRoZSByZXN1bHRpbmcgY2xhc3MgbmFtZSB3aGlj
+aCB3YXMgYXBwbGllZAogICAgICovICAgIAogICAgcmVtb3ZlIDogZnVuY3Rpb24oZWxlbSwgY2xh
+c3NlcykKICAgIHsKICAgICAgaWYgKHR5cGVvZiBjbGFzc2VzICE9PSAib2JqZWN0IikgewogICAg
+ICAgIGNsYXNzZXMgPSBBcnJheS5wcm90b3R5cGUuc2xpY2UuY2FsbChhcmd1bWVudHMsIDEpOwog
+ICAgICB9CiAgICAgIAogICAgICB2YXIgcmVnID0gbmV3IFJlZ0V4cCh0aGlzLl9fZWRnZSArIGNs
+YXNzZXMuam9pbih0aGlzLl9fZGl2aWRlcikgKyB0aGlzLl9fZWRnZSwgImciKTsKICAgICAgcmV0
+dXJuIGVsZW0uY2xhc3NOYW1lID0gZWxlbS5jbGFzc05hbWUucmVwbGFjZShyZWcsICIiKTsgICAg
+IAogICAgfQ==
+</data>
+
+          </attachment>
+          <attachment isobsolete="1" ispatch="0" isprivate="0" isurl="0">
+            <attachid>631</attachid>
+            <date>2009-10-23 10:42:00 +0200</date>
+            <delta_ts>2009-10-23 10:47:09 +0200</delta_ts>
+            <desc>Replacement for old solution. This one works more stable.</desc>
+            <filename>update.txt</filename>
+            <type>text/plain</type>
+            <size>1810</size>
+            <attacher>info</attacher>
+            
+              <data encoding="base64">ICAgIC8qKiB7UmVnRXhwfSBSZWd1bGFyIGV4cHJlc3Npb25zIHRvIHNwbGl0IGNsYXNzIG5hbWVz
+ICovCiAgICBfX3NwbGl0dGVyIDogL1xzKy9nLAogICAgCiAgICAvKioge1JlZ0V4cH0gU3RyaW5n
+IHRyaW0gcmVndWxhciBleHByZXNzaW9uLiAqLwogICAgX190cmltIDogL15ccyt8XHMrJC9nLAog
+ICAgCiAgICAvKioKICAgICAqIEFkZHMgb25lIG9yIG11bHRpcGxlIGNsYXNzZXMgdG8gdGhlIGdp
+dmVuIGVsZW1lbnQKICAgICAqIAogICAgICogQHBhcmFtIGVsZW0ge0VsZW1lbnR9IERPTSBlbGVt
+ZW50IHRvIG1vZGlmeQogICAgICogQHBhcmFtIGNsYXNzZXMge1N0cmluZ1tdfHZhcmFyZ3N9IExp
+c3Qgb2YgY2xhc3NlcyB0byBhZGQuIENvdWxkIGJlIAogICAgICogICAgYW4gYXJyYXkgb3IgYSBs
+aXN0IG9yIGFyZ3VtZW50cy4gCiAgICAgKiBAcmV0dXJuIHtTdHJpbmd9IFRoZSByZXN1bHRpbmcg
+Y2xhc3MgbmFtZSB3aGljaCB3YXMgYXBwbGllZAogICAgICovCiAgICBhZGQgOiBmdW5jdGlvbihl
+bGVtLCBjbGFzc2VzKQogICAgewogICAgICBpZiAodHlwZW9mIGNsYXNzZXMgIT09ICJvYmplY3Qi
+KSB7CiAgICAgICAgY2xhc3NlcyA9IEFycmF5LnByb3RvdHlwZS5zbGljZS5jYWxsKGFyZ3VtZW50
+cywgMSk7CiAgICAgIH0KICAgICAgCiAgICAgIHZhciBvbGQ9ZWxlbS5jbGFzc05hbWUsIGtleXM9
+e30sIHJlc3VsdDsKICAgICAgaWYgKG9sZCkKICAgICAgewogICAgICAgIHJlc3VsdCA9IG9sZC5z
+cGxpdCh0aGlzLl9fc3BsaXR0ZXIpOwogICAgICAgIGZvciAodmFyIGk9MCwgbD1yZXN1bHQubGVu
+Z3RoOyBpPGw7IGkrKykgewogICAgICAgICAga2V5c1tyZXN1bHRbaV1dID0gdHJ1ZTsKICAgICAg
+ICB9CgogICAgICAgIGZvciAodmFyIGk9MCwgbD1jbGFzc2VzLmxlbmd0aDsgaTxsOyBpKyspIAog
+ICAgICAgIHsKICAgICAgICAgIGlmICgha2V5c1tjbGFzc2VzW2ldXSkgewogICAgICAgICAgICBy
+ZXN1bHQucHVzaChjbGFzc2VzW2ldKTsKICAgICAgICAgIH0KICAgICAgICB9CiAgICAgIH0KICAg
+ICAgZWxzZQogICAgICB7CiAgICAgICAgcmVzdWx0ID0gY2xhc3NlczsKICAgICAgfSAgICAKCiAg
+ICAgIHJldHVybiBlbGVtLmNsYXNzTmFtZSA9IHJlc3VsdC5qb2luKCIgIik7CiAgICB9LAogICAg
+CiAgICAKICAgIC8qKgogICAgICogUmVtb3ZlcyBvbmUgb3IgbXVsdGlwbGUgY2xhc3NlcyBmcm9t
+IHRoZSBnaXZlbiBlbGVtZW50CiAgICAgKiAKICAgICAqIEBwYXJhbSBlbGVtIHtFbGVtZW50fSBE
+T00gZWxlbWVudCB0byBtb2RpZnkKICAgICAqIEBwYXJhbSBjbGFzc2VzIHtTdHJpbmdbXXx2YXJh
+cmdzfSBMaXN0IG9mIGNsYXNzZXMgdG8gcmVtb3ZlLiBDb3VsZCBiZSAKICAgICAqICAgIGFuIGFy
+cmF5IG9yIGEgbGlzdCBvciBhcmd1bWVudHMuIAogICAgICogQHJldHVybiB7U3RyaW5nfSBUaGUg
+cmVzdWx0aW5nIGNsYXNzIG5hbWUgd2hpY2ggd2FzIGFwcGxpZWQKICAgICAqLyAgICAKICAgIHJl
+bW92ZSA6IGZ1bmN0aW9uKGVsZW0sIGNsYXNzZXMpCiAgICB7CiAgICAgIGlmICh0eXBlb2YgY2xh
+c3NlcyAhPT0gIm9iamVjdCIpIHsKICAgICAgICBjbGFzc2VzID0gQXJyYXkucHJvdG90eXBlLnNs
+aWNlLmNhbGwoYXJndW1lbnRzLCAxKTsKICAgICAgfQogICAgICAKICAgICAgdmFyIHJlZyA9IG5l
+dyBSZWdFeHAoY2xhc3Nlcy5qb2luKCJ8IiksICJnIik7CiAgICAgIHJldHVybiBlbGVtLmNsYXNz
+TmFtZSA9IGVsZW0uY2xhc3NOYW1lLnJlcGxhY2UocmVnLCAiIikucmVwbGFjZSh0aGlzLl9fdHJp
+bSwgIiIpLnJlcGxhY2UodGhpcy5fX3NwbGl0dGVyLCAiICIpOwogICAgfQ==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>632</attachid>
+            <date>2009-10-23 10:47:00 +0200</date>
+            <delta_ts>2009-10-23 10:47:09 +0200</delta_ts>
+            <desc>Sorry, this one is correct.</desc>
+            <filename>update.txt</filename>
+            <type>text/plain</type>
+            <size>1831</size>
+            <attacher>info</attacher>
+            
+              <data encoding="base64">ICAgIC8qKiB7UmVnRXhwfSBSZWd1bGFyIGV4cHJlc3Npb25zIHRvIHNwbGl0IGNsYXNzIG5hbWVz
+ICovCiAgICBfX3NwbGl0dGVyIDogL1xzKy9nLAogICAgCiAgICAvKioge1JlZ0V4cH0gU3RyaW5n
+IHRyaW0gcmVndWxhciBleHByZXNzaW9uLiAqLwogICAgX190cmltIDogL15ccyt8XHMrJC9nLAog
+ICAgCiAgICAKICAgIC8qKgogICAgICogQWRkcyBvbmUgb3IgbXVsdGlwbGUgY2xhc3NlcyB0byB0
+aGUgZ2l2ZW4gZWxlbWVudAogICAgICogCiAgICAgKiBAcGFyYW0gZWxlbSB7RWxlbWVudH0gRE9N
+IGVsZW1lbnQgdG8gbW9kaWZ5CiAgICAgKiBAcGFyYW0gY2xhc3NlcyB7U3RyaW5nW118dmFyYXJn
+c30gTGlzdCBvZiBjbGFzc2VzIHRvIGFkZC4gQ291bGQgYmUgCiAgICAgKiAgICBhbiBhcnJheSBv
+ciBhIGxpc3Qgb3IgYXJndW1lbnRzLiAKICAgICAqIEByZXR1cm4ge1N0cmluZ30gVGhlIHJlc3Vs
+dGluZyBjbGFzcyBuYW1lIHdoaWNoIHdhcyBhcHBsaWVkCiAgICAgKi8KICAgIGFkZCA6IGZ1bmN0
+aW9uKGVsZW0sIGNsYXNzZXMpCiAgICB7CiAgICAgIGlmICh0eXBlb2YgY2xhc3NlcyAhPT0gIm9i
+amVjdCIpIHsKICAgICAgICBjbGFzc2VzID0gQXJyYXkucHJvdG90eXBlLnNsaWNlLmNhbGwoYXJn
+dW1lbnRzLCAxKTsKICAgICAgfQogICAgICAKICAgICAgdmFyIG9sZD1lbGVtLmNsYXNzTmFtZSwg
+a2V5cz17fSwgcmVzdWx0OwogICAgICBpZiAob2xkKQogICAgICB7CiAgICAgICAgcmVzdWx0ID0g
+b2xkLnNwbGl0KHRoaXMuX19zcGxpdHRlcik7CiAgICAgICAgZm9yICh2YXIgaT0wLCBsPXJlc3Vs
+dC5sZW5ndGg7IGk8bDsgaSsrKSB7CiAgICAgICAgICBrZXlzW3Jlc3VsdFtpXV0gPSB0cnVlOwog
+ICAgICAgIH0KCiAgICAgICAgZm9yICh2YXIgaT0wLCBsPWNsYXNzZXMubGVuZ3RoOyBpPGw7IGkr
+KykgCiAgICAgICAgewogICAgICAgICAgaWYgKCFrZXlzW2NsYXNzZXNbaV1dKSB7CiAgICAgICAg
+ICAgIHJlc3VsdC5wdXNoKGNsYXNzZXNbaV0pOwogICAgICAgICAgfQogICAgICAgIH0KICAgICAg
+fQogICAgICBlbHNlCiAgICAgIHsKICAgICAgICByZXN1bHQgPSBjbGFzc2VzOwogICAgICB9ICAg
+IAoKICAgICAgcmV0dXJuIGVsZW0uY2xhc3NOYW1lID0gcmVzdWx0LmpvaW4oIiAiKTsKICAgIH0s
+CiAgICAKICAgIAogICAgLyoqCiAgICAgKiBSZW1vdmVzIG9uZSBvciBtdWx0aXBsZSBjbGFzc2Vz
+IGZyb20gdGhlIGdpdmVuIGVsZW1lbnQKICAgICAqIAogICAgICogQHBhcmFtIGVsZW0ge0VsZW1l
+bnR9IERPTSBlbGVtZW50IHRvIG1vZGlmeQogICAgICogQHBhcmFtIGNsYXNzZXMge1N0cmluZ1td
+fHZhcmFyZ3N9IExpc3Qgb2YgY2xhc3NlcyB0byByZW1vdmUuIENvdWxkIGJlIAogICAgICogICAg
+YW4gYXJyYXkgb3IgYSBsaXN0IG9yIGFyZ3VtZW50cy4gCiAgICAgKiBAcmV0dXJuIHtTdHJpbmd9
+IFRoZSByZXN1bHRpbmcgY2xhc3MgbmFtZSB3aGljaCB3YXMgYXBwbGllZAogICAgICovICAgIAog
+ICAgcmVtb3ZlIDogZnVuY3Rpb24oZWxlbSwgY2xhc3NlcykKICAgIHsKICAgICAgaWYgKHR5cGVv
+ZiBjbGFzc2VzICE9PSAib2JqZWN0IikgewogICAgICAgIGNsYXNzZXMgPSBBcnJheS5wcm90b3R5
+cGUuc2xpY2UuY2FsbChhcmd1bWVudHMsIDEpOwogICAgICB9CgogICAgICB2YXIgcmVnID0gbmV3
+IFJlZ0V4cCgiXFxiIiArIGNsYXNzZXMuam9pbigiXFxifFxcYiIpICsgIlxcYiIsICJnIik7CiAg
+ICAgIHJldHVybiBlbGVtLmNsYXNzTmFtZSA9IGVsZW0uY2xhc3NOYW1lLnJlcGxhY2UocmVnLCAi
+IikucmVwbGFjZSh0aGlzLl9fdHJpbSwgIiIpLnJlcGxhY2UodGhpcy5fX3NwbGl0dGVyLCAiICIp
+OwogICAgfQ==
+</data>
+
+          </attachment>
+      
+
+    </bug>

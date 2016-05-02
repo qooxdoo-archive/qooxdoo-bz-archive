@@ -1,0 +1,110 @@
+<bug>
+          <bug_id>1782</bug_id>
+          
+          <creation_ts>2008-12-17 14:44:00 +0100</creation_ts>
+          <short_desc>Can&#39;t build/source code with nonlatin literals in js code like this.tr(&quot;юникод&quot;)</short_desc>
+          <delta_ts>2014-03-03 15:27:45 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Linux</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Max Lavrenov">maxim.lavrenov</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>7067</commentid>
+            <who name="Max Lavrenov">maxim.lavrenov</who>
+            <bug_when>2008-12-17 14:44:47 +0100</bug_when>
+            <thetext>I use nonlatin string literals as identifiers for localization, for example this.tr(&quot;Вход&quot;)
+
+./generate.py translation woks fine, but ./generate source or generate.py build fails to find identifiers, cause code in tool/pylib/polib/polib.py is trying to compare unicode to binary string.
+
+I am not py-guru, so i use temporary solution:
+
+--- tool/pylib/polib/polib.py   (revision 17064)
++++ tool/pylib/polib/polib.py   (working copy)
+@@ -334,7 +334,13 @@
+         &#39;Thursday&#39;
+         &quot;&quot;&quot;
+         try:
+-            return [e for e in self if getattr(e, by) == st][0]
++            def eq(s1, s2):
++                if not isinstance(s1, unicode):
++                    s1 = s1.decode(&#39;utf-8&#39;)
++                if not isinstance(s2, unicode):
++                    s2 = s2.decode(&#39;utf-8&#39;)
++                return s1 == s2
++            return [e for e in self if eq(getattr(e, by), st)][0]
+         except IndexError:
+             return None</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7257</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-01-07 18:38:00 +0100</bug_when>
+            <thetext>@Thomas, could you please check that behavior and try to get in touch with the polib developer? Fixing this issue should further stabilize the improved i18n support of the recent qooxdoo release.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7303</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-01-12 17:05:56 +0100</bug_when>
+            <thetext>supplied a fix with r17200 - please verify!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7307</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-01-12 17:42:42 +0100</bug_when>
+            <thetext>The basic problem that caused this bug was:
+
+- .po files can contain unicode strings (not surprisingly!)
+- but the polib module always read files with the open() built-in, which returns &#39;str&#39; data (essentially a byte string)
+- if such str data is compared to a unicode value Python tries to convert the str data to unicode
+- but this is done using the default str decoder, which is an ascii decoder; this decoder cannot decode bytes outside range(127), effectively disabling 2-and-more-byte utf-8 characters
+
+Rather than fixing encoding issues locally (such as in the cited find() method), the basic strategy is to read and write po files with de-/encoding using codecs.open(); and to use unicode for string operations inside the module as much as possible. A I18N module should operate on unicode internally :).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13873</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-04 23:18:01 +0100</bug_when>
+            <thetext>mass correction: set previously unspecified target milestone to 0.8.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39575</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:45 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,96 @@
+<bug>
+          <bug_id>1847</bug_id>
+          
+          <creation_ts>2009-01-15 12:40:00 +0100</creation_ts>
+          <short_desc>Support automatic dependency-detection in top-level closures</short_desc>
+          <delta_ts>2014-03-03 09:18:06 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>0.8.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>info</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>7369</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-01-15 12:40:29 +0100</bug_when>
+            <thetext>The dependency system of the generator detects top-level (global) references to classes and automatically collects them as #require&#39;s. This mechanism is not working if there is a top-level closure definition with immediate invocation, like
+
+(function () {
+  ...
+})();
+
+Class references in the body of the closure are not auto-detected as requires, since they are not global and therefore regarded as run time dependecies, not load time.
+
+If those class references in top-level closures would be regarded as require&#39;s this would save a lot of &quot;#require...&quot; statements at the top of the file, e.g. in qx.bom.ElementCollection.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33469</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-07-23 16:37:00 +0200</bug_when>
+            <thetext>Mh, this is weird. Testing with a desktop skeleton suggest that dependencies 
+are being picked up from top-level closures alright.
+
+There is little left of this code idiom in the framework, though. The probably 
+last example is qx.type.BaseArray which uses qx.core.Environment in a top-level 
+closure, and this is *not* detected as load-time.
+
+Have to dig further...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33472</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-07-23 16:42:11 +0200</bug_when>
+            <thetext>This code sample reproduces the issue from qx.type.BaseArray:
+
+qx.Class.define(&quot;gui.TestB&quot;, {});
+
+(
+  function(){
+    function foo() {
+      var a = qx.util.format.DateFormat.ISO_MASKS;
+      return a;
+    }
+    var b = foo();
+  }
+)();
+
+The isCall attribute of the top-level closure, which implies load-time 
+dependencies of the function symbols, is not being transported down to the 
+inner function call. (Lifting the code from foo() to the closure detects the 
+load-time deps to qx.util.format.DateFormat alright).</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

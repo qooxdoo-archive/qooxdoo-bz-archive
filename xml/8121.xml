@@ -1,0 +1,194 @@
+<bug>
+          <bug_id>8121</bug_id>
+          
+          <creation_ts>2014-02-13 14:10:00 +0100</creation_ts>
+          <short_desc>variant specific build did not work</short_desc>
+          <delta_ts>2014-02-21 16:01:07 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Henner Kollmann">Henner.Kollmann</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>35052</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2014-02-13 14:10:14 +0100</bug_when>
+            <thetext>Hello,
+
+i tried the example from here
+
+http://manual.qooxdoo.org/current/pages/tool/generator/generator_config_articles.html#environment-key
+
+to build 2 different Versions.
+
+      &quot;environment&quot; :
+      {
+        &quot;qx.nativeScrollBars&quot; : &quot;true&quot;,
+        &quot;qx.emulatemouse&quot;: &quot;true&quot;,
+        &quot;vzaweb.version&quot;: [&quot;full&quot;, &quot;light&quot;]
+      },
+      &quot;compile-options&quot; : {
+         &quot;paths&quot;: {
+            &quot;file&quot; : &quot;${SOURCE_PATH}/script/${APPLICATION}_{vzaweb.version}.js&quot;,
+         }
+      }
+
+I expected 2 different output files as mentioned.
+
+Instead i only get one with the Name vzaweb_{vzaweb.version}.js.
+
+Where is the mistake? In the doc or in the Generator?
+
+best regards,
+Henner Kollmann</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35061</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-02-14 08:09:22 +0100</bug_when>
+            <thetext>I guess one build is overriding another but Richi can sure tell you more about that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35064</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2014-02-14 08:57:24 +0100</bug_when>
+            <thetext>I can reproduce with a fresh generated new project with the appended config.json!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35065</commentid>
+              <attachid>1306</attachid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2014-02-14 08:58:13 +0100</bug_when>
+            <thetext>Created attachment 1306
+example config</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35068</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-02-14 20:51:35 +0100</bug_when>
+            <thetext>You need two adaptions - here is the full job definition:
+
+    &quot;build-script&quot; :
+    {
+      &quot;environment&quot; :
+      {
+        &quot;qx.nativeScrollBars&quot; : &quot;true&quot;,
+        &quot;qx.emulatemouse&quot;: &quot;true&quot;,
+        &quot;vzaweb.version&quot;: [&quot;full&quot;, &quot;light&quot;]
+      },
+      &quot;compile-options&quot; : {
+         &quot;paths&quot;: {
+            &quot;file&quot; : &quot;build/script/${APPLICATION}_{vzaweb.version}.js&quot;
+         }
+      }
+    }
+
+And here&#39;s the diff:
+
++  &quot;build-script&quot; :
+-  &quot;common&quot; :
+
++  &quot;file&quot; : &quot;${BUILD_PATH}/script/${APPLICATION}_{vzaweb.version}.js&quot;
+-  &quot;file&quot; : &quot;${SOURCE_PATH}/script/${APPLICATION}_{vzaweb.version}.js&quot;
+
+You can&#39;t generate a source version of the variant builds - only build versions are possible (&quot;./generate source&quot; vs &quot;./generate build&quot;). Why is that? See:
+https://github.com/qooxdoo/qooxdoo/commit/382c6ef5820c072a4276a4e77ffbbbf936f4dba3
+
+But there&#39;s a catch. During the build the &quot;index.html&quot; is copied from &quot;source/index.html&quot; to &quot;build/index.html&quot; which references a script file named &quot;vzaweb2.js&quot;. But now you have two new files &quot;build/script/vzaweb2_full.js&quot;  &quot;build/script/vzaweb2_light.js&quot; and no &quot;build/script/vzaweb2.js&quot;.
+
+You can change the &quot;build/index.html&quot; manually but it gets overridden every time. This can be a workaround for the time being.
+
+In this case probably two files should be created: &quot;build/index_full.html&quot; and &quot;build/index_light.html&quot;, which could be an enhancement.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35069</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2014-02-14 22:21:48 +0100</bug_when>
+            <thetext>Great - this works!
+Thank you very much for the hint!
+
+You can Close the bug Report!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35162</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2014-02-21 16:01:07 +0100</bug_when>
+            <thetext>Didn&#39;t need a fix. Issue could be resolved by providing a working config.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1306</attachid>
+            <date>2014-02-14 08:58:00 +0100</date>
+            <delta_ts>2014-02-14 08:58:13 +0100</delta_ts>
+            <desc>example config</desc>
+            <filename>config.json</filename>
+            <type>text/plain</type>
+            <size>1603</size>
+            <attacher>Henner.Kollmann</attacher>
+            
+              <data encoding="base64">ew0KICAibmFtZSIgICAgOiAidnphd2ViMiIsDQoNCiAgImluY2x1ZGUiIDoNCiAgWw0KICAgIHsN
+CiAgICAgICJwYXRoIiA6ICIke1FPT1hET09fUEFUSH0vdG9vbC9kYXRhL2NvbmZpZy9hcHBsaWNh
+dGlvbi5qc29uIg0KICAgIH0NCiAgXSwNCg0KICAiZXhwb3J0IiA6DQogIFsNCiAgICAiYXBpIiwN
+CiAgICAiYXBpLWRhdGEiLA0KICAgICJidWlsZCIsDQogICAgImNsZWFuIiwNCiAgICAiZGlzdGNs
+ZWFuIiwNCiAgICAiZGVwZW5kZW5jaWVzIiwNCiAgICAiZml4IiwNCiAgICAiaW5mbyIsDQogICAg
+Imluc3BlY3RvciIsDQogICAgImxpbnQiLA0KICAgICJtaWdyYXRpb24iLA0KICAgICJwcmV0dHki
+LA0KICAgICJwcm9maWxpbmciLA0KICAgICJzb3VyY2UiLA0KICAgICJzb3VyY2UtYWxsIiwNCiAg
+ICAic291cmNlLWh5YnJpZCIsDQogICAgInNvdXJjZS1zZXJ2ZXIiLA0KICAgICJzb3VyY2Utc2Vy
+dmVyLXJlbG9hZCIsDQogICAgInNvdXJjZS1odHRwZC1jb25maWciLA0KICAgICJzaW11bGF0aW9u
+LWJ1aWxkIiwNCiAgICAic2ltdWxhdGlvbi1ydW4iLA0KICAgICJ0ZXN0IiwNCiAgICAidGVzdC1z
+b3VyY2UiLA0KICAgICJ0cmFuc2xhdGlvbiIsDQogICAgInZhbGlkYXRlLWNvbmZpZyIsDQogICAg
+InZhbGlkYXRlLW1hbmlmZXN0IiwNCiAgICAid2F0Y2giDQogIF0sDQoNCiAgImRlZmF1bHQtam9i
+IiA6ICJzb3VyY2UtaHlicmlkIiwNCg0KICAibGV0IiA6DQogIHsNCiAgICAiQVBQTElDQVRJT04i
+ICA6ICJ2emF3ZWIyIiwNCiAgICAiUU9PWERPT19QQVRIIiA6ICIuLi8uLi8uLi9xb294ZG9vL3Fv
+b3hkb28iLA0KICAgICJRWFRIRU1FIiAgICAgIDogInZ6YXdlYjIudGhlbWUuVGhlbWUiLA0KICAg
+ICJBUElfRVhDTFVERSIgIDogWyJxeC50ZXN0LioiLCAiJHtBUFBMSUNBVElPTn0udGhlbWUuKiIs
+ICIke0FQUExJQ0FUSU9OfS50ZXN0LioiLCAiJHtBUFBMSUNBVElPTn0uc2ltdWxhdGlvbi4qIl0s
+DQogICAgIkxPQ0FMRVMiICAgICAgOiBbICJlbiIgXSwNCiAgICAiQ0FDSEUiICAgICAgICA6ICIk
+e1RNUERJUn0vcXgke1FPT1hET09fVkVSU0lPTn0vY2FjaGUiLA0KICAgICJST09UIiAgICAgICAg
+IDogIi4iDQogIH0sDQoNCiAgLy8gWW91IG9ubHkgbmVlZCB0byBlZGl0IHRoZSByZW1haW5kZXIg
+b2YgdGhpcyBmaWxlLCBpZiB5b3Ugd2FudCB0byBjdXN0b21pemUNCiAgLy8gc3BlY2lmaWMgam9i
+cywgb3IgYWRkIG93biBqb2IgZGVmaW5pdGlvbnMuDQoNCiAgImpvYnMiIDoNCiAgew0KICAgICJj
+b21tb24iIDoNCiAgICB7DQogICAgICAiZW52aXJvbm1lbnQiIDoNCiAgICAgIHsNCiAgICAgICAg
+InF4Lm5hdGl2ZVNjcm9sbEJhcnMiIDogInRydWUiLA0KICAgICAgICAicXguZW11bGF0ZW1vdXNl
+IjogInRydWUiLA0KICAgICAgICAidnphd2ViLnZlcnNpb24iOiBbImZ1bGwiLCAibGlnaHQiXQ0K
+ICAgICAgfSwNCiAgICAgICJjb21waWxlLW9wdGlvbnMiIDogew0KICAgICAgICAgInBhdGhzIjog
+ew0KICAgICAgICAgICAgImZpbGUiIDogIiR7U09VUkNFX1BBVEh9L3NjcmlwdC8ke0FQUExJQ0FU
+SU9OfV97dnphd2ViLnZlcnNpb259LmpzIiwNCiAgICAgICAgIH0NCiAgICAgIH0NCiAgICB9DQog
+IH0NCn0NCg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

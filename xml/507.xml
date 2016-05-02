@@ -1,0 +1,316 @@
+<bug>
+          <bug_id>507</bug_id>
+          
+          <creation_ts>2007-06-26 10:39:00 +0200</creation_ts>
+          <short_desc>GroupBox does not adapt to font size</short_desc>
+          <delta_ts>2014-03-03 15:26:10 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>0.7</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8</target_milestone>
+          <dependson>20</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Ralf Sternberg">rsternberg</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>1628</commentid>
+            <who name="Ralf Sternberg">rsternberg</who>
+            <bug_when>2007-06-26 10:39:19 +0200</bug_when>
+            <thetext>The qx.ui.groupbox.GroupBox does not adapt to the size of a user defined font. The exact position of the group&#39;s label (the legendObject) is defined in the appearance theme. When a custom font is set, the legend text is not aligned with the frame anymore, and the group is not resized. Just as a button changes its size when a larger or smaller font is set, the group box should do so as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1632</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-06-26 13:31:58 +0200</bug_when>
+            <thetext>The appearance defines the position. So there is a way to override this in the user code, too. I don&#39;t know how at all the widget should even know or modify about the appearance code and the expected behavior in this case.
+
+If the user defines a font, he should also update the position of the legend if it should be vertically middled to the outer frame.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1637</commentid>
+            <who name="Ralf Sternberg">rsternberg</who>
+            <bug_when>2007-06-26 15:00:39 +0200</bug_when>
+            <thetext>I don&#39;t agree. I think that a programmer should not have to deal with the internals of a widget to adjust its layout after changing the font. A widget should be in a consistent state after any valid API call. Since setFont is part of the API, it should not be necessary to resize the legend object after calling this function. In fact, the programmer should not even have to know about the internal organization of the widget.
+
+I understand that this requirement is not quite simple to implement and requires a change in the current GroupBox implementation. However, I think that qooxdoo should provide the same ease of use as other widget toolkits.
+
+There should be a distinction between properties that are part of the theme and those which should be adjusted programmatically. I think that a theme should not depend on font sizes that can be changed by the user. I&#39;ll attach a drawing that suggests how the layout of the GroupBox might be organized. In this example, the margin and padding should be themeable, the positioning of the legend object could be, too. These settings are not affected by a change of the font size.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1638</commentid>
+              <attachid>197</attachid>
+            <who name="Ralf Sternberg">rsternberg</who>
+            <bug_when>2007-06-26 15:01:55 +0200</bug_when>
+            <thetext>Created attachment 197
+Suggestion for a group box layout that does not depend on the font size</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1652</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-06-26 17:30:31 +0200</bug_when>
+            <thetext>In my opinion how a widget shoud look is a defined in the appearance. If the user of the widget (badly) influence the original design (defined by the designer) he could not expect that it renders correctly anymore. &quot;consistent state after any valid API call&quot; is simply nontheless. What is a consistant state. Who says that a group box should loop like what? Who defines this. If someone influence the design of a single attribute from outer side, how should the widget react on these changes. I really don&#39;t know how to automate this while keeping full control for both the theme author and the widget user. &quot;I think that qooxdoo should provide the same ease of use as other widget toolkits.&quot; I think this, too. But no one wants to pay the price of SWT&#39;s inflexibility just to get this.
+
+Your sketch exactly shows what qooxdoo already does. This concept is by far too naive. The interesting questions is, how we can vertically middle the legend object to the line of the box. I don&#39;t see any easy possibility for this because we don&#39;t have the line as a separate widget. But if you have further ideas -- I am really interested.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1663</commentid>
+            <who name="Ralf Sternberg">rsternberg</who>
+            <bug_when>2007-06-26 18:48:23 +0200</bug_when>
+            <thetext> (In reply to comment #4)
+&gt; In my opinion how a widget shoud look is a defined in the appearance.
+
+I agree.
+
+&gt; If the user of the widget (badly) influence the original design (defined by the
+&gt; designer) he could not expect that it renders correctly anymore.
+
+The user doesn&#39;t know about the thoughts of the theme designer. She just uses the API to set a larger font. After doing so, the layout looks weird :(
+
+&gt; Who says that a group box should loop like what? Who defines this.
+
+As you said, The theme designer does.
+
+&gt; What is a consistant state.
+
+What I mean in this context is a state (or a set of property values) in which the widget renders as the theme designer wishes. Now I am the theme designer. I wish that whatever font size the user sets, my group box looks like in my drawing. With the frame aligned to the text middle and with always the same padding between legend text and client widgets. How can I achieve this? I didn&#39;t make this up to bug you, that&#39;s the actual problem I&#39;m trying to solve.
+
+&gt; But no one wants to pay the price of SWT&#39;s inflexibility just to get this.
+
+Well, let&#39;s not argue about which toolkit is better. I am happy if qooxdoo provides the flexibility we need. Actually, this bug is about improving qooxdoo&#39;s flexibility to simulate SWT, not to trim it down to this toolkit. ;-)
+
+&gt; Your sketch exactly shows what qooxdoo already does.
+
+No, there is a small but important difference. In my sketch, the padding is the distance from the lower bound of the text to the top of the client area. In the actual qooxdoo implementation, the padding starts at the lower bound of the frame border. The same applies for the margin. This way, the theme is independent from the font size in my draft.
+
+&gt; The interesting questions is, how we can vertically middle the legend
+&gt; object to the line of the box. I don&#39;t see any easy possibility for this because
+&gt; we don&#39;t have the line as a separate widget.
+
+Yep. I don&#39;t have a solution either. I just wanted to formulate the requirement, for a start. I let you know if I have an idea.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1664</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-06-26 18:56:36 +0200</bug_when>
+            <thetext>&quot;In my sketch, the padding is the distance from the lower bound of the text to the top of the client area. In the actual qooxdoo implementation, the padding starts at the lower bound of the frame border. The same applies for the margin. This way, the theme is
+independent from the font size in my draft.&quot;
+
+And even if this is what you mean, this don&#39;t fix the problem to vertically align the text and the line for different font-sizes. Just think again about it. You must vertically center it. Without this it always depends on the font-size. This is in no-way related to the other things you wrote.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1682</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-06-28 11:17:39 +0200</bug_when>
+            <thetext>Changed target to 0.8. Massive restructuring would be needed to correctly implement this with is better done in 0.8. This also depends on layout changes as we need to adjust other layouts when the box-height of the label object changes.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1683</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-06-28 11:18:05 +0200</bug_when>
+            <thetext>Opps. Forgot the 0.8 bump.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3094</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-05-30 10:21:49 +0200</bug_when>
+            <thetext>This is finally implemented in 0.8.
+
+The groupbox now has a property, which sets whether the border goes through the middle of the label or under the label. Using margins on the label, the label can be positioned further. Different text sizes are no problem anymore.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39016</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:10 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>197</attachid>
+            <date>2007-06-26 15:01:00 +0200</date>
+            <delta_ts>2007-06-26 15:01:55 +0200</delta_ts>
+            <desc>Suggestion for a group box layout that does not depend on the font size</desc>
+            <filename>group-layout.png</filename>
+            <type>image/png</type>
+            <size>8221</size>
+            <attacher>rsternberg</attacher>
+            
+              <data encoding="base64">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
+AHDOOedw6623ctppp/GVr3yFyy67jJtvvpmenh4uvvhiIoK1a9fymte8hg996EN8+9vf5sgjjyQz
+Of7443nggQc45ZRT+NSnPsXq1Tv2xTVWr149OSIurXsdkoa9nWuat9bLe70WmD5UT7527dptfo6b
+brqJ+fPns2zZMkaPHg3A1KlTueGGG5g1axYXX3wx3/jGN5g1axYARx999PrH3nLLLcybN4+HHnqI
+XXbZBYD99tuPefPmceqppwIwbtw4rrvuOgDGjx/PvHnzOPLII5k/fz4/+tGPePTRRxk5ciRLly7l
+4IMP3uafZzhbs2bNROCP616HpGHvmromru3yXm3uBh7czs+5U29v71uAUdvyJIsWLWLs2LGcd96G
+07w9PT3ce++9HHzwwaxatYrp0zcc82fOnMk999yz/rHjxo3j/PPP3+g577333vUHzJNOOmn9+Otf
+/3quvPJKABYvXsyMGTMYOXIkAAcddBD77LMPO7Le3t6nge/VvQ5Jw9JI4DdbX3+6pjUsG0EV/fyg
+hsnXtf78YmZ+cXs+cUSMHzly5I+BvbbxeZg8eTLnnnvu+rFzzz2XyZMnk5msW7eOX/7yl4wZMwaA
+VatWbfTYSZMmveyxe+21YUl9jwPo7e1l3bp16x/b93Wf7fGKeTgbNWrUfZn5jv7vKanbRMSr2BCK
+HsHQnc7bolp3+gEeq3HuATnuuOO444472G+//TjqqKPW/zNp0iQmT57Mvvvuy7e+9S0AVq5cyfz5
+8zd67I9+9CP23XffjR7bfsDckiOOOIIFCxasr2Lvueceli9fPjQ/pCQ1y5CdytuaWqMfYM8a536Z
+K664guuvv37990cffTQf//jHef/7388BBxzAySefzLhx41i0aBGXXXYZxx57LF/60pc47bTTuPLK
+K1mxYgXHHnssmQnA9OnT+cAHPsCBBx7IySefzK677sqiRYuYM2cOM2bM2OpaZs2axYwZM9h///05
+6aSTWLhwIQcccMCQ/vySpK3aJYAZmfnd0jNHxNNUu/2cNxRvyZ599tk/vuqqqwb0luzdd9/NU089
+tdHYhAkTOOSQQwBYunQpS5YsYcSIEbz+9a9n//33X3+/lStXcv/993PggQfyO7/zO+yzzz588pOf
+XH/70qVLueuuu+jt7d3osXfffTcTJ05kzz2r3xsee+wxli9fzmGHHQbASy+9xC233MJzzz3Hm9/8
+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
+bgAAAABJRU5ErkJggg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

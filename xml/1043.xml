@@ -1,0 +1,159 @@
+<bug>
+          <bug_id>1043</bug_id>
+          
+          <creation_ts>2008-07-08 11:18:00 +0200</creation_ts>
+          <short_desc>Opera 9.5 does not render the last item in combobox properly</short_desc>
+          <delta_ts>2014-03-03 15:25:53 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>0.7.3</version>
+          <rep_platform>Opera 9.5</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.7.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Denis">nomus</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Opera</cf_browser>
+          <cf_browser_version>9.5</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>3693</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-07-08 11:18:34 +0200</bug_when>
+            <thetext>In Opera 9.5 the last item of combobox’s list is cut in height. 
+See Test/Combobox 4 in Demo browser to check the problem (http://demo.qooxdoo.org/current/demobrowser/#test~ComboBox_4.html).
+
+Best regards,
+Denis</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3698</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-07-08 11:35:35 +0200</bug_when>
+            <thetext>The last item is not cut but is overlapped by horizontal scrollbar.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3884</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-07-14 16:23:23 +0200</bug_when>
+            <thetext>Actually this bug is related to qx.ui.form.List.
+The following rough patch can be used to fix the problem.
+
+if (qx.core.Client.isOpera()
+        &amp;&amp; qx.core.Client.getMajor() === 9
+        &amp;&amp; qx.core.Client.getMinor() === 5) {
+
+    qx.Class.patch(qx.ui.form.List,
+        qx.Mixin.define(&quot;patch.qx.ui.form.List&quot;,
+        {
+            members :
+            {
+                _afterAppear : function()
+                {
+                  var lastItem = this.getLastChild();
+                  if (lastItem &amp;&amp; qx.html.Location.getClientAreaBottom(lastItem.getElement()) &gt; qx.html.Location.getClientAreaBottom(this.getElement())) {
+                      var nPadding = lastItem.getPaddingBottom();
+                      if (typeof(nPadding) !== &quot;number&quot;) {
+                          nPadding = 0;
+                      }
+                      var nCorrection = qx.ui.core.Widget.SCROLLBAR_SIZE;
+                      this.setUserData(&quot;__paddingCorrection&quot;, nCorrection);
+                      this.setUserData(&quot;__correctedItem&quot;, lastItem);
+                      nPadding += nCorrection;
+                      lastItem.setPaddingBottom(nPadding);
+                  }
+
+                  this.createDispatchEvent(&quot;beforeAppear&quot;);
+                },
+                _afterDisappear : function()
+                {
+                  var nCorrection = this.getUserData(&quot;__paddingCorrection&quot;);
+                  if (typeof(nCorrection) === &quot;number&quot; &amp;&amp; nCorrection &gt; 0) {
+                      var item = this.getUserData(&quot;__correctedItem&quot;);
+                      if (item) {
+                          var nPadding = item.getPaddingBottom();
+                          if (typeof(nPadding) === &quot;number&quot; &amp;&amp; nPadding &gt; nCorrection) {
+                              item.setPaddingBottom(nPadding - qx.ui.core.Widget.SCROLLBAR_SIZE);
+                          }
+                          this.setUserData(&quot;__correctedItem&quot;, null);
+                      }
+                      this.setUserData(&quot;__paddingCorrection&quot;, null);
+                  }
+
+                  this._isSeeable = false;
+                  this.createDispatchEvent(&quot;disappear&quot;);
+                }
+            }
+        })
+    );
+
+}
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3885</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-07-14 16:27:27 +0200</bug_when>
+            <thetext>Sorry. _afterDisappear should look like:
+
+                _afterDisappear : function()
+                {
+                  var nCorrection = this.getUserData(&quot;__paddingCorrection&quot;);
+                  if (typeof(nCorrection) === &quot;number&quot; &amp;&amp; nCorrection &gt; 0) {
+                      var item = this.getUserData(&quot;__correctedItem&quot;);
+                      if (item) {
+                          var nPadding = item.getPaddingBottom();
+                          if (typeof(nPadding) === &quot;number&quot; &amp;&amp; nPadding &gt; nCorrection) {
+                              item.setPaddingBottom(nPadding - nCorrection);
+                          }
+                          this.setUserData(&quot;__correctedItem&quot;, null);
+                      }
+                      this.setUserData(&quot;__paddingCorrection&quot;, null);
+                  }
+
+                  this._isSeeable = false;
+                  this.createDispatchEvent(&quot;disappear&quot;);
+                }
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5306</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-05 19:56:26 +0200</bug_when>
+            <thetext>Render issues will not be fixed in the 0.7.x branch anymore. Sorry.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38913</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:53 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

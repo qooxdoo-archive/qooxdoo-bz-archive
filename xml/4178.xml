@@ -1,0 +1,201 @@
+<bug>
+          <bug_id>4178</bug_id>
+          
+          <creation_ts>2010-10-12 20:00:00 +0200</creation_ts>
+          <short_desc>Not possible to move Google map with mouse (Opera, IE)</short_desc>
+          <delta_ts>2011-01-11 07:54:23 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>app</component>
+          <version>1.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://jlmag.labo.free.fr/qooxdoo-app/maps/simplemap-5/</bug_file_loc>
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.2.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Jean-Luc MAGNAN">jlmagnan</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          <cc>adrian.olaru</cc>
+    
+    <cc>qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20565</commentid>
+              <attachid>817</attachid>
+            <who name="Jean-Luc MAGNAN">jlmagnan</who>
+            <bug_when>2010-10-12 20:00:30 +0200</bug_when>
+            <thetext>Created attachment 817
+Application source code
+
+When &quot;decorator&quot; is setting, it&#39;s not possible to move the map (google map) with mouse for 2 WEB browser :
+
+Windows XP SP3 Home Ed:
+  IE 8 : Nok
+  Opera 10.62 : Nok
+
+  FF 3.6.10 : Ok
+  Chrome 6.0.472.63 : Ok
+  Safari 5.0.2 : Ok
+
+Windows XP SP3 Pro:
+  IE 6.0 : Nok
+  Opera 10.62 : Nok
+
+  FF 3.6.10 : Ok
+  Chrome 6.0.472.63 : Ok
+  Safari 5.0.2 : Ok
+
+The code is here : &quot;http://jlmag.labo.free.fr/qooxdoo-app/maps/simplemap-5/Application.js&quot;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20678</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-13 09:00:00 +0200</bug_when>
+            <thetext>Adi, please have a look.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20869</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2010-10-26 13:05:46 +0200</bug_when>
+            <thetext>accept</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20940</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2010-10-28 15:21:07 +0200</bug_when>
+            <thetext>I haven&#39;t found a fix for this but I know for sure that the protector and the decorator elements has something to do with this. It seems that these elements blocks the mouse interaction with the actual content. I have to dig deeper.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20941</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2010-10-28 15:29:41 +0200</bug_when>
+            <thetext>Ok, now I&#39;m certain. 
+
+The protector element that is used to support decoration blocks mouse interaction with the content. It has a higher z-index that the content.
+
+From the protector definition:
+
+     * the protector element is used to block mouse events
+     * from the decoration.
+     *
+     * This is needed because of the way the decorations work. Most
+     * of them tend to replace the underlying HTML of a widget
+     * dynamically on mouse over. But this also means that the
+     * native mouse out is not fired on the new content with which
+     * the old content is replaced. This is a fact given through
+     * the native behavior of the browser.
+     *
+     * The protector is placed between the content and the decoration.
+
+
+Now, only if I find a fix for this...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21637</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2010-11-30 14:06:24 +0100</bug_when>
+            <thetext>Fixed with r24067 on trunk. Please refer to the Maps demo.
+
+@Adrian
+
+Many thanks for your detailed comments, they were very helpful. Well, I think you were very close to the solution…
+
+Google Maps sets the zIndex of the content element to 0 (was: 10) when initializing. This prevents the map from beeing able to be moved when a protector element is in use (which is true for all browser that don&#39;t support the pointerEvents CSS property).
+
+Moreover, qooxdoo does not track this change. Therefore, the internal representation of the zIndex property is still 10.
+
+As a consequence, setting the zIndex like this
+
+isle.getContentElement().setStyles({zIndex: 10}, true);
+
+... is silently ignored.
+
+The work-around is to set the style of the DOM element without qooxdoo, this way bringing internal representation and DOM in sync and the content element to the front (i.e. clickable).</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>817</attachid>
+            <date>2010-10-12 20:00:00 +0200</date>
+            <delta_ts>2010-10-12 20:00:30 +0200</delta_ts>
+            <desc>Application source code</desc>
+            <filename>Application.js</filename>
+            <type>text/javascript</type>
+            <size>2664</size>
+            <attacher>jlmagnan</attacher>
+            
+              <data encoding="base64">LyogKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqDQoNCiAgIENvcHlyaWdodDoNCg0KICAgTGljZW5zZToNCg0KICAg
+QXV0aG9yczoNCg0KKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqICovDQoNCi8qICoqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKg0KDQoj
+YXNzZXQoc2ltcGxlbWFwXzUvKikNCg0KKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqICovDQoNCi8qKg0KICogVGhp
+cyBpcyB0aGUgbWFpbiBhcHBsaWNhdGlvbiBjbGFzcyBvZiB5b3VyIGN1c3RvbSBhcHBsaWNhdGlv
+biAic2ltcGxlbWFwXzUiDQogKi8NCnF4LkNsYXNzLmRlZmluZSgic2ltcGxlbWFwXzUuQXBwbGlj
+YXRpb24iLA0Kew0KICBleHRlbmQgOiBxeC5hcHBsaWNhdGlvbi5TdGFuZGFsb25lLA0KDQogIG1l
+bWJlcnMgOg0KICB7DQogICAgbWFpbiA6IGZ1bmN0aW9uKCkNCiAgICB7DQogICAgICB0aGlzLmJh
+c2UoYXJndW1lbnRzKTsNCg0KICAgICAgLy8gRW5hYmxlIGxvZ2dpbmcgaW4gZGVidWcgdmFyaWFu
+dA0KICAgICAgaWYgKHF4LmNvcmUuVmFyaWFudC5pc1NldCgicXguZGVidWciLCAib24iKSkNCiAg
+ICAgIHsNCiAgICAgICAgcXgubG9nLmFwcGVuZGVyLk5hdGl2ZTsNCiAgICAgICAgcXgubG9nLmFw
+cGVuZGVyLkNvbnNvbGU7DQogICAgICB9DQogICAgICANCiAgICAgIHZhciBnb29nbGVNYXBXaXRo
+b3V0RGVjbyA9IHRoaXMuX2NyZWF0ZUdvb2dsZU1hcCgpOw0KICAgICAgdmFyIGdvb2dsZU1hcFdp
+dGhEZWNvID0gdGhpcy5fY3JlYXRlR29vZ2xlTWFwKCJtYWluIik7DQogICAgICANCiAgICAgIHRo
+aXMuZ2V0Um9vdCgpLmFkZCh0aGlzLl9jcmVhdGVXaW5kb3coIkdvb2dsZSBNYXBzIHdpdGggZGVj
+b3JhdG9yIiwgZ29vZ2xlTWFwV2l0aERlY28pLHsNCiAgICAgICAgbGVmdCA6IDQyMCwNCiAgICAg
+ICAgdG9wICA6IDEwMA0KICAgICAgfSk7DQogICAgICANCiAgICAgIHRoaXMuZ2V0Um9vdCgpLmFk
+ZCh0aGlzLl9jcmVhdGVXaW5kb3coIkdvb2dsZSBNYXBzIHdpdGhvdXQgZGVjb3JhdG9yIiwgZ29v
+Z2xlTWFwV2l0aG91dERlY28pLHsNCiAgICAgICAgbGVmdCA6IDEwMCwNCiAgICAgICAgdG9wIDog
+MTAwDQogICAgICB9KTsNCiAgICB9LA0KICAgIA0KICAgIF9jcmVhdGVXaW5kb3cgOiBmdW5jdGlv
+bih0aXRsZSwgbWFwLCBkZWNvcmF0b3IpDQogICAgew0KICAgICAgdmFyIHdpbiA9IG5ldyBxeC51
+aS53aW5kb3cuV2luZG93KHRpdGxlKTsNCiAgICAgIHdpbi5zZXRMYXlvdXQobmV3IHF4LnVpLmxh
+eW91dC5Hcm93KCkpOw0KICAgICAgd2luLnNldCh7DQogICAgICAgIG1pbldpZHRoIDogMzAwLA0K
+ICAgICAgICBtaW5IZWlnaHQgOiAzMDAsDQogICAgICAgIGNvbnRlbnRQYWRkaW5nIDogNQ0KICAg
+ICAgfSk7DQogICAgICB3aW4uYWRkKG1hcCk7DQogICAgICB3aW4ub3BlbigpOw0KICAgICAgDQog
+ICAgICByZXR1cm4gd2luOw0KICAgIH0sDQogICAgDQogICAgX2NyZWF0ZUdvb2dsZU1hcCA6IGZ1
+bmN0aW9uKGRlY28pDQogICAgew0KICAgICAgdmFyIGxheW91dCA9IG5ldyBxeC51aS5sYXlvdXQu
+Q2FudmFzKCk7DQogICAgICB2YXIgaXNsZSA9IG5ldyBxeC51aS5jb250YWluZXIuQ29tcG9zaXRl
+KGxheW91dCk7DQogICAgICANCiAgICAgIGlmKGRlY28pIGlzbGUuc2V0RGVjb3JhdG9yKGRlY28p
+Ow0KICAgICAgDQogICAgICBpc2xlLmFkZExpc3RlbmVyT25jZSgiYXBwZWFyIiwgZnVuY3Rpb24o
+KSB7DQogICAgICAgIA0KICAgICAgICAvLyBBZnRlciBhcHBlYXIsIGluc2VydCBHbWFwIG9uY2UN
+CiAgICAgICAgdmFyIHRoZU1hcENlbnRlciA9IG5ldyBnb29nbGUubWFwcy5MYXRMbmcoNDkuMDEx
+ODk5LDguNDAzMzExKTsNCiAgICAgICAgdmFyIHRoZU1hcFpvb20gPSAxMzsNCiAgICAgICAgdmFy
+IHRoZU1hcFR5cGUgPSBnb29nbGUubWFwcy5NYXBUeXBlSWQuUk9BRE1BUDsNCiAgICAgICAgDQog
+ICAgICAgIHZhciB0aGVNYXAgPSBuZXcgZ29vZ2xlLm1hcHMuTWFwKGlzbGUuZ2V0Q29udGVudEVs
+ZW1lbnQoKS5nZXREb21FbGVtZW50KCksIHsNCiAgICAgICAgICB6b29tOiB0aGVNYXBab29tLA0K
+ICAgICAgICAgIGNlbnRlcjogdGhlTWFwQ2VudGVyLA0KICAgICAgICAgIG1hcFR5cGVJZDogdGhl
+TWFwVHlwZQ0KICAgICAgICB9KTsNCiAgICAgICAgDQogICAgICAgIC8vIEFmdGVyIHJlc2l6ZSwg
+Y2VudGVyIEdtYXANCiAgICAgICAgaXNsZS5hZGRMaXN0ZW5lcigicmVzaXplIiwgZnVuY3Rpb24o
+KQ0KICAgICAgICB7DQogICAgICAgICAgcXguaHRtbC5FbGVtZW50LmZsdXNoKCk7IA0KICAgICAg
+ICAgIHRoaXMuZGVidWcoInJlc2l6ZSBhbmQgcGFuVG8iKTsNCiAgICAgICAgICBnb29nbGUubWFw
+cy5ldmVudC50cmlnZ2VyKHRoZU1hcCwgJ3Jlc2l6ZScpOw0KICAgICAgICAgIHRoZU1hcC5wYW5U
+byh0aGVNYXBDZW50ZXIpOw0KICAgICAgICB9KTsgICAgICAgIA0KICAgICAgICANCiAgICAgIH0p
+Ow0KDQogICAgICByZXR1cm4gaXNsZTsNCiAgICB9DQogIH0NCn0pOw0K
+</data>
+
+          </attachment>
+      
+
+    </bug>

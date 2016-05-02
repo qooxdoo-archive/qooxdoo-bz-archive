@@ -1,0 +1,208 @@
+<bug>
+          <bug_id>4374</bug_id>
+          
+          <creation_ts>2010-11-26 15:11:00 +0100</creation_ts>
+          <short_desc>Selection-Handling of Radio Toolbar-Buttons</short_desc>
+          <delta_ts>2010-12-13 08:30:58 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core.selection</component>
+          <version>1.2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.2.2</target_milestone>
+          
+          <blocked>4394</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Alexander Steitz">alexander.steitz</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>christian.hagendorn</cc>
+    
+    <cc>schnepe2</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21587</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-11-26 15:11:01 +0100</bug_when>
+            <thetext>== Steps to reproduce ==
+
+1. open demo at http://demo.qooxdoo.org/current/demobrowser/#widget~ToolBar.html 
+2. Load this demo in the playground application (devel version)
+3. Change the line &quot;radioGroup.setAllowEmptySelection(true);&quot; to  &quot;radioGroup.setAllowEmptySelection(false);&quot; (line 93)
+4. Hit the &quot;Run&quot; button
+5. Click at the toolbar at the &quot;Right&quot; button
+6. Click again at the &quot;Right&quot; button
+
+== Problem ==
+The selection is changing back to &quot;Left&quot;
+
+== Reason ==
+Since the selection is not allowed to be empty the first toolbar button is selected. This behaviour is problematic if someone is using these toolbar buttons to e.g. change his content. Clicking again at an already selected button will lead to a selection of the first button.
+
+This is confusing, since the &quot;normal&quot; radio button (qx.ui.form.RadioButton) is behaving different as the toolbar radio button.
+
+
+== Technical background ==
+  * qx.ui.form.RadioButton uses for &quot;onExecute&quot; -&gt; &quot;setValue(true)&quot;
+  * qx.ui.toolbar.RadioButton uses for &quot;onExecute&quot; -&gt; &quot;toggleValue&quot; (inherit throught the implementation of &quot;qx.ui.form.ToggleButton&quot;)
+
+
+== Possible solution ==
+Use &quot;toggleValue&quot; for all cases when a selection can be empty and &quot;setValue(true)&quot; for all cases where an empty selection is not possible.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21605</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-29 10:04:20 +0100</bug_when>
+            <thetext>Override the _onExecute for the toolbars radio button like suggested.
+
+trunk: r24035
+1.2.x: r24037</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21668</commentid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2010-12-01 14:25:15 +0100</bug_when>
+            <thetext>Unfortunately the &#39;solution&#39; breaks the API Viewer!
+
+A click on the &quot;Inherited&quot; Button fails
+and produces the following error/warning:
+  &quot;this.getGroup() is null&quot;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21672</commentid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2010-12-01 15:06:33 +0100</bug_when>
+            <thetext>The following implementation of qx.ui.toolbar.RadioButton._onExecute
+*seems* to work [1]:
+&lt;code&gt;
+  _onExecute : function (e)
+  {
+    var grp = this.getGroup();
+    if (grp === null || grp.getAllowEmptySelection()) {
+      this.toggleValue();
+    } else {
+      this.setValue(true);
+    }
+  }
+&lt;/code&gt;
+
+[1] ...at least for the API-Viewer (further tests needed/welcome ;) )</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21676</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2010-12-01 15:47:36 +0100</bug_when>
+            <thetext>Also the Inspector is broken, see bug #4394</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21683</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-12-02 09:02:28 +0100</bug_when>
+            <thetext>Ops.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21688</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-12-02 10:09:07 +0100</bug_when>
+            <thetext>I must have missed that spot. Sure, the group property is nullable which makes this check mandatory. Thanks for reopening the bug!
+
+trunk: r24137
+1.2.x: r24138</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21691</commentid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2010-12-02 11:25:41 +0100</bug_when>
+            <thetext>Sorry, but I had to &quot;re-re-open&quot; the this one.
+
+The &quot;fix&quot; of (comment 6) works only for grouped buttons!
+It is *not* possible to toggle non-grouped buttons.
+
+== Steps to reproduce ==
+If you just build the API and try to un-check any of the buttons on the top right
+(&quot;Properties&quot;, &quot;Inherited&quot;, &quot;Protected&quot; or &quot;Private&quot;) you will see that it is
+not possible to un-check them.
+
+== Reason ==
+The commited code can never reach &quot;this.toggleValue();&quot;
+
+== Possible solution ==
+See comment 3.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21695</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-12-02 14:45:17 +0100</bug_when>
+            <thetext>You were right, using the button without a group was not as it was before. Change that back to the old behavior. but just in case, using a radio button without a group... why? Isn&#39;t that a toggle button then?Committed the fix with:
+
+trunk: r24148
+1.2.x: r24150
+
+
+Here ist the code I used to reproduce in the playground:
+
+var trb1 = new qx.ui.toolbar.RadioButton(&quot;1&quot;);
+var trb2 = new qx.ui.toolbar.RadioButton(&quot;2&quot;);
+var trb3 = new qx.ui.toolbar.RadioButton(&quot;3&quot;);
+this.getRoot().add(trb1, {top: 70});
+this.getRoot().add(trb2, {top: 90});
+this.getRoot().add(trb3, {top: 110});
+
+var rb1 = new qx.ui.form.RadioButton(&quot;1&quot;);
+var rb2 = new qx.ui.form.RadioButton(&quot;2&quot;);
+var rb3 = new qx.ui.form.RadioButton(&quot;3&quot;);
+
+var rbg = new qx.ui.form.RadioButtonGroup();
+rbg.setLayout(new qx.ui.layout.VBox());
+rbg.add(rb1);
+rbg.add(rb2);
+rbg.add(rb3);
+this.getRoot().add(rbg);
+
+// var rg = new qx.ui.form.RadioGroup();
+// rg.add(trb1);rg.add(trb2);rg.add(trb3);
+
+// rg.setAllowEmptySelection(true);
+// rbg.getRadioGroup().setAllowEmptySelection(true);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21699</commentid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2010-12-02 15:30:25 +0100</bug_when>
+            <thetext>Right, the four buttons[1] of the API-Viewer should be &quot;ToggleButtons&quot;.
+Unfortunately there is no qx.ui.toolbar.ToggleButton class and
+qx.ui.toolbar.Button has no &quot;value&quot; property...
+
+Nevertheless, after your fix the qx.ui.toolbar.RadioButton does work
+&quot;group-less&quot;, so I don&#39;t think &quot;qx.ui.toolbar.ToggleButton&quot; is really needed.
+
+---
+[1] &quot;Properties&quot;, &quot;Inherited&quot;, &quot;Protected&quot; and &quot;Private&quot;</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

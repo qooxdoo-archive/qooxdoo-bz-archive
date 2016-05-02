@@ -1,0 +1,244 @@
+<bug>
+          <bug_id>2340</bug_id>
+          
+          <creation_ts>2009-05-06 10:45:00 +0200</creation_ts>
+          <short_desc>Subkey Specifiers for Config Values</short_desc>
+          <delta_ts>2014-03-03 15:19:36 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.config</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://qooxdoo.org/documentation/0.8/generator_config_ref#log</bug_file_loc>
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9813</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-05-06 10:45:05 +0200</bug_when>
+            <thetext>This bug presents a new micro protocol on the level of configuration file 
+values.
+
+Currently there is a new micro protocol under investigation which can be 
+applied to string values in Json configuration files. I call it &quot;subkey 
+specifiers&quot; or &quot;value refinements&quot;. The idea is simply to allow a certain value 
+for a config key to be augmented or refined by additional values, joined to the 
+main value with forward slashes (&quot;/&quot;). An entry looks like this:
+
+  &quot;key&quot; : &quot;mainval/subval1/subval2/...&quot;
+
+As you can see the value consists of a path-like expression where the first 
+element represents the main value which is further refined by subsequent key 
+words or values. It is easy to come up with examples for these kinds of refined 
+values:
+
+  &quot;output-format&quot;       : &quot;json/pretty&quot;
+  &quot;dependency-type&quot;    : &quot;using/runtime&quot;
+
+I find this notation clear and intuitive, even more so compared to the 
+alternative notation, which we used so far, which introduces additional levels 
+in the Json config map. The above examples would look like this:
+
+  &quot;output-format&quot; : 
+  {
+    &quot;type&quot;    : &quot;json&quot;,
+    &quot;subtype&quot; : &quot;pretty&quot;
+  }
+
+or
+  
+  &quot;output-format&quot; : 
+  {
+    &quot;type&quot;   : &quot;json&quot;,
+    &quot;pretty&quot; : true
+  }
+
+and
+
+  &quot;dependency-type&quot; : 
+  {
+    &quot;type&quot;    : &quot;using&quot;,
+    &quot;subtype&quot; : &quot;runtime&quot;
+  }
+
+or
+
+  &quot;dependency-type&quot; : 
+  {
+    &quot;type&quot;            : &quot;using&quot;,
+    &quot;load-or-runtime&quot; : &quot;runtime&quot;
+  }
+
+As you can see, you are not only introducing nested levels to the config file, 
+thereby adding structural complexity. You are also struggling to find proper 
+subkeys that more than often turn out to be &quot;type&quot;, &quot;subtype&quot; and the likes.
+
+Another disadvantage of the classical approach is that values turn into maps 
+when additonal refinements are introduced. This breaks existing code that 
+expects a value at a given position. E.g in the second above example, say you 
+want to further refine the &quot;pretty&quot; attribute so that it can be either 
+&quot;progressive&quot; or &quot;conservative&quot; (whatever that may mean). Then
+
+  &quot;output-format&quot; : 
+  {
+    &quot;type&quot;   : &quot;json&quot;,
+    &quot;pretty&quot; : true
+  }
+
+needs to turn into something like
+
+  &quot;output-format&quot; : 
+  {
+    &quot;type&quot;   : &quot;json&quot;,
+    &quot;pretty&quot; : 
+    {
+      &quot;mode&quot; : &quot;progressive&quot;
+    }
+  }
+
+The former &quot;true&quot; value is replaced by a map. With the path-like expression it 
+would be easy to add further refinements:
+
+  &quot;output-format&quot; : &quot;json/pretty/progressive&quot;
+
+while existing code still continues to function using the leftmost parts of the 
+expression and ignoring the additional refinement. A suitable API would allow 
+application code to abstract away from parsing such expressions and accessing 
+individual parts.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9817</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-05-06 11:24:57 +0200</bug_when>
+            <thetext>Thanks Thomas for this well-written proposal. I understand the (possible) benefit of writing less (i.e. more compact) code when modifying and maintaining a config file manually.
+
+On the other hand I see some severe drawbacks: processing the JSON file is more complex as hierarchical information is condensed (somewhat &quot;hidden&quot;) in string values. This might also be a problem when trying to validate the config files (e.g. JSON scheme). While the structural information may be more verbose, it could nevertheless allow for more effective ways of manually editing files (hierarchical editors similar to XML editing, opening/closing nodes, auto-completion, etc.). Also, wouldn&#39;t introducing subkey handling as an alternative way of specifying config options lead to potential conflicts with existing hierarchical setups? A single form of structure could minimize conflicts (by limiting to redundancy/ambiguity of values, not structural alternatives).
+
+Good to see you mention possible migration issues. I think this is rather a general topic and not specific to the subkey proposal, so we should address that. The migration scripts should probably be able to read/parse an existing config file, then process/output a migrated version that is compatible with the new qooxdoo version. What do you think (worth a separate bug/enhancement report)?
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9823</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-05-06 16:03:39 +0200</bug_when>
+            <thetext>The subkey specifiers are resolved into maps for the log/dependencies config 
+key. Keys &#39;type&#39; and &#39;format&#39; now have simple values, which act like 
+&quot;selectors&quot;: They determine which dependency type or output format is chosen. 
+Depending on that there are corresponding keys (e.g. &#39;using&#39;, &#39;dot&#39;, &#39;json&#39;) 
+that correspond to the selector setting, and refine the choice in their own 
+maps. So these are &quot;descriptors&quot;. We could exploit this relation at one point 
+by taking the selector&#39;s value as a lookup key into the descriptors.
+Other top-level keys &#39;root&#39; and &#39;file&#39; were moved into appropriate sub-maps. 
+While this causes a bit of redunancy on the config side, e.g. for &#39;file&#39;, it is 
+much clearer on the documentation side, e.g it&#39;s easy to document indiviudal 
+defaults for the file name. You could argue the same for the &#39;format&#39; key, but 
+I expect to re-use it for &#39;used-by&#39; type dependencies.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9824</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-05-06 16:42:09 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; On the other hand I see some severe drawbacks: processing the JSON file is 
+more complex as hierarchical information is condensed (somewhat &quot;hidden&quot;) in 
+string values.
+
+But there is a clear separation: The generic Json processing only goes so far 
+as a terminal, scalar value; it wouldn&#39;t look into that value. Interpreting the 
+value is the task of the consuming function, as it always is (no matter whether 
+the value is &#39;dot/span-tree-only&#39; or 42). And processing subkeys locally in the 
+funtion is easy in my experience.
+
+&gt; This might also be a problem when trying to validate the config files (e.g. 
+JSON scheme).
+
+Yes, you trade expressiveness on the Json side.
+
+&gt; While the structural information may be more verbose, it could nevertheless 
+allow for more effective ways of manually editing files (hierarchical editors 
+similar to XML editing, opening/closing nodes, auto-completion, etc.). 
+
+I know such editors, and still find them more tedious than subkeys :).
+
+&gt; Also, wouldn&#39;t introducing subkey handling as an alternative way of 
+specifying config options lead to potential conflicts with existing 
+hierarchical setups?
+
+I doubt that. Subkeys have a fairly specific set of situations where they can 
+be applied, i.e.: Successively refining a value on a given dimension. This is a 
+narrow use case, although I think a very common one. Mapping this to 
+hierarchical Json structures is unnatural since you always have to invent 
+artificial keys (&#39;type&#39;, &#39;subtype&#39;, ...), as I wrote before.
+
+OTOH, hierarchical Json captures all other cases, e.g. those where you need to 
+assign values to a subkey. E.g. &#39;dot/span-tree-only&#39; is fine as a subkey, but 
+&#39;dot/radius=5&#39; is not :). These are the cases where you need to resolve subkeys 
+into maps anyway.
+
+&gt; A single form of structure could minimize conflicts (by limiting to 
+redundancy/ambiguity of values, not structural alternatives).
+
+It is certainly a bit more decision making on the side of the implementor, but 
+not on the side of the users. They have to know the concrete syntax for a 
+config key anyway.
+
+&gt; 
+&gt; Good to see you mention possible migration issues.
+
+Actually, I was not thinking of migrating applications, but adding 
+functionality to the generator that would build on refinements, where the 
+existing code continues to work with the un-refined values. But changing the 
+Json structure almost always forces you to touch the old code.
+
+&gt; I think this is rather a general topic and not specific to the subkey 
+proposal, so we should address that. The migration scripts should probably be 
+able to read/parse an existing config file, then process/output a migrated 
+version that is compatible with the new qooxdoo version. What do you think 
+(worth a separate bug/enhancement report)?
+
+Yep: bug#2285</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9825</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-05-06 16:42:13 +0200</bug_when>
+            <thetext>decided for 0.8.3</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36550</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:36 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

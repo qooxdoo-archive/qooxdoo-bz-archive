@@ -1,0 +1,149 @@
+<bug>
+          <bug_id>1648</bug_id>
+          
+          <creation_ts>2008-11-27 11:01:00 +0100</creation_ts>
+          <short_desc>Generator: Improve &#39;uris&#39; representation in source version of loader script</short_desc>
+          <delta_ts>2014-03-03 15:21:27 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>0.8</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>6520</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-11-27 11:01:54 +0100</bug_when>
+            <thetext>The current representation of the &#39;uris&#39; array in window.qxloader in every loader script (think &quot;custom.js&quot;) of a source version is suboptimal with regard to space. The contained URIs are fully expanded, and therefore repeat initial paths to the used libraries multiple times. For a skeleton &#39;gui&#39; app this can easily amount to about 50k of additional source code.
+
+This can be improved in the following way, which requires only changes in the generator output (adding to the qxlibraries map) and the file tool/data/generator/loader.js (qxloader implementation).
+
+Change the output of the &#39;source-script&#39; job as follows:
+
+// add classUri member to each lib entry
+qxlibraries[&#39;qx&#39;]={&#39;classUri&#39;:&quot;...&quot;,...}
+
+// replace URI prefix by name space in &#39;uris&#39; array
+  uris : [[&quot;qx:qx/Bootstrap.js&quot;,&quot;qx:dom/Node.js&quot;,...]]
+
+// re-insert URI prefix when using &#39;uris&#39;
+  uris = this.uris[pkg];
+  uris = this._patchUris(uris, qxlibraries);  // write appropriate _patchUris method
+  this.scriptQueue.push.apply(this.scriptQueue, uris);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6525</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-11-27 13:20:14 +0100</bug_when>
+            <thetext>Since the loading of qooxdoo apps is to be reworked for 0.8.2 (e.g. bug #1177), it might not make sense to spent much time with this intermediate optimization. If it can quickly be done without risking breaking the existing behavior, it could probably make it into 0.8.1.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9629</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-24 16:23:08 +0200</bug_when>
+            <thetext>The new representation of the includer uris is now being generated (with 
+r18882), in the field
+
+   qx.$$loader.uris2
+
+@Fabian: You only have to remove the library namespace and &#39;:&#39;, take 
+qxlibraries[namespace][&#39;sourceUri&#39;], and join this string with the remainder 
+from the class uri with &#39;/&#39;, and you have a working uri again.
+
+E.g.:
+
+qxlibraries = {
+  &quot;qx&quot;: {
+      &quot;resourceUri&quot;: 
+&quot;http://localhost/qooxdoo.trunk/framework/source/resource&quot;, 
+      &quot;version&quot;: &quot;trunk&quot;, 
+      &quot;sourceUri&quot;: &quot;http%3A//localhost/qooxdoo.trunk/framework/source/class&quot;}, 
+...
+  }
+
+qx.$$loader {
+
+  uris : 
+[[&quot;http://localhost/qooxdoo.trunk/framework/source/class/qx/Bootstrap.js&quot;,...
+
+  uris2:   [[&quot;qx:qx/Bootstrap.js&quot;, ...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11070</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-07-24 12:30:50 +0200</bug_when>
+            <thetext>I have updated the loader scripts and the part loading to use the compressed URIs (r19682).
+The generator still needs to be updated to generate compressed URIs for the build 
+version as well.
+
+I have marked the places, which need to be changed once the URIs are compressed in the
+build version with &quot;TODO: #1648&quot; comments. The affected files are:
+
+qooxdoo/framework/source/class/qx/io2/PartLoader.js
+qooxdoo/tool/data/generator/loader-build.tmpl.js
+qooxdoo/tool/data/generator/loader-source.tmpl.js
+qooxdoo/tool/pylib/generator/action/CodeGenerator.py
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11071</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-07-24 12:31:18 +0200</bug_when>
+            <thetext>back to Thomas</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11091</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-24 16:57:24 +0200</bug_when>
+            <thetext>Implemented generation of compressed uris for the build version, and adjusted 
+the build loader template and PartLoader.js accordingly. Now both source and 
+build versions only use the new uri representation. Space gain for the source 
+version is easily in the 1K dimension.
+
+The generator code needs more clean-up, so I might be committing code patches 
+under this bug number in the future, but the desired functionality is there, so 
+I&#39;m closing it.
+
+With r19686.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37296</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:27 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

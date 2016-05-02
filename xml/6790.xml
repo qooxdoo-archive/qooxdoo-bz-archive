@@ -1,0 +1,154 @@
+<bug>
+          <bug_id>6790</bug_id>
+          
+          <creation_ts>2012-09-07 01:54:00 +0200</creation_ts>
+          <short_desc>q.template.get fails if template contains TABLE tag</short_desc>
+          <delta_ts>2012-10-10 09:48:28 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>website</component>
+          <version>2.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>2.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="sergey">tetkins</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30634</commentid>
+              <attachid>1190</attachid>
+            <who name="sergey">tetkins</who>
+            <bug_when>2012-09-07 01:54:25 +0200</bug_when>
+            <thetext>Created attachment 1190
+two html files in zip archive
+
+1. Create a template containing the following code:
+
+&lt;div id=&quot;tpl&quot; style=&quot;display: none&quot;&gt;
+	&lt;table border=&quot;1&quot;&gt;
+		{{#items}}
+		&lt;tr&gt;
+			&lt;td&gt;{{key}}&lt;/td&gt;
+			&lt;td&gt;{{val}}&lt;/td&gt;
+		&lt;/tr&gt;
+		{{/items}}
+	&lt;/table&gt;
+&lt;/div&gt;
+
+2. Execute the script:
+
+var data = {
+	items: [
+		{ key: &quot;a&quot;, val: 1},
+		{ key: &quot;b&quot;, val: 2},
+		{ key: &quot;c&quot;, val: 3}
+	]};
+
+var element = q.template.get(&quot;tpl&quot;, data);
+q(&quot;body&quot;).append(element);
+
+Result: an empty table is rendered (in Chrome 21.0.1180.83, FF 14.0.1, Opera 12.02).
+
+Expected result: a table with three rows and two columns is rendered. 
+
+However, a correct result is achieved in IE9.
+
+As a workaround I would suggest to place the template markup not in &lt;body&gt; but inside &lt;script type=&quot;text/html&quot; id=&quot;tpl&quot;&gt; tag.
+
+In this case you should use &#39;render&#39; method instead of &#39;get&#39; method:
+
+var s = document.scripts[&quot;tpl&quot;];
+var html = q.template.render(s.text, data);
+q(&quot;body&quot;).append(html);
+
+Moreover, there is no restriction of a single element to have in a template.
+
+
+See full samples in the attachment.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30639</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-09-07 09:28:28 +0200</bug_when>
+            <thetext>Thanks for the good report. The problem is easy to explain but not as easy to fix. Putting the template as you described into the DOM into a hidden div element invokes to browser to parse the div and its content. During that parsing process, the template will be rewritten and ends up like this (at least in chrome):
+
+&lt;div id=&quot;tpl&quot; style=&quot;display: none&quot;&gt;
+    &lt;table border=&quot;1&quot;&gt;
+        {{#items}}{{/items}}
+        &lt;tbody&gt;
+            &lt;tr&gt;
+                &lt;td&gt;{{key}}&lt;/td&gt;
+                &lt;td&gt;{{val}}&lt;/td&gt;
+            &lt;/tr&gt;
+        &lt;/tbody&gt;
+    &lt;/table&gt;
+&lt;/div&gt;
+
+Using this template as a base makes it clear why the result is an empty table.
+
+Unfortunately, we don&#39;t have much of a chance to fix that bug so I put in a hint in the API docs to point the users to the best practice using a script tag like you suggested as a workaround.
+
+master: 4ab6856e36890a997d1d5d42a8961b3b051829bb</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1190</attachid>
+            <date>2012-09-07 01:54:00 +0200</date>
+            <delta_ts>2012-09-07 01:54:25 +0200</delta_ts>
+            <desc>two html files in zip archive</desc>
+            <filename>tests.zip</filename>
+            <type>application/x-zip-compressed</type>
+            <size>1028</size>
+            <attacher>tetkins</attacher>
+            
+              <data encoding="base64">UEsDBBQAAAAIAK4dJ0EDmeFibAEAAHsCAAAJAAAAdGVzdC5odG1shZLPUoMwEMbPdabvEOOFztTE
+tqcicFHPevDiOB4CiS01/AsrlGF4Mg8+kq/gBkoHT3LJ8stuvi+7+fn69i7vH++eX54eyB4SHcwv
+PLuSY6LT0qd7gNzlvK5rVm9YZnZ8td1u+dHmUEyeeXslpA1mHsSgVQCqBI/38YDLyMQ5EGhy5VNQ
+R+AHUYmBUlKayKfF9ZrdsBU7lDTw+LCFxf+X9wqzghk00Tjvn2kEcZYSZ9Hzdn5RCUOkAEF8gn+z
+GFRSuuTVbrfkQzUuoYIuSSW0S1bdcsrDka//8mjkmw7xW3fbG8XPaimtEpUCyhUMtXItQLGdAodC
+rrHQelmcKwqHhpls6IKJPFepdE7lmGH3u2GddATjsd+erbTjknFFYun3AqSERmOfZFyiNLpNs1QN
+cwIRakXCzEhlfLoaWte2V31Lum6YoLHUBjJoW7xu1+Eo5RTizScQA3M6iJ8PQtqLWXMc3Q2+R7v8
+9Mx+AVBLAwQUAAAACACJHSdBuNmrfnwBAADrAgAACgAAAHRlc3QyLmh0bWyFUsFSwjAQPeMM/xDj
+pcxgYuEEtFzUsx68OAyH0EYplrYkC6XT6Zd58JP8BTdJAdFxPOXlvbfZfUk+3z+Cy7uH26fnx3uy
+hHU67V4EZiX7dZrpkC4BijHnZVmycshy9cr90WjE98ZD0dwJllLEBnQCSCCVU5AaAm6xo3WkkgII
+VIUMKcg98JXYCcdSolUU0s31gN0wn600nQbcSVj8R7ntTZIYt4UbAm1L33YeBByRo0AsUkkWuYql
+CqnfOjt1fZWAXOumwb31KaM4GE/r+k1WTYMR4nN6J9IzGqE6HsmPR1rFtj5MprhF/wf7di+udsMU
+3m7lvWyzCJI8I17P8rVruxOKxAIECUnLdOwYYzKzW+MkmGZMqKB9ggHGxG/6P7XFQRv81qKDNmxa
+ad5Muhen/hqbx3m0XcsMmBtez+zDzCcnl3kyNG4YjlekAiQGy/BZPM1M8r6N0WsLNh5d5HFFe0wU
+Bdo8U92KDa7nd4m4/YIGm0JHtghV962/AFBLAQI/ABQAAAAIAK4dJ0EDmeFibAEAAHsCAAAJACQA
+AAAAAAAAIAAAAAAAAAB0ZXN0Lmh0bWwKACAAAAAAAAEAGABpp8WwiYzNAfWVxLCJjM0BBZbhaH19
+zQFQSwECPwAUAAAACACJHSdBuNmrfnwBAADrAgAACgAkAAAAAAAAACAAAACTAQAAdGVzdDIuaHRt
+bAoAIAAAAAAAAQAYAFDEXIeJjM0B00FZh4mMzQE2vTn8hYzNAVBLBQYAAAAAAgACALcAAAA3AwAA
+AAA=
+</data>
+
+          </attachment>
+      
+
+    </bug>

@@ -1,0 +1,128 @@
+<bug>
+          <bug_id>4236</bug_id>
+          
+          <creation_ts>2010-10-25 16:02:00 +0200</creation_ts>
+          <short_desc>Memory leak when using a Json-store</short_desc>
+          <delta_ts>2010-11-11 08:19:25 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.2.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>alexander.steitz</cc>
+    
+    <cc>qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20866</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2010-10-25 16:02:14 +0200</bug_when>
+            <thetext>We are just removing memory leaks from our application.
+To do so, we try to program our app in a way that the number of registered qooxdoo objects do not increase when our application polls.
+(We check the number of qooxdoo objects by an extension to qx.core.ObjectRegistry, which works similar to qx.dev.ObjectSummary.getInfo()).
+
+Now we have found out that we need the following disposal code in order to avoid memory leaks:
+
+      this.__store = new qx.data.store.Json(...);
+      this.__store.addListener(&quot;loaded&quot;, function(e) {
+        var data = e.getData();
+        
+        // ...
+        
+        if(data.getTasks()) {
+          var taskArray = data.getTasks().toArray();
+          if( taskArray ) {
+            for(var i=0; i&lt;taskArray.length; i++ ) {
+              taskArray[i].dispose();
+            }
+          }
+          data.getTasks().dispose();
+        }
+        data.dispose();
+      }, this);
+
+The JSon-Structure from which the JSON-Object is created is:
+{&quot;tasks&quot;:[{&quot;id&quot;:1388,&quot;priority&quot;:3,&quot;status&quot;:1,&quot;note&quot;:&quot;Ganz wichtig: Bis 6.10. alle Bugs fixen&quot;,&quot;title&quot;:&quot;Bugs fixen&quot;,&quot;folderID&quot;:&quot;1770&quot;,&quot;percent_completed&quot;:0,&quot;start_date&quot;:null,&quot;end_date&quot;:1286323200,&quot;recurrence_type&quot;:0,&quot;last_modified&quot;:1287412430,&quot;statusURI&quot;:&quot;Folder/1770/Task/1388/Status&quot;},{&quot;id&quot;:1390,&quot;priority&quot;:2,&quot;status&quot;:1,&quot;note&quot;:null,&quot;title&quot;:&quot;Code reviewen lassen&quot;,&quot;folderID&quot;:&quot;1770&quot;,&quot;percent_completed&quot;:0,&quot;start_date&quot;:null,&quot;end_date&quot;:null,&quot;recurrence_type&quot;:0,&quot;last_modified&quot;:1287412429,&quot;statusURI&quot;:&quot;Folder/1770/Task/1390/Status&quot;},{&quot;id&quot;:1389,&quot;priority&quot;:2,&quot;status&quot;:1,&quot;note&quot;:&quot;Immer fleiÃŸig Tests schreiben&quot;,&quot;title&quot;:&quot;Tests schreiben&quot;,&quot;folderID&quot;:&quot;1770&quot;,&quot;percent_completed&quot;:0,&quot;start_date&quot;:null,&quot;end_date&quot;:null,&quot;recurrence_type&quot;:0,&quot;last_modified&quot;:1287412427,&quot;statusURI&quot;:&quot;Folder/1770/Task/1389/Status&quot;}],&quot;numberOfTasksFound&quot;:3}
+
+The strange thing (and probably the bug) is that we have to make a lot of dispose calls to clean up the memory.
+If we omit one of these three dispose calls, the number of registered objects grows for each polling request.
+Why do we need so many dispose-calls in the loaded-event of the JSon-store to avoid memory leaks?
+Would this not be the task of qooxdoo instead the task of the application developer?
+
+I would like to ask whether it would be possible to improve the memory management of the JSon-store in the following two ways:
+1. I would except that when I call dispose() on the object e.getData (which is created by qx.data.marshal.Json.toJson()), qooxdoo disposes all sub-objects of this object and that I do not have to do that myself.
+2. Would it be possible for qooxdoo to call data.dispose() automatically at the end of the loaded-event so that not each application developer has to call this method by himself?
+
+Our JSon-structeres can be very big, and our applications are polling every few minutes.
+Therefore we now have the problem that the browser may use up to 800 MByte, if the browser has been open all night.
+This is the reason why we do not want to ignore such memory leaks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20867</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-25 17:03:10 +0200</bug_when>
+            <thetext>Thanks for reporting yet another issue including a thorough analysis. To Martin.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21211</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-10 10:21:23 +0100</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; 1. I would except that when I call dispose() on the object e.getData (which is
+&gt; created by qx.data.marshal.Json.toJson()), qooxdoo disposes all sub-objects of
+&gt; this object and that I do not have to do that myself.
+I would expect that too. So I take care of it to do so.
+
+&gt; 2. Would it be possible for qooxdoo to call data.dispose() automatically at the
+&gt; end of the loaded-event so that not each application developer has to call this
+&gt; method by himself?
+No, thats not possible because the handed in data is simply the model of the call which is stored in the model model property of the store.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21213</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-10 13:10:48 +0100</bug_when>
+            <thetext>As said in the previous post, I added destructors to all generated model classes which are responsible for disposing all its properties. That way, disposing the model should be enough.
+
+trunk: r23735
+1.2.x: r23736</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21226</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2010-11-11 08:19:25 +0100</bug_when>
+            <thetext>The fix has been successfully tested.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

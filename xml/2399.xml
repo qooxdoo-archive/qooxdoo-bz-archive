@@ -1,0 +1,305 @@
+<bug>
+          <bug_id>2399</bug_id>
+          
+          <creation_ts>2009-05-19 14:20:00 +0200</creation_ts>
+          <short_desc>Memory leak in IE using qx.io.remote.Rpc</short_desc>
+          <delta_ts>2014-03-03 15:19:31 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>0.8.2</version>
+          <rep_platform>IE</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          <bug_file_loc>http://www.nabble.com/Memory-leak-in-IE7-using-qx.io.remote.Rpc-in-0.8.2-td23206022.html</bug_file_loc>
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Chris Brown">chris_brown</reporter>
+          <assigned_to name="Andreas Junghans">andreas.junghans</assigned_to>
+          <cc>burak.arslan</cc>
+    
+    <cc>derrell.lipman</cc>
+    
+    <cc>gene</cc>
+    
+    <cc>helder.magalhaes</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10036</commentid>
+            <who name="Chris Brown">chris_brown</who>
+            <bug_when>2009-05-19 14:20:13 +0200</bug_when>
+            <thetext>Using qx.io.remote.Rpc in IE6 or IE7 to make a request to a web service repeatedly e.g. once every 2 seconds, causes a memory leak.
+
+Both the request and response are small (&lt; 100 characters) and the application is
+growing between 25Kb to 100Kb per call.
+
+The following code shows the bug and is from the Application.js file in a standard skeleton. The rest of the skeleton is unmodified. Web service details will need to be modified.
+
+main : function()
+{
+    this.base(arguments);
+
+    var doc = this.getRoot();
+                       
+    var btn = new qx.ui.form.Button(&quot;Test Comms&quot;);
+    btn.addListener(&quot;click&quot;, this.__startRPCComms, this);
+    this.__lbl = new qx.ui.basic.Label();
+    doc.add(btn, {left: 0, top: 0});
+    doc.add(this.__lbl, {left: 0, top: 50});
+},
+
+__startRPCComms : function()
+{
+  this.__callRpc();
+  var self = this;
+  setTimeout(function() { self.__startRPCComms(); }, 2*1000);
+},
+__callRpc : function()
+{
+  var method = &quot;serviceMethod&quot;;
+  var url = &quot;serviceUrl&quot;;
+  var service = &quot;service&quot;;
+  var params = {};
+
+  var rpc = new qx.io.remote.Rpc();
+  rpc.setTimeout(40000);
+  rpc.setUrl(url);
+  rpc.setServiceName(service);
+  rpc.addListener(&quot;completed&quot;, this.__onRpcCompleted, this);
+  rpc.addListener(&quot;failed&quot;, this.__onRpcFailed, this);
+  rpc.addListener(&quot;timeout&quot;, this.__onRpcTimeout, this);
+  rpc.addListener(&quot;aborted&quot;, this.__onRpcAborted, this);
+  var request = rpc.callAsyncListeners(true, method, params);
+},
+
+__onRpcCompleted : function(e)
+{
+  this.__lbl.setContent(&quot;(completed) &quot; + new Date());
+},
+
+__onRpcFailed : function(e)
+{
+  this.__lbl.setContent(&quot;(failed) &quot; + new Date());
+},
+
+__onRpcTimeout : function(e)
+{
+  this.__lbl.setContent(&quot;(timeout) &quot; + new Date());
+},
+
+__onRpcAborted : function(e)
+{
+  this.__lbl.setContent(&quot;(aborted) &quot; + new Date());
+},
+
+There is a workaround which is to use qx.io.remote.Request directly. See newsgroup thread referenced in URL for details.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10047</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-05-20 09:54:42 +0200</bug_when>
+            <thetext>@Andreas/Derrell, could you look into this issue, please? This might also happen for 0.7.x.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10070</commentid>
+            <who name="Andreas Junghans">andreas.junghans</who>
+            <bug_when>2009-05-20 23:50:35 +0200</bug_when>
+            <thetext>I don&#39;t really have time to investigate, but I guess the problem is caused by using callAsyncListeners. A quick test in our own apps (using callAsync) shows no RPC leaks. However, we&#39;re using a modified old qooxdoo version, so that doesn&#39;t have to mean much.
+
+@Chris: Can you change your code to use callAsync and see if you still have a leak?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10612</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-06-26 18:09:33 +0200</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; Using qx.io.remote.Rpc in IE6 or IE7 to make a request to a web service
+&gt; repeatedly e.g. once every 2 seconds, causes a memory leak.
+
+I&#39;ve noticed a couple of related updates in the legacy branch (around revision 19300) and had already received reports of a potentially related issue (application hang after a few hours, which I assumed to be a memory leak which was leading the browser to an unusable state) so decided to make a few tests around this.
+
+I&#39;ve setup a client application to perform server requests every 500 ms, each with a server response of about 20 kb (!). I&#39;ve let IE6, IE7 and IE8 during a few hours (overnight) with good results: there seem to be *no* RPC (XMLHttpRequest-based) related memory leaks.
+
+Also, I&#39;ve rolled back the changes and also there were apparently no serious memory leaks, but I didn&#39;t test for long (noticed a small fluctuation which wasn&#39;t enough to affirm that previously there were memory leaks). Nevertheless, I&#39;ve reviewed the latest changes and they sound relevant: I&#39;ve even back-ported them into our (still) 0.7.2-based repository.
+
+Note that, during this testing I&#39;ve noticed that IE (mostly version 8) seems to be suffering from a memory leak in image rendering. I didn&#39;t have the time to reduce the issue yet but I&#39;ve started to document my qooxdoo-related research in bug 2521.
+
+
+(In reply to comment #2)
+&gt; @Chris: Can you change your code to use callAsync and see if you still have a
+&gt; leak?
+
+Also, the leak can be caused by your code, if you hold the variable value and/or create a closure... Please double check your implementation! ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10670</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-06-29 20:37:05 +0200</bug_when>
+            <thetext>@Chris
+
+Also, there are a couple of things here that make me wonder...
+
+
+&gt;   var self = this;
+
+1. I&#39;m afraid that &quot;self = this&quot; may create a closure...
+
+
+&gt;   setTimeout(function() { self.__startRPCComms(); }, 2*1000);
+
+2. Why not using a &quot;qx.client.Timer#once&quot; instead?
+
+
+&gt;   var rpc = new qx.io.remote.Rpc();
+
+3. You are creating a &quot;qx.io.remote.Rpc&quot; instance with every request! I&#39;m convinced this is probably the main source for the problem. In our case, we derived the class and created a singleton RPC class for all our requests. I&#39;m not familiar with &quot;callAsyncListeners&quot; but I&#39;m sure it doesn&#39;t destroy the RPC class afterward... Does it? ;-)
+
+
+Hope this helps,
+ Helder</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10673</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-06-29 22:12:04 +0200</bug_when>
+            <thetext>&gt;&gt;   var self = this;
+&gt;
+&gt;1. I&#39;m afraid that &quot;self = this&quot; may create a closure...
+
+The recurring nature of the function, resetting self on each 2-second recurring call, is asking for trouble, although I&#39;m not sure that this particular instance actually creates a problem. However...
+
+&gt;&gt;   setTimeout(function() { self.__startRPCComms(); }, 2*1000);
+&gt;
+&gt;2. Why not using a &quot;qx.client.Timer#once&quot; instead?
+
+This, or better yet, qx.util.TimerManager which ensures that only a single native timer is used, would be a much cleaner way to do it. This way, the context (&#39;this&#39;) reference could be passed as a parameter and no closure is necessary.
+
+&gt;&gt;   var rpc = new qx.io.remote.Rpc();
+&gt;
+&gt;3. You are creating a &quot;qx.io.remote.Rpc&quot; instance with every request! I&#39;m
+&gt;convinced this is probably the main source for the problem. In our case, we
+&gt;derived the class and created a singleton RPC class for all our requests. I&#39;m
+&gt;not familiar with &quot;callAsyncListeners&quot; but I&#39;m sure it doesn&#39;t destroy the RPC
+&gt;class afterward... Does it? ;-)
+
+Absolutely correct. Only a single qx.io.remote.Rpc object should be instantiated, and reused for each of your callAsync*() requests. Look at the qooxdoo-contrib project RpcExample source/class/rpcexample/Application.js in, for example, the method multipleAsyncCalls().
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10695</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-06-30 18:39:09 +0200</bug_when>
+            <thetext>@Chris
+
+Can you review the latest comments and add more information if you can still reproduce the issue after a code revision or update the issue&#39;s status (&quot;invalid&quot; seems to be what the latest comments point at)?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10708</commentid>
+            <who name="Chris Brown">chris_brown</who>
+            <bug_when>2009-07-01 15:11:34 +0200</bug_when>
+            <thetext>Using a single Rpc instance does indeed prevent the memory growth.
+
+Which leaves the question of how the old Rpc objects can be correctly disposed so that the memory is regained.
+
+What is the recommended approach to correctly dispose an Rpc instance? 
+
+I have some questions relating to how this could be applied to our application.
+
+An rpc instance has a url, service name and timeout set on the object. Multiple calls can then be made to different methods with varying params using the same rpc object.
+
+In our case, the application uses multiple service endpoints and different timeout durations for method calls on the same service endpoint.
+
+Am I correct in thinking that we require a separate Rpc instance for each unique combination of url, service and timeout and that each rpc instance should be kept alive for reuse?
+
+This approach may work where the application is making lots of frequent calls to the same service endpoint. 
+
+In the case where infrequent calls are made to a service endpoint, e.g. only at application startup, it would be preferable to subsequently delete the Rpc instance. How can we ensure that the Rpc instance in this case is correctly cleaned up?
+
+Alternatively, is it safe to reset the url, service and timeout properties of a single rpc object when there are outstanding calls? If this is safe then our application could treat the rpc as a singleton.
+
+Thanks,
+
+Chris</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10709</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-07-01 15:20:21 +0200</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; Using a single Rpc instance does indeed prevent the memory growth.
+
+Great. Thanks for checking it out. ;-)
+
+I&#39;m marking the issue resolved (invalid) as this seems to be the appropriate status.
+
+
+&gt; Which leaves the question of how the old Rpc objects can be correctly disposed
+&gt; so that the memory is regained.
+
+I&#39;d suggest dealing with support/discussion within the mailing list. Please create a thread (maybe by a simple copy+paste of this portion, also maybe adding a link to this issue as background for whoever might be interested) so the whole community can see, learn and provide feedback for this, as I imagine this can easily go pretty off-topic if your questions start being answered. ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10710</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-07-01 15:35:50 +0200</bug_when>
+            <thetext>&gt; Alternatively, is it safe to reset the url, service and timeout properties of a
+&gt; single rpc object when there are outstanding calls? If this is safe then our
+&gt; application could treat the rpc as a singleton.
+
+Yes, this is the typical way to use an RPC object. Just reset the properties
+for each new request, as necessary. If you run the RpcExample application,
+you&#39;ll see that you can control each of those properties on a per-request basis
+while re-using the single Rpc object.
+
+In looking at the qx.io.remote.Rpc code, I don&#39;t see anything that requires
+special disposing so I&#39;m not sure where the memory leak is coming from in your
+original test application. I suspect it has to do more with the design of the
+test app (closures and timeouts) than with the Rpc object itself. The things I
+can think of to change in the test app are:
+
+(1) before letting the rpc object go out of scope, you try calling
+rpc.dispose() to cause it and its superclass to clean up.
+
+(2) replace the closure and setTimeout() call with use of qx.util.TimerManager.
+
+Since the normal usage of the RPC object shows no memory leak, I&#39;ll close this
+bug. If you can come up with a test app that clearly has no memory leak itself
+yet shows a memory leak in the Rpc object, please re-open this bug.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36520</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:31 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

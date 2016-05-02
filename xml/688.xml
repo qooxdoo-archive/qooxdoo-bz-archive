@@ -1,0 +1,178 @@
+<bug>
+          <bug_id>688</bug_id>
+          
+          <creation_ts>2007-10-10 14:05:00 +0200</creation_ts>
+          <short_desc>Drag &amp; Drop feedback widget under cursor breaks d&amp;d</short_desc>
+          <delta_ts>2014-03-03 15:20:31 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>0.7.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.1</target_milestone>
+          <dependson>695</dependson>
+          <blocked>903</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter>chase-r</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2465</commentid>
+            <who name="">chase-r</who>
+            <bug_when>2007-10-10 14:05:21 +0200</bug_when>
+            <thetext>If the feedback widget is moved under the cursor (that is at a deltaX and deltaY &lt;= 0), all drag events will target to that widget instead of the underlying &quot;fixed&quot; widgets.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2466</commentid>
+            <who name="">chase-r</who>
+            <bug_when>2007-10-10 14:09:22 +0200</bug_when>
+            <thetext>I now modified the qx.event.handler.DragAndDropHandler#getDropTarget method by adding a check of the event target against the feedback widget. If the widget ist the event target, it will be hidden, the underlying correct target will be retrieved and the feedback widget will be displayed again. This does not cause flickering or any sideeffects under Firefox (not tested in other browsers).
+
+
+    /**
+     * @signature function(e)
+     */
+    getDropTarget : qx.core.Variant.select(&quot;qx.client&quot;,
+    {
+      &quot;gecko&quot; : function(e)
+      {
+        var vCurrent = e.getTarget();
+
+        // work around gecko bug (all other browsers are correct)
+        // clicking on a free space and drag prohibit the get of
+        // a valid event target. The target is always the element
+        // which was the one with the mousedown event before.
+        if (vCurrent == this.__dragCache.sourceWidget) {
+          vCurrent = qx.event.handler.EventHandler.getTargetObject(qx.html.ElementFromPoint.getElementFromPoint(e.getPageX(), e.getPageY()));
+        } else {
+          vCurrent = qx.event.handler.EventHandler.getTargetObject(null, vCurrent);
+        }
+		
+		if (vCurrent === this.__feedbackWidget) {
+			vCurrent.setVisibility(false);
+			var domElem = qx.html.ElementFromPoint.getElementFromPoint(e.getPageX(), e.getPageY());
+			vCurrent.setVisibility(true);
+			vCurrent = qx.event.handler.EventHandler.getTargetObject(domElem);
+		}
+
+        while (vCurrent != null)
+        {
+          if (!vCurrent.supportsDrop(this.__dragCache)) {
+            return null;
+          }
+
+          if (this.supportsDrop(vCurrent)) {
+            return vCurrent;
+          }
+
+          vCurrent = vCurrent.getParent();
+        }
+
+        return null;
+      },
+
+      &quot;default&quot; : function(e)
+      {
+        var vCurrent = e.getTarget();
+
+		if (vCurrent === this.__feedbackWidget) {
+			vCurrent.setVisibility(false);
+			var domElem = qx.html.ElementFromPoint.getElementFromPoint(e.getPageX(), e.getPageY());
+			vCurrent.setVisibility(true);
+			vCurrent = qx.event.handler.EventHandler.getTargetObject(domElem);
+		}
+
+        while (vCurrent != null)
+        {
+          if (!vCurrent.supportsDrop(this.__dragCache)) {
+            return null;
+          }
+
+          if (this.supportsDrop(vCurrent)) {
+            return vCurrent;
+          }
+
+          vCurrent = vCurrent.getParent();
+        }
+
+        return null;
+      }
+    }),
+
+
+As you can see, the following lines do all the magic.
+		if (vCurrent === this.__feedbackWidget) {
+			vCurrent.setVisibility(false);
+			var domElem = qx.html.ElementFromPoint.getElementFromPoint(e.getPageX(), e.getPageY());
+			vCurrent.setVisibility(true);
+			vCurrent = qx.event.handler.EventHandler.getTargetObject(domElem);
+		}
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2470</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2007-10-11 13:58:51 +0200</bug_when>
+            <thetext>change Target
+
+Thanks for the patch</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2694</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-01-11 11:59:01 +0100</bug_when>
+            <thetext>The problem is that getElementFromPoint is really slow and not anymore supported by qooxdoo. If we found another solution for this it would be great. But I think that&#39;s not that easy. Does this make any problems in the default configuration, too? Moved to 0.7.4 and reduced priority.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3291</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-06-12 16:44:14 +0200</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3942</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-07-17 13:56:57 +0200</bug_when>
+            <thetext>Moved to 0.8.1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4016</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-07-28 16:32:09 +0200</bug_when>
+            <thetext>Moving the feedbackWidget under the cursor is currently not supported, because you cannot retrieve the current drop target in an easy way. 
+As already mentioned doing a lookup during the drag session, which means on each(!) mouseMove event,  is technically not feasible.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36921</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:31 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

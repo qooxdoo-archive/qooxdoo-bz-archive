@@ -1,0 +1,119 @@
+<bug>
+          <bug_id>4589</bug_id>
+          
+          <creation_ts>2011-01-28 20:17:00 +0100</creation_ts>
+          <short_desc>AbstractField._onHtmlInput has potential bug</short_desc>
+          <delta_ts>2014-03-03 15:23:00 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>1.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>trivial</bug_severity>
+          <target_milestone>1.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Andy Jarrell">andyjarrell</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>22467</commentid>
+            <who name="Andy Jarrell">andyjarrell</who>
+            <bug_when>2011-01-28 20:17:25 +0100</bug_when>
+            <thetext>In stepping through the code I see what may be a potential bug in AbstractField member _onHtmlInput() routine.  Here&#39;s the code:
+
+
+ _onHtmlInput : function(e)
+    {
+      var value = e.getData();
+      var fireEvents = true;
+
+      this.__nullValue = false;
+
+      // check for the filter
+      if (this.getFilter() != null)
+      {
+        var filteredValue = &quot;&quot;;
+        var index = value.search(this.getFilter());
+        var processedValue = value;
+        while(index &gt;= 0)
+        {
+          filteredValue = filteredValue + (processedValue.charAt(index));
+          processedValue = processedValue.substring(index + 1, processedValue.length);
+          index = processedValue.search(this.getFilter());
+        }
+
+        if (filteredValue != value)
+        {
+          fireEvents = false;
+          value = filteredValue;
+          this.getContentElement().setValue(value);
+        }
+      }
+
+      // check for the max length
+      if (value.length &gt; this.getMaxLength())
+      {
+        var fireEvents = false;
+        this.getContentElement().setValue(
+          value.substr(0, this.getMaxLength())
+        );
+      }
+
+      // fire the events, if necessary
+      if (fireEvents)
+      {
+        // store the old input value
+        this.fireDataEvent(&quot;input&quot;, value, this.__oldInputValue);
+        this.__oldInputValue = value;
+
+        // check for the live change event
+        if (this.getLiveUpdate()) {
+          this.__fireChangeValueEvent(value);
+        }
+      }
+    },
+
+
+in the if (value.length &gt; this.getMaxLength()) the variable fireEvents is redefined.  I haven&#39;t noticed an error but I don&#39;t think it should be redefined (just fireEvents=false).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22477</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-01-31 08:07:30 +0100</bug_when>
+            <thetext>Thanks for the pointer. The var statement is not necessary in that place so I removed it with r24734. The rest of the code looks like designed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37857</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:00 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

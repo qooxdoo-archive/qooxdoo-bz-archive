@@ -1,0 +1,139 @@
+<bug>
+          <bug_id>4286</bug_id>
+          
+          <creation_ts>2010-11-05 08:51:00 +0100</creation_ts>
+          <short_desc>Add support for class define watchers</short_desc>
+          <delta_ts>2014-03-03 08:47:37 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.oo</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P5</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Doru Moisa">teodor.moisa</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21106</commentid>
+            <who name="Doru Moisa">teodor.moisa</who>
+            <bug_when>2010-11-05 08:51:50 +0100</bug_when>
+            <thetext>In our project, we have some dependencies which we cannot directly modify. The system uses a lazy loading mechanism that loads js code as needed in the application. 
+Important parts of this code is out of our control, and we need a way to control class creation. Because the lazy loading mechanism is using a callback that is run immediately after code loading, lots of objects are created using classes defined in the just loaded code. We need a mechanism to watch for a specific classname creation at runtime, and modify them as needed (qx.Class.patch / qx.Class.include ).
+
+My current solution implies runtime overwriting/patching qx.Class like this:
+
+&lt;code&gt;
+qx.Class.$$watchers = {};
+qx.Class.watchDefine = function(classFQN, callback){
+    if(typeof this.$$watchers[classFQN] == &#39;undefined&#39;) {
+        this.$$watchers[classFQN] = [];
+    }
+    if(this.$$watchers[classFQN].indexOf(callback) == -1) {
+        this.$$watchers[classFQN].push(callback);
+    }
+}
+qx.Class.watchDefine.displayName = &quot;qx.Class.watchDefine()&quot;;
+qx.Class.oldDefine = qx.Class.define;
+qx.Class.oldDefine.displayName = &quot;qx.Class.oldDefine()&quot;;
+qx.Class.define = function(){
+
+    qx.Class.oldDefine.apply(this, arguments);
+    var classFQN = arguments[0];    
+
+    // get a reference to the just created class
+    var newborn = qx.Class.getByName(classFQN);
+    if(
+        typeof qx.Class.$$watchers[classFQN] != &#39;undefined&#39; &amp;&amp; 
+        qx.Class.$$watchers[classFQN].length &gt; 0) 
+    {
+        for(
+            var idx = 0; 
+            idx &lt; qx.Class.$$watchers[classFQN].length; 
+            idx ++) 
+        {
+            qx.Class.$$watchers[classFQN][idx](newborn);
+        }
+        // class was created, we don&#39;t need the watchers anymore
+        delete qx.Class.$$watchers[classFQN];
+    }
+}
+qx.Class.define.displayName = &quot;qx.Class.define()&quot;;
+&lt;/code&gt;
+
+As you can see, I&#39;m aliasing the old define() method to oldDefine(), and
+overwrite it with code that calls the old method, plus code to call all the
+watchers for that specific classname.
+
+Thus, at runtime, I can do something like this:
+&lt;code&gt;
+// define my patcher mixin
+qx.Mixin.define(&quot;my.patch.dependency&quot;, {
+	members: {
+		doCoolStuff: function(){
+			this.info(&quot;I do cool stuff&quot;);
+		}
+	}
+});
+// add a watcher to the &quot;some.dependency&quot; class creation
+qx.Class.watchDefine(&quot;some.dependency&quot;, function watcherTest(cls) {
+	qx.Class.patch(cls, my.patch.dependency);
+});
+&lt;/code&gt;
+
+The &quot;some.dependency&quot; class looks like this:
+&lt;code&gt;
+qx.Class.define(&quot;some.dependency&quot;, {
+    extend: qx.core.Object,
+    members: {
+        doCoolStuff: function(){
+            this.info(&quot;I do some things&quot;);
+        }
+    }
+});
+&lt;/code&gt;
+
+When the &quot;some.dependency&quot; class is lazy loaded
+the class is passed as parameter to my watcher, which patches it using 
+the &quot;my.patch.dependency&quot; mixin, so any &quot;some.dependency&quot; objects that are
+created in the dependency code will have the patch applied.
+
+Thank you,
+Doru Moisa</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35966</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:47:37 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

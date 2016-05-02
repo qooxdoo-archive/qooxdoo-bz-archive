@@ -1,0 +1,206 @@
+<bug>
+          <bug_id>1578</bug_id>
+          
+          <creation_ts>2008-11-11 15:22:00 +0100</creation_ts>
+          <short_desc>Table model issue</short_desc>
+          <delta_ts>2014-03-03 15:24:54 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>blocker</bug_severity>
+          <target_milestone>0.8.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>6248</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2008-11-11 15:22:54 +0100</bug_when>
+            <thetext>It is a weakness to have to initiate the table model before constructing the class like this:
+
+      var rowData = [];
+      rowData.push([ &quot;1&quot;, &quot;2&quot;, &quot;01-01-01&quot;, &quot;true&quot; ]);
+
+      var tableModel = new qx.ui.table.model.Simple();
+      tableModel.setColumns([ &quot;ID&quot;, &quot;A number&quot;, &quot;A date&quot;, &quot;Boolean&quot; ]);
+      tableModel.setData(rowData);
+      tableModel.setColumnEditable(1, false);
+      tableModel.setColumnEditable(2, true);
+      tableModel.setColumnSortable(3, true);
+
+      this.__documentTable = new qx.ui.table.Table(tableModel);
+
+If you instead want to do it in the other direction which is especially interesting:when subclassing:
+
+      this.__documentTable = new qx.ui.table.Table();
+
+      var rowData = [];
+      rowData.push([ &quot;1&quot;, &quot;2&quot;, &quot;01-01-01&quot;, &quot;true&quot; ]);
+
+      var tableModel = new qx.ui.table.model.Simple();
+      tableModel.setColumns([ &quot;ID&quot;, &quot;A number&quot;, &quot;A date&quot;, &quot;Boolean&quot; ]);
+      tableModel.setData(rowData);
+      tableModel.setColumnEditable(1, false);
+      tableModel.setColumnEditable(2, true);
+      tableModel.setColumnSortable(3, true);
+
+      this.__documentTable.setTableModel(tableModel);
+
+the following error is coming up:
+
+this.__visibleColumnArr has no properties
+[Break on this error] return this.__visibleColumnArr.length;
+
+When looking at other tables and usual functionality, then this should work. Some initiate as a default one empty row while others don&#39;t when there has not been initiating a data model.
+
+I still look at this as a bug as it should per definition be possible to dynamically create the components (columns) dynamically independent on the subcomponents of the widget. Therefore my solution on this would be no default model and just checks to make the order of creation independent.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6254</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2008-11-11 16:53:07 +0100</bug_when>
+            <thetext>Additional problem when subclassing:
+Example:
+
+      var rowData = [[&quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot; ]];
+
+      var tableModel = this.__tableModel = new qx.ui.table.model.Simple();
+      tableModel.setColumns([ &quot;Name&quot;, &quot;Size&quot;, &quot;Type&quot;, &quot;Date Modified&quot; ]);
+      tableModel.setData(rowData);
+      tableModel.setColumnEditable(1, false);
+      tableModel.setColumnEditable(2, true);
+      tableModel.setColumnSortable(3, true);
+
+      this.__documentTable = new document_scan.DocumentTable(this.__tableModel);
+
+gets the same problem as previously said:
+
+this.__visibleColumnArr has no properties
+[Break on this error] return this.__visibleColumnArr.length;
+
+After debugging of the parameters passed to the  following class:
+
+qx.Class.define(&quot;document_scan.DocumentTable&quot;,
+{
+  extend : qx.ui.table.Table,
+
+  construct : function()
+  {
+    this.base(arguments);
+  }
+});
+
+We can find inside the qx.ui.table.Table class at the following lane of the constructor:
+
+ if (tableModel != null)
+{
+ // ... then save it.
+ this.setTableModel(tableModel);
+}
+
+that tableModel at inspection is &quot;undefined&quot;.
+
+It seems that the arguments variable is not resolved to tableModel !</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6417</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-11-21 18:17:29 +0100</bug_when>
+            <thetext>A</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6418</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-11-21 18:19:59 +0100</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6419</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-11-21 19:15:02 +0100</bug_when>
+            <thetext>I can confirm the porblem, when using the &quot;Tabel&quot; constructor without a parameter and calling the &quot;setTableModel&quot; method after it, then an exception is thrown.
+
+@Stefan Andersson
+Could you please change your code to:
+*******
+qx.Class.define(&quot;document_scan.DocumentTable&quot;,
+{
+  extend : qx.ui.table.Table,
+
+  construct : function(tableModel)
+  {
+    this.base(arguments, tableModel);
+  }
+});
+*****
+
+And try again, than should work your second excample.
+
+Thanks Chris
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6443</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-11-24 14:25:50 +0100</bug_when>
+            <thetext>Fabian, can you have a look please.
+
+The reversion 16742 in the current trunk should fix the issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6489</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-11-25 17:41:48 +0100</bug_when>
+            <thetext>look good.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6604</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2008-12-03 00:20:52 +0100</bug_when>
+            <thetext>Tested. Resolved .</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13915</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-04 23:23:40 +0100</bug_when>
+            <thetext>mass correction: set previously unspecified target milestone to 0.8.1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38557</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:54 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

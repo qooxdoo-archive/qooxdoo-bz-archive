@@ -1,0 +1,160 @@
+<bug>
+          <bug_id>628</bug_id>
+          
+          <creation_ts>2007-09-07 16:35:00 +0200</creation_ts>
+          <short_desc>Restoring initial header widths for auto-resizable columns after hiding and showing the table</short_desc>
+          <delta_ts>2014-03-03 15:26:56 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>0.7.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.7.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Denis">nomus</reporter>
+          <assigned_to name="Til Schneider">tilman.schneider</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2203</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2007-09-07 16:35:46 +0200</bug_when>
+            <thetext>If width of an auto-resizable column was changed, and the table was hidden and shown again someway, then header widths of table columns will have initial values. But it affects only headers, not cells. As a result, the table looks broken.
+Use the following code to see the problem. For example, try to increase width of the second (A number) column. Then click on &quot;Page 2&quot; and go back to &quot;Page 1&quot;. Header widths of columns will be restored, but rows will not be re-rendered.
+
+Code snippet:
+
+var tableModel = new qx.ui.table.model.Simple();
+tableModel.setColumns([ &quot;ID&quot;, &quot;A number&quot;, &quot;A date&quot;, &quot;Boolean test&quot; ]);
+var rowData = [];
+var now = new Date().getTime();
+var dateRange = 400 * 24 * 60 * 60 * 1000; // 400 days
+
+for (var row=0; row&lt;10; row++)
+{
+    var date = new Date(now + Math.random() * dateRange - dateRange / 2);
+    rowData.push([ row, Math.random() * 10000, date, (Math.random() &gt; 0.5)]);
+}
+
+tableModel.setData(rowData);
+var custom = {
+    tableColumnModel : function(obj) {
+        return new qx.ui.table.columnmodel.Resize(obj);
+    }
+};
+var table = new qx.ui.table.Table(tableModel, custom);
+table.set({
+    backgroundColor : &quot;white&quot;,
+    border : &quot;inset-thin&quot;,
+    left : 5,
+    top : 5,
+    right : 5,
+    bottom : 5
+});
+table.setStatusBarVisible(false);
+var tcm = table.getTableColumnModel();
+tcm.setDataCellRenderer(3, new qx.ui.table.cellrenderer.Boolean());
+var resizeBehavior = tcm.getBehavior();
+resizeBehavior.set(0, {width : &quot;10%&quot;});
+resizeBehavior.set(1, {width : &quot;30%&quot;});
+resizeBehavior.set(2, {width : &quot;1*&quot;});
+resizeBehavior.set(3, {width : &quot;10%&quot;});
+
+var pageView = new qx.ui.pageview.tabview.TabView();
+pageView.set({
+    left : 10,
+    top : 10,
+    right : 10,
+    bottom : 10
+});
+pageView.addToDocument();
+var btn = new qx.ui.pageview.tabview.Button(&quot;Page 1&quot;);
+btn.setChecked(true);
+pageView.getBar().add(btn);
+var page = new qx.ui.pageview.tabview.Page(btn);
+page.add(table);
+pageView.getPane().add(page);
+btn = new qx.ui.pageview.tabview.Button(&quot;Page 2&quot;);
+pageView.getBar().add(btn);
+page = new qx.ui.pageview.tabview.Page(btn);
+pageView.getPane().add(page);
+
+
+Best regards,
+Dioc</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2213</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-09-11 12:55:15 +0200</bug_when>
+            <thetext>Added to the list for 0.7.2.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2371</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-09-18 18:25:44 +0200</bug_when>
+            <thetext>Mass move of bugs to target 0.7.3</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2586</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2007-12-11 11:09:05 +0100</bug_when>
+            <thetext>Dioc, I could not reproduce this behavior using your sample code together with qooxdoo 0.7.2. In Firefox, Internet Explorer, Safari and Opera the whole table is re-renderd using the inital width values for headers and cells.
+Could you try again using the latest legacy version or provide another example showing the bug?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2597</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2007-12-14 20:02:07 +0100</bug_when>
+            <thetext>Fixed by r10955.
+
+Although, like Jonathan, I did not see headers being resized wiithout column data, it was a mistake to allow any resizing upon a &quot;redisplay&quot; of a previously rendered table.
+
+The default table column resize model initializes the column widths upon the
+&quot;appear&quot; event.  If the table is hidden -- e.g. by being placed in a pageview
+and the page switched -- and then made visible again, another &quot;appear&quot; event
+is generated.  Typically we won&#39;t want any manually adjusted column widths to
+be modified.
+
+This checkin adds a new boolean property, &quot;inintializeWidthsOnEveryAppear&quot;.  Its
+default value is false (breaking backward compatibility but yielding the
+commonly desired result).
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39288</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:56 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

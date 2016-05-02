@@ -1,0 +1,133 @@
+<bug>
+          <bug_id>4724</bug_id>
+          
+          <creation_ts>2011-03-01 16:58:00 +0100</creation_ts>
+          <short_desc>Mousewheel does not work well with nested scroll panes</short_desc>
+          <delta_ts>2011-04-13 08:21:12 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.3.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>23022</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-03-01 16:58:22 +0100</bug_when>
+            <thetext>The scroll pane of our app is sometimes not scrollable via the mousewheel.
+This problem can be demonstrated with the playground code at the end of this issue.
+The whole scroll pane (that contains the red, green and blue boxes) can be scrolled
+via the mousewheel - until the mouse is over the table.
+Once the mouse is over the table, the scrolling is stuck.
+The inner table swallows all mousewheel events.
+
+Therefore I would recommend the following improvement:
+If the mousewheel-handler for the table receives a mousewheel event
+and the table is already scrolled to the start or end of the scrollable area,
+then the mousewheel event should not be stopped, but passed to the parent.
+
+To implement this, the following lines of code could be added to the start
+of the method qx.ui.table.pane.Scroller._onMousewheel:
+    _onMousewheel : function(e) {
+      var position = this.__verScrollBar.getPosition();
+      var max = this.__verScrollBar.getMaximum();
+      if(     e.getWheelDelta() &lt; 0 &amp;&amp; position &lt;=0
+           || e.getWheelDelta() &gt; 0 &amp;&amp; position &gt;= max   ) {
+        // Pass the mousewheel event to the parent
+        return;
+      }
+      ...
+      e.stop();
+
+Other scrollable widgets handle these events similar:
+The textarea only stops the mousewheel event when the scrollbar has been moved.
+The AbsctractSrollArea only stops the mousewheel event when a scrollbar is visible.
+
+Is it possible to improve this handling of mousewheel events?
+
+-- Playground Snipplet ----------------------------------------------
+var scrollContainer = new qx.ui.container.Scroll().set({ width: 340, height: 600 });
+
+var appContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(20));
+scrollContainer.add(appContainer);
+
+appContainer.add(new qx.ui.container.Composite().set({height: 160, backgroundColor: &quot;#44FF44&quot;}));
+appContainer.add(new qx.ui.container.Composite().set({height: 160, backgroundColor: &quot;#4444FF&quot;}));
+appContainer.add(new qx.ui.container.Composite().set({height: 160, backgroundColor: &quot;#FF4444&quot;}));
+
+var tableModel = new qx.ui.table.model.Simple();
+tableModel.setColumns([&quot;First Name&quot;,&quot;Last Name&quot;]);
+tableModel.setData([
+  [&quot;Fritz&quot;, &quot;Weber&quot;],
+  [&quot;Frank&quot;, &quot;Miller&quot;]
+  ]);
+var table = new qx.ui.table.Table(tableModel);
+table.set({minHeight: 120, height: 120, maxHeight: 120});
+appContainer.add(table);
+
+appContainer.add(new qx.ui.container.Composite().set({height: 160, backgroundColor: &quot;#FFFF44&quot;}));
+appContainer.add(new qx.ui.container.Composite().set({height: 160, backgroundColor: &quot;#44FFFF&quot;}));
+appContainer.add(new qx.ui.container.Composite().set({height: 160, backgroundColor: &quot;#FF44FF&quot;}));
+
+// Document is the application root
+var doc = this.getRoot();
+
+// Add button to document at fixed coordinates
+doc.add(scrollContainer, {left: 100, top: 1});
+-- Playground Snipplet ----------------------------------------------</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23024</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-02 07:59:44 +0100</bug_when>
+            <thetext>Thanks for the report. Need to check that before i can make any guess if thats possible.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23441</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-21 16:35:47 +0100</bug_when>
+            <thetext>Thanks again for the report. Really like the new behavior! Added such a check to the table scroller and the abstract scroller, which is used every where else.
+
+trunk: r25856
+1.3.x: r25857</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23984</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-04-12 13:02:22 +0200</bug_when>
+            <thetext>I have just verified that the newest qooxdoo version has solved our problem.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,128 @@
+<bug>
+          <bug_id>6200</bug_id>
+          
+          <creation_ts>2012-03-07 15:18:00 +0100</creation_ts>
+          <short_desc>Anonymous classes (Mocks, CommonJS)</short_desc>
+          <delta_ts>2012-05-07 08:04:13 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>2.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Vladimir Dobriakov">vladimir.dobriakov</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>tristan.koch</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>28765</commentid>
+            <who name="Vladimir Dobriakov">vladimir.dobriakov</who>
+            <bug_when>2012-03-07 15:18:00 +0100</bug_when>
+            <thetext>We partition our functionality by topic into mixins. If I need to test functions from e.g. MAlbum, 
+
+* I create a separate file with a mock class:
+
+   11 qx.Class.define(&quot;sd3.test.io.mock.Album&quot;,
+   12 {
+   13   extend : qx.core.Object,
+   14   include : [
+   15     myproj.io.MAlbum
+   16   ]
+   17 });
+
+* I would like to avoid an extra file for that. It is possible to define and later to undefine a class like in
+  https://github.com/qooxdoo/qooxdoo/blob/master/framework/source/class/qx/test/ui/tree/virtual/AbstractTreeTest.js#L197-198
+
+  But it can be fragile, if something unexpectedly goes wrong in-between.
+
+* so it would be better to create an unnamed single-use autodisposable class, which is not registered in the qooxdoo type system at all, like:
+
+  setUp : function()
+   {
+     LogicToTest = qx.Class.define(null, /* suggested neue semantic: 
+     do not register the type if == null */
+     {
+       extend : qx.core.Object,
+       include : [
+         myproj.io.MAlbum
+       ]
+     });
+     logicToTest = LogicToTest.new();
+   }
+
+
+To implement that, it seems to be enough to add an `if` here https://github.com/qooxdoo/qooxdoo/blob/fa3970a1d9e66ddc73beac08e8715123a5aefe8e/framework/source/class/qx/Class.js#L224
+so the clazz is not registered if `name == null`.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28775</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2012-03-08 08:48:43 +0100</bug_when>
+            <thetext>I like the idea of anonymous classes for testing purposes. In fact, I think this could also be very useful for writing CommonJS modules.
+
+  klass.js
+
+  var Klass = qx.Class.define({
+    members: {
+      someMethod: function() {}
+    }
+  })
+
+  // Expose
+  if (typeof module != &quot;undefined&quot;) {
+    module.exports = Klass;
+  }
+
+  application.js
+
+  // Common JS
+  var Klass = require(&quot;klass&quot;);
+  obj = new Klass();
+  obj.someMethod();
+
+  // AMD
+  require(&quot;klass&quot;, function(Klass), function( {
+    obj = new Klass();
+    obj.someMethod();
+  }));
+
+This approach would completly avoid the global namespace pollution that usually comes with qx.Class.define and qx.Bootstrap.define.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29001</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-03-30 13:55:35 +0200</bug_when>
+            <thetext>That was an rather easy one because only one line relied on the name and with a check on that, we can use anonymous classes (handing in null as proposed). Added the same for bootstrap classes which is more interesting for the modules as tristan described.
+
+master: 4218e2cd98108061d73a30720c04ca446414514c</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

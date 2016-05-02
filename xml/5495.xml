@@ -1,0 +1,159 @@
+<bug>
+          <bug_id>5495</bug_id>
+          
+          <creation_ts>2011-08-08 10:28:00 +0200</creation_ts>
+          <short_desc>rest.Resource: Support Gregorio URI Templates / Optional parameters</short_desc>
+          <delta_ts>2012-02-13 13:00:46 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.6</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tristan Koch">tristan.koch</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26426</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-08-08 10:28:25 +0200</bug_when>
+            <thetext>The Network Working Group of the IETF is currently working on a standard for URI templates. See http://tools.ietf.org/html/draft-gregorio-uritemplate-05 (Example:/users/{id}).
+
+We should consider supporting this format in qx.io.rest.Resource alongside the colon notation.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26816</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-16 09:51:42 +0200</bug_when>
+            <thetext>Consider dropping support for colon notation.
+
+Maybe add syntax for specifying optional parameters. Example:
+
+     /articles/{tag?}
+
+And/or support default values
+
+     /articles/{tag=affe}
+     --&gt; /articles/affe
+     /articles/{tag=}
+     --&gt; /articles/ (not sure)
+
+It appears there is no explicit syntax for optional parameters. Parameters are optional by default. Default values, on the other hand, are specified.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26817</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-16 10:05:40 +0200</bug_when>
+            <thetext>Another approach is to make parameters optional by default (as specified in URI templates) and come up with a syntax to signal a parameter required. Example:
+
+     /articles/{tag+} (variable name may not contain +)
+     --&gt; /articles/affe with {tag: &quot;affe&quot;}
+     --&gt; Exception with {}
+     /articles/{tag+}+maus (but pattern can)
+     --&gt; /articles/affe+maus with {tag: &quot;affe&quot;}</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26818</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-16 10:12:11 +0200</bug_when>
+            <thetext>One benefit of optional parameters becomes obvious when you consider the following description.
+
+     var description = {
+       get: {
+         method: &quot;GET&quot;,
+         url: &quot;/articles/{tag}&quot;
+       }
+     };
+     
+     var articles = new io.rest.Resource(description);
+     articles.get();
+     // --&gt; All articles
+     articles.get({tag: &quot;affe&quot;});
+     // --&gt; All articles filtered by tag
+
+With the same action, you can send requests to two kinds of urls. This is especially useful if you want to follow the REST pattern when naming your actions (i.e. use the name &quot;get&quot; instead of &quot;show&quot;, &quot;retrieve&quot;…).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26892</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-23 13:33:15 +0200</bug_when>
+            <thetext>Came up with a solution that does not require to add any kind of special syntax to the URI template. Rather, the check feature is enhanced to cover the special case of checking the mere existence of a parameter.
+
+In constrast to the old behavior, parameters are optional by default (see above). When a parameter is required, it can be signalled by adding a check for the desired key with the value of true (instead of a regular expression). Checks can also by used to require request body parameters.
+
+Example:
+
+&quot;test: invoke action throws when missing required param&quot;: function() {
+  var res = this.res;
+
+  // {tag: true} checks existence of the tag parameter
+  res.map(&quot;get&quot;, &quot;GET&quot;, &quot;/photos/{tag}&quot;, {tag: true});
+  this.assertException(function() {
+    res.get();
+  }, Error, &quot;Missing parameter &#39;tag&#39;&quot;);
+}
+
+Trunk: r28752</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26898</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-23 14:11:17 +0200</bug_when>
+            <thetext>Allow to provide default values in template.
+
+Example:
+
+&quot;test: invoke action fills in default when missing param&quot;: function() {
+  var res = this.res;
+
+  res.map(&quot;get&quot;, &quot;GET&quot;, &quot;/photos/{tag=recent}/{size}&quot;);
+  res.get({size: &quot;large&quot;});
+
+  this.assertSend(&quot;GET&quot;, &quot;/photos/recent/large&quot;);
+}
+
+Trunk: 28757</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26987</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-27 14:48:06 +0200</bug_when>
+            <thetext>Use qx.io.rest.Resource.REQUIRED (a reg ex) instead of true as value to signal required.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27020</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-28 15:58:59 +0200</bug_when>
+            <thetext>Trunk: r28811</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

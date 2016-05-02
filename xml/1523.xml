@@ -1,0 +1,170 @@
+<bug>
+          <bug_id>1523</bug_id>
+          
+          <creation_ts>2008-10-29 16:55:00 +0100</creation_ts>
+          <short_desc>terminate() and close() methods are not called</short_desc>
+          <delta_ts>2014-03-03 15:19:45 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>0.8</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Evgeny Stambulchik">fnevgeny</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>6062</commentid>
+            <who name="Evgeny Stambulchik">fnevgeny</who>
+            <bug_when>2008-10-29 16:55:21 +0100</bug_when>
+            <thetext>After migration from 0.7, the terminate() and close() methods of my Application class seem to be never called.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6126</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-11-05 10:03:06 +0100</bug_when>
+            <thetext>@Johnny. The application lifecycle changed, e.g. http://api.qooxdoo.org/#qx.application.IApplication . Please add some information to the migration guide how to translate the former 0.7 lifecycle methods to 0.8 equivalents.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6130</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2008-11-05 14:02:50 +0100</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6134</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-11-05 18:48:56 +0100</bug_when>
+            <thetext>In 0.7 application close() was hooked into the standard Javascript event onBeforeUnload. 
+
+I use it to ensure that users logout properly from the server - normally this is done from a menu item in our app which waits to confirm that the server has acknowledged the logout. In the close() method I start the logout and then put up an alert, asking them to use the menu item in future. In the time it takes the user to acknowledge the alert, the logout request completes.
+
+Searching the 0.8 codebase I find that onBeforeUnload is only hooked to prevent out of memory errors in IE with Flash embedding. Looks like I won&#39;t be able to port across my special code to logout from the server.
+
+I suppose there&#39;s nothing to prevent me hooking onBeforeUnload directly, but it would be nicer if qooxdoo didn&#39;t change the API... That&#39;s what you get for using 0.x releases, I guess!
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6210</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2008-11-10 16:23:21 +0100</bug_when>
+            <thetext>With r16637 we brought back the close() method and it is possible to cancel the 
+unload process, again.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6219</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-11-10 18:34:05 +0100</bug_when>
+            <thetext>Just a note: the current implementation has a side-effect in IE browsers. E.g. the BOM selection demo does raise an error when it is unloaded. 
+The problem is 
+
+--snip--
+// qx.core.Init
+__close : function(e)
+{
+  var app = this.__application;
+
+  if (app) {
+    e.setReturnValue(app.close());
+  }
+}
+--snip--
+This method relies on that a &quot;qx.event.type.Native&quot; is passed as a parameter. This listener method is called whenever a &quot;beforeunload&quot; event is fired.
+
+--snip--
+qx.event.Registration.addListener(window, &quot;beforeunload&quot;, statics.__close, statics);
+--snip--
+
+This &quot;beforeunload&quot; event is unfortunately also fired by the &quot;qx.event.handler.Window&quot; class inside &quot;_onNative&quot; listener. And this handler fires an instance of &quot;qx.event.type.Event&quot; leading to an error because this event class does not implement the &quot;setReturnValue&quot; method.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6243</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2008-11-11 14:21:48 +0100</bug_when>
+            <thetext>Alex, we moved the event to window to avoid this problem.
+
+I have added a note to the migration guide to state the changes form 0.7.x to 
+0.8:
+http://qooxdoo.org/documentation/0.8/migration_guide_from_07</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7389</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-01-18 17:26:18 +0100</bug_when>
+            <thetext>Although the close() method is properly called before unload now, the terminate() method is not called upon completion of unloading. The low-level event handler, qx.core.Init.__close() gets called but qx.core.Init.__shutdown() does not.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7390</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-01-18 17:29:38 +0100</bug_when>
+            <thetext>BTW, I tested this in Firefox 3.0.5. It&#39;s possible that the &quot;shutdown&quot; event is properly firing in other browsers.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7393</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2009-01-19 09:51:24 +0100</bug_when>
+            <thetext>Changed MS</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8029</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-02-25 11:02:52 +0100</bug_when>
+            <thetext>raised prio</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8168</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2009-03-02 17:19:12 +0100</bug_when>
+            <thetext>-&gt; Fabian</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8336</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-06 10:20:59 +0100</bug_when>
+            <thetext>fixed in trunk (rev. 18344)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36612</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:45 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,92 @@
+<bug>
+          <bug_id>675</bug_id>
+          
+          <creation_ts>2007-10-02 11:32:00 +0200</creation_ts>
+          <short_desc>Building StackTrace fails if original caller is XMLHttpRequest</short_desc>
+          <delta_ts>2012-05-16 09:43:00 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>0.7.2</version>
+          <rep_platform>Firefox 2.0</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter>chase-r</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>2</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2444</commentid>
+            <who name="">chase-r</who>
+            <bug_when>2007-10-02 11:32:36 +0200</bug_when>
+            <thetext>I am debugging for quite a time now, and finally could identify the point where
+building the stacktrace (e.g. calling this.printStackTrace()) fails with quite a
+critical error &quot;Permission denied to get property Function.caller&quot; in Firefox
+with Firebug.
+
+The (simplified) scenario is as follows. I have an instance of a qooxdoo object,
+this one uses an XMLHttpRequest for AJAX. It registers a callback method though
+a dispatcher function so that the &#39;this&#39; reference inside the callback points to
+the qooxdoo object. Inside callback, this.printStackTrace() is invoked - and fails!
+
+I used Firebird to step through the building of the stack trace. In
+&quot;getStackTraceFromCaller&quot; (StackTrace.js:135) the stack is build in a while loop
+(lines 148-165). With &quot;fcn = fcn.caller;&quot; (153) each caller is retrieved.
+However, at a step the internal event handler of Firebug for the XmlHttpRequest,
+named &quot;handleEvent&quot;, is reached. Trying to access the &quot;caller&quot; property of this
+handler causes the permission exception.
+
+Paste the following lines into your Firebug console:
+
+var req = new XMLHttpRequest();
+req.onreadystatechange = function() {
+  if (req.readyState == 4) {
+    qx.dev.StackTrace.getStackTrace();
+  }
+};
+req.open(&#39;GET&#39;, &#39;/&#39;, true);
+req.send(null);
+
+A try-catch around the .caller access breaking the loop fixes it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2446</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2007-10-02 11:39:47 +0200</bug_when>
+            <thetext>Thanks for your excellent analysis, Fabian is going to have a look at this issue on Thu.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2451</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2007-10-04 09:47:57 +0200</bug_when>
+            <thetext>i have fixed it in legacy_0_7 and trunk. Could you please verify that it is working for you now?</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

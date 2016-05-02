@@ -1,0 +1,171 @@
+<bug>
+          <bug_id>6612</bug_id>
+          
+          <creation_ts>2012-07-10 11:09:00 +0200</creation_ts>
+          <short_desc>qx.ui.table.model.Remote - improve data handling</short_desc>
+          <delta_ts>2014-03-03 15:22:47 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>DUPLICATE</resolution>
+          <dup_id>7111</dup_id>
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>2.1.1</target_milestone>
+          
+          <blocked>7111</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Torsten Wesolek">torsten.wesolek</reporter>
+          <assigned_to name="Mustafa Sak">mustafa.sak</assigned_to>
+          <cc>alexander.steitz</cc>
+    
+    <cc>Matthias.Hellriegel</cc>
+    
+    <cc>mustafa.sak</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30074</commentid>
+            <who name="Torsten Wesolek">torsten.wesolek</who>
+            <bug_when>2012-07-10 11:09:43 +0200</bug_when>
+            <thetext>Currently the model looses it&#39;s data in the moment a new backend request is made.
+
+But if the backend data are unchanged since last request (e.g. the server answers with a 304 not modified or the widget itself is able to compare a hash over the result of two requests), there is no need to make a UI refresh.
+Therefore it would be cool to leave the data in the model untouched until we know the backends answer.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30220</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2012-07-20 15:58:41 +0200</bug_when>
+            <thetext>I&#39;ll take over this one.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30253</commentid>
+            <who name="Torsten Wesolek">torsten.wesolek</who>
+            <bug_when>2012-07-25 10:56:31 +0200</bug_when>
+            <thetext>In _onRowCountLoaded I tryed to remove the last line
+this.fireDataEvent(&quot;dataChanged&quot;, data); that seemed to fit our needs.
+
+Untortunatly _onRowCountLoaded can not be overwritten, because private variables are used.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30838</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2012-09-28 15:12:23 +0200</bug_when>
+            <thetext>committed into master and branch_2_0_x a4484b6851e07cc0704985eac76eaaa1d57002bc</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30843</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-10-01 13:07:36 +0200</bug_when>
+            <thetext>The commit hash for master is: 9467af0ca0dca9a46907179dd8c8001cea68d436</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30844</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-10-01 13:09:55 +0200</bug_when>
+            <thetext>Changed the demo to allow disabling of the polling feature. Having a reload button and polling always on seems to be a bit too much.
+
+master: 8dd32c4320ad1dfdde07806f9f8c21c7c7d808de
+2.0.x: c002ec23fffc8dd5b237b4a42bce19cdb9b4de87</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31746</commentid>
+            <who name="Matthias Hellriegel">Matthias.Hellriegel</who>
+            <bug_when>2012-12-14 16:40:26 +0100</bug_when>
+            <thetext>I reopen this bug because this fix has some side effects that cause other issues:
+
+- now a flag (_clearCache) is set to true when reloadData is called.
+- it is set to false again after the request finished
+- in the time between the method &quot;prefetchRows&quot; could be called several times (see Pane._getRowsHtml) when initializing a table
+- because the flag is set to true &quot;prefetchRows&quot; always triggers the backend request
+
+=&gt; This leads to many request when initializing the table.
+
+
+Here is a stacktrace to show you from where the method is called several times
+
+qx.ui.table.model.Remote.prefetchRows:421
+qx.ui.table.pane.Pane._getRowsHtml:479
+qx.ui.table.pane.Pane._updateAllRows:716
+qx.ui.table.pane.Pane.updateContent:394
+qx.ui.table.pane.Pane.setColumnWidth:248
+qx.ui.table.pane.Scroller.setColumnWidth:606
+qx.ui.table.Table._onColWidthChanged:1557
+qx.event.dispatch.Direct.dispatchEvent:134
+qx.Interface.wrappedFunction:453
+qx.event.Manager.dispatchEvent:873
+qx.event.Registration.fireNonBubblingEvent:342
+qx.core.Object.fireDataEvent:228
+qx.ui.table.columnmodel.Basic.setColumnWidth:271
+qx.ui.table.columnmodel.resizebehavior.Default._computeColumnsFlexWidth:395
+qx.ui.table.columnmodel.resizebehavior.Default.onAppear:282
+qx.ui.table.columnmodel.Resize._onappear:232
+
+and 
+
+qx.ui.table.pane.Pane._updateAllRows:677
+qx.ui.table.pane.Pane.updateContent:394
+qx.ui.table.pane.Pane.onPaneModelChanged:265
+qx.ui.table.pane.Scroller._onPaneModelChanged:696
+qx.event.dispatch.Direct.dispatchEvent:134
+qx.Interface.wrappedFunction:453
+qx.event.Manager.dispatchEvent:873
+qx.event.Registration.fireEvent:309
+qx.core.Object.fireEvent:176
+qx.ui.table.pane.Model._onHeaderCellRendererChanged:184
+qx.event.dispatch.Direct:134
+qx.Interface:453
+qx.event.Manager:873
+qx.event.Registration:342
+qx.core.MEvent:228
+qx.ui.table.columnmodel.Basic:315
+qui.ui.table.BaseTable:335
+
+and a few more...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31748</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2012-12-14 16:53:44 +0100</bug_when>
+            <thetext>@Martin
+Please take over.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31841</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2013-01-07 18:27:50 +0100</bug_when>
+            <thetext>
+
+*** This bug has been marked as a duplicate of bug 7111 ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37806</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:47 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

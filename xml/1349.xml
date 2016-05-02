@@ -1,0 +1,224 @@
+<bug>
+          <bug_id>1349</bug_id>
+          
+          <creation_ts>2008-09-01 17:44:00 +0200</creation_ts>
+          <short_desc>Defect: label font colour uses css settings in gecko</short_desc>
+          <delta_ts>2014-03-03 15:21:49 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>1.0</version>
+          <rep_platform>Firefox</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Matthew">matthew+qooxdoo</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          <cc>elvanor</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>4932</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2008-09-01 17:44:06 +0200</bug_when>
+            <thetext>For gecko browsers qx.bom.label creates an inner xul label element to take advantage of ellipsis. The problem is though that this relies on the font settings from the parent div. Normally this is fine but can cause some problems when embedding a qooxdoo application into an existing page that uses CSS.
+
+For a simple test add the following to the head section of any qooxdoo application and check the results:
+
+&lt;style&gt; label {color : red; font-size : large;}&lt;/style&gt;
+
+Obviously, this example is a bit extreme but you can see the problem.
+
+Proposed Patch Attached</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4934</commentid>
+              <attachid>347</attachid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2008-09-01 17:45:18 +0200</bug_when>
+            <thetext>Created attachment 347
+Proposed Patch</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4935</commentid>
+              <attachid>348</attachid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2008-09-01 17:45:22 +0200</bug_when>
+            <thetext>Created attachment 348
+Proposed Patch</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4940</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2008-09-01 17:58:02 +0200</bug_when>
+            <thetext>think the same also applies to margin and padding. Not sure if they should be set 0</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5025</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-03 10:22:50 +0200</bug_when>
+            <thetext>Fixed in revision: 16269.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11176</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-08-03 12:57:46 +0200</bug_when>
+            <thetext>the fix doesn&#39;t cover the &quot;color&quot; property</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11177</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-08-03 12:58:43 +0200</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11178</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-08-03 13:07:54 +0200</bug_when>
+            <thetext>fixed in r19747</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16680</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2010-02-04 01:54:26 +0100</bug_when>
+            <thetext>Another related bug (happens only on Firefox 3.6 as far as I can tell; 3.5 and earlier don&#39;t have that problem). If you have padding-right: 5px on a CSS label selector, *every* label in the Qooxdoo app is croped (the three last characters are missing and instead you get the ellipsis).
+
+To reproduce just add to the head of the document:
+
+&lt;style type=&quot;text/css&quot; media=&quot;screen&quot;&gt;
+label { padding-right: 5px; }
+&lt;/style&gt;
+
+and load with FF 3.6.
+
+The fix is trivial: add 
+
+        xulel.style.paddingLeft = &quot;0px&quot;;
+        xulel.style.paddingRight = &quot;0px&quot;;
+
+to line 193 of Label.js. (The left is not necessary but probably better there anyway, else the bug may manifest with right to left languages).
+
+Please someone with commit access do it. This bug is hard to trigger but can completely ruin your Qx app (I encountered it this morning.)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16681</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2010-02-04 03:22:53 +0100</bug_when>
+            <thetext>Ha, you also need to fix the measure element, add to line of Label.js:
+
+        inner.style.paddingLeft = &quot;0px&quot;;
+        inner.style.paddingRight = &quot;0px&quot;;
+
+else the measure will be wrong. This actually applies to all version of Firefox not just 3.6 so this is much more critical! All the layout will be wrong if the host page has a padding on the labels.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16682</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2010-02-04 03:23:15 +0100</bug_when>
+            <thetext>I meant line 101 of Label.js in last comment.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16765</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2010-02-09 18:18:04 +0100</bug_when>
+            <thetext>I rescheduled this bug for 1.0.2 (fix is trivial as mentioned).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17000</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2010-02-25 11:22:03 +0100</bug_when>
+            <thetext>fixed in trunk and in the 1.0.x branch.
+
+r21644</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37436</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:49 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>347</attachid>
+            <date>2008-09-01 17:45:00 +0200</date>
+            <delta_ts>2008-09-01 17:45:18 +0200</delta_ts>
+            <desc>Proposed Patch</desc>
+            <filename>qx.bom.Label.patch</filename>
+            <type>text/plain</type>
+            <size>884</size>
+            <attacher>matthew+qooxdoo</attacher>
+            
+              <data encoding="base64">SW5kZXg6IExhYmVsLmpzDQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09DQotLS0gTGFiZWwuanMJKHJldmlzaW9uIDE2MTI0
+KQ0KKysrIExhYmVsLmpzCSh3b3JraW5nIGNvcHkpDQpAQCAtNjEsNiArNjEsMTEgQEANCiAgICAg
+ICBpZiAocXguY29yZS5WYXJpYW50LmlzU2V0KCJxeC5jbGllbnQiLCAiZ2Vja28iKSkKICAgICAg
+IHsKICAgICAgICAgdmFyIGlubmVyID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudE5TKCJodHRwOi8v
+d3d3Lm1vemlsbGEub3JnL2tleW1hc3Rlci9nYXRla2VlcGVyL3RoZXJlLmlzLm9ubHkueHVsIiwg
+ImxhYmVsIik7CisgICAgICAgIGZvciAodmFyIGtleSBpbiB0aGlzLl9fc3R5bGVzKQorICAgICAg
+ICB7CisgICAgICAgICAgaW5uZXIuc3R5bGVba2V5XSA9ICJpbmhlcml0IjsKKyAgICAgICAgfQor
+ICAgICAgICBpbm5lci5zdHlsZS5jb2xvciA9ICJpbmhlcml0IjsKICAgICAgICAgZWwuYXBwZW5k
+Q2hpbGQoaW5uZXIpOwogICAgICAgfQogCkBAIC0xMzMsNiArMTM4LDExIEBADQogICAgICAgICB4
+dWxlbC5zdHlsZS5jdXJzb3IgPSAiaW5oZXJpdCI7CiAgICAgICAgIHh1bGVsLnN0eWxlLm92ZXJm
+bG93ID0gImhpZGRlbiI7CiAgICAgICAgIHh1bGVsLnN0eWxlLm1heFdpZHRoID0gIjEwMCUiOwor
+ICAgICAgICBmb3IgKHZhciBrZXkgaW4gdGhpcy5fX3N0eWxlcykKKyAgICAgICAgeworICAgICAg
+ICAgIHh1bGVsLnN0eWxlW2tleV0gPSAiaW5oZXJpdCI7ICAgICAgICAgIAorICAgICAgICB9Cisg
+ICAgICAgIHh1bGVsLnN0eWxlLmNvbG9yID0gImluaGVyaXQiOwogCiAgICAgICAgIHh1bGVsLnNl
+dEF0dHJpYnV0ZSgiY3JvcCIsICJlbmQiKTsKIAo=
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>348</attachid>
+            <date>2008-09-01 17:45:00 +0200</date>
+            <delta_ts>2008-09-01 17:45:22 +0200</delta_ts>
+            <desc>Proposed Patch</desc>
+            <filename>qx.bom.Label.patch</filename>
+            <type>text/plain</type>
+            <size>884</size>
+            <attacher>matthew+qooxdoo</attacher>
+            
+              <data encoding="base64">SW5kZXg6IExhYmVsLmpzDQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09DQotLS0gTGFiZWwuanMJKHJldmlzaW9uIDE2MTI0
+KQ0KKysrIExhYmVsLmpzCSh3b3JraW5nIGNvcHkpDQpAQCAtNjEsNiArNjEsMTEgQEANCiAgICAg
+ICBpZiAocXguY29yZS5WYXJpYW50LmlzU2V0KCJxeC5jbGllbnQiLCAiZ2Vja28iKSkKICAgICAg
+IHsKICAgICAgICAgdmFyIGlubmVyID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudE5TKCJodHRwOi8v
+d3d3Lm1vemlsbGEub3JnL2tleW1hc3Rlci9nYXRla2VlcGVyL3RoZXJlLmlzLm9ubHkueHVsIiwg
+ImxhYmVsIik7CisgICAgICAgIGZvciAodmFyIGtleSBpbiB0aGlzLl9fc3R5bGVzKQorICAgICAg
+ICB7CisgICAgICAgICAgaW5uZXIuc3R5bGVba2V5XSA9ICJpbmhlcml0IjsKKyAgICAgICAgfQor
+ICAgICAgICBpbm5lci5zdHlsZS5jb2xvciA9ICJpbmhlcml0IjsKICAgICAgICAgZWwuYXBwZW5k
+Q2hpbGQoaW5uZXIpOwogICAgICAgfQogCkBAIC0xMzMsNiArMTM4LDExIEBADQogICAgICAgICB4
+dWxlbC5zdHlsZS5jdXJzb3IgPSAiaW5oZXJpdCI7CiAgICAgICAgIHh1bGVsLnN0eWxlLm92ZXJm
+bG93ID0gImhpZGRlbiI7CiAgICAgICAgIHh1bGVsLnN0eWxlLm1heFdpZHRoID0gIjEwMCUiOwor
+ICAgICAgICBmb3IgKHZhciBrZXkgaW4gdGhpcy5fX3N0eWxlcykKKyAgICAgICAgeworICAgICAg
+ICAgIHh1bGVsLnN0eWxlW2tleV0gPSAiaW5oZXJpdCI7ICAgICAgICAgIAorICAgICAgICB9Cisg
+ICAgICAgIHh1bGVsLnN0eWxlLmNvbG9yID0gImluaGVyaXQiOwogCiAgICAgICAgIHh1bGVsLnNl
+dEF0dHJpYnV0ZSgiY3JvcCIsICJlbmQiKTsKIAo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

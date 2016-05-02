@@ -1,0 +1,255 @@
+<bug>
+          <bug_id>3029</bug_id>
+          
+          <creation_ts>2009-11-04 14:49:00 +0100</creation_ts>
+          <short_desc>Review qx.bom.element.Decoration</short_desc>
+          <delta_ts>2014-03-03 15:22:37 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>critical</bug_severity>
+          <target_milestone>1.0</target_milestone>
+          
+          <blocked>3066</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Fabian Jakobs">fabian.jakobs</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          <cc>info</cc>
+    
+    <cc>ulrich.berger</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>13859</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-04 14:49:41 +0100</bug_when>
+            <thetext>By reviewing the qx.bom.element.Decoration code it looks like it has some serious issues:
+
+- &quot;repeat-x&quot; and &quot;repeat-y&quot; modes seem not to be working in IE
+- &quot;scale-x&quot; and &quot;scale-y&quot; are handled as &quot;scale&quot; in IE
+- clipped images are not used in IE6/IE7 even if it should (e.g. for PNG images with &quot;no-repeat&quot;) 
+
+We should add a demo, which exercises qx.bom.element.Decoration for all repeat modes and:
+
+- PNG, GIF images
+- clipped PNG, GIF images</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13860</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-04 14:51:45 +0100</bug_when>
+            <thetext>After adding the demo, the &quot;getAttributes&quot; function should be broken up into several smaller functions because in its currents state its very hard to read.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13864</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-11-04 16:55:58 +0100</bug_when>
+            <thetext>accepting</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14095</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-11-13 11:29:51 +0100</bug_when>
+            <thetext>added first version of demo (&quot;Decoration_UseCases&quot; in test section) to show the capabilities of the current implementation concerning IE alpha PNG images.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14096</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-11-13 11:35:17 +0100</bug_when>
+            <thetext>First observation in IE8:
+If the alpha image fix is disabled (then IE is using DIV and IMG elements for the grid decorator instead of only DIV elements with alphaImageLoader) there significant performance differences in Standards Mode and IE7 Standards Mode/Quirks Mode.
+
+It seems IE8 has the same performance issues in IE8 Standards Mode with fast IMG element movements as already observed with VML.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14101</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-11-13 13:59:27 +0100</bug_when>
+            <thetext>&gt; - &quot;repeat-x&quot; and &quot;repeat-y&quot; modes seem not to be working in IE
+The problem here is that currently alpha PNG are not correctly displayed for IE6 since this browser does not support those images. IE7 and IE8 do support alpha PNGs and the images are displayed correctly in &quot;repeat-x&quot; and &quot;repeat-y&quot; modes (also true for clipped images).
+
+&gt; - &quot;scale-x&quot; and &quot;scale-y&quot; are handled as &quot;scale&quot; in IE
+At the moment every IE browser version does use the AlphaImageLoader which is applied at a DIV element. Since the AlphaImageLoader only supports the &quot;scale&quot; sizingMethod the scaling in horizontal respectively in vertical dimension is achieved by setting approbiate width/height values.
+However using an IMG element for scaling in IE7 and IE8 is not a solution since the scaling of alpha PNG images with IMG elements looks really bad. We rely on the AlphaImageLoader filter here.
+
+&gt; - clipped images are not used in IE6/IE7 even if it should (e.g. for PNG images with &quot;no-repeat&quot;)
+This is the main issue. We need to modify the implementation to let IE7 and IE8 use the native alpha PNG support to display clipped images. For IE6 it is not possible to use clipped images since we need to make use of the AlphaImageLoader which does not support any CSS &quot;background-position&quot; values.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14169</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-11-18 00:19:16 +0100</bug_when>
+            <thetext>As far as I know IE6 supports alpha PNG only for 8-bit alpha PNG. Maybe this helps.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14170</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-11-18 00:30:26 +0100</bug_when>
+            <thetext>Ever thought about do not &quot;scale&quot; images? For all existing decorators this would work flawlessly.
+
+I would suggest to go this way:
+* Removing AlphaPNGLoader completely - also from IE6
+* Switching to image tags for every browser
+* Create 8-bit PNGs from all resources which should degrade OK in IE6
+
+Arguments:
+* AlphaPNG is slow and memory consuming as hell and also leaks memory
+* Scaling combined images is not easy and may have side-effects through interpolation of images
+* Scaling was only used because of IE could not repeat AlphaPNG images. There was no other reason!
+* IE6 is not that important anymore. To degrade OK is fair enough IMHO. It&#39;s far more important to be correctly in recent versions.
+
+Sources:
+* http://code.google.com/p/google-web-toolkit/issues/detail?id=3588
+* http://robertnyman.com/2009/05/26/serious-memory-leak-issue-with-24-bit-png-images-with-alpha-transparency-in-internet-explorer/
+* http://yuiblog.com/blog/2008/11/04/imageopt-2/
+* http://ap-project.org/Russian/Article/View/83/English_translation/</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15100</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-11-30 15:52:23 +0100</bug_when>
+            <thetext>Fixed with Revision #20835
+
+Instead of using the alphaImageLoader for all IE versions the filter is now only applied for IE6 and IE8 in &quot;IE8 Standards Mode&quot;.
+
+Feel free to re-open if any issues are still present / need to be discussed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15119</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-11-30 23:22:05 +0100</bug_when>
+            <thetext>I am not sure if I am the only one here. But I feel that my notes made in comment #7 are not already discussed. It seems that the whole implementation is currently misleading and could benefit from not using AlphaImageLoader at all.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15316</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-12-04 17:25:12 +0100</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; I would suggest to go this way:
+&gt; * Removing AlphaPNGLoader completely - also from IE6
+This is not acceptable since we want to support AlphaPNGs also in IE6. Additionally IE8 in &quot;IE8 Standards Mode&quot; is lacking performance when *not* using the AlphaImageLoader.
+
+&gt; Arguments:
+&gt; * AlphaPNG is slow and memory consuming as hell and also leaks memory
+I know, but there is no alternative which is better at the moment.
+
+&gt; * Scaling combined images is not easy and may have side-effects through
+&gt; interpolation of images
+We are not using combined images when using the AlphaImageLoader. So this issue won&#39;t come up.
+
+&gt; * Scaling was only used because of IE could not repeat AlphaPNG images. There
+&gt; was no other reason!
+Yes, and this is the reason to keep it. We want to support AlphaPNG images for all IE browsers.
+
+&gt; * IE6 is not that important anymore. To degrade OK is fair enough IMHO. It&#39;s far
+&gt; more important to be correctly in recent versions.
+As long as there are users out there using this old browser we have to have a solution for them. I guess there is no developer out there who doesn&#39;t want to get rid off it, but we have to live with it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15318</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-12-04 19:10:16 +0100</bug_when>
+            <thetext>Answer to comment #10:
+
+&gt; This is not acceptable since we want to support AlphaPNGs also in IE6.
+
+You can have AlphaPNGs in IE6, but only 8 Bit Alpha PNG. For basically most graphics you would not see a change. I swear.
+
+&gt; Additionally IE8 in &quot;IE8 Standards Mode&quot; is lacking performance when *not* using the AlphaImageLoader.
+
+This is interesting, but we need more data here, before keeping it in IE8. When it really has so many memory issues as found out by a lot of people, we should have at least the same qualified tests to prove the performance statements.
+
+One should know that all these filters post-pone the rendering of images after the browser rendering. So it would be really interesting how you have measured that AlphaImageLoader is faster in IE8. It may delegate the rendering to something out of your measurement and this way might seem faster only.
+
+&gt;  we have to have a solution for them
+
+Sure you need a solution for them. And you have one: 8 Bit PNG. Really it works. As written in the YUIBlog article linked above: &quot;With PNG8, whenever you have semi-transparent pixels they appear as fully transparent in IE (version 6 and lower). This is not ideal but it’s still useful and is the same behavior that you get from a GIF.&quot;
+
+&gt; I know, but there is no alternative which is better at the moment.
+
+I really have the feeling that you don&#39;t have read the links I have posted. As written: there is an alternative. It&#39;s named 8-bit PNG.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15357</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-12-07 13:22:29 +0100</bug_when>
+            <thetext>&gt; You can have AlphaPNGs in IE6, but only 8 Bit Alpha PNG. For basically most graphics you would not see a change. I 
+&gt; swear.
+I know about 8-bit Alpha PNGs. The issue is that these only support 1-bit alpha transparency (just like GIF) and this is not enough in my opinion. We could change all PNGs of qx to 8-bit ones, but the framework should be able to support 24-bit as well, because there are applications which make use of them.
+
+&gt; This is interesting, but we need more data here, before keeping it in IE8. When it really has so many memory 
+&gt; issues as found out by a lot of people, we should have at least the same qualified tests to prove the performance 
+&gt; statements.
+I also know about the memory issues. My tests are subjective ones, but the performances issues were *visible* at runtime. Using multiple decorators which are switched fast are visually slower in IE 8 Standards Mode. I&#39;ve tested this with two different machines (both 3 Ghz dual core / 2 GB RAM) and another developer also encountered this issue.
+It has to do with the DOM structure. Moving around IMG elements seems to be an issue, because DIV elements when using the AlphaImageLoader are not affected with performances penalties.
+
+This is not the only performance issue in IE8 in IE8 Standards Mode. It may not have something in common, but since VML performance is also slow ONLY in the Standards Mode I think IE8 has issues here in general.
+
+--cite--
+&quot;The most outstanding change however (my favourite) is the drop in VML rendering performance. Rendering VML fragment in standards mode in IE8 is about 10 times slower compared to IE8 quirks or previous IE versions.&quot; (Sergey Ilinsky at http://ajaxian.com/archives/the-vml-changes-in-ie-8 )
+--cite--
+
+&gt; One should know that all these filters post-pone the rendering of images after the browser rendering. So it would 
+&gt; be really interesting how you have measured that AlphaImageLoader is faster in IE8.
+Only through visual testing.
+
+&gt; I really have the feeling that you don&#39;t have read the links I have posted. As written: there is an alternative. It&#39;s 
+&gt; named 8-bit PNG.
+I&#39;ve read all articles and I&#39;m still not convinced. The behaviour just like GIF is not enough here.
+
+If we can get rid off the AlphaImageLoader I would love to kick these pieces of code out of qx, but there are still requirements we need to address.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15395</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-12-07 18:35:06 +0100</bug_when>
+            <thetext>&gt; but the framework should be able to support 24-bit as well
+
+It is able but with limitations in IE. Do you really think this would not be ok for most real-world applications? Basically this is so hard-coded in the code that it really leaves no option to the users. At least this should be configurable that way.
+
+&gt; the performances issues were *visible* at runtime
+
+Ok, but let&#39;s talk about more details here before doing a decision of this size which influences almost every part of qooxdoo. It would be for example really interesting which the use of AlphaImageLoader costs regarding memory footprint. Keep in mind that most IE6 computers are also quite limited to other resources e.g. memory. Memory footprint might be as essential as performance.
+
+Also what mean &quot;visible at runtime&quot;. Is it about 10x slower, 10% slower, can you give some details of your estimation? Tried to have some kind of other decoration dealing just for IE. If it is really so slow to move image nodes from A to B maybe we can do something else. It&#39;s IMHO not good to fix an issue of the top-level on the low-level as this also influence other users of the class. qx.bom is also useful for low-level classes. If these classes are designed only be the requirements of the high-level classes we might overlook something here.
+
+In the articles I shared it&#39;s written that mostly only PNG-24 is slow in IE. This is also true for background patterns etc. Maybe the performance bottleneck of IE8 is also only valid with PNG-24. Something we should test out before doing further &quot;improvements&quot;.
+
+&gt; The behaviour just like GIF is not enough here.
+
+Quite bold words. I am not as sure as you. PNG-8 can support multi-level opacity in all other browsers except IE6. And on IE6 this is only slightly visible for most cases. Also keep in mind that IE6 users already get the worst performance of all users on Web2.0 applications. I wouldn&#39;t argue that their pain perception is already quite low, but we also do not need to make it better for them at all costs. It&#39;s just not worth it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37744</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:37 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

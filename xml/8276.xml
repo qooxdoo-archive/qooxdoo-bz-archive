@@ -1,0 +1,181 @@
+<bug>
+          <bug_id>8276</bug_id>
+          
+          <creation_ts>2014-04-22 14:35:00 +0200</creation_ts>
+          <short_desc>dragover event gets wrong action if moving from one drop target to another</short_desc>
+          <delta_ts>2014-05-14 13:35:18 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mustafa Sak">mustafa.sak</reporter>
+          <assigned_to name="Mustafa Sak">mustafa.sak</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>40027</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-04-22 14:35:13 +0200</bug_when>
+            <thetext>Mind you are in a drag session and moved cursor to a drop target. You decide to reject a potential drop on this target by calling .preventDefault() on dragover event. The action will be set to null, drag cursor will be changed. 
+
+Now mind you move the cursor to another drop target. &quot;dragover&quot; will be fired, but you are not able to decide if a drop should be able, because action is still null.
+
+Recommended to get available action based on pressed keys and added actions on dragover, however.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40030</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-04-22 14:53:00 +0200</bug_when>
+            <thetext>Fixed on master: bbe96f2a32591dde53958a4bf028bc7a84884401</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40078</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-04-28 15:43:24 +0200</bug_when>
+            <thetext>The commit breaks the drag &amp; drop demos in the demobrowser.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40086</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-04-29 09:50:02 +0200</bug_when>
+            <thetext>Reverted the commit which breaks the drag&amp;drop demo because I need to work on a working code base for bug #8272.
+
+master: 51128c02c6112af5aadb20b48300a958932574d0</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40090</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-04-29 13:31:29 +0200</bug_when>
+            <thetext>Tried to build a demo for reproduction but did only come up with a working demo:
+
+var drag = new qx.ui.core.Widget().set({backgroundColor: &quot;#ddd&quot;});
+var target1 = new qx.ui.core.Widget().set({backgroundColor: &quot;red&quot;});
+var target2 = new qx.ui.core.Widget().set({backgroundColor: &quot;green&quot;});
+
+this.getRoot().add(drag);
+this.getRoot().add(target1, {top: 50});
+this.getRoot().add(target2, {top: 100});
+
+drag.setDraggable(true);
+target1.setDroppable(true);
+target2.setDroppable(true);
+
+drag.addListener(&quot;dragstart&quot;, function(e) {
+  e.addAction(&quot;copy&quot;);
+});
+
+target1.addListener(&quot;dragover&quot;, function(e) {
+  console.log(&quot;over target 1&quot;, e.supportsAction(&quot;copy&quot;));
+  e.preventDefault();
+});
+
+target2.addListener(&quot;dragover&quot;, function(e) {
+  console.log(&quot;over target 2&quot;, e.supportsAction(&quot;copy&quot;));
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40094</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-04-29 16:28:09 +0200</bug_when>
+            <thetext>Please try this example, I will point you to e.getCurrentAction():
+
+var drag = new qx.ui.core.Widget().set({backgroundColor: &quot;#ddd&quot;});
+var target1 = new qx.ui.core.Widget().set({backgroundColor: &quot;red&quot;});
+var target2 = new qx.ui.core.Widget().set({backgroundColor: &quot;green&quot;});
+
+this.getRoot().add(drag);
+this.getRoot().add(target1, {top: 50});
+this.getRoot().add(target2, {top: 100});
+
+drag.setDraggable(true);
+target1.setDroppable(true);
+target2.setDroppable(true);
+
+drag.addListener(&quot;dragstart&quot;, function(e) {
+  e.addAction(&quot;copy&quot;);
+});
+
+target1.addListener(&quot;dragover&quot;, function(e) {
+  console.log(&quot;over target 1&quot;, e.getCurrentAction());
+  e.preventDefault();
+});
+
+target2.addListener(&quot;dragover&quot;, function(e) {
+  console.log(&quot;over target 2&quot;, e.getCurrentAction());
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40224</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-05-14 13:35:18 +0200</bug_when>
+            <thetext>I fixed the getCurrentAction call to return the current action. This means that as long as the event is not prevented, the current action will be returned. As soon as the event is prevented, null will be the current action.
+
+master: ff115b6619fe82212f4eca929fd113cc218c8442
+
+
+Here is the modified code to reproduce:
+
+
+var drag = new qx.ui.core.Widget().set({backgroundColor: &quot;#ddd&quot;});
+var target1 = new qx.ui.core.Widget().set({backgroundColor: &quot;red&quot;});
+var target2 = new qx.ui.core.Widget().set({backgroundColor: &quot;green&quot;});
+
+this.getRoot().add(drag);
+this.getRoot().add(target1, {top: 50});
+this.getRoot().add(target2, {top: 100});
+
+drag.setDraggable(true);
+target1.setDroppable(true);
+target2.setDroppable(true);
+
+drag.addListener(&quot;dragstart&quot;, function(e) {
+  e.addAction(&quot;copy&quot;);
+  e.addAction(&quot;move&quot;);
+});
+
+target1.addListener(&quot;dragover&quot;, function(e) {
+  console.log(&quot;over target 1&quot;, e.getCurrentAction());
+  e.preventDefault();
+  console.log(&quot;over target 1 (after)&quot;, e.getCurrentAction());
+});
+
+target2.addListener(&quot;dragover&quot;, function(e) {
+  console.log(&quot;over target 2&quot;, e.getCurrentAction());
+});
+
+drag.addListener(&quot;dragchange&quot;, function(e) {
+  console.log(&quot;change&quot;, e.getCurrentAction());
+});</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,203 @@
+<bug>
+          <bug_id>2925</bug_id>
+          
+          <creation_ts>2009-10-13 16:09:00 +0200</creation_ts>
+          <short_desc>SelectBox doesn&#39;t respect ListItem.rich property</short_desc>
+          <delta_ts>2009-11-24 20:16:15 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          <dependson>3080</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Petr Kobalíček">kobalicek.petr</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          <cc>fabian.jakobs</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>13169</commentid>
+            <who name="Petr Kobalíček">kobalicek.petr</who>
+            <bug_when>2009-10-13 16:09:05 +0200</bug_when>
+            <thetext>If rich property is set, selectbox will escape item label instead of using rich too.
+
+Sample code:
+
+var doc = this.getRoot();
+
+var listbox = new qx.ui.form.SelectBox();
+
+for (var i = 0; i &lt; 10; i++)
+{
+ var item = new qx.ui.form.ListItem();
+ item.setRich(true);
+ item.setLabel(&quot;&lt;span style=&#39;color:red&#39;&gt;&quot; + i + &quot;&lt;/span&gt;&quot;);
+ listbox.add(item);
+}
+
+doc.add(listbox, {left:50, right: 40});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13172</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-13 17:13:38 +0200</bug_when>
+            <thetext>to Chris.
+
+The current behavior isn&#39;t by intention, right? IMHO it should be ok to have the selectbox respect rich content. But shouldn&#39;t there be a more general solution for text-only content as well (think of font-sizes, etc.)? How would that be possible, and do other select boxes allow for that? Comments?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13223</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-16 10:45:22 +0200</bug_when>
+            <thetext>It is not by intention. I think it would be OK to sync the rich property between the selectbox&#39;s atom and the selected item. Just make sure that non rich list items are never displayed as &quot;rich&quot; in the atom. This would open potential XSS vulnerabilities.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13299</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-10-19 14:54:39 +0200</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13314</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-10-19 16:43:53 +0200</bug_when>
+            <thetext>It isn&#39;t possible to synchronize the rich property from the selected item and the selectbox&#39;s atom. The rich property can&#39;t be changed on runtime, because the implementation on atom dosen&#39;t allow to change the rich property if the label is created in the DOM.
+
+To support items with rich text. I would prefer to add a property on selectbox which configure the internal atom to use rich. But this would have the same restriction like the rich property on the atom (can&#39;t be changed after widget creation).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13315</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-10-19 16:48:38 +0200</bug_when>
+            <thetext>Added the property &quot;rich&quot; which configured the internal atom to allow rich text. Done in trunk with rev. 20419.
+
+As example:
+
+var doc = this.getRoot();
+
+var listbox = new qx.ui.form.SelectBox();
+listbox.setRich(true);
+
+for (var i = 0; i &lt; 10; i++)
+{
+ var item = new qx.ui.form.ListItem();
+ item.setRich(true);
+ item.setLabel(&quot;&lt;span style=&#39;color:red&#39;&gt;&quot; + i + &quot;&lt;/span&gt;&quot;);
+ listbox.add(item);
+}
+
+doc.add(listbox, {left:50, right: 40});
+
+ </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13317</commentid>
+            <who name="Petr Kobalíček">kobalicek.petr</who>
+            <bug_when>2009-10-19 16:53:35 +0200</bug_when>
+            <thetext>Hi Chris,
+
+I have generic view and model components and I&#39;m not able to set rich property for each SelectBox. I don&#39;t know what the data will be, if rich or not.
+
+By this way I&#39;m setting rich property for each items, what about items that has rich=false ? Maybe SelectBox should be smart enough and escape these items, it&#39;s implemented ?
+
+Thanks
+- Petr</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13351</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-10-20 11:26:31 +0200</bug_when>
+            <thetext>Petr, yes this should be possible. Fabian, what do you think?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13496</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-26 10:36:59 +0100</bug_when>
+            <thetext>Yes, that would be possible. We could set the selectbox atom to rich and if the selected list item is not &quot;rich&quot; we could simply set the HTML escaped value. If we do this we should remove the &quot;rich&quot; property on the SelectBox.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13670</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-10-29 11:50:08 +0100</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14076</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-11-12 13:03:12 +0100</bug_when>
+            <thetext>Fixed on trunk with rev. 20612. Petr, could you please verify it and set it to VERIFIED if it works like you expected. Thanks.
+
+- Removed the rich property on the SelectBox.
+- The atom from the SelectBox is set to rich.
+- If the selected ListItem is not rich -&gt; the value is escaped, before atom is changed. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14206</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-11-18 18:27:56 +0100</bug_when>
+            <thetext>Reopened bug. Setting the Atom to rich has now the effect that a too long ListItem enforces a line break. -&gt; set wrap to false on the label</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14228</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-11-19 14:36:44 +0100</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14233</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-11-19 15:20:12 +0100</bug_when>
+            <thetext>Using the wrap property for the label has the problem that the ellipsis are missing if the text is too long. I discussed this issue with Fabian and there is no possibility to get the ellipsis for rich labels. We think that the use case for using rich ListItems is not the main use case and it is more important to have the ellipsis. Due to, we decided to revert the commit from rev. 20612 and add a filter for removing the HTML tags from the label.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14236</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-11-19 16:09:54 +0100</bug_when>
+            <thetext>Added the format functionality on trunk with rev. 20702. The value from the ListItem is now formated. The formatter removes all HTML tags and converts all HTML entities to string characters when the rich property is true.
+
+Here is a code snippet to remove the formatter and set the atom to rich:
+var selectBox = new qx.ui.form.SelectBox();
+selectBox.getChildControl(&quot;atom&quot;).setRich(true);
+selectBox.setFormat(null);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14392</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-11-24 09:04:44 +0100</bug_when>
+            <thetext>-&gt; CLOSED</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14638</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:16:15 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

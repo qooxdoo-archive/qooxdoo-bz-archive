@@ -1,0 +1,199 @@
+<bug>
+          <bug_id>4693</bug_id>
+          
+          <creation_ts>2011-02-22 11:24:00 +0100</creation_ts>
+          <short_desc>Scan namespace only, allow unrelated directories in source/class</short_desc>
+          <delta_ts>2014-03-03 15:19:52 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>2.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Malte S. Stretz">qooxdoo-bugs</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>22871</commentid>
+              <attachid>896</attachid>
+            <who name="Malte S. Stretz">qooxdoo-bugs</who>
+            <bug_when>2011-02-22 11:24:55 +0100</bug_when>
+            <thetext>Created attachment 896
+Patch against Qooxdoo 1.3
+
+I&#39;m currently working on a project which uses a Qooxdoo UI with a Pyramid (&lt;http://pylonsproject.org/&gt;) server.  As a side product I hope to have a pyramid_qooxdoo plugin for Pyramid in the end.
+
+Since the main project here is based on Pyramid, I try to use a typical python directory structure, ie. for a project/module foo I put my sources in /foo.  To resemble other Pyramid plugins, I&#39;d also like to put the Qooxdoo code below this path.  To do this, my Qooxdoo project uses the namespace foo.ui and the classes should be located in /foo/ui (resources are in /foo/static).  I can set the class path accordingly but unfortunately is the generator a bit picky about the directories and breaks with an error like
+
+  Multiple namespaces per library are not supported (/home/mss/Projects/foo/foo,Foo.egg-info,data)
+
+This is easily fixed:  Since multiple namespaces aren&#39;t allowed anyway, there&#39;s no point in starting the scan in the class directory; instead we can just start within the namespace directory.  I&#39;ll attach a patch against 1.3 which does exactly this.
+
+It only modifies generator.resource.Library and in the end gets rid of both _checkNamespace (which isn&#39;t needed anymore) and _detectNamespace (which looked like some leftover copypasta and wasn&#39;t used anywhere anyway).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22911</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-02-23 08:48:51 +0100</bug_when>
+            <thetext>Thanks for the report and the patch, Malte!
+
+Thomas, could that be a good addition to the toolchain? Sounds good for me.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22918</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-02-23 11:30:25 +0100</bug_when>
+            <thetext>The patch and the arguments look ok on first sight, but I&#39;m not entirely sure we should give up on the possibility to support multiple name spaces in the &#39;class&#39; path in the future. And all that for an individual and very specific use case.
+
+Rather, we could provide a user-configurable skip list when scanning the class path, so people could exempt all kinds of files and directories when the scan runs. This might prove usable for a much wider range of users and use cases.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22919</commentid>
+            <who name="Malte S. Stretz">qooxdoo-bugs</who>
+            <bug_when>2011-02-23 11:54:03 +0100</bug_when>
+            <thetext>The support for multiple namespaces could also require to have all the namespaces added to Manifest.json, like
+
+{
+  //...
+  provides : {
+    namespace : [ &quot;foo.ui&quot;, &quot;foo.lib&quot; ],
+    // ..
+  }
+}
+
+The patch can be changed easily to support this.  Form my cursory glance I actually couldn&#39;t see a reason in the code why multiple namespaces aren&#39;t supported currenty, but I didn&#39;t test it.
+
+OTOH it would also be quite easy to add additional pattern to Library._ignoredDirectories, a solution which would be fine with me, too.  Just tell me where to put this option and I&#39;ll have a try :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31082</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-10-27 14:31:51 +0200</bug_when>
+            <thetext>Multiple subdirectories beneath in the class path (typically source/class) are now only warned about, but no exception is thrown. Additional files are picked up with no warnings at all (&quot;namespace-less classes&quot;).
+
+A user-configurable skip list for library scanning would still be a good idea, but is not implemented yet.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36664</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:52 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>896</attachid>
+            <date>2011-02-22 11:24:00 +0100</date>
+            <delta_ts>2011-02-22 11:24:55 +0100</delta_ts>
+            <desc>Patch against Qooxdoo 1.3</desc>
+            <filename>qooxdoo-1.3-sdk.scan-ns-only.patch</filename>
+            <type>text/plain</type>
+            <size>4207</size>
+            <attacher>qooxdoo-bugs</attacher>
+            
+              <data encoding="base64">ZGlmZiAtdXIgcW9veGRvby0xLjMtc2RrLm9yaWcvL3Rvb2wvcHlsaWIvZ2VuZXJhdG9yL3Jlc291
+cmNlL0xpYnJhcnkucHkgcW9veGRvby0xLjMtc2RrL3Rvb2wvcHlsaWIvZ2VuZXJhdG9yL3Jlc291
+cmNlL0xpYnJhcnkucHkKLS0tIHFvb3hkb28tMS4zLXNkay5vcmlnLy90b29sL3B5bGliL2dlbmVy
+YXRvci9yZXNvdXJjZS9MaWJyYXJ5LnB5CTIwMTAtMTAtMTUgMTc6NDI6MzAuMDAwMDAwMDAwICsw
+MjAwCisrKyBxb294ZG9vLTEuMy1zZGsvdG9vbC9weWxpYi9nZW5lcmF0b3IvcmVzb3VyY2UvTGli
+cmFyeS5weQkyMDExLTAyLTE4IDE5OjQyOjMyLjkyNTgyMDAwMSArMDEwMApAQCAtNzksNyArNzks
+NiBAQAogCiAgICAgICAgIHNlbGYubmFtZXNwYWNlID0gc2VsZi5fY29uZmlnLmdldCgibmFtZXNw
+YWNlIikKICAgICAgICAgaWYgbm90IHNlbGYubmFtZXNwYWNlOiByYWlzZSBSdW50aW1lRXJyb3IK
+LSAgICAgICAgc2VsZi5fY2hlY2tOYW1lc3BhY2Uoc2VsZi5fY2xhc3NQYXRoKQogCiAgICAgICAg
+ICNJbWFnZUluZm9PYmogPSBJbWFnZUluZm8oY29udGV4dC5jb25zb2xlLCBjb250ZXh0LmNhY2hl
+KQogICAgICAgICBzZWxmLl9pbWFnZUluZm9PYmogPSBJbWFnZUluZm8oY29udGV4dC5jb25zb2xl
+LCBjb250ZXh0LmNhY2hlKQpAQCAtMTc2LDU0ICsxNzUsNiBAQAogICAgICAgICByZXR1cm4gTm9u
+ZQogCiAKLSAgICBkZWYgX2NoZWNrTmFtZXNwYWNlKHNlbGYsIHBhdGgpOgotICAgICAgICBpZiBu
+b3Qgb3MucGF0aC5leGlzdHMocGF0aCk6Ci0gICAgICAgICAgICByYWlzZSBWYWx1ZUVycm9yKCJU
+aGUgZ2l2ZW4gcGF0aCBkb2VzIG5vdCBjb250YWluIGEgY2xhc3MgZm9sZGVyOiAlcyIgJSBwYXRo
+KQotCi0gICAgICAgIG5zID0gTm9uZQotICAgICAgICBmaWxlcyA9IG9zLmxpc3RkaXIocGF0aCkK
+LQotICAgICAgICBmb3IgZW50cnkgaW4gZmlsZXM6Ci0gICAgICAgICAgICBpZiBlbnRyeS5zdGFy
+dHN3aXRoKCIuIikgb3Igc2VsZi5faWdub3JlZERpcmVjdG9yaWVzLm1hdGNoKGVudHJ5KToKLSAg
+ICAgICAgICAgICAgICBjb250aW51ZQotCi0gICAgICAgICAgICBmdWxsID0gb3MucGF0aC5qb2lu
+KHBhdGgsIGVudHJ5KQotICAgICAgICAgICAgaWYgb3MucGF0aC5pc2RpcihmdWxsKToKLSAgICAg
+ICAgICAgICAgICBpZiBucyAhPSBOb25lOgotICAgICAgICAgICAgICAgICAgICByYWlzZSBWYWx1
+ZUVycm9yKCJNdWx0aXBsZSBuYW1lc3BhY2VzIHBlciBsaWJyYXJ5IGFyZSBub3Qgc3VwcG9ydGVk
+ICglcywlcykiICUgKGZ1bGwsIG5zKSkKLQotICAgICAgICAgICAgICAgIG5zID0gZW50cnkKLQot
+ICAgICAgICBpZiBucyA9PSBOb25lOgotICAgICAgICAgICAgcmFpc2UgVmFsdWVFcnJvcigiTmFt
+ZXNwYWNlIGNvdWxkIG5vdCBiZSBkZXRlY3RlZCEiKQotCi0KLSAgICBkZWYgX2RldGVjdE5hbWVz
+cGFjZShzZWxmLCBwYXRoKToKLSAgICAgICAgaWYgbm90IG9zLnBhdGguZXhpc3RzKHBhdGgpOgot
+ICAgICAgICAgICAgcmFpc2UgVmFsdWVFcnJvcigiVGhlIGdpdmVuIHBhdGggZG9lcyBub3QgY29u
+dGFpbiBhIGNsYXNzIGZvbGRlcjogJXMiICUgcGF0aCkKLQotICAgICAgICBucyA9IE5vbmUKLSAg
+ICAgICAgZmlsZXMgPSBvcy5saXN0ZGlyKHBhdGgpCi0KLSAgICAgICAgZm9yIGVudHJ5IGluIGZp
+bGVzOgotICAgICAgICAgICAgaWYgZW50cnkuc3RhcnRzd2l0aCgiLiIpIG9yIHNlbGYuX2lnbm9y
+ZWREaXJlY3Rvcmllcy5tYXRjaChlbnRyeSk6Ci0gICAgICAgICAgICAgICAgY29udGludWUKLQot
+ICAgICAgICAgICAgZnVsbCA9IG9zLnBhdGguam9pbihwYXRoLCBlbnRyeSkKLSAgICAgICAgICAg
+IGlmIG9zLnBhdGguaXNkaXIoZnVsbCk6Ci0gICAgICAgICAgICAgICAgaWYgbnMgIT0gTm9uZToK
+LSAgICAgICAgICAgICAgICAgICAgcmFpc2UgVmFsdWVFcnJvcigiTXVsdGlwbGUgbmFtZXNwYWNl
+cyBwZXIgbGlicmFyeSBhcmUgbm90IHN1cHBvcnRlZCAoJXMsJXMpIiAlIChmdWxsLCBucykpCi0K
+LSAgICAgICAgICAgICAgICBucyA9IGVudHJ5Ci0KLSAgICAgICAgaWYgbnMgPT0gTm9uZToKLSAg
+ICAgICAgICAgIHJhaXNlIFZhbHVlRXJyb3IoIk5hbWVzcGFjZSBjb3VsZCBub3QgYmUgZGV0ZWN0
+ZWQhIikKLQotICAgICAgICBzZWxmLl9jb25zb2xlLmRlYnVnKCJEZXRlY3RlZCBuYW1lc3BhY2U6
+ICVzIiAlIG5zKQotICAgICAgICBzZWxmLm5hbWVzcGFjZSA9IG5zCi0KLQotCiAgICAgZGVmIHNj
+YW5SZXNvdXJjZVBhdGgoc2VsZik6CiAgICAgICAgICMgcGF0aCB0byB0aGUgbGliIHJlc291cmNl
+IHJvb3QKICAgICAgICAgbGlicGF0aCA9IG9zLnBhdGgubm9ybXBhdGgoc2VsZi5fcmVzb3VyY2VQ
+YXRoKSAgIyBub3JtYWxpemUgIi4vLi4uIgpAQCAtMjM1LDcgKzE4Niw3IEBACiAgICAgICAgIGlm
+IG5vdCBvcy5wYXRoLmV4aXN0cyhwYXRoKToKICAgICAgICAgICAgIHJhaXNlIFZhbHVlRXJyb3Io
+IlRoZSBnaXZlbiByZXNvdXJjZSBwYXRoIGRvZXMgbm90IGV4aXN0OiAlcyIgJSBwYXRoKQogCi0g
+ICAgICAgIHNlbGYuX2NvbnNvbGUuZGVidWcoIlNjYW5uaW5nIHJlc291cmNlIGZvbGRlci4uLiIp
+CisgICAgICAgIHNlbGYuX2NvbnNvbGUuZGVidWcoIlNjYW5uaW5nIHJlc291cmNlIGZvbGRlciAl
+cy4uLiIgJSBwYXRoKQogCiAgICAgICAgIHBhdGggPSBvcy5wYXRoLmFic3BhdGgocGF0aCkKICAg
+ICAgICAgbGliX3ByZWZpeF9sZW4gPSBsZW4ocGF0aCkKQEAgLTI3MywxNyArMjI0LDIyIEBACiAg
+ICAgICAgIGlmIG5vdCBvcy5wYXRoLmV4aXN0cyhwYXRoKToKICAgICAgICAgICAgIHJhaXNlIFZh
+bHVlRXJyb3IoIlRoZSBnaXZlbiBjbGFzcyBwYXRoIGRvZXMgbm90IGV4aXN0OiAlcyIgJSBwYXRo
+KQogCi0gICAgICAgIHNlbGYuX2NvbnNvbGUuZGVidWcoIlNjYW5uaW5nIGNsYXNzIGZvbGRlci4u
+LiIpCisgICAgICAgIHN0YXJ0UGF0aCA9IHNlbGYubmFtZXNwYWNlLnJlcGxhY2UoIi4iLCBvcy5z
+ZXApCisgICAgICAgIHN0YXJ0UGF0aCA9IG9zLnBhdGguam9pbihwYXRoLCBzdGFydFBhdGgpCisg
+ICAgICAgIGlmIG5vdCBvcy5wYXRoLmV4aXN0cyhzdGFydFBhdGgpOgorICAgICAgICAgICAgcmFp
+c2UgVmFsdWVFcnJvcigiVGhlIGdpdmVuIG5hbWVzcGFjZSBwYXRoIGRvZXMgbm90IGV4aXN0OiAl
+cyIgJSBzdGFydFBhdGgpCisgICAgICAgIAorICAgICAgICBzZWxmLl9jb25zb2xlLmRlYnVnKCJT
+Y2FubmluZyBjbGFzcyBmb2xkZXIgJXMuLi4iICUgc3RhcnRQYXRoKQogCiAgICAgICAgIGNsYXNz
+TGlzdCA9IHt9CiAgICAgICAgIGRvY3MgPSB7fQogCiAgICAgICAgICMgSXRlcmF0ZS4uLgotICAg
+ICAgICBmb3Igcm9vdCwgZGlycywgZmlsZXMgaW4gZmlsZXRvb2wud2FsayhwYXRoKToKKyAgICAg
+ICAgZm9yIHJvb3QsIGRpcnMsIGZpbGVzIGluIGZpbGV0b29sLndhbGsoc3RhcnRQYXRoKToKICAg
+ICAgICAgICAgICMgRmlsdGVyIGlnbm9yZWQgZGlyZWN0b3JpZXMKLSAgICAgICAgICAgIGZvciBp
+Z25vcmVkRGlyIGluIGRpcnM6Ci0gICAgICAgICAgICAgICAgaWYgc2VsZi5faWdub3JlZERpcmVj
+dG9yaWVzLm1hdGNoKGlnbm9yZWREaXIpOgotICAgICAgICAgICAgICAgICAgICBkaXJzLnJlbW92
+ZShpZ25vcmVkRGlyKQorICAgICAgICAgICAgZm9yIGRpck5hbWUgaW4gZGlyczoKKyAgICAgICAg
+ICAgICAgICBpZiBzZWxmLl9pZ25vcmVkRGlyZWN0b3JpZXMubWF0Y2goZGlyTmFtZSk6CisgICAg
+ICAgICAgICAgICAgICAgIGRpcnMucmVtb3ZlKGRpck5hbWUpCiAKICAgICAgICAgICAgICMgQWRk
+IGdvb2QgZGlyZWN0b3JpZXMKICAgICAgICAgICAgIGN1cnJOYW1lU3BhY2UgPSByb290W2xlbihw
+YXRoK29zLnNlcCk6XQpAQCAtMzg5LDcgKzM0NSw3IEBACiAgICAgICAgIGlmIG5vdCBvcy5wYXRo
+LmV4aXN0cyhwYXRoKToKICAgICAgICAgICAgIHNlbGYuX2NvbnNvbGUud2FybigiVGhlIGdpdmVu
+IHBhdGggZG9lcyBub3QgY29udGFpbiBhIHRyYW5zbGF0aW9uIGZvbGRlcjogJXMiICUgcGF0aCkK
+IAotICAgICAgICBzZWxmLl9jb25zb2xlLmRlYnVnKCJTY2FubmluZyB0cmFuc2xhdGlvbiBmb2xk
+ZXIuLi4iKQorICAgICAgICBzZWxmLl9jb25zb2xlLmRlYnVnKCJTY2FubmluZyB0cmFuc2xhdGlv
+biBmb2xkZXIgJXMuLi4iICUgcGF0aCkKIAogICAgICAgICAjIEl0ZXJhdGUuLi4KICAgICAgICAg
+Zm9yIHJvb3QsIGRpcnMsIGZpbGVzIGluIGZpbGV0b29sLndhbGsocGF0aCk6Cg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

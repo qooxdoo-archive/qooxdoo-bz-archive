@@ -1,0 +1,191 @@
+<bug>
+          <bug_id>5186</bug_id>
+          
+          <creation_ts>2011-06-03 10:46:00 +0200</creation_ts>
+          <short_desc>Generator Compiling package &#39;Node&#39; object has no attribute &#39;items&#39;</short_desc>
+          <delta_ts>2014-03-03 15:21:26 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>1.4.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Steve Thomson">organicpanda</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>24840</commentid>
+            <who name="Steve Thomson">organicpanda</who>
+            <bug_when>2011-06-03 10:46:02 +0200</bug_when>
+            <thetext>Hi,
+
+Sorry if this is posted in the wrong place. I came across this bug when using &#39;generate.py build&#39;. The output is as follows:
+
+============================================================================
+    EXECUTING: BUILD::BUILD-SCRIPT
+============================================================================
+&gt;&gt;&gt; Initializing cache...
+&gt;&gt;&gt; Scanning libraries...
+&gt;&gt;&gt; Resolving dependencies
+  - ... snip ...
+  - Sorting 562 classes ... snip ....
+&gt;&gt;&gt; Generate build version...
+  - Processing translations for 2 locales
+    - Package 0:  10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+  - Generating packages...
+    - Compiling package #0: 10% 20% 30% 40% 50% 60%&#39;Node&#39; object has no attribute &#39;items&#39;
+
+As you can see it gets to 60% then bombs out. My colleague traced the error back to &#39;qooxdoo-1.4.1-sdk\tool\pylib\ecmascript\transform\optimizer\basecalloptimizer.py&#39; on line 70. Changing the code from:
+
+for methodName, methodNode in members.items():
+    patchCount += optimizeConstruct(methodNode, superClass, methodName, classDefNodes)
+
+to:
+
+if hasattr(members, &quot;items&quot;):
+    for methodName, methodNode in members.items():
+        patchCount += optimizeConstruct(methodNode, superClass, methodName, classDefNodes) 
+
+Fixes the problem but I&#39;m not sure if it is the best solution. I added a few debug &#39;print&#39; statements but couldn&#39;t really figure out what qooxdoo code this code is optimizing when it errors. It looks as if it is encountering an empty &#39;members&#39; object but I&#39;ve searched my code and I can&#39;t find any.
+
+Anyway this fixes our problem so I thought I would let you guys know about it.
+
+Steve</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24846</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-06-03 14:24:17 +0200</bug_when>
+            <thetext>Hi Steve,
+
+thanks for the good analysis and the patch. My impression is that you have a class that has a &quot;members&quot; key which doesn&#39;t have a *map* value. Maybe the value is a function, or a simple value or a list. Plese check that.
+
+In that case the error should be raised as soon as this class is parsed by the generator (not when it is compiled).
+
+Thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24849</commentid>
+            <who name="Steve Thomson">organicpanda</who>
+            <bug_when>2011-06-03 15:52:52 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Hi Steve,
+&gt; 
+&gt; thanks for the good analysis and the patch. My impression is that you have a
+&gt; class that has a &quot;members&quot; key which doesn&#39;t have a *map* value. Maybe the
+&gt; value is a function, or a simple value or a list. Plese check that.
+&gt; 
+&gt; In that case the error should be raised as soon as this class is parsed by the
+&gt; generator (not when it is compiled).
+&gt; 
+&gt; Thanks.
+
+I&#39;ve had a look through all my classes and I can&#39;t see any &#39;members&#39; that are incorrect. The problem is that we have a lot of classes to check (~150) so without a better error message from the generator I wouldn&#39;t know where to look in more detail.
+
+Thanks for your help!
+Steve</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24949</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-06-07 09:56:53 +0200</bug_when>
+            <thetext>The patch in the bug description just skips an invalid &quot;members&quot; section of a 
+class during basecall optimization. Which is not a big issue, you&#39;re just 
+missing out on a few permille of performance. Much more serious is the effect 
+of the faulty members section on the class definition, where it might affect 
+the execution of qx.Class.define at run time, or even might shadow a proper 
+members section, if it is a second entry of that name further down the class 
+map. In both cases, the semantics of the class could be adversely affected. 
+Hence I wouldn&#39;t recommend the patch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24959</commentid>
+            <who name="Steve Thomson">organicpanda</who>
+            <bug_when>2011-06-07 11:03:22 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; The patch in the bug description just skips an invalid &quot;members&quot; section of a 
+&gt; class during basecall optimization. Which is not a big issue, you&#39;re just 
+&gt; missing out on a few permille of performance. Much more serious is the effect 
+&gt; of the faulty members section on the class definition, where it might affect 
+&gt; the execution of qx.Class.define at run time, or even might shadow a proper 
+&gt; members section, if it is a second entry of that name further down the class 
+&gt; map. In both cases, the semantics of the class could be adversely affected. 
+&gt; Hence I wouldn&#39;t recommend the patch.
+
+Hi Thomas,
+
+I wasn&#39;t suggesting that you apply my &#39;patch&#39; to the QooxDoo source. I was just trying to demonstrate what was happening. I agree that my code is probably faulty but the problem is that instead of telling me where the error is the generator just dies. This leaves me with no idea where to look for the error! It would be more user friendly if the generator caught this error and gave me a message to let me know where the problem is.
+
+Sorry for the confusion,
+Steve</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24964</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-06-07 13:16:29 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; (In reply to comment #3)
+&gt; Hi Thomas,
+&gt; 
+&gt; I wasn&#39;t suggesting that you apply my &#39;patch&#39; to the QooxDoo source. I was just
+&gt; trying to demonstrate what was happening. 
+
+That&#39;s fine.
+
+&gt; I agree that my code is probably
+&gt; faulty but the problem is that instead of telling me where the error is the
+&gt; generator just dies. This leaves me with no idea where to look for the error!
+&gt; It would be more user friendly if the generator caught this error and gave me a
+&gt; message to let me know where the problem is.
+
+Definitely, and I ment no offense. I just wanted to capture my considerations in the bug, esp. since a similar problem popped up on our mailing list. So it was meant both as a hint to you (that you might rather look for the offending class definition - searching 150 classes is no big deal in my world, with proper tooling), as well as informing other people looking at this bug, and even for the person that eventually fixes it.
+
+My current impression is that this issue has to be fixed in the parser, but that might require a few preparatory steps, so I don&#39;t see a quick fix. Hence my comment.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27714</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-30 16:16:00 +0100</bug_when>
+            <thetext>I&#39;ve guarded the code in basecalloptimizer to make sure &#39;members&#39; is actually a 
+map, and put try/except in the calling code, to issue the proper class name on 
+exceptions.
+
+Fixed in master and branch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37287</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:26 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

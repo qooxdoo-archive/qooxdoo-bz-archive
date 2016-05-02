@@ -1,0 +1,95 @@
+<bug>
+          <bug_id>8777</bug_id>
+          
+          <creation_ts>2014-12-08 14:59:00 +0100</creation_ts>
+          <short_desc>Rpc.refreshSession  if statement always false</short_desc>
+          <delta_ts>2014-12-12 08:00:22 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io.remote</component>
+          <version>4.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>NEW</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Ralph Schaer">ralphschaer</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>41863</commentid>
+            <who name="Ralph Schaer">ralphschaer</who>
+            <bug_when>2014-12-08 14:59:06 +0100</bug_when>
+            <thetext>The function refreshSession in the qx.io.remote.Rpc object contains the following if statement
+
+      if (qx.core.ServerSettings &amp;&amp;
+          qx.core.ServerSettings.serverPathSuffix)
+
+The problem is that in my case serverPathSuffix contains the empty string &#39;&#39; and this test is always false
+
+Shouldn&#39;t this if statement test the property serverPathPrefix?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41869</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-12-09 08:18:29 +0100</bug_when>
+            <thetext>I just checked the code and looks like as qx.core.ServerSettings is kind of an odd way of setting options for the RPC calls. But in the end, I have no idea why the refreshSession method needs to have a serverPathSuffix set as it is never used within the code. Maybe you can help me out with that?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41916</commentid>
+            <who name="Ralph Schaer">ralphschaer</who>
+            <bug_when>2014-12-12 04:25:20 +0100</bug_when>
+            <thetext>I think it is correct that the refreshSession function checks if a server connection is configured, because it tries to send a message to the server.
+
+But I have no idea why it checks for the serverPathSuffix variable. IMHO it would make more sense if it checks for the serverPathPrefix variable.
+
+Both variables are used in the makeServerURL function
+
+retVal =
+          qx.core.ServerSettings.serverPathPrefix +
+          &quot;/.qxrpc&quot; +
+          qx.core.ServerSettings.serverPathSuffix;
+
+I have no idea what the use case for the serverPathSuffix is. In my case I simply set it to the empty string &#39;&#39; so that the application does not throw an error. serverPathPrefix  contains the base url (e.g. &#39;http://myserver:8080&#39;). Not sure if serverPathPrefix can ever be empty. 
+
+Maybe it does not matter which variable refreshSession checks, but it should not skip the server call if the variable is set to the empty string. 
+
+This proposed change only checks if serverPathSuffix is not undefined and not null
+
+      if (qx.core.ServerSettings &amp;&amp;
+          qx.core.ServerSettings.serverPathSuffix != null)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41917</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-12-12 08:00:22 +0100</bug_when>
+            <thetext>Agree with that.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

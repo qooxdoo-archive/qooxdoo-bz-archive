@@ -1,0 +1,185 @@
+<bug>
+          <bug_id>7035</bug_id>
+          
+          <creation_ts>2012-11-23 17:24:00 +0100</creation_ts>
+          <short_desc>Add possibility to rename an application namespace</short_desc>
+          <delta_ts>2014-05-26 12:34:34 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          <votes>1</votes>
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Richard Sternagel">richard.sternagel</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>31444</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2012-11-23 17:24:48 +0100</bug_when>
+            <thetext>When starting things you are often choosing an app name (&quot;create-application.py -n {appName}&quot;) which doesn&#39;t fit later on. Renaming your app manually is a bit of a hassle.
+
+What has to be changed:
+=======================
+
+1)
+Config:
+- config.json (edit)
+   - name
+   - let &gt; APPLICATION
+   - let &gt; QXTHEME
+- Manifest.json (edit)
+   - info &gt; name
+   - provides &gt; namespace
+
+2)
+Code JS: (edit)
+- source/class/{oldAppName}/
+- source/class/{oldAppName}/theme/
+- source/class/{oldAppName}/test/
+- source/class/{oldAppName}/simulation/
+
+Examples:
+- *.js
+  - &quot;#asset({oldAppName}/*)&quot;
+  - &#39;qx.Class.define(&quot;{oldAppName}.XXX&quot;&#39;
+  - &quot;new {oldAppName}.XXX()&quot;
+  - ?
+
+- Theme.js
+  - color : {oldAppName}.theme.Color,
+  - decoration : {oldAppName}.theme.Decoration,
+  - font : {oldAppName}.theme.Font,
+  - appearance : {oldAppName}.theme.Appearance
+
+Code HTML: (edit)
+  - source/index.html
+  - source/class/{oldAppName}/__init__.js
+
+3)
+Paths: (mv)
+  - source/class/{oldAppName} (mv source/class/{newAppName})
+  - source/resource/{oldAppName} (mv source/resource/{newAppName})
+
+4)
+./generate distclean
+
+5) 
+./generate source
+
+
+CLI API:
+========
+
+./generate.py rename {newAppName} ?
+(Should ask for confirmation: &quot;Are you sure...?&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31446</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2012-11-23 18:11:39 +0100</bug_when>
+            <thetext>Additional note to 3):
+
+&gt; Paths: (mv)
+&gt;   - source/class/{oldAppName} (mv source/class/{newAppName})
+&gt;   - source/resource/{oldAppName} (mv source/resource/{newAppName})
+
+If {appName} contains dots (&quot;.&quot;), they will be translated to directories during creation. So &quot;create-application.py (-s|-n) my.great.appname&quot; results in &quot;source/class/my/great/appname&quot;. Normally qooxdoo doesn&#39;t create files in those dirs (only in the last), however the user may do so. If that&#39;s the case, then only top level files (&quot;source/class/my&quot;) can safely be moved (to the new top level dir). The remaining files have to be moved manually by the user (e.g. files residing in source/class/my/great). The Generator should then print out a message, pointing that out.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31669</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2012-12-07 09:48:31 +0100</bug_when>
+            <thetext>Renaming an existing app is tedious, agreed. But I wouldn&#39;t want to put effort &quot;just&quot; into a local replace/renaming. 
+
+If we go for that task, lets see how that could be extended to also cover migration aspects (which also require manual work, but happen more often than renamings): i.e. not only move an app within a qooxdoo version, but optionally also to a newer version.
+
+Idea: create a skeleton for the same/newer qooxdoo version with the new app name, then copy over the old data to the new app structure. In doing so one could also instrument migration changes between config files (e.g. if they cannot be resolved, print deprecation warnings).
+
+Thomas might also have ideas, as I recall that instrumentation of migration changes (besides manipulating JS code) is a topic (but don&#39;t know the corresponding bugs). That would be a real benefit when migrating (even if it cannot be made fully automatic in some cases).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31670</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-12-07 10:45:22 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; Renaming an existing app is tedious, agreed. But I wouldn&#39;t want to put effort
+&gt; &quot;just&quot; into a local replace/renaming. 
+&gt; 
+&gt; If we go for that task, lets see how that could be extended to also cover
+&gt; migration aspects (which also require manual work, but happen more often than
+&gt; renamings): i.e. not only move an app within a qooxdoo version, but optionally
+&gt; also to a newer version.
+
+I don&#39;t see a benefit in mixing these two actions. Renaming and migrating are two distinct actions, and are also orthogonal, so you should be able to perform them independently. Renaming libraries might not be a frequent action, but will be valuable especially for people maintaining multiple libraries where you might want to rename to resolve namespace conflicts.
+
+Just think of splitting a library into two: You could just duplicate the directory tree, and in the copy run the rename job. Then you just have to delete corresponding classes in either of them to get back to a conflict-free state.
+
+&gt; Idea: create a skeleton for the same/newer qooxdoo version with the new app
+&gt; name, then copy over the old data to the new app structure. In doing so one
+&gt; could also instrument migration changes between config files (e.g. if they
+&gt; cannot be resolved, print deprecation warnings).
+
+I like the idea of a fresh target directory structure instead of changing things in place, both for renaming and migration. The user could then switch back and forth between his old application and the new, checking and adapting things if necessary. On the other hand, given the ubiquity of version control systems like git this might be irrelevant. Maybe as an option.
+
+&gt; Thomas might also have ideas, as I recall that instrumentation of migration
+&gt; changes (besides manipulating JS code) is a topic (but don&#39;t know the
+&gt; corresponding bugs). That would be a real benefit when migrating (even if it
+&gt; cannot be made fully automatic in some cases).
+
+I&#39;m not sure I understand what you mean by &quot;instrumentation of migration changes&quot;. If you mean checking the current config and change it / report potential issues during migration, then yes, this would be a plus. But as you said there are separate bugs for this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32731</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-05-13 16:37:31 +0200</bug_when>
+            <thetext>When renaming the namespace of an app the actions fall in one of two categories: 
+
+- renaming files and directories
+- changing name references in code
+
+Project files to change are the Manifest.json and config.json. 
+
+Further modifications have to be made to the source tree, particularly beneath source/class and source/resource. Directories under these paths reflect the application namespace and have to be changed, but mind to only change that many subdirectories as the Manifest.json gives as the namespace. (This is esp. crucial for complex namespaces like &quot;foo.bar.baz&quot;).
+
+After that you have to change source files in the source/class tree, looking for appearances of the old namespace. This affects #asset hints, the first parameter to a qx.*.define call, and &#39;new&#39; operands (A global search-and-replace on the *.js files might get us close enough).
+
+I suggest to always assume that in a complex namespace there are no files on intervening levels. This would be against the qooxdoo programming model (although it might work).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40403</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-05-26 12:34:34 +0200</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

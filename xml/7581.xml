@@ -1,0 +1,149 @@
+<bug>
+          <bug_id>7581</bug_id>
+          
+          <creation_ts>2013-07-22 08:29:00 +0200</creation_ts>
+          <short_desc>Unable to move window further outside desktop to the right (or bottom) on IE10 and IE9</short_desc>
+          <delta_ts>2014-03-03 15:25:28 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>3.0.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Dietrich Streifert">dietrich.streifert</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          <cf_browser_version>9 and 10</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>33440</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2013-07-22 08:29:03 +0200</bug_when>
+            <thetext>When trying to moving a window which is allready partially outside the desktop even more outside, the window jumps back to full visibilty.
+
+To reproduce open eg. the widget browser and there the window tab:
+
+   http://demo.qooxdoo.org/devel/widgetbrowser/index.html
+
+1. Move the window titled &quot;Second Window&quot; half size outside the desktop to the right edge.
+
+2. Grab the window again and try to move it further outside the desktop in the same direction.
+
+Now the window &quot;jumps back&quot; to full visibility near the edge you moved it out. The desktop in total jumps quickly left-right (or up-down). The widgets &quot;flicker&quot;.
+
+Reproducable on IE9 on Windows Vista x64 and IE10 on Windows 7 x64.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33441</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2013-07-22 08:32:43 +0200</bug_when>
+            <thetext>The bug does not show up on IE8 Windows XPSP3 x32</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33550</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2013-08-05 16:17:11 +0200</bug_when>
+            <thetext>This is caused by the focus() call in qx.event.handler.Focus.__onNativeMouseDown (line 796): It causes IE &gt; 8 to scroll the desktop&#39;s content element so that the window is completely visible, which messes up the coordinate calculation in MMovable. We&#39;ve seen this before with input elements but newer IEs apparently apply it to divs as well.
+
+I couldn&#39;t find any way to disable this behavior. Two possible workarounds are:
+
+1) store the scrollLeft/Top values of the focused element&#39;s parent node before calling focus and re-apply them immediately afterwards.
+
+2) wrap the focus call in setTimeout(..., 0) so that MMovable&#39;s calculations aren&#39;t affected by it.
+
+Both work in that the window can now be moved normally even when partially outside of its parent, but there&#39;s a brief ugly flicker right after the mouse button is pressed.
+
+Martin, any better ideas?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33579</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2013-08-07 11:30:42 +0200</bug_when>
+            <thetext>Seems that ExtJS has the same issue when moving the window to the bottom
+
+http://docs.sencha.com/extjs/4.2.1/extjs-build/examples/desktop/desktop.html
+
+For horizontal moves: they simply don&#39;t allow moving outside desktop bounds.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33808</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2013-09-02 13:51:17 +0200</bug_when>
+            <thetext>IE&#39;s native &quot;scroll into view&quot; on focus can be prevented by removing the tabindex attribute from the DOM element. This fixes the problem, but the downside is that qx.ui.core.FocusHandler.isFocused will now return false for any ui.window.Window. We don&#39;t use this method in the framework but there might be application code out there that does. Dietrich, if you have an application using (multiple) windows, could you please check for any unwanted side effects in IE?
+
+(Tentatively) fixed with
+49a0b5859bcb844332f491e29f3fe5809ed5e26a (master)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33849</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2013-09-09 08:40:16 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; IE&#39;s native &quot;scroll into view&quot; on focus can be prevented by removing the
+&gt; tabindex attribute from the DOM element. This fixes the problem, but the
+&gt; downside is that qx.ui.core.FocusHandler.isFocused will now return false for
+&gt; any ui.window.Window. We don&#39;t use this method in the framework but there might
+&gt; be application code out there that does. Dietrich, if you have an application
+&gt; using (multiple) windows, could you please check for any unwanted side effects
+&gt; in IE?
+&gt; 
+&gt; (Tentatively) fixed with
+&gt; 49a0b5859bcb844332f491e29f3fe5809ed5e26a (master)
+
+I apologize for the late answer. I&#39;ve been in vacation. I&#39;ll check asap and report back.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33868</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2013-09-10 13:40:12 +0200</bug_when>
+            <thetext>I&#39;ve tested this with my app with modal window stacks (modal window on top of modal window) as well as multiple non modal windows on IE9 (Windows Vista), IE10 (Windows 7), Chrome 30 (Windows Vista) and Firefox 23 (Windows Vista) without finding any problems so far.
+
+For some windows I&#39;m using my own focus handler (copied over and modified qx.ui.core.FocusHandler). This also does not seem to cause any problems.
+
+So from my point of view I&#39;d say this bug is fixed.
+
+Thank you Daniel.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33869</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2013-09-10 13:53:28 +0200</bug_when>
+            <thetext>Perfect timing, we&#39;re just preparing for a 3.0.1 patch release :)
+
+Applied the fix to branch_3_0_x with 209735f7ffd69323631ee3e48480dab7524ad9bb</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38760</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:28 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

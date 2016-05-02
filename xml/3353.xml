@@ -1,0 +1,216 @@
+<bug>
+          <bug_id>3353</bug_id>
+          
+          <creation_ts>2010-01-21 11:00:00 +0100</creation_ts>
+          <short_desc>qx.event.type.Mouse getButton() wrongly returns &#39;left&#39; in some cases</short_desc>
+          <delta_ts>2010-10-13 07:54:10 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.2.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Benoît Collignon">b.collignon</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>alexander.steitz</cc>
+    
+    <cc>matthias.braun</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>16318</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2010-01-21 11:00:24 +0100</bug_when>
+            <thetext>Hello QX Team,
+
+This bug comes from a post I submitted two weeks ago on nabble : http://n2.nabble.com/question-about-mouse-click-events-td4281023.html . 
+
+I guess it would better to post it using the bug report tool.
+
+I was wondering why the getButton() method always returns &#39;left&#39; on &#39;click&#39; events. Indeed, a click doesn&#39;t always mean (in my opinion) that the pressed button is 	inevitably the left one.
+
+The current code of getButton() is:
+
+switch(this._type)
+{
+        case &quot;click&quot;:
+        case &quot;dblclick&quot;:
+          return &quot;left&quot;;
+
+        case &quot;contextmenu&quot;:
+          return &quot;right&quot;;
+
+        default:
+          return this.__buttons[this._native.button] || &quot;none&quot;;
+}
+
+Unless it is intentional for some reasons, maybe would it be better if it was:
+
+switch(this._type)
+{
+        case &quot;contextmenu&quot;:
+          return &quot;right&quot;;
+
+        default:
+          return this.__buttons[this._native.button] || &quot;none&quot;;
+      }
+}
+
+Am I right or completely mistaken ?
+
+Best,
+
+Benoît.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16336</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-22 09:17:26 +0100</bug_when>
+            <thetext>Fabian, is the current behavior by intention? Are there really cases that a (dbl)click isn&#39;t triggered by a left mouse button?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16596</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2010-01-29 16:16:44 +0100</bug_when>
+            <thetext>Hi again,
+
+I was also wondering how the qx.core.Variant exactly interprets the &quot;mshtml&quot; string because it seems that IE8 uses the native button numbers in the &quot;standard&quot; way from now.
+
+So the following code might not be anymore correct :
+
+__buttons : qx.core.Variant.select(&quot;qx.client&quot;,
+    {
+      &quot;mshtml&quot; :
+      {
+        1 : &quot;left&quot;,
+        2 : &quot;right&quot;,
+        4 : &quot;middle&quot;
+      },
+
+      &quot;default&quot; :
+      {
+        0 : &quot;left&quot;,
+        2 : &quot;right&quot;,
+        1 : &quot;middle&quot;
+      }
+    })
+
+Best,
+
+Benoît
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16597</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2010-01-29 16:48:40 +0100</bug_when>
+            <thetext>I suggest the following code:
+
+__buttons : qx.core.Variant.select(&quot;qx.client&quot;,
+{
+	&quot;mshtml&quot; : function() 
+	{
+		// make the difference between IE8+ only in standard mode and the other available cases
+		if (qx.bom.client.Browser.VERSION&lt;8 &amp;&amp; document.documentMode&lt;8) return {
+		1 : &quot;left&quot;,
+		2 : &quot;right&quot;,
+		4 : &quot;middle&quot;
+		};
+		else return {
+		0 : &quot;left&quot;,
+		2 : &quot;right&quot;,
+		1 : &quot;middle&quot;
+		};
+	}(),
+	&quot;default&quot; :
+	{
+		0 : &quot;left&quot;,
+		2 : &quot;right&quot;,
+		1 : &quot;middle&quot;
+	}
+})
+
+Regards,
+
+Benoît.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16598</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2010-01-29 16:58:21 +0100</bug_when>
+            <thetext>Ok, forgot about that... It seems I didn&#39;t read my code correctly. IE8 behaves as the previous versions...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17331</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-17 13:50:53 +0100</bug_when>
+            <thetext>to Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19919</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-08-19 14:51:54 +0200</bug_when>
+            <thetext>I finally have kind of a solution with which I can go.
+
+Here is the table whats working.
+
+&lt;- = left mouse button
+-&gt; = right mouse button
+^  = middle mouse button
+
+Browser | click, dblclick | contextmenu
+---------------------------------------
+Firefox | &lt;- ^ -&gt;         | -&gt;
+Chrome  | &lt;- ^            | -&gt;
+Safari  | &lt;- ^            | -&gt;
+IE      | &lt;- (^ is &lt;-)    | -&gt;
+Opera   | &lt;-              | -&gt; (twice)
+
+
+This still is not perfect but ok for the click event. If you want to have
+better mouse button detection, use the mouseup or mousedown event.
+
+trunk: r23107
+1.2.x: r23108</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19921</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-08-19 14:54:38 +0200</bug_when>
+            <thetext>*** Bug 3690 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20597</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-13 07:54:10 +0200</bug_when>
+            <thetext>mass retargeting to 1.2.2 due to intermediate 1.2.1 release</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

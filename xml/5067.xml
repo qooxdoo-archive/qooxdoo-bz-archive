@@ -1,0 +1,187 @@
+<bug>
+          <bug_id>5067</bug_id>
+          
+          <creation_ts>2011-04-30 03:06:00 +0200</creation_ts>
+          <short_desc>qx.bom.Event add/remove listener is missing some Chrome capability</short_desc>
+          <delta_ts>2011-06-28 17:12:56 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.4.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>24260</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-04-30 03:06:42 +0200</bug_when>
+            <thetext>qx.bom.Event.addNativeListener() tries to find an appropriate way to add a listener to an object, based on members of the object. I discovered that in some cases, it fails to find a way to add (and remove) listeners on Chrome.
+
+In my case, the object being passed is a FileReader object, as provided by qx.bom.FileReader. With Firefox, one of the existing means of adding a native listener worked fine. In Chrome, neither of the existing means works. What is needed is an additional method of adding/removing listeners, based on member names beginning with &quot;on&quot;. 
+
+See the attached patch, that fixes the problem. I&#39;m not committing this directly, as I&#39;d like another set of eyes on it first. I instead could do engine-specific testing in qx.bom.FileReader, but I suspect that won&#39;t be the only native object that requires this alternate means of adding and removing listeners, as we start getting more and more into HTML5 objects.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24261</commentid>
+              <attachid>975</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-04-30 03:08:51 +0200</bug_when>
+            <thetext>Created attachment 975
+Patch to solve the problem</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24262</commentid>
+              <attachid>976</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-04-30 15:43:57 +0200</bug_when>
+            <thetext>Created attachment 976
+A more aggressive patch
+
+This is a more aggressive patch to solve the problem that also could save some poor framework developer a bunch of time in the future. The precondition here is that whenever addNativeListener() is called, it is, actually, expected to do its job, and not simply ignore the request if none of the means to add the listener are available on the specified target object.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24291</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-05-02 13:19:35 +0200</bug_when>
+            <thetext>Thanks for the report and patch, Derrell. Chris, please have a look at that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24292</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-05-02 13:21:06 +0200</bug_when>
+            <thetext>I just took a look at the patch and I&#39;m not sure we should change the way it is handled if no listener could be added. We need to check that this should only happen in cases where we know we can throw an error and don&#39;t break some appications. Maybe a warning would be enough...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24294</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-05-02 14:21:07 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; I just took a look at the patch and I&#39;m not sure we should change the way it is
+&gt; handled if no listener could be added. We need to check that this should only
+&gt; happen in cases where we know we can throw an error and don&#39;t break some
+&gt; appications. Maybe a warning would be enough...
+
+Yes, as mentioned, that second patch with throwing an error was quite aggressive. I think a warning would be very adequate to serve the purpose of letteg the developer know that his request to add a listener was ignored, and is better than my first patch.
+
+It does beg the question, though... When would it be reasonable to simply ignore the request to add a native listener? Is that ever an appropriate response?
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24295</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-05-02 14:27:15 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; It does beg the question, though... When would it be reasonable to simply
+&gt; ignore the request to add a native listener? Is that ever an appropriate
+&gt; response?
+
+Well, no matter if its reasonable or not to have such a behavior, we currently have it and if some appication developer out there is relying on that behavior, we should not break it, even if its sad becasue we don&#39;t have the fredom to change such things. :(
+
+But maybe we could add a deprecation warning and after the next release throw an error. We will see as soon as we take care of that issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25154</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-06-17 16:55:00 +0200</bug_when>
+            <thetext>Added DOM 0 event handling as fall back and a warning is logged when no handler could added/removed.
+
+Done on trunk with r27717 and branch with r27718.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>975</attachid>
+            <date>2011-04-30 03:08:00 +0200</date>
+            <delta_ts>2011-04-30 03:08:51 +0200</delta_ts>
+            <desc>Patch to solve the problem</desc>
+            <filename>x.diff</filename>
+            <type>text/plain</type>
+            <size>811</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3RydW5rL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9ib20v
+RXZlbnQuanMgYi90cnVuay9xb294ZG9vL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvYm9tL0V2
+ZW50LmpzCmluZGV4IDA0MWJjNGMuLjZkYmU2ZTggMTAwNjQ0Ci0tLSBhL3RydW5rL3Fvb3hkb28v
+ZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9ib20vRXZlbnQuanMKKysrIGIvdHJ1bmsvcW9veGRv
+by9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2JvbS9FdmVudC5qcwpAQCAtODcsNiArODcsOCBA
+QCBxeC5DbGFzcy5kZWZpbmUoInF4LmJvbS5FdmVudCIsCiAgICAgICAgIHRhcmdldC5hZGRFdmVu
+dExpc3RlbmVyKHR5cGUsIGxpc3RlbmVyLCAhIXVzZUNhcHR1cmUpOwogICAgICAgfSBlbHNlIGlm
+ICh0YXJnZXQuYXR0YWNoRXZlbnQpIHsKICAgICAgICAgdGFyZ2V0LmF0dGFjaEV2ZW50KCJvbiIg
+KyB0eXBlLCBsaXN0ZW5lcik7CisgICAgICB9IGVsc2UgaWYgKHR5cGVvZiB0YXJnZXRbIm9uIiAr
+IHR5cGVdICE9ICJ1bmRlZmluZWQiKSB7CisgICAgICAgIHRhcmdldFsib24iICsgdHlwZV0gPSBs
+aXN0ZW5lcjsKICAgICAgIH0KICAgICB9LAogCkBAIC0xMjEsNiArMTIzLDEwIEBAIHF4LkNsYXNz
+LmRlZmluZSgicXguYm9tLkV2ZW50IiwKICAgICAgICAgICB9OwogICAgICAgICB9CiAgICAgICB9
+CisgICAgICBlbHNlIGlmICh0eXBlb2YgdGFyZ2V0WyJvbiIgKyB0eXBlXSAhPSAidW5kZWZpbmVk
+IikKKyAgICAgIHsKKyAgICAgICAgdGFyZ2V0WyJvbiIgKyB0eXBlXSA9IG51bGw7CisgICAgICB9
+CiAgICAgfSwKIAogCg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>976</attachid>
+            <date>2011-04-30 15:43:00 +0200</date>
+            <delta_ts>2011-04-30 15:43:57 +0200</delta_ts>
+            <desc>A more aggressive patch</desc>
+            <filename>x.patch</filename>
+            <type>text/plain</type>
+            <size>1078</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3RydW5rL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9ib20v
+RXZlbnQuanMgYi90cnVuay9xb294ZG9vL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvYm9tL0V2
+ZW50LmpzCmluZGV4IDA0MWJjNGMuLjQzZDUzZWQgMTAwNjQ0Ci0tLSBhL3RydW5rL3Fvb3hkb28v
+ZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9ib20vRXZlbnQuanMKKysrIGIvdHJ1bmsvcW9veGRv
+by9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2JvbS9FdmVudC5qcwpAQCAtODcsNiArODcsMTEg
+QEAgcXguQ2xhc3MuZGVmaW5lKCJxeC5ib20uRXZlbnQiLAogICAgICAgICB0YXJnZXQuYWRkRXZl
+bnRMaXN0ZW5lcih0eXBlLCBsaXN0ZW5lciwgISF1c2VDYXB0dXJlKTsKICAgICAgIH0gZWxzZSBp
+ZiAodGFyZ2V0LmF0dGFjaEV2ZW50KSB7CiAgICAgICAgIHRhcmdldC5hdHRhY2hFdmVudCgib24i
+ICsgdHlwZSwgbGlzdGVuZXIpOworICAgICAgfSBlbHNlIGlmICh0eXBlb2YgdGFyZ2V0WyJvbiIg
+KyB0eXBlXSAhPSAidW5kZWZpbmVkIikgeworICAgICAgICB0YXJnZXRbIm9uIiArIHR5cGVdID0g
+bGlzdGVuZXI7CisgICAgICB9IGVsc2UgeworICAgICAgICB0aHJvdyBuZXcgRXJyb3IoIk5vIG1l
+dGhvZCBhdmFpbGFibGUgdG8gYWRkIG5hdGl2ZSBsaXN0ZW5lciB0byAiICsgCisgICAgICAgICAg
+ICAgICAgICAgICAgICB0YXJnZXQpOwogICAgICAgfQogICAgIH0sCiAKQEAgLTEyMSw2ICsxMjYs
+MTQgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC5ib20uRXZlbnQiLAogICAgICAgICAgIH07CiAgICAg
+ICAgIH0KICAgICAgIH0KKyAgICAgIGVsc2UgaWYgKHR5cGVvZiB0YXJnZXRbIm9uIiArIHR5cGVd
+ICE9ICJ1bmRlZmluZWQiKQorICAgICAgeworICAgICAgICB0YXJnZXRbIm9uIiArIHR5cGVdID0g
+bnVsbDsKKyAgICAgIH0gZWxzZQorICAgICAgeworICAgICAgICB0aHJvdyBuZXcgRXJyb3IoIk5v
+IG1ldGhvZCBhdmFpbGFibGUgdG8gcmVtb3ZlIG5hdGl2ZSBsaXN0ZW5lciBmcm9tICIgKyAKKyAg
+ICAgICAgICAgICAgICAgICAgICAgIHRhcmdldCk7CisgICAgICB9CiAgICAgfSwKIAogCg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

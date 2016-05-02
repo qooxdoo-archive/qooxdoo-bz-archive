@@ -1,0 +1,144 @@
+<bug>
+          <bug_id>4073</bug_id>
+          
+          <creation_ts>2010-09-13 16:54:00 +0200</creation_ts>
+          <short_desc>Absolute resource URIs are broken with IE and HTTPS</short_desc>
+          <delta_ts>2014-03-03 15:21:39 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>1.2</version>
+          <rep_platform>IE</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.2.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="John Spackman">john.spackman</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20145</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2010-09-13 16:54:55 +0200</bug_when>
+            <thetext>If you have an absolute path in resource URIs listed in config.json and you use IE with SSL, the paths to resources are not seen as absolute — they are prefixed by the path to the index.html (this happens in build and source versions).
+
+For example, my config.json contains:
+
+  &quot;let&quot; :
+  {
+    &quot;QOOXDOO_PATH&quot; : &quot;/Users/John/dev/sparlm/Source/Portal2/Local/WebContent/public/qooxdoo-1.2&quot;,
+    &quot;QOOXDOO_URI&quot;  : &quot;/public/qooxdoo-1.2/framework&quot;
+  },
+
+  &quot;jobs&quot; :
+  {
+    &quot;libraries&quot; : 
+    {
+      &quot;library&quot;: 
+      [
+        {
+          &quot;manifest&quot; : &quot;${QOOXDOO_PATH}/framework/Manifest.json&quot;,
+          &quot;uri&quot; : &quot;${QOOXDOO_URI}&quot;
+        },
+[…snip…]
+
+My app is at https://xyz.co.uk/qa/profile/index.html, Qooxdoo is at https://xyz.co.uk/public/qooxdoo-1.2 and I&#39;m getting URL requests for:
+
+https://qa-dev.spar.co.uk/qa/profile/public/qooxdoo-1.2/framework/source/resource/qx/icon/Tango/22/places/folder-open.png
+
+I&#39;ve tracked this to qx.util.ResourceManager which tries to convert all URLs to absolute if the client is running IE and HTTPS, but it only sees a URL as absolute if it begins with &quot;//&quot; not just &quot;/&quot;, so a resource URL of /public/qooxdoo-1.2 (in my case) is seen as relative to the current page.
+
+The fix is to change line 205 from
+          if (resourceUri.match(/^\//\/) != null) {
+To:
+          if (resourceUri.match(/^\//) != null) {</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20154</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-09-14 08:39:22 +0200</bug_when>
+            <thetext>Daniel, please check if its only in trunk or also in the 1.2.x branch.
+
+Thanks for the report John.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20159</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-09-14 14:20:59 +0200</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20160</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-09-14 14:27:23 +0200</bug_when>
+            <thetext>1.2.x is affected as well.
+
+John, applying your suggested change gives me resource URIs like https:/resource_uri/resource_id which don&#39;t look like valid HTTP URIs to me (please correct me if I&#39;m wrong). I&#39;d rather introduce a separate check for resourceUris starting with a single slash and construct the prefix like this:
+
+statics.__urlPrefix[lib] = window.location.protocol + &quot;//&quot; + window.location.host;
+
+What do you think?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20179</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2010-09-15 10:32:08 +0200</bug_when>
+            <thetext>Hi Daniel,
+
+Yes of course, you&#39;re right - I&#39;ve just double checked our test server and I can see that the URLs will be wrong although it appears that IE normalises them correctly.
+
+Cheers
+John</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20182</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-09-15 11:45:39 +0200</bug_when>
+            <thetext>Fixed for trunk and branch 1_2_x in r23284. John, could you please check and set this issues&#39;s status to verified if everything looks good?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20186</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2010-09-15 12:21:08 +0200</bug_when>
+            <thetext>Copies &amp; pasted it into my 1.2 and deleted the cache before rebuild - works fine</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20676</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-13 07:54:19 +0200</bug_when>
+            <thetext>mass retargeting to 1.2.2 due to intermediate 1.2.1 release</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37372</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:39 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,163 @@
+<bug>
+          <bug_id>4487</bug_id>
+          
+          <creation_ts>2010-12-14 09:51:00 +0100</creation_ts>
+          <short_desc>Wrong target returned from __getTargetFromChain when targetPropertyChain begins with array notation</short_desc>
+          <delta_ts>2011-01-19 09:13:22 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.3.1</target_milestone>
+          
+          <blocked>4489</blocked>
+    
+    <blocked>4490</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tristan Koch">tristan.koch</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>christian.hagendorn</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21944</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2010-12-14 09:51:57 +0100</bug_when>
+            <thetext>To reproduce:
+
+Call __getTargetFromChain() with:
+- targetObject = [{}, {}], i.e. array of objects
+- targetPropertyChain = [0].checked
+
+In my case, this was triggered by the following ListDelegate:
+
+…
+
+bindGroupItem : function(controller, item, id) {
+  // item is a CheckBox widget
+  controller.bindPropertyReverse(&quot;checked&quot;, &quot;value&quot;, null, item, id);
+},
+
+group : function(model) {
+  return model.getGroup();
+  // --&gt; {…}
+}
+
+…
+
+Observed:
+
+property is set to empty string.
+
+qx.lang.String.firstUp(property)
+--&gt; TypeError: Cannot call method &#39;charAt&#39; of undefined
+
+target (which is returned) is set to targetObject.
+
+Expected:
+
+target should be set to targetObject[index], afaik.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21945</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2010-12-14 09:52:45 +0100</bug_when>
+            <thetext>A more condensed example:
+
+qx.Class.define(&quot;Klass&quot;, {
+  extend: qx.core.Object,
+  properties: {
+   property: {nullable: true, event: &quot;changeProperty&quot;} 
+  }
+})
+
+var obj = new Klass();
+var arr = new qx.data.Array([&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]);
+
+obj.bind(&quot;property&quot;, arr, &quot;[0]&quot;);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21946</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2010-12-14 09:58:44 +0100</bug_when>
+            <thetext>http://tinyurl.com/32avkqv</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21947</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2010-12-14 10:01:28 +0100</bug_when>
+            <thetext>Actually, the error in the condensed example is thrown in __setTargetValue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21984</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-12-15 13:32:23 +0100</bug_when>
+            <thetext>There was a simple check missing for direct array bindings as target.
+
+trunk: r24352
+1.3.x: r24353</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22042</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2010-12-20 13:36:47 +0100</bug_when>
+            <thetext>The last fix doesn&#39;t work when a array item is a Object:
+http://tinyurl.com/3xprzvv</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22342</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-01-18 14:36:43 +0100</bug_when>
+            <thetext>It was an issue with binding an array which is not stored in a property like &quot;[0].abc&quot; instead of &quot;prop[0].abc&quot;. Fixed that now:
+
+trunk: r24582
+1.3.x: r24583</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22346</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-01-18 15:39:13 +0100</bug_when>
+            <thetext>Martin, I get a script error when I run the example from comment #5.
+
+This is the script error:
+TypeError: target[&quot;set&quot; + qx.lang.String.firstUp(lastProperty)] is not a function</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22350</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-01-19 08:36:54 +0100</bug_when>
+            <thetext>Yes, because the sample is wrong. You are trying to bind a plain JavaScript object which can not work (contant of the data array).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22352</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-01-19 08:54:53 +0100</bug_when>
+            <thetext>Oops, you are right. I think I was blind. Now I can confirm the fix.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

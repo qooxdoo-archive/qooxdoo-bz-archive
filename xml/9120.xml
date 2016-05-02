@@ -1,0 +1,122 @@
+<bug>
+          <bug_id>9120</bug_id>
+          
+          <creation_ts>2015-05-06 13:37:00 +0200</creation_ts>
+          <short_desc>One element per widget</short_desc>
+          <delta_ts>2015-05-12 11:09:52 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>website.widgets</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>5.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martin Wittemann">martin.wittemann</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>43240</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-05-06 13:37:34 +0200</bug_when>
+            <thetext>Within the &#39;next&#39; framework, we used a similar approach to the widgets as we did with the website widgets. But one major difference is that the &#39;next&#39; widgets can only contain one DOM node which reduces complexity a lot. As this is the main use case anyway, we should take this concept and apply it to the website widgets as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43249</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-05-06 14:20:13 +0200</bug_when>
+            <thetext>Added a separate branch to test the implementation named &#39;1w&#39;. I change the implementation to return always the same collection of a widget when queried. Also removed the special event handling API for multiple dom element widget.
+
+1w: 0ff03b3d6a3afa04152a8d3394086588bae8bf16</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43259</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2015-05-06 16:23:36 +0200</bug_when>
+            <thetext>Found a problem with these changes: It&#39;s still possible to create a multi-widget collection by using a selector, e.g. q(&quot;*[data-qx-class]&quot;). This returns a new instance of whatever class is configured for the first element, which may not be the expected result.
+For example, the Website Widget Browser uses such a selector to call setEnabled on all widgets within each demo page. The calendar widget overrides setEnabled and uses a member variable (_shownValue) that is defined during the first initialization. Since the multi-widget collection is a different instance, this value is undefined and an exception is thrown.
+
+One workaround is to use forEachElementWrapped for any widget API method call on a multi-widget collection to make sure the original instance is used, but that&#39;s not very intuitive for framework users.
+
+Alternatively, we could add a check to qxWeb.$init and throw if there is more than one element in the arguments list and at least one of the elements has a data-qx-class attribute, but that would break ui.website.Widget.initWidgets.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43268</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2015-05-07 14:12:27 +0200</bug_when>
+            <thetext>Another issue: Since we store a reference to the widget instance on the DOM element, we can unintentionally modify the collection:
+
+q(&quot;#firstWidget&quot;); // length: 1
+q(&quot;#firstWidget&quot;).add(q(&quot;#secondWidget&quot;)); // length: 2
+q(&quot;#firstWidget&quot;); // length: 2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43279</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-05-12 11:06:13 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; Found a problem with these changes: It&#39;s still possible to create a
+&gt; multi-widget collection by using a selector, e.g. q(&quot;*[data-qx-class]&quot;). This
+&gt; returns a new instance of whatever class is configured for the first element,
+&gt; which may not be the expected result.
+&gt; For example, the Website Widget Browser uses such a selector to call setEnabled
+&gt; on all widgets within each demo page. The calendar widget overrides setEnabled
+&gt; and uses a member variable (_shownValue) that is defined during the first
+&gt; initialization. Since the multi-widget collection is a different instance, this
+&gt; value is undefined and an exception is thrown.
+
+I added a unit test testing exactly that use case. I decided to return a plain collection instead of a widget collection which makes it possible to work with the default collection API but not with the Widget API. I don&#39;t see any other option other than implementing all methods with a recursion like we already did with some methods in next. But thats a lot of effort and overhead for such an edge case.
+ 
+&gt; One workaround is to use forEachElementWrapped for any widget API method call
+&gt; on a multi-widget collection to make sure the original instance is used, but
+&gt; that&#39;s not very intuitive for framework users.
+
+I would still think thats the way to go at the moment.
+
+
+1w: 6239400d1c071ef36a4f2609d0aad34c405898a3</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43280</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-05-12 11:09:52 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; Another issue: Since we store a reference to the widget instance on the DOM
+&gt; element, we can unintentionally modify the collection:
+&gt; 
+&gt; q(&quot;#firstWidget&quot;); // length: 1
+&gt; q(&quot;#firstWidget&quot;).add(q(&quot;#secondWidget&quot;)); // length: 2
+&gt; q(&quot;#firstWidget&quot;); // length: 2
+
+This is an issue we have in next as well. We could override the method and throw in case of an widget. This would fix the add-problem but there are more methods like this which only make sense on a collection having more than one element like &#39;getLast&#39;, &#39;eq&#39;, &#39;contains&#39;, &#39;not&#39; ...
+So I guess that there will always be a set of method not making sense for a given content of the collection.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

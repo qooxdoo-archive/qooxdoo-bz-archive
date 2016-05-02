@@ -1,0 +1,80 @@
+<bug>
+          <bug_id>6528</bug_id>
+          
+          <creation_ts>2012-06-18 14:56:00 +0200</creation_ts>
+          <short_desc>Opera 12 shows a &quot;max. recursion depth&quot; error at startup</short_desc>
+          <delta_ts>2014-03-03 15:26:48 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>app.testrunner</component>
+          <version>master</version>
+          <rep_platform>Opera</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>2.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Alexander Steitz">alexander.steitz</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>Opera</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>29844</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2012-06-18 14:56:52 +0200</bug_when>
+            <thetext>At the very first start and run of the tests of the mobule skeleton Opera shows 
+a &quot;max. recursion depth&quot; warning. Reloading the tests or the whole application 
+does solve the issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31642</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2012-12-05 10:43:55 +0100</bug_when>
+            <thetext>This is a weird one. I can only reproduce it on my machine by loading the full suite of framework tests (build version). Smaller test suites or source tests don&#39;t cause the problem.
+
+Examining the stack trace of the &quot;Maximum recursion depth exceeded&quot; exception, I found some old code in qx.dev.unit.TestSuite where a try/catch block was added around the code that uses eval to create the test suite namespace. This was added by Johnny with commit c0d33ca2 and deactivated by Fabian with e10f7d5d. Re-enabling the try/catch seemed to fix the problem even though the catch body was never executed.
+
+Martin suggested that maybe Opera was using the wrong window&#39;s eval (this code runs in the AUT iframe), and even though eval === window.eval returns true at that point in the execution, using window.eval() fixed the problem. Interestingly enough, just adding a line &quot;window.eval;&quot; before the actual eval call also fixed it, so we speculated that Opera somehow stored a &#39;broken&#39; eval in its scope object unless forced to look it up on the window object.
+
+Except then I re-enabled the build version optimizations which I had turned off for debugging, and the problem returned.
+
+Further debugging led me to the TestRunner&#39;s assertion wrapping feature which uses new Function(body). Disabling this feature for Opera seems to fix the problem permanently.
+
+In conclusion: Opera seems to have some kind of weird problem when evaluating strings that only emerges while the engine is under heavy load.
+
+Hopefully fixed with
+e08ad598a5d8ba2614e74f3d3f18a79f5968a955 (master)
+473bf832fab68637e8ef299351a98acf72f80ef7 (branch_2_1_x)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39235</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:48 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

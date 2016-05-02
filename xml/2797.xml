@@ -1,0 +1,206 @@
+<bug>
+          <bug_id>2797</bug_id>
+          
+          <creation_ts>2009-09-14 19:03:00 +0200</creation_ts>
+          <short_desc>RFC: Allow &quot;Raw Packages&quot; to nail down dedicated packages and their contents</short_desc>
+          <delta_ts>2014-03-03 08:46:18 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>0.8.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          <cc>alexander.steitz</cc>
+    
+    <cc>fabian.jakobs</cc>
+    
+    <cc>mshillinger</cc>
+    
+    <cc>qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>12270</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-09-14 19:03:36 +0200</bug_when>
+            <thetext>Here is a draft outline of what I have tentatively named &quot;raw packages&quot;. (In 
+bug#2067 the term &quot;module&quot; was used, to go slightly into the same direction). 
+The basic idea is, as an alternative to parts, to allow the user to explicitly 
+specify any number of packages with their exact contents. This base technique 
+would allow to support a number of use cases like custom libraries, foreign 
+code integration, hybrid source versions and &quot;freeze-thaw&quot;-style developing of 
+selected classes (cf. bug#2587), to name a few.
+
+Highlights:
+- more control over resulting code .js packages
+- dependency analysis is done, directed by &quot;include&quot; and &quot;exclude&quot; keys
+- define low-level libraries
+- each package is defined independenly, assure non-overlapping classes is up to 
+the user
+  (but additional tool should provide possibility to check that)
+- integrate non-qooxdoo JS code (and apply compressor)
+- define source/compressed/optimized *per package*
+- support for library-specific optimize settings ?!
+- support for hybrid source/build apps             [bug#2008]
+- support for partial source packages, e.g.:       [bug#2587]
+    &quot;let&quot; : { &quot;CLASSES_IN_WORK&quot; : [ &quot;custom.ClassA&quot;, &quot;custom.ClassB&quot; ] }
+    &quot;classes-in-work&quot; : {
+      &quot;include&quot; : &quot;${CLASSES_IN_WORK}&quot; }
+    &quot;classes-stable&quot; : {
+      &quot;include&quot; : [ &quot;custom.*&quot; ],
+      &quot;exclude&quot; : &quot;${CLASSES_IN_WORK}&quot; }
+    &quot;framework&quot; : {
+      &quot;include&quot; : [ &quot;qx.*&quot; ],
+      &quot;exclude&quot; : [ &quot;qx.test.*&quot;, &quot;qx.legacy.*&quot; ] }  // amounts to a framework 
+source-all package
+- classical &#39;source&#39; would be just a corner case of this (?):
+  - one file per package (? sounds weird)
+  - all in &quot;compile-mode: source&quot;
+- classical &#39;build&#39; would be just a corner case of this:
+  - packages auto-defined by part definition (no part definition is again just 
+a corner case of this one)
+  - all in &quot;compile-mode: ${OPTIMIZE}&quot;
+
+
+Possible config entry:
+
+        // raw-packages:
+        // - this takes precedence over a &quot;parts&quot; key!
+        // - this will ignore global &quot;include&quot; and &quot;exclude&quot; keys!
+        &quot;raw-packages&quot; :
+        {
+          &quot;framework.js&quot; :            // actual file name of output file
+          {
+            &quot;include&quot;  : [ &quot;qx.*&quot; ]   // could include files and file globs!
+            ,&quot;exclude&quot; : [ &quot;qx.legacy.*&quot;, &quot;qx.test.*&quot; ]   // could include 
+files and file globs!?
+            ,&quot;compile-mode&quot; :         // defines in which mode this package 
+should be
+            {
+              &quot;type&quot;   : &quot;source&quot;     // or: &quot;compressed&quot; - w/o comments, 
+whitespace, variants
+                                      // or: &quot;optimized&quot;  - as given by 
+&quot;optimize&quot; key
+              ,&quot;optimize&quot; : []        // usual optimize settings
+            }
+          }
+        }
+ 
+NOTES:
+- localise: CodeGenerator.py#runCompiled, before packages loop
+- re-use compile back-end:
+  - the back-end receives a list of packages
+  - compiles them according to their individual settings
+    - the previous routine prepares the packages
+    - either from parts definitions, or from raw-package definitions
+  - writes output files</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12603</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-09-24 12:14:20 +0200</bug_when>
+            <thetext>The biggest contender for this idea of raw packages is probably:
+
+simply defining separate build jobs for each package (!?)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26152</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-07-21 12:12:04 +0200</bug_when>
+            <thetext>I think most thoughts mentioned in the bug&#39;s description concerning an (almost 
+free) mix of compiled and source classes have been covered with the 
+source-hybrid implementation, also implementing &#39;source&#39; and &#39;build&#39; as corner 
+cases (bug#2008).
+
+For raw packages here is a different implementation/config idea: Make it 
+orthogonal to the parts concept.
+
+&quot;packages&quot; : {  // [1]
+  &quot;raw&quot; : { // [2]
+    &quot;foo&quot; : { // [3]
+       &quot;include&quot; : [ ...],  // [4]
+       &quot;exclude&quot; : [ ... ]
+     }
+  }
+}
+
+
+[1] Implement it under the same job-level key, not under its own. I think 
+&quot;packages&quot; summarizes both approaches well, and having them under the same 
+config root provides better locality, checking interdependences, etc.
+
+[2] &quot;raw&quot; is on the same level as &quot;parts&quot;, and is the new section (I couldn&#39;t 
+think of a better name).
+
+[3] Raw packages need dedicated, user-given names. This is related to the way 
+they are loaded in the app.
+
+[4] &quot;include&quot; and &quot;exclude&quot; have the same meaning as the job-level keys of the 
+same name: You determine which classes go into that package. You can control 
+inclusion of dependencies with &#39;=&#39;. 
+
+Some more notes:
+- &quot;raw&quot; and &quot;parts&quot; keys exclude each other; you can use only one of them in a 
+&quot;packages&quot; key.
+- There will no loader be generated when using raw packages (?). They are just 
+dumped to disk, and the user has to take care about the rest.
+- Maybe there should be a &quot;file&quot; key for each package, to determine the output 
+file name?!
+- Job-level &quot;include&quot;/&quot;exclude&quot; keys are ignored (?).
+- If you start thinking about having individual compile options for a raw 
+package, which would essentially mean drawing in the compile-options key, then 
+you are really duplicating (more) job-level keys on the package level. How 
+would that be different from a dedicated job (as in comment#1)?!
+- The only rough edge with using a dedicated job to create a raw package is 
+that you still need the &quot;packages/separate-loader&quot; key to split off the loader. 
+But that seems quite acceptable. (Might be better off as 
+&quot;compile-options/code/separate-loader&quot;, though).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26219</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-07-25 09:48:35 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; The biggest contender for this idea of raw packages is probably:
+&gt; 
+&gt; simply defining separate build jobs for each package (!?)
+
+That idea sounds like the most practical to me. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35487</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:18 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

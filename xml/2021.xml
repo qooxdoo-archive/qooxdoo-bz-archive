@@ -1,0 +1,203 @@
+<bug>
+          <bug_id>2021</bug_id>
+          
+          <creation_ts>2009-03-02 23:16:00 +0100</creation_ts>
+          <short_desc>Difference in context menu display between table and treeVirtual - selection issue</short_desc>
+          <delta_ts>2014-03-03 15:26:08 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.treevirtual</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          <dependson>605</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mr. Hericus">mrh</reporter>
+          <assigned_to name="Andreas Ecker">qooxdoo</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>8185</commentid>
+            <who name="Mr. Hericus">mrh</who>
+            <bug_when>2009-03-02 23:16:30 +0100</bug_when>
+            <thetext>As simply as I can put it, the treeVirtual selection for right click context menus doesn&#39;t work correctly the first time you hit the right click on the tree.  Once you have selected any row in the tree, the next time you right click on another row the selection is first moved and then the context menu is displayed.  However, the first time you do this, the selection is not activated (or moved) but the context menu is displayed.
+
+A normal table works properly for the first and subsequent times using the right click to both select and display the context menu.
+
+The easiest way to see this is if you have another widget to click on so that you can take the focus away from the tree view, and then right click again back to the tree view.  I&#39;ve put together a very simple playground application (see below) that demonstrates this.  Use just the right-click to bounce back and forth between the tree and the table, and you&#39;ll see that the table always selects and then brings up the context menu, but the tree will bring up the context menu without updating or activating the selection.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8186</commentid>
+            <who name="Mr. Hericus">mrh</who>
+            <bug_when>2009-03-02 23:17:09 +0100</bug_when>
+            <thetext>////// BEGIN COPY HERE
+var win = new qx.ui.window.Window(&quot;First Window&quot;);
+win.setWidth(600);
+win.setHeight(400);
+win.setShowMinimize(false);
+this.getRoot().add(win, {left:20, top:20});
+win.setLayout(new qx.ui.layout.VBox() );
+
+// some mechanics first.
+var splitpane = new qx.ui.splitpane.Pane(&quot;horizontal&quot;);
+var left = new qx.ui.container.Composite(new qx.ui.layout.VBox);
+var right = new qx.ui.container.Composite(new qx.ui.layout.VBox);
+splitpane.add(left);
+splitpane.add(right);
+win.add(splitpane, {flex:1});
+
+// Put a table in the left side:
+var tableModel = new qx.ui.table.model.Simple();
+tableModel.setColumns([&quot;one&quot;, &quot;two&quot;, &quot;three&quot;]);
+var table = new qx.ui.table.Table(tableModel);
+left.add(table, {flex:1});
+var tableData = [ [&quot;row 1&quot;, &quot;&quot;, &quot;&quot;], [&quot;row 2&quot;, &quot;&quot;, &quot;&quot;] ];
+tableModel.setData( tableData );
+
+// Put a tree-virtual on the right side:
+var tree = new qx.ui.treevirtual.TreeVirtual([&quot;one&quot;, &quot;two&quot;, &quot;three&quot;]);
+tree.setAlwaysShowOpenCloseSymbol(true);
+tree.getDataRowRenderer().setHighlightFocusRow(false);
+tree.setFocusCellOnMouseMove(false);
+tree.setShowCellFocusIndicator(false);
+right.add(tree, {flex:1});
+var root = tree.getDataModel().addBranch(null, &quot;Node One&quot;, true);
+var sub1 = tree.getDataModel().addBranch(root, &quot;Sub One&quot;, true);
+tree.getDataModel().setColumnData( sub1, 1, &quot;row&quot;);
+tree.getDataModel().setColumnData( sub1, 2, &quot;one&quot;);
+var sub2 = tree.getDataModel().addBranch(root, &quot;Sub Two&quot;, true);
+tree.getDataModel().setColumnData( sub2, 1, &quot;row&quot;);
+tree.getDataModel().setColumnData( sub2, 2, &quot;two&quot;);
+tree.getDataModel().setData( );
+
+// Add a context menu to the table
+var table_context = new qx.ui.menu.Menu;
+var cmd1 = new qx.event.Command();
+cmd1.addListener(&#39;execute&#39;, function(){alert(&quot;Table Context 1&quot;);}, this );
+table_context.add( new qx.ui.menu.Button(&quot;Table Context 1&quot;, null, cmd1) );
+var cmd2 = new qx.event.Command();
+cmd2.addListener(&#39;execute&#39;, function(){alert(&quot;Table Context 2&quot;)}, this );
+table_context.add( new qx.ui.menu.Button(&quot;Table Context 2&quot;, null, cmd2) );
+table.setContextMenu( table_context);
+                                                                      
+// Add a context menu to the tree
+var tree_context = new qx.ui.menu.Menu;
+var cmd3 = new qx.event.Command();
+cmd3.addListener(&#39;execute&#39;, function(){alert(&quot;Tree Context 1&quot;)}, this );
+tree_context.add( new qx.ui.menu.Button(&quot;Tree Context 1&quot;, null, cmd3) );
+var cmd4 = new qx.event.Command();
+cmd4.addListener(&#39;execute&#39;, function(){alert(&quot;Tree Context 2&quot;)}, this );
+tree_context.add( new qx.ui.menu.Button(&quot;Tree Context 2&quot;, null, cmd4) );
+tree.setContextMenu( tree_context );
+
+// finally open the window to display the app
+win.open();
+////// END COPY HERE</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8187</commentid>
+            <who name="Mr. Hericus">mrh</who>
+            <bug_when>2009-03-02 23:20:36 +0100</bug_when>
+            <thetext>Also note that the treeVirtual works properly in IE7, but not in FF3 or Chrome.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8255</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-04 11:07:30 +0100</bug_when>
+            <thetext>Derrell can you have a look? </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8279</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-03-04 18:15:24 +0100</bug_when>
+            <thetext>Yes I&#39;ll have a look, but unfortunately I won&#39;t have time until next week so I won&#39;t be able to get to it for this release.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8536</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-03-11 18:35:36 +0100</bug_when>
+            <thetext>Bug confirmed. I can&#39;t see how this can possibly happen, though. TreeVirtual doesn&#39;t have any code that should be intercepting the event, but somehow it&#39;s getting intercepted and not acted upon.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8604</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-03-13 14:25:29 +0100</bug_when>
+            <thetext>This is the same problem as bug #605. If the &#39;alwaysUpdateCells&#39; property if false, selection works correctly. Mr. Hericus, if you don&#39;t require the use of separate icons for selected vs. not selected state in your TreeVirtual objects, you can work around this problem easily with:
+
+  tree.setAlwaysUpdateCells(false);
+
+The final resolution for this depends on how we deal with the issue described in the comments for bug #605.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8616</commentid>
+            <who name="Mr. Hericus">mrh</who>
+            <bug_when>2009-03-13 17:01:28 +0100</bug_when>
+            <thetext>I&#39;ve tried the setAlwaysUpdateCells(false) option and it does indeed solve the problem for me.  And upon initial use it appears to speed up the user-interaction with the TreeVirtual considerably.  I&#39;ll update the rest of my code to use this.
+
+Thanks for the workaround!
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8618</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-03-13 17:35:26 +0100</bug_when>
+            <thetext>Fixed with r18438 and r18439 by leaving the default value of
+&#39;alwaysUpdateCells&#39; at Table&#39;s default of false. If users want to be able to
+provide a unique icon for display in a TreeVirtual they&#39;ll now have to manually
+set this property to true, but incur a failure of double click events in IE and
+also of immediate selection of a row upon right-click (and sometimes left-click
+too).
+
+I&#39;ve reassigned this bug to Andreas to create an entry in the next Release
+Notes regarding this change.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10925</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-07-15 19:41:12 +0200</bug_when>
+            <thetext>As described in bug #605 this issue has been addressed and appropriate info will be part of the 0.8.3 release notes. Closing this bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39004</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:08 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

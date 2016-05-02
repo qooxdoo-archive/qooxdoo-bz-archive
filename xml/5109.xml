@@ -1,0 +1,410 @@
+<bug>
+          <bug_id>5109</bug_id>
+          
+          <creation_ts>2011-05-11 23:08:00 +0200</creation_ts>
+          <short_desc>instanceof Array sometimes doesn&#39;t detect an array (rhino compiled)</short_desc>
+          <delta_ts>2014-03-03 15:22:46 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.5</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Derrell Lipman">derrell.lipman</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>24451</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-05-11 23:08:51 +0200</bug_when>
+            <thetext>When qooxdoo code is compiled by rhino-jsc, due (presumably) to a bug in rhino, literal form arrays are sometimes not detected as arrays by instanceof Array. In particular, entries such as
+
+  include : [qx.data.MBinding],
+
+in qx.core.Object reaches qx.Class.define() which executes code like this:
+
+
+      // Normalize include to array
+      if (config.include &amp;&amp; !(config.include instanceof Array)) {
+        config.include = [config.include];
+      }
+
+and decides that config.include is not already an array, so enters the &quot;if&quot; condition and puts the array inside of another array.
+
+Using qx.Bootstrap.isArray() (or qx.lang.Type.isArray() in higher-level code) corrects the deficiency. The above example, altered as follows, properly skips the &quot;if&quot; condition:
+
+      // Normalize include to array
+      if (config.include &amp;&amp; !(qx.Bootstrap.isArray(config.include))) {
+        config.include = [config.include];
+      }
+
+The attached patch solves the problem entirely.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24452</commentid>
+              <attachid>978</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-05-11 23:10:17 +0200</bug_when>
+            <thetext>Created attachment 978
+Patch to fix the problem</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24457</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-05-12 09:16:42 +0200</bug_when>
+            <thetext>Thats interesting to know because we are using qooxdoo on Rhino ourself. Daniel, can you confirm that issue?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24461</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-05-12 10:23:20 +0200</bug_when>
+            <thetext>Never ran into that issue myself. I&#39;m using Rhino 1.7R2 and JRE 1.6.0. What about you, Derrell?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24471</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-05-12 14:44:16 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; Never ran into that issue myself. I&#39;m using Rhino 1.7R2 and JRE 1.6.0. What
+&gt; about you, Derrell?
+
+I&#39;m running those same versions.
+
+Note that this problem does not occur running in Rhino&#39;s JavaScript interpreted mode. This problem occurs when compiling qooxdoo classes to .class files using Rhino&#39;s JavaScript compiler.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24633</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-05-19 16:03:30 +0200</bug_when>
+            <thetext>I would greatly appreciate having this targeted for 1.4.2. The patch is supplied and ready to apply.
+
+Thanks!
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24663</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-05-23 11:53:31 +0200</bug_when>
+            <thetext>I am not sure if we should include that due to performance reasons. Do you think thats ok?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24669</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-05-23 14:26:16 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; I am not sure if we should include that due to performance reasons.
+
+No, there shouldn&#39;t be any significant performance issues from this. Aside from the few in the finite state machine classes, these changes are all in the define() process of classes, mixins, and interfaces, not in any repeatedly-executed code. Also, in the case where instanceof Array works correctly (most environments), short-circuiting of the || operator will mean that the only additional check is that the value is not null.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24673</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-05-23 15:32:56 +0200</bug_when>
+            <thetext>I looked into this some more.
+
+This bug would also occur in a multi-frame DOM environment, and occurs because instanceof Array requires that the objects share prototypes, and in both my compiled-with-rhino case and in the multi-frame DOM environment, that&#39;s not the case. See here for more details: http://perfectionkills.com/instanceof-considered-harmful-or-how-to-write-a-robust-isarray/
+
+This bug is resolved with my patch because qx.Bootstrap.isArray() calls qx.Bootstrap.getClass() which uses the proper mechanism for determining whether the object really is an array, i.e., by checking whether Object.prototype.toString.call(value) === &quot;Array&quot;.
+
+An alternative patch to the one I provided would replace the occurrences of
+  x instanceof Array
+with
+  x instanceof Array || qx.Bootstrap.getClass(x) === &quot;Array&quot;
+or even just
+  qx.Bootstrap.getClass(x) === &quot;Array&quot;
+
+The patch I provided should be fine, but if you&#39;d prefer for me to provide a patch that directly calls qx.Bootstrap.getClass() or embeds the test it does directly in place of the instanceof Array usages, I&#39;ll be glad to do so.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24680</commentid>
+              <attachid>991</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-05-24 05:22:38 +0200</bug_when>
+            <thetext>Created attachment 991
+Revised patch avoiding superfluous checks
+
+Here&#39;s a revised patch that does only exactly what&#39;s necessary, rather than the few extra but superfluous checks that qx.Bootstrap.isArray() does. This now uses qx.Bootstrap.getClass(x) === &quot;Array&quot;.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24725</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-05-25 11:33:11 +0200</bug_when>
+            <thetext>Thank you very much Derrell! I think we can apply the patch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24743</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-05-26 20:24:07 +0200</bug_when>
+            <thetext>Great. I&#39;ll apply it. Thanks.
+
+To me.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24744</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-05-26 20:42:55 +0200</bug_when>
+            <thetext>Applied with r27427</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24749</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-05-27 08:40:48 +0200</bug_when>
+            <thetext>Marked it as enhancement because we only add the patch to trunk.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37802</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:46 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="1" ispatch="1" isprivate="0" isurl="0">
+            <attachid>978</attachid>
+            <date>2011-05-11 23:10:00 +0200</date>
+            <delta_ts>2011-05-24 05:22:38 +0200</delta_ts>
+            <desc>Patch to fix the problem</desc>
+            <filename>x.patch</filename>
+            <type>text/plain</type>
+            <size>6040</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3RydW5rL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9DbGFz
+cy5qcyBiL3RydW5rL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9DbGFzcy5qcwpp
+bmRleCBkNjQwMjk0Li45MjEwMmU4IDEwMDY0NAotLS0gYS90cnVuay9xb294ZG9vL2ZyYW1ld29y
+ay9zb3VyY2UvY2xhc3MvcXgvQ2xhc3MuanMKKysrIGIvdHJ1bmsvcW9veGRvby9mcmFtZXdvcmsv
+c291cmNlL2NsYXNzL3F4L0NsYXNzLmpzCkBAIC0xNTksMTIgKzE1OSwxMiBAQCBxeC5Cb290c3Ry
+YXAuZGVmaW5lKCJxeC5DbGFzcyIsCiAgICAgICB9CiAKICAgICAgIC8vIE5vcm1hbGl6ZSBpbmNs
+dWRlIHRvIGFycmF5Ci0gICAgICBpZiAoY29uZmlnLmluY2x1ZGUgJiYgIShjb25maWcuaW5jbHVk
+ZSBpbnN0YW5jZW9mIEFycmF5KSkgeworICAgICAgaWYgKGNvbmZpZy5pbmNsdWRlICYmICEocXgu
+Qm9vdHN0cmFwLmlzQXJyYXkoY29uZmlnLmluY2x1ZGUpKSkgewogICAgICAgICBjb25maWcuaW5j
+bHVkZSA9IFtjb25maWcuaW5jbHVkZV07CiAgICAgICB9CiAKICAgICAgIC8vIE5vcm1hbGl6ZSBp
+bXBsZW1lbnQgdG8gYXJyYXkKLSAgICAgIGlmIChjb25maWcuaW1wbGVtZW50ICYmICEoY29uZmln
+LmltcGxlbWVudCBpbnN0YW5jZW9mIEFycmF5KSkgeworICAgICAgaWYgKGNvbmZpZy5pbXBsZW1l
+bnQgJiYgIShxeC5Cb290c3RyYXAuaXNBcnJheShjb25maWcuaW1wbGVtZW50KSkpIHsKICAgICAg
+ICAgY29uZmlnLmltcGxlbWVudCA9IFtjb25maWcuaW1wbGVtZW50XTsKICAgICAgIH0KIApAQCAt
+ODM2LDcgKzgzNiw3IEBAIHF4LkJvb3RzdHJhcC5kZWZpbmUoInF4LkNsYXNzIiwKICAgICAgICAg
+Ly8gVmFsaWRhdGUgaW5jbHVkZSBkZWZpbml0aW9uCiAgICAgICAgIGlmIChjb25maWcuaW5jbHVk
+ZSkKICAgICAgICAgewotICAgICAgICAgIGlmIChjb25maWcuaW5jbHVkZSBpbnN0YW5jZW9mIEFy
+cmF5KQorICAgICAgICAgIGlmIChxeC5Cb290c3RyYXAuaXNBcnJheShjb25maWcuaW5jbHVkZSkp
+CiAgICAgICAgICAgewogICAgICAgICAgICAgZm9yICh2YXIgaT0wLCBhPWNvbmZpZy5pbmNsdWRl
+LCBsPWEubGVuZ3RoOyBpPGw7IGkrKykKICAgICAgICAgICAgIHsKQEAgLTg1NCw3ICs4NTQsNyBA
+QCBxeC5Cb290c3RyYXAuZGVmaW5lKCJxeC5DbGFzcyIsCiAgICAgICAgIC8vIFZhbGlkYXRlIGlt
+cGxlbWVudCBkZWZpbml0aW9uCiAgICAgICAgIGlmIChjb25maWcuaW1wbGVtZW50KQogICAgICAg
+ICB7Ci0gICAgICAgICAgaWYgKGNvbmZpZy5pbXBsZW1lbnQgaW5zdGFuY2VvZiBBcnJheSkKKyAg
+ICAgICAgICBpZiAocXguQm9vdHN0cmFwLmlzQXJyYXkoY29uZmlnLmltcGxlbWVudCkpCiAgICAg
+ICAgICAgewogICAgICAgICAgICAgZm9yICh2YXIgaT0wLCBhPWNvbmZpZy5pbXBsZW1lbnQsIGw9
+YS5sZW5ndGg7IGk8bDsgaSsrKQogICAgICAgICAgICAgewpAQCAtMTA5MCw3ICsxMDkwLDcgQEAg
+cXguQm9vdHN0cmFwLmRlZmluZSgicXguQ2xhc3MiLAogICAgIHsKICAgICAgIGlmIChxeC5jb3Jl
+LkVudmlyb25tZW50LmdldCgicXguZGVidWciKSkKICAgICAgIHsKLSAgICAgICAgaWYgKHR5cGVv
+ZiBldmVudHMgIT09ICJvYmplY3QiIHx8IGV2ZW50cyBpbnN0YW5jZW9mIEFycmF5KSB7CisgICAg
+ICAgIGlmICh0eXBlb2YgZXZlbnRzICE9PSAib2JqZWN0IiB8fCBxeC5Cb290c3RyYXAuaXNBcnJh
+eShldmVudHMpKSB7CiAgICAgICAgICAgdGhyb3cgbmV3IEVycm9yKGNsYXp6LmNsYXNzbmFtZSAr
+ICI6IHRoZSBldmVudHMgbXVzdCBiZSBkZWZpbmVkIGFzIG1hcCEiKTsKICAgICAgICAgfQogCmRp
+ZmYgLS1naXQgYS90cnVuay9xb294ZG9vL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvSW50ZXJm
+YWNlLmpzIGIvdHJ1bmsvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L0ludGVyZmFj
+ZS5qcwppbmRleCBiZmJmNzM4Li4wZDA3NWVjIDEwMDY0NAotLS0gYS90cnVuay9xb294ZG9vL2Zy
+YW1ld29yay9zb3VyY2UvY2xhc3MvcXgvSW50ZXJmYWNlLmpzCisrKyBiL3RydW5rL3Fvb3hkb28v
+ZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9JbnRlcmZhY2UuanMKQEAgLTk0LDcgKzk0LDcgQEAg
+cXguQm9vdHN0cmFwLmRlZmluZSgicXguSW50ZXJmYWNlIiwKICAgICAgIGlmIChjb25maWcpCiAg
+ICAgICB7CiAgICAgICAgIC8vIE5vcm1hbGl6ZSBpbmNsdWRlCi0gICAgICAgIGlmIChjb25maWcu
+ZXh0ZW5kICYmICEoY29uZmlnLmV4dGVuZCBpbnN0YW5jZW9mIEFycmF5KSkgeworICAgICAgICBp
+ZiAoY29uZmlnLmV4dGVuZCAmJiAhKHF4LkJvb3RzdHJhcC5pc0FycmF5KGNvbmZpZy5leHRlbmQp
+KSkgewogICAgICAgICAgIGNvbmZpZy5leHRlbmQgPSBbY29uZmlnLmV4dGVuZF07CiAgICAgICAg
+IH0KIApAQCAtNTEyLDcgKzUxMiw3IEBAIHF4LkJvb3RzdHJhcC5kZWZpbmUoInF4LkludGVyZmFj
+ZSIsCiAgICAgICAgICAgewogICAgICAgICAgICAgdmFyIGtleSA9IG1hcHNbaV07CiAKLSAgICAg
+ICAgICAgIGlmIChjb25maWdba2V5XSAhPT0gdW5kZWZpbmVkICYmIChjb25maWdba2V5XSBpbnN0
+YW5jZW9mIEFycmF5IHx8IGNvbmZpZ1trZXldIGluc3RhbmNlb2YgUmVnRXhwIHx8IGNvbmZpZ1tr
+ZXldIGluc3RhbmNlb2YgRGF0ZSB8fCBjb25maWdba2V5XS5jbGFzc25hbWUgIT09IHVuZGVmaW5l
+ZCkpIHsKKyAgICAgICAgICAgIGlmIChjb25maWdba2V5XSAhPT0gdW5kZWZpbmVkICYmIChxeC5C
+b290c3RyYXAuaXNBcnJheShjb25maWdba2V5XSkgfHwgY29uZmlnW2tleV0gaW5zdGFuY2VvZiBS
+ZWdFeHAgfHwgY29uZmlnW2tleV0gaW5zdGFuY2VvZiBEYXRlIHx8IGNvbmZpZ1trZXldLmNsYXNz
+bmFtZSAhPT0gdW5kZWZpbmVkKSkgewogICAgICAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoJ0lu
+dmFsaWQga2V5ICInICsga2V5ICsgJyIgaW4gaW50ZXJmYWNlICInICsgbmFtZSArICciISBUaGUg
+dmFsdWUgbmVlZHMgdG8gYmUgYSBtYXAhJyk7CiAgICAgICAgICAgICB9CiAgICAgICAgICAgfQpk
+aWZmIC0tZ2l0IGEvdHJ1bmsvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L01peGlu
+LmpzIGIvdHJ1bmsvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L01peGluLmpzCmlu
+ZGV4IDA5ODY5YWYuLjkxY2NiMDkgMTAwNjQ0Ci0tLSBhL3RydW5rL3Fvb3hkb28vZnJhbWV3b3Jr
+L3NvdXJjZS9jbGFzcy9xeC9NaXhpbi5qcworKysgYi90cnVuay9xb294ZG9vL2ZyYW1ld29yay9z
+b3VyY2UvY2xhc3MvcXgvTWl4aW4uanMKQEAgLTg0LDcgKzg0LDcgQEAgcXguQm9vdHN0cmFwLmRl
+ZmluZSgicXguTWl4aW4iLAogICAgICAgaWYgKGNvbmZpZykKICAgICAgIHsKICAgICAgICAgLy8g
+Tm9ybWFsaXplIGluY2x1ZGUKLSAgICAgICAgaWYgKGNvbmZpZy5pbmNsdWRlICYmICEoY29uZmln
+LmluY2x1ZGUgaW5zdGFuY2VvZiBBcnJheSkpIHsKKyAgICAgICAgaWYgKGNvbmZpZy5pbmNsdWRl
+ICYmICEocXguQm9vdHN0cmFwLmlzQXJyYXkoY29uZmlnLmluY2x1ZGUpKSkgewogICAgICAgICAg
+IGNvbmZpZy5pbmNsdWRlID0gW2NvbmZpZy5pbmNsdWRlXTsKICAgICAgICAgfQogCkBAIC0zNzQs
+NyArMzc0LDcgQEAgcXguQm9vdHN0cmFwLmRlZmluZSgicXguTWl4aW4iLAogICAgICAgICB7CiAg
+ICAgICAgICAgdmFyIGtleSA9IG1hcHNbaV07CiAKLSAgICAgICAgICBpZiAoY29uZmlnW2tleV0g
+IT09IHVuZGVmaW5lZCAmJiAoY29uZmlnW2tleV0gaW5zdGFuY2VvZiBBcnJheSB8fCBjb25maWdb
+a2V5XSBpbnN0YW5jZW9mIFJlZ0V4cCB8fCBjb25maWdba2V5XSBpbnN0YW5jZW9mIERhdGUgfHwg
+Y29uZmlnW2tleV0uY2xhc3NuYW1lICE9PSB1bmRlZmluZWQpKSB7CisgICAgICAgICAgaWYgKGNv
+bmZpZ1trZXldICE9PSB1bmRlZmluZWQgJiYgKHF4LkJvb3RzdHJhcC5pc0FycmF5KGNvbmZpZ1tr
+ZXldKSB8fCBjb25maWdba2V5XSBpbnN0YW5jZW9mIFJlZ0V4cCB8fCBjb25maWdba2V5XSBpbnN0
+YW5jZW9mIERhdGUgfHwgY29uZmlnW2tleV0uY2xhc3NuYW1lICE9PSB1bmRlZmluZWQpKSB7CiAg
+ICAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoJ0ludmFsaWQga2V5ICInICsga2V5ICsgJyIgaW4g
+bWl4aW4gIicgKyBuYW1lICsgJyIhIFRoZSB2YWx1ZSBuZWVkcyB0byBiZSBhIG1hcCEnKTsKICAg
+ICAgICAgICB9CiAgICAgICAgIH0KZGlmZiAtLWdpdCBhL3RydW5rL3Fvb3hkb28vZnJhbWV3b3Jr
+L3NvdXJjZS9jbGFzcy9xeC91dGlsL2ZzbS9TdGF0ZS5qcyBiL3RydW5rL3Fvb3hkb28vZnJhbWV3
+b3JrL3NvdXJjZS9jbGFzcy9xeC91dGlsL2ZzbS9TdGF0ZS5qcwppbmRleCBmZDRiYjExLi5mYTcw
+YWM4IDEwMDY0NAotLS0gYS90cnVuay9xb294ZG9vL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgv
+dXRpbC9mc20vU3RhdGUuanMKKysrIGIvdHJ1bmsvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2Ns
+YXNzL3F4L3V0aWwvZnNtL1N0YXRlLmpzCkBAIC0zMjIsNyArMzIyLDcgQEAgcXguQ2xhc3MuZGVm
+aW5lKCJxeC51dGlsLmZzbS5TdGF0ZSIsCiAgICAgICAgIHZhciBmdW5jdGlvblJlcXVlc3QgPSB2
+YWx1ZVtmXTsKIAogICAgICAgICAvLyBUaGUgZnVuY3Rpb24gcmVxdWVzdCB2YWx1ZSBzaG91bGQg
+YmUgYW4gb2JqZWN0Ci0gICAgICAgIGlmICghZnVuY3Rpb25SZXF1ZXN0IGluc3RhbmNlb2YgQXJy
+YXkpIHsKKyAgICAgICAgaWYgKCEgcXgubGFuZy5UeXBlLmlzQXJyYXkoZnVuY3Rpb25SZXF1ZXN0
+KSkgewogICAgICAgICAgIHRocm93IG5ldyBFcnJvcigiSW52YWxpZCBmdW5jdGlvbiByZXF1ZXN0
+IHR5cGU6ICIgKwogICAgICAgICAgICAgICAgICAgICAgICAgICAiZXhwZWN0ZWQgYXJyYXksIGZv
+dW5kICIgKwogICAgICAgICAgICAgICAgICAgICAgICAgICB0eXBlb2YgKGZ1bmN0aW9uUmVxdWVz
+dCkpOwpAQCAtMzU4LDcgKzM1OCw3IEBAIHF4LkNsYXNzLmRlZmluZSgicXgudXRpbC5mc20uU3Rh
+dGUiLAogICAgICAgICAgIGVsc2UKICAgICAgICAgICB7CiAgICAgICAgICAgICAvLyBvdGhlcndp
+c2UsIGVuc3VyZSB3ZSBnb3QgYW4gYXJyYXkKLSAgICAgICAgICAgIGlmICghcGFyYW1zIGluc3Rh
+bmNlb2YgQXJyYXkpIHsKKyAgICAgICAgICAgIGlmICghIHF4LmxhbmcuVHlwZS5pc0FycmF5KHBh
+cmFtcykpIHsKICAgICAgICAgICAgICAgdGhyb3cgbmV3IEVycm9yKCJJbnZhbGlkIGZ1bmN0aW9u
+IHBhcmFtZXRlcnM6ICIgKwogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgImV4cGVjdGVk
+IGFycmF5LCBmb3VuZCAiICsKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHR5cGVvZiAo
+cGFyYW1zKSk7CkBAIC00MDgsNyArNDA4LDcgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC51dGlsLmZz
+bS5TdGF0ZSIsCiAgICAgICAgICAgICAvLyBOb3BlLiAgU2ltcGxpZnkgY29kZSBieSBjcmVhdGlu
+ZyBhbiBlbXB0eSBhcnJheS4KICAgICAgICAgICAgIGEgPSBbXTsKICAgICAgICAgICB9Ci0gICAg
+ICAgICAgZWxzZSBpZiAoIWEgaW5zdGFuY2VvZiBBcnJheSkKKyAgICAgICAgICBlbHNlIGlmICgh
+IHF4LmxhbmcuVHlwZS5pc0FycmF5KGEpKQogICAgICAgICAgIHsKICAgICAgICAgICAgIHRocm93
+IG5ldyBFcnJvcigiSW52YWxpZCAnb2JqZWN0cycgbGlzdDogZXhwZWN0ZWQgYXJyYXksIGdvdCAi
+ICsKICAgICAgICAgICAgICAgICAgICAgICAgICAgICB0eXBlb2YgKGEpKTsKQEAgLTQzMyw3ICs0
+MzMsNyBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LnV0aWwuZnNtLlN0YXRlIiwKICAgICAgICAgICBp
+ZiAoZykKICAgICAgICAgICB7CiAgICAgICAgICAgICAvLyBZdXAuICBFbnN1cmUgaXQncyBhbiBh
+cnJheS4KLSAgICAgICAgICAgIGlmICghZyBpbnN0YW5jZW9mIEFycmF5KQorICAgICAgICAgICAg
+aWYgKCEgcXgubGFuZy5UeXBlLmlzQXJyYXkoZykpCiAgICAgICAgICAgICB7CiAgICAgICAgICAg
+ICAgIHRocm93IG5ldyBFcnJvcigiSW52YWxpZCAnZ3JvdXBzJyBsaXN0OiBleHBlY3RlZCBhcnJh
+eSwgZ290ICIgKwogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgdHlwZW9mIChnKSk7Cg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>991</attachid>
+            <date>2011-05-24 05:22:00 +0200</date>
+            <delta_ts>2011-05-24 05:22:38 +0200</delta_ts>
+            <desc>Revised patch avoiding superfluous checks</desc>
+            <filename>x.patch</filename>
+            <type>text/plain</type>
+            <size>4461</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3RydW5rL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9DbGFz
+cy5qcyBiL3RydW5rL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9DbGFzcy5qcwpp
+bmRleCAwZDYwMmM5Li4zNjZhNjQ1IDEwMDY0NAotLS0gYS90cnVuay9xb294ZG9vL2ZyYW1ld29y
+ay9zb3VyY2UvY2xhc3MvcXgvQ2xhc3MuanMKKysrIGIvdHJ1bmsvcW9veGRvby9mcmFtZXdvcmsv
+c291cmNlL2NsYXNzL3F4L0NsYXNzLmpzCkBAIC0xNTMsMTIgKzE1MywxMiBAQCBxeC5Cb290c3Ry
+YXAuZGVmaW5lKCJxeC5DbGFzcyIsCiAgICAgICB9CiAKICAgICAgIC8vIE5vcm1hbGl6ZSBpbmNs
+dWRlIHRvIGFycmF5Ci0gICAgICBpZiAoY29uZmlnLmluY2x1ZGUgJiYgIShjb25maWcuaW5jbHVk
+ZSBpbnN0YW5jZW9mIEFycmF5KSkgeworICAgICAgaWYgKGNvbmZpZy5pbmNsdWRlICYmICEocXgu
+Qm9vdHN0cmFwLmdldENsYXNzKGNvbmZpZy5pbmNsdWRlKSA9PT0gIkFycmF5IikpIHsKICAgICAg
+ICAgY29uZmlnLmluY2x1ZGUgPSBbY29uZmlnLmluY2x1ZGVdOwogICAgICAgfQogCiAgICAgICAv
+LyBOb3JtYWxpemUgaW1wbGVtZW50IHRvIGFycmF5Ci0gICAgICBpZiAoY29uZmlnLmltcGxlbWVu
+dCAmJiAhKGNvbmZpZy5pbXBsZW1lbnQgaW5zdGFuY2VvZiBBcnJheSkpIHsKKyAgICAgIGlmIChj
+b25maWcuaW1wbGVtZW50ICYmICEocXguQm9vdHN0cmFwLmdldENsYXNzKGNvbmZpZy5pbXBsZW1l
+bnQpID09PSAiQXJyYXkiKSkgewogICAgICAgICBjb25maWcuaW1wbGVtZW50ID0gW2NvbmZpZy5p
+bXBsZW1lbnRdOwogICAgICAgfQogCkBAIC03OTYsNyArNzk2LDcgQEAgcXguQm9vdHN0cmFwLmRl
+ZmluZSgicXguQ2xhc3MiLAogICAgICAgICAvLyBWYWxpZGF0ZSBpbmNsdWRlIGRlZmluaXRpb24K
+ICAgICAgICAgaWYgKGNvbmZpZy5pbmNsdWRlKQogICAgICAgICB7Ci0gICAgICAgICAgaWYgKGNv
+bmZpZy5pbmNsdWRlIGluc3RhbmNlb2YgQXJyYXkpCisgICAgICAgICAgaWYgKHF4LkJvb3RzdHJh
+cC5nZXRDbGFzcyhjb25maWcuaW5jbHVkZSkgPT09ICJBcnJheSIpCiAgICAgICAgICAgewogICAg
+ICAgICAgICAgZm9yICh2YXIgaT0wLCBhPWNvbmZpZy5pbmNsdWRlLCBsPWEubGVuZ3RoOyBpPGw7
+IGkrKykKICAgICAgICAgICAgIHsKQEAgLTgxNCw3ICs4MTQsNyBAQCBxeC5Cb290c3RyYXAuZGVm
+aW5lKCJxeC5DbGFzcyIsCiAgICAgICAgIC8vIFZhbGlkYXRlIGltcGxlbWVudCBkZWZpbml0aW9u
+CiAgICAgICAgIGlmIChjb25maWcuaW1wbGVtZW50KQogICAgICAgICB7Ci0gICAgICAgICAgaWYg
+KGNvbmZpZy5pbXBsZW1lbnQgaW5zdGFuY2VvZiBBcnJheSkKKyAgICAgICAgICBpZiAocXguQm9v
+dHN0cmFwLmdldENsYXNzKGNvbmZpZy5pbXBsZW1lbnQpID09PSAiQXJyYXkiKQogICAgICAgICAg
+IHsKICAgICAgICAgICAgIGZvciAodmFyIGk9MCwgYT1jb25maWcuaW1wbGVtZW50LCBsPWEubGVu
+Z3RoOyBpPGw7IGkrKykKICAgICAgICAgICAgIHsKQEAgLTEwNTAsNyArMTA1MCw3IEBAIHF4LkJv
+b3RzdHJhcC5kZWZpbmUoInF4LkNsYXNzIiwKICAgICB7CiAgICAgICBpZiAocXguY29yZS5FbnZp
+cm9ubWVudC5nZXQoInF4LmRlYnVnIikpCiAgICAgICB7Ci0gICAgICAgIGlmICh0eXBlb2YgZXZl
+bnRzICE9PSAib2JqZWN0IiB8fCBldmVudHMgaW5zdGFuY2VvZiBBcnJheSkgeworICAgICAgICBp
+ZiAodHlwZW9mIGV2ZW50cyAhPT0gIm9iamVjdCIgfHwgcXguQm9vdHN0cmFwLmdldENsYXNzKGV2
+ZW50cykgPT09ICJBcnJheSIpIHsKICAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoY2xhenouY2xh
+c3NuYW1lICsgIjogdGhlIGV2ZW50cyBtdXN0IGJlIGRlZmluZWQgYXMgbWFwISIpOwogICAgICAg
+ICB9CiAKZGlmZiAtLWdpdCBhL3RydW5rL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9x
+eC9JbnRlcmZhY2UuanMgYi90cnVuay9xb294ZG9vL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgv
+SW50ZXJmYWNlLmpzCmluZGV4IDYyMDQ5ODAuLmUwNGZiYTEgMTAwNjQ0Ci0tLSBhL3RydW5rL3Fv
+b3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9JbnRlcmZhY2UuanMKKysrIGIvdHJ1bmsv
+cW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L0ludGVyZmFjZS5qcwpAQCAtOTQsNyAr
+OTQsNyBAQCBxeC5Cb290c3RyYXAuZGVmaW5lKCJxeC5JbnRlcmZhY2UiLAogICAgICAgaWYgKGNv
+bmZpZykKICAgICAgIHsKICAgICAgICAgLy8gTm9ybWFsaXplIGluY2x1ZGUKLSAgICAgICAgaWYg
+KGNvbmZpZy5leHRlbmQgJiYgIShjb25maWcuZXh0ZW5kIGluc3RhbmNlb2YgQXJyYXkpKSB7Cisg
+ICAgICAgIGlmIChjb25maWcuZXh0ZW5kICYmICEocXguQm9vdHN0cmFwLmdldENsYXNzKGNvbmZp
+Zy5leHRlbmQpID09PSAiQXJyYXkiKSkgewogICAgICAgICAgIGNvbmZpZy5leHRlbmQgPSBbY29u
+ZmlnLmV4dGVuZF07CiAgICAgICAgIH0KIApAQCAtNTEyLDcgKzUxMiwxMyBAQCBxeC5Cb290c3Ry
+YXAuZGVmaW5lKCJxeC5JbnRlcmZhY2UiLAogICAgICAgICAgIHsKICAgICAgICAgICAgIHZhciBr
+ZXkgPSBtYXBzW2ldOwogCi0gICAgICAgICAgICBpZiAoY29uZmlnW2tleV0gIT09IHVuZGVmaW5l
+ZCAmJiAoY29uZmlnW2tleV0gaW5zdGFuY2VvZiBBcnJheSB8fCBjb25maWdba2V5XSBpbnN0YW5j
+ZW9mIFJlZ0V4cCB8fCBjb25maWdba2V5XSBpbnN0YW5jZW9mIERhdGUgfHwgY29uZmlnW2tleV0u
+Y2xhc3NuYW1lICE9PSB1bmRlZmluZWQpKSB7CisgICAgICAgICAgICBpZiAoY29uZmlnW2tleV0g
+IT09IHVuZGVmaW5lZCAmJiAKKyAgICAgICAgICAgICAgICAoWworICAgICAgICAgICAgICAgICAg
+ICJBcnJheSIsIAorICAgICAgICAgICAgICAgICAgICJSZWdFeHAiLCAKKyAgICAgICAgICAgICAg
+ICAgICAiRGF0ZSIKKyAgICAgICAgICAgICAgICAgXS5pbmRleE9mKHF4LkJvb3RzdHJhcC5nZXRD
+bGFzcyhjb25maWdba2V5XSkpICE9IC0xIHx8CisgICAgICAgICAgICAgICAgIGNvbmZpZ1trZXld
+LmNsYXNzbmFtZSAhPT0gdW5kZWZpbmVkKSkgewogICAgICAgICAgICAgICB0aHJvdyBuZXcgRXJy
+b3IoJ0ludmFsaWQga2V5ICInICsga2V5ICsgJyIgaW4gaW50ZXJmYWNlICInICsgbmFtZSArICci
+ISBUaGUgdmFsdWUgbmVlZHMgdG8gYmUgYSBtYXAhJyk7CiAgICAgICAgICAgICB9CiAgICAgICAg
+ICAgfQpkaWZmIC0tZ2l0IGEvdHJ1bmsvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4
+L01peGluLmpzIGIvdHJ1bmsvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L01peGlu
+LmpzCmluZGV4IDA5ODY5YWYuLjc3NjA4NzYgMTAwNjQ0Ci0tLSBhL3RydW5rL3Fvb3hkb28vZnJh
+bWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9NaXhpbi5qcworKysgYi90cnVuay9xb294ZG9vL2ZyYW1l
+d29yay9zb3VyY2UvY2xhc3MvcXgvTWl4aW4uanMKQEAgLTg0LDcgKzg0LDcgQEAgcXguQm9vdHN0
+cmFwLmRlZmluZSgicXguTWl4aW4iLAogICAgICAgaWYgKGNvbmZpZykKICAgICAgIHsKICAgICAg
+ICAgLy8gTm9ybWFsaXplIGluY2x1ZGUKLSAgICAgICAgaWYgKGNvbmZpZy5pbmNsdWRlICYmICEo
+Y29uZmlnLmluY2x1ZGUgaW5zdGFuY2VvZiBBcnJheSkpIHsKKyAgICAgICAgaWYgKGNvbmZpZy5p
+bmNsdWRlICYmICEocXguQm9vdHN0cmFwLmdldENsYXNzKGNvbmZpZy5pbmNsdWRlKSA9PT0gIkFy
+cmF5IikpIHsKICAgICAgICAgICBjb25maWcuaW5jbHVkZSA9IFtjb25maWcuaW5jbHVkZV07CiAg
+ICAgICAgIH0KIApAQCAtMzc0LDcgKzM3NCwxNCBAQCBxeC5Cb290c3RyYXAuZGVmaW5lKCJxeC5N
+aXhpbiIsCiAgICAgICAgIHsKICAgICAgICAgICB2YXIga2V5ID0gbWFwc1tpXTsKIAotICAgICAg
+ICAgIGlmIChjb25maWdba2V5XSAhPT0gdW5kZWZpbmVkICYmIChjb25maWdba2V5XSBpbnN0YW5j
+ZW9mIEFycmF5IHx8IGNvbmZpZ1trZXldIGluc3RhbmNlb2YgUmVnRXhwIHx8IGNvbmZpZ1trZXld
+IGluc3RhbmNlb2YgRGF0ZSB8fCBjb25maWdba2V5XS5jbGFzc25hbWUgIT09IHVuZGVmaW5lZCkp
+IHsKKyAgICAgICAgICBpZiAoY29uZmlnW2tleV0gIT09IHVuZGVmaW5lZCAmJiAKKyAgICAgICAg
+ICAgICAgKFsKKyAgICAgICAgICAgICAgICAgIkFycmF5IiwgCisgICAgICAgICAgICAgICAgICJS
+ZWdFeHAiLCAKKyAgICAgICAgICAgICAgICAgIkRhdGUiCisgICAgICAgICAgICAgICBdLmluZGV4
+T2YocXguQm9vdHN0cmFwLmdldENsYXNzKGNvbmZpZ1trZXldKSkgIT0gLTEgfHwKKyAgICAgICAg
+ICAgICAgIGNvbmZpZ1trZXldLmNsYXNzbmFtZSAhPT0gdW5kZWZpbmVkKSkgeworCiAgICAgICAg
+ICAgICB0aHJvdyBuZXcgRXJyb3IoJ0ludmFsaWQga2V5ICInICsga2V5ICsgJyIgaW4gbWl4aW4g
+IicgKyBuYW1lICsgJyIhIFRoZSB2YWx1ZSBuZWVkcyB0byBiZSBhIG1hcCEnKTsKICAgICAgICAg
+ICB9CiAgICAgICAgIH0K
+</data>
+
+          </attachment>
+      
+
+    </bug>

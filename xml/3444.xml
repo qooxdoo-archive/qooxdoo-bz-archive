@@ -1,0 +1,190 @@
+<bug>
+          <bug_id>3444</bug_id>
+          
+          <creation_ts>2010-02-16 16:14:00 +0100</creation_ts>
+          <short_desc>Deprecate implicit behavior in event.message.Bus#dispatch</short_desc>
+          <delta_ts>2014-03-03 15:26:21 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Daniel Wagner">daniel.wagner</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          <cc>fritz.zaucker</cc>
+    
+    <cc>info</cc>
+    
+    <cc>tobi</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>16838</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-02-16 16:14:10 +0100</bug_when>
+            <thetext>As documented, qx.event.message.Bus.dispatch() takes one parameter, either a qx.event.Message object or a String. If it&#39;s a string, a new Message object will be created, using the string as the message name. Only in that case, any second (undocumented) parameter will be used as the message data (otherwise the message data will be set to true). While this might be useful in some cases, Alex and I agree that it&#39;s an implicit API and we should deprecate it: dispatch() should only take qx.event.Message objects.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16839</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-02-16 16:28:45 +0100</bug_when>
+            <thetext>Correction: qx.event.message.Bus.dispatch() should of course accept a Message object or a string, however it shouldn&#39;t accept a second parameter.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16840</commentid>
+            <who name="Tobias Oetiker">tobi</who>
+            <bug_when>2010-02-16 16:49:48 +0100</bug_when>
+            <thetext>I realy like the 
+
+qx.event.message.Bus.dispatch(key,value)
+
+syntax ... since this is what I am using all the time ... having to explicity create a message object first seems to be just extra work ... or is there an upside to this?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16841</commentid>
+            <who name="Fritz Zaucker">fritz.zaucker</who>
+            <bug_when>2010-02-16 16:53:33 +0100</bug_when>
+            <thetext>I am afraid that removing the undocumented feature might break applications
+making use of it. Although I can live with that for my own applications (which
+I can fix) this might make some people unhappy. At least it should be
+deprecated first.
+
+However, I find a short-cut like dispatch(&#39;name&#39;, variable) for dispatch(new
+qx.event.message.Message(&#39;name&#39;, variable)) rather useful ...
+
+So I agree with Tobi&#39;s comment ... just document this option (and perhaps remove the undefined-&gt;true conversion if there is no obvious reason for it).
+
+Cheers,
+Fritz</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16853</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-02-17 10:54:30 +0100</bug_when>
+            <thetext>I would propose to change the API of the &#39;dispatch&#39; method to *only* accept one parameter: a message object. If we change this API, we will deprecate it to allow application developers to streamline their implementation with the new API.
+
+Why this rather drastic change? I think since the event bus and the subscribers are dealing with message objects when receiving messages we should align the API here to use a message object throughout the whole event bus implementation. 
+The subscriber receives a message object and this should be true in the opposite direction: when dispatching a message to the bus this should also be done with a message object.
+
+I personally think we should replace this implicit API with an explicit one. Maybe we can introduce a second method which accepts two parameters: message and value. This method can internally transform it into a message instance. But I really can&#39;t imagine a good method name for this. Any thoughts here?
+
+I added Christian Boulanger to the CC list, since he is the original author of the message bus and maybe he want to add his comments here, too.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16855</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2010-02-17 14:04:14 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; I would propose to change the API of the &#39;dispatch&#39; method to *only* accept one
+&gt; parameter: a message object. If we change this API, we will deprecate it to
+&gt; allow application developers to streamline their implementation with the new
+&gt; API.
+&gt; 
+&gt; Why this rather drastic change? I think since the event bus and the subscribers
+&gt; are dealing with message objects when receiving messages we should align the
+&gt; API here to use a message object throughout the whole event bus implementation. 
+&gt; The subscriber receives a message object and this should be true in the
+&gt; opposite direction: when dispatching a message to the bus this should also be
+&gt; done with a message object.
+&gt; 
+&gt; I personally think we should replace this implicit API with an explicit one.
+&gt; Maybe we can introduce a second method which accepts two parameters: message
+&gt; and value. This method can internally transform it into a message instance. But
+&gt; I really can&#39;t imagine a good method name for this. Any thoughts here?
+&gt; 
+&gt; I added Christian Boulanger to the CC list, since he is the original author of
+&gt; the message bus and maybe he want to add his comments here, too.
+&gt; 
+
+I think the change is ok if the signature is properly deprecated. What about a new &quot;dispatchByName&quot; method?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16944</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-02-24 11:34:15 +0100</bug_when>
+            <thetext>@Fritz and @Tobi
+Can you live with an extra method &quot;dispatchByName&quot; which would accept a message (=string) and a value (=variable) as parameters?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16946</commentid>
+            <who name="Tobias Oetiker">tobi</who>
+            <bug_when>2010-02-24 11:37:08 +0100</bug_when>
+            <thetext>sure ... it would be nice if the source version did complain about the ill usage though ... </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16947</commentid>
+            <who name="Fritz Zaucker">fritz.zaucker</who>
+            <bug_when>2010-02-24 11:50:42 +0100</bug_when>
+            <thetext>(In reply to comment #6)
+
+Fine with me ...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19407</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-07-22 12:56:21 +0200</bug_when>
+            <thetext>accepting</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19410</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2010-07-22 14:31:31 +0200</bug_when>
+            <thetext>(In reply to comment #9)
+&gt; accepting
+
+Maybe for the second (undocumented) behavior, we could use a method name that is used in other message subscription APIs, namely &quot;publish&quot;, for example in dojo http://www.dojotoolkit.org/reference-guide/dojo/publish.html ).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19429</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-07-27 10:13:05 +0200</bug_when>
+            <thetext>(In reply to comment #10)
+&gt; Maybe for the second (undocumented) behavior, we could use a method name that
+&gt; is used in other message subscription APIs, namely &quot;publish&quot;, for example in
+&gt; dojo http://www.dojotoolkit.org/reference-guide/dojo/publish.html ).
+I guess this would mix up things more, in my opinion. Personally I like the method name &quot;publish&quot; more than &quot;dispatch&quot; (since other libraries are also using this name), but looking at the current implementation I tend to use &quot;dispatchByName&quot; as new name to show the connection between those two.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19486</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-07-28 18:24:24 +0200</bug_when>
+            <thetext>Fixed with Revision #22837
+
+If an application developer wants to dispatch a method using 2 parameters (string and value) the &quot;dispatchByName&quot; method is now available. The &quot;dispatch&quot; method only accepts a &quot;qx.event.message.Message&quot; instance and shows a warning if the old API is used.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39083</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:21 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

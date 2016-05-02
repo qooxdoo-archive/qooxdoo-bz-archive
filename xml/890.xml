@@ -1,0 +1,323 @@
+<bug>
+          <bug_id>890</bug_id>
+          
+          <creation_ts>2008-05-28 14:48:00 +0200</creation_ts>
+          <short_desc>“Mixed-Content” warning in Internet Explorer working over HTTPS</short_desc>
+          <delta_ts>2014-03-03 15:22:25 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>0.7.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8-alpha2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Denis">nomus</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>3078</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-05-28 14:48:25 +0200</bug_when>
+            <thetext>Hello,
+
+There are some situations when Internet Explorer that works over HTTPS displays warning about mixed content. This is the known problem and it can occur from different causes. For example, see http://davidovitz.blogspot.com/2006/09/https-bug-in-ie.html
+By now I found two places in qooxdoo that can lead to the warning. The first one is related to use of removeChild in Widget._handleDisplayable. Unfortunately I cannot give an example that could reproduce the problem in this case. But it appears in my application when I use removeAll method. I applied the patch to _handleDisplayable and the problem disappeared.
+The second place is related to Widget._applyStyleProperties when “display” style property is being set to “none”. The following snippet can be used to reproduce the problem (use IE over HTTPS). The second patch can eliminate the problem in this case but I am not sure this patch is the best solution.
+
+Code snippet that can be used to reproduce the problem in _applyStyleProperties:
+
+var btn = new qx.ui.form.Button(&quot;Demonstrate&quot;);
+btn.setLeft(100);
+btn.setTop(500);
+btn.addEventListener(&quot;execute&quot;, function(event) {
+    if (! this._tabView) {
+        var tabView = new qx.ui.pageview.tabview.TabView;
+        tabView.setLeft(10);
+        tabView.setTop(10);
+        tabView.setWidth(500);
+        tabView.setHeight(300);
+        tabView.addToDocument();
+        
+        var btn1 = new qx.ui.pageview.tabview.Button(&quot;Page 1&quot;);
+        btn1.setChecked(true);
+        var btn2 = new qx.ui.pageview.tabview.Button(&quot;Page 2&quot;);
+        tabView.getBar().add(btn1, btn2);
+        tabView.getBar().hide();
+        
+        var page1 = new qx.ui.pageview.tabview.Page(btn1);
+        var page2 = new qx.ui.pageview.tabview.Page(btn2);
+        tabView.getPane().add(page1, page2);
+        
+        this._tabView = tabView;
+    }
+    if (this._tabView.isSeeable()) {
+        this._tabView.hide();
+    }
+    else {
+        this._tabView.show();
+    }
+}, this);
+btn.addToDocument();
+
+Best regards,
+Denis</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3079</commentid>
+              <attachid>305</attachid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-05-28 14:51:30 +0200</bug_when>
+            <thetext>Created attachment 305
+Fixes appearance of warning in Widget._handleDisplayable</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3080</commentid>
+              <attachid>306</attachid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-05-28 14:52:47 +0200</bug_when>
+            <thetext>Created attachment 306
+Fixes appearance of warning in Widget._applyStyleProperties</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3219</commentid>
+              <attachid>307</attachid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-06-07 16:21:38 +0200</bug_when>
+            <thetext>Created attachment 307
+Fixes appearance of warning in Widget._handleDisplayable
+
+I corrected patch of Widget._handleDisplayable because I found that it is necessary to clear backgrounImage style property not only of the deleting element itself but also of all its children too.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3224</commentid>
+              <attachid>308</attachid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-06-09 12:06:57 +0200</bug_when>
+            <thetext>Created attachment 308
+Fixes appearance of warning in Widget._handleDisplayable (version 3)
+
+Sorry, I made mistake in the previous version of the patch of Widget._handleDisplayable. 
+I have attached corrected version of the patch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3338</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-06-12 17:35:39 +0200</bug_when>
+            <thetext>to alex</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3407</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-06-17 11:54:39 +0200</bug_when>
+            <thetext>working on this one</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3440</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-06-18 12:26:03 +0200</bug_when>
+            <thetext>Fixed this bug with revision #13981 (trunk) and #13982 (legacy_0_7_x branch).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37667</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:25 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>305</attachid>
+            <date>2008-05-28 14:51:00 +0200</date>
+            <delta_ts>2008-05-28 14:51:30 +0200</delta_ts>
+            <desc>Fixes appearance of warning in Widget._handleDisplayable</desc>
+            <filename>handleDisplayable.patch</filename>
+            <type>text/plain</type>
+            <size>1294</size>
+            <attacher>nomus</attacher>
+            
+              <data encoding="base64">LS0tIF9vcmlnaW5hbF9XaWRnZXQuanMJMjAwOC0wNS0wOCAxMTowODowMS44Njc1NDkwMDAgKzA0
+MDANCisrKyBXaWRnZXQuanMJMjAwOC0wNS0yOCAxNjo0MjoxMi4xMjgyOTk2MDAgKzA0MDANCkBA
+IC0yNjE4LDYgKzI2MTgsMTEgQEANCiANCiAgICAgICAgICAgdGhpcy5fYmVmb3JlUmVtb3ZlRG9t
+KCk7DQogICAgICAgICAgIHRyeSB7DQorICAgICAgICAgICAgLy8gVGhpcyBwcmV2ZW50cyBhcHBl
+YXJhbmNlIG9mICJNaXhlZC1Db250ZW50IiB3YXJuaW5nIGluIElFIG92ZXIgSFRUUFMNCisgICAg
+ICAgICAgICBpZiAocXguY29yZS5WYXJpYW50LmlzU2V0KCJxeC5jbGllbnQiLCAibXNodG1sIikN
+CisgICAgICAgICAgICAgICAgICAgICYmIGVsZW0uc3R5bGUuYmFja2dyb3VuZEltYWdlLmxlbmd0
+aCA+IDApIHsNCisgICAgICAgICAgICAgICAgZWxlbS5zdHlsZS5iYWNrZ3JvdW5kSW1hZ2UgPSAi
+IjsNCisgICAgICAgICAgICB9DQogICAgICAgICAgICAgdGhpcy5fb2xkUGFyZW50Ll9nZXRUYXJn
+ZXROb2RlKCkucmVtb3ZlQ2hpbGQoZWxlbSk7DQogICAgICAgICAgIH0gY2F0Y2goZSkgew0KICAg
+ICAgICAgICAgIC8vIGlnbm9yZSBleGNlcHRpb24NCkBAIC0yNzE2LDcgKzI3MjEsMTQgQEANCiAg
+ICAgICAgICAgICB2YXIgcGFyZW50Tm9kZSA9IHRoaXMuZ2V0RWxlbWVudCgpLnBhcmVudE5vZGU7
+DQogICAgICAgICAgICAgaWYgKHBhcmVudE5vZGUpDQogICAgICAgICAgICAgew0KLSAgICAgICAg
+ICAgICAgcGFyZW50Tm9kZS5yZW1vdmVDaGlsZCh0aGlzLmdldEVsZW1lbnQoKSkNCisgICAgICAg
+ICAgICAgIC8vIFRoaXMgcHJldmVudHMgYXBwZWFyYW5jZSBvZiAiTWl4ZWQtQ29udGVudCIgd2Fy
+bmluZyBpbiBJRSBvdmVyIEhUVFBTDQorICAgICAgICAgICAgICB2YXIgZWxlbSA9IHRoaXMuZ2V0
+RWxlbWVudCgpOw0KKyAgICAgICAgICAgICAgaWYgKHF4LmNvcmUuVmFyaWFudC5pc1NldCgicXgu
+Y2xpZW50IiwgIm1zaHRtbCIpDQorICAgICAgICAgICAgICAgICAgICAgICYmIGVsZW0uc3R5bGUu
+YmFja2dyb3VuZEltYWdlLmxlbmd0aCA+IDApIHsNCisgICAgICAgICAgICAgICAgICBlbGVtLnN0
+eWxlLmJhY2tncm91bmRJbWFnZSA9ICIiOw0KKyAgICAgICAgICAgICAgfQ0KKw0KKyAgICAgICAg
+ICAgICAgcGFyZW50Tm9kZS5yZW1vdmVDaGlsZChlbGVtKTsNCiANCiAgICAgICAgICAgICAgIC8v
+IERPTSBlbGVtZW50IGNoZWNrDQogICAgICAgICAgICAgICBpZiAocGFyZW50Tm9kZSAmJiBwYXJl
+bnROb2RlICE9PSB2UGFyZW50Ll9nZXRUYXJnZXROb2RlKCkpIHsNCg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>306</attachid>
+            <date>2008-05-28 14:52:00 +0200</date>
+            <delta_ts>2008-05-28 14:52:47 +0200</delta_ts>
+            <desc>Fixes appearance of warning in Widget._applyStyleProperties</desc>
+            <filename>applyStyleProperties.patch</filename>
+            <type>text/plain</type>
+            <size>668</size>
+            <attacher>nomus</attacher>
+            
+              <data encoding="base64">LS0tIF9vcmlnaW5hbF9XaWRnZXQuanMJMjAwOC0wNS0wOCAxMTowODowMS44Njc1NDkwMDAgKzA0
+MDANCisrKyBXaWRnZXQuanMJMjAwOC0wNS0yOCAxNjo0Mzo0NC4yNjM2MTczMDAgKzA0MDANCkBA
+IC01NzA1LDYgKzU3MDUsMTEgQEANCiAgICAgICB2YXIgdmFsdWU7DQogICAgICAgZm9yIChwcm9w
+TmFtZSBpbiB2UHJvcGVydGllcykNCiAgICAgICB7DQorICAgICAgICAvLyBUaGlzIHByZXZlbnRz
+IGFwcGVhcmFuY2Ugb2YgIk1peGVkLUNvbnRlbnQiIHdhcm5pbmcgaW4gSUUgb3ZlciBIVFRQUw0K
+KyAgICAgICAgaWYgKHByb3BOYW1lID09PSAiYmFja2dyb3VuZEltYWdlIiAmJiBxeC5jb3JlLlZh
+cmlhbnQuaXNTZXQoInF4LmNsaWVudCIsICJtc2h0bWwiKQ0KKyAgICAgICAgICAgICAgICAmJiAh
+IHRoaXMuZ2V0UGFyZW50KCkuaXNTZWVhYmxlKCkpIHsNCisgICAgICAgICAgICBjb250aW51ZTsN
+CisgICAgICAgIH0NCiAgICAgICAgIGVsZW0gPSB0aGlzLl9fb3V0ZXJFbGVtZW50U3R5bGVQcm9w
+ZXJ0aWVzW3Byb3BOYW1lXSA/IHZCYXNlRWxlbWVudCA6IHZUYXJnZXRFbGVtZW50Ow0KICAgICAg
+ICAgdmFsdWUgPSB2UHJvcGVydGllc1twcm9wTmFtZV07DQogICAgICAgICBlbGVtLnN0eWxlW3By
+b3BOYW1lXSA9ICh2YWx1ZSA9PSBudWxsKSA/ICIiIDogdmFsdWU7DQo=
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>307</attachid>
+            <date>2008-06-07 16:21:00 +0200</date>
+            <delta_ts>2008-06-07 16:21:38 +0200</delta_ts>
+            <desc>Fixes appearance of warning in Widget._handleDisplayable</desc>
+            <filename>handleDisplayable_v2.patch</filename>
+            <type>text/plain</type>
+            <size>2105</size>
+            <attacher>nomus</attacher>
+            
+              <data encoding="base64">LS0tIF9vcmlnaW5hbF9XaWRnZXQuanMJMjAwOC0wNS0zMCAxMjo0Njo0OC4yODc4MDExMDAgKzA0
+MDANCisrKyBXaWRnZXQuanMJMjAwOC0wNi0wNyAxODoxMTo1OC45MDU4ODI5MDAgKzA0MDANCkBA
+IC0yNTc4LDYgKzI1NzgsMjggQEANCiAgICAgKi8NCiANCiAgICAgLyoqDQorICAgICAqIENsZWFy
+cyBiYWNrZ3JvdW5kSW1hZ2Ugc3R5bGUgcHJvcGVydHkgb2Ygc3BlY2lmaWVkIG5vZGUgYW5kIGFs
+bCBpdHMgY2hpbGRyZW4uDQorICAgICAqDQorICAgICAqIEBwYXJhbSBpbml0Tm9kZSB7Tm9kZX0N
+CisgICAgICogICAgICBET00gbm9kZSB0aGF0IHNob3VsZCBiZSBwcm9jZXNzZWQuDQorICAgICAq
+Lw0KKyAgICBfY2xlYXJOb2Rlc0JhY2tyb3VuZEltYWdlcyA6IGZ1bmN0aW9uKGluaXROb2RlKSB7
+DQorICAgICAgICBpZiAoaW5pdE5vZGUuc3R5bGUuYmFja2dyb3VuZEltYWdlLmxlbmd0aCA+IDAp
+IHsNCisgICAgICAgICAgICBpbml0Tm9kZS5zdHlsZS5iYWNrZ3JvdW5kSW1hZ2UgPSAiIjsNCisg
+ICAgICAgIH0NCisgICAgICAgIHZhciBjaGlsZE5vZGU7DQorICAgICAgICBmb3IgKHZhciBpID0g
+MCwgbGVuID0gaW5pdE5vZGUuY2hpbGROb2Rlcy5sZW5ndGg7IGkgPCBsZW47IGkrKykgew0KKyAg
+ICAgICAgICAgIGNoaWxkTm9kZSA9IGluaXROb2RlLmNoaWxkTm9kZXNbaV07DQorICAgICAgICAg
+ICAgaWYgKGNoaWxkTm9kZS5jaGlsZE5vZGVzLmxlbmd0aCA+IDApIHsNCisgICAgICAgICAgICAg
+ICAgdGhpcy5fY2xlYXJOb2Rlc0JhY2tyb3VuZEltYWdlcyhjaGlsZE5vZGUpOw0KKyAgICAgICAg
+ICAgIH0NCisgICAgICAgICAgICBlbHNlIGlmIChjaGlsZE5vZGUuc3R5bGUuYmFja2dyb3VuZElt
+YWdlLmxlbmd0aCA+IDApIHsNCisgICAgICAgICAgICAgICAgY2hpbGROb2RlLnN0eWxlLmJhY2tn
+cm91bmRJbWFnZSA9ICIiOw0KKyAgICAgICAgICAgIH0NCisgICAgICAgIH0NCisgICAgfSwNCisN
+CisgICAgLyoqDQogICAgICAqIFRPRE9DDQogICAgICAqDQogICAgICAqIEB0eXBlIG1lbWJlcg0K
+QEAgLTI2MTgsNiArMjY0MCwxMCBAQA0KIA0KICAgICAgICAgICB0aGlzLl9iZWZvcmVSZW1vdmVE
+b20oKTsNCiAgICAgICAgICAgdHJ5IHsNCisgICAgICAgICAgICAvLyBUaGlzIHByZXZlbnRzIGFw
+cGVhcmFuY2Ugb2YgIk1peGVkLUNvbnRlbnQiIHdhcm5pbmcgaW4gSUUgb3ZlciBIVFRQUw0KKyAg
+ICAgICAgICAgIGlmIChxeC5jb3JlLlZhcmlhbnQuaXNTZXQoInF4LmNsaWVudCIsICJtc2h0bWwi
+KSkgew0KKyAgICAgICAgICAgICAgICB0aGlzLl9jbGVhck5vZGVzQmFja3JvdW5kSW1hZ2VzKGVs
+ZW0pOw0KKyAgICAgICAgICAgIH0NCiAgICAgICAgICAgICB0aGlzLl9vbGRQYXJlbnQuX2dldFRh
+cmdldE5vZGUoKS5yZW1vdmVDaGlsZChlbGVtKTsNCiAgICAgICAgICAgfSBjYXRjaChlKSB7DQog
+ICAgICAgICAgICAgLy8gaWdub3JlIGV4Y2VwdGlvbg0KQEAgLTI3MTYsNyArMjc0MiwxMyBAQA0K
+ICAgICAgICAgICAgIHZhciBwYXJlbnROb2RlID0gdGhpcy5nZXRFbGVtZW50KCkucGFyZW50Tm9k
+ZTsNCiAgICAgICAgICAgICBpZiAocGFyZW50Tm9kZSkNCiAgICAgICAgICAgICB7DQotICAgICAg
+ICAgICAgICBwYXJlbnROb2RlLnJlbW92ZUNoaWxkKHRoaXMuZ2V0RWxlbWVudCgpKQ0KKyAgICAg
+ICAgICAgICAgLy8gVGhpcyBwcmV2ZW50cyBhcHBlYXJhbmNlIG9mICJNaXhlZC1Db250ZW50IiB3
+YXJuaW5nIGluIElFIG92ZXIgSFRUUFMNCisgICAgICAgICAgICAgIHZhciBlbGVtID0gdGhpcy5n
+ZXRFbGVtZW50KCk7DQorICAgICAgICAgICAgICBpZiAocXguY29yZS5WYXJpYW50LmlzU2V0KCJx
+eC5jbGllbnQiLCAibXNodG1sIikpIHsNCisgICAgICAgICAgICAgICAgICB0aGlzLl9jbGVhck5v
+ZGVzQmFja3JvdW5kSW1hZ2VzKGVsZW0pOw0KKyAgICAgICAgICAgICAgfQ0KKw0KKyAgICAgICAg
+ICAgICAgcGFyZW50Tm9kZS5yZW1vdmVDaGlsZCh0aGlzLmdldEVsZW1lbnQoKSk7DQogDQogICAg
+ICAgICAgICAgICAvLyBET00gZWxlbWVudCBjaGVjaw0KICAgICAgICAgICAgICAgaWYgKHBhcmVu
+dE5vZGUgJiYgcGFyZW50Tm9kZSAhPT0gdlBhcmVudC5fZ2V0VGFyZ2V0Tm9kZSgpKSB7DQo=
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>308</attachid>
+            <date>2008-06-09 12:06:00 +0200</date>
+            <delta_ts>2008-06-09 12:06:57 +0200</delta_ts>
+            <desc>Fixes appearance of warning in Widget._handleDisplayable (version 3)</desc>
+            <filename>handleDisplayable_v3.patch</filename>
+            <type>text/plain</type>
+            <size>2486</size>
+            <attacher>nomus</attacher>
+            
+              <data encoding="base64">LS0tIF9vcmlnaW5hbF9XaWRnZXQuanMJMjAwOC0wNS0zMCAxMjo0Njo0OC4yODc4MDExMDAgKzA0
+MDANCisrKyBXaWRnZXQuanMJMjAwOC0wNi0wOSAxMzo1Mzo1My44MjExNTcwMDAgKzA0MDANCkBA
+IC0yNTc2LDYgKzI1NzYsMzQgQEANCiAgICAgICBESVNQTEFZQkxFIEhBTkRMSU5HDQogICAgIC0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLQ0KICAgICAqLw0KKyAgICAvKioNCisgICAgICogQ2xlYXJzIGJhY2tn
+cm91bmRJbWFnZSBzdHlsZSBwcm9wZXJ0eSBvZiBzcGVjaWZpZWQgbm9kZSBhbmQgYWxsIGl0cyBj
+aGlsZHJlbi4NCisgICAgICoNCisgICAgICogQHBhcmFtIGluaXROb2RlIHtOb2RlfQ0KKyAgICAg
+KiAgICAgIERPTSBub2RlIHRoYXQgc2hvdWxkIGJlIHByb2Nlc3NlZC4NCisgICAgICovDQorICAg
+IF9jbGVhck5vZGVzQmFja3JvdW5kSW1hZ2VzIDogZnVuY3Rpb24oaW5pdE5vZGUpIHsNCisgICAg
+ICAgIHZhciBzdHlsZSA9IGluaXROb2RlLnN0eWxlOw0KKyAgICAgICAgaWYgKHR5cGVvZihzdHls
+ZSkgPT09ICJvYmplY3QiICYmIHN0eWxlICE9PSBudWxsDQorICAgICAgICAgICAgICAgICYmIHR5
+cGVvZihzdHlsZS5iYWNrZ3JvdW5kSW1hZ2UpID09PSAic3RyaW5nIg0KKyAgICAgICAgICAgICAg
+ICAmJiBzdHlsZS5iYWNrZ3JvdW5kSW1hZ2UubGVuZ3RoID4gMCkgew0KKyAgICAgICAgICAgIHN0
+eWxlLmJhY2tncm91bmRJbWFnZSA9ICIiOw0KKyAgICAgICAgfQ0KKyAgICAgICAgdmFyIGNoaWxk
+Tm9kZTsNCisgICAgICAgIGZvciAodmFyIGkgPSAwLCBsZW4gPSBpbml0Tm9kZS5jaGlsZE5vZGVz
+Lmxlbmd0aDsgaSA8IGxlbjsgaSsrKSB7DQorICAgICAgICAgICAgY2hpbGROb2RlID0gaW5pdE5v
+ZGUuY2hpbGROb2Rlc1tpXTsNCisgICAgICAgICAgICBzdHlsZSA9IGNoaWxkTm9kZS5zdHlsZTsN
+CisgICAgICAgICAgICBpZiAoY2hpbGROb2RlLmNoaWxkTm9kZXMubGVuZ3RoID4gMCkgew0KKyAg
+ICAgICAgICAgICAgICB0aGlzLl9jbGVhck5vZGVzQmFja3JvdW5kSW1hZ2VzKGNoaWxkTm9kZSk7
+DQorICAgICAgICAgICAgfQ0KKyAgICAgICAgICAgIGVsc2UgaWYgKHR5cGVvZihzdHlsZSkgPT09
+ICJvYmplY3QiICYmIHN0eWxlICE9PSBudWxsDQorICAgICAgICAgICAgICAgICAgICAgICAgJiYg
+dHlwZW9mKHN0eWxlLmJhY2tncm91bmRJbWFnZSkgPT09ICJzdHJpbmciDQorICAgICAgICAgICAg
+ICAgICAgICAgICAgJiYgc3R5bGUuYmFja2dyb3VuZEltYWdlLmxlbmd0aCA+IDApIHsNCisgICAg
+ICAgICAgICAgICAgc3R5bGUuYmFja2dyb3VuZEltYWdlID0gIiI7DQorICAgICAgICAgICAgfQ0K
+KyAgICAgICAgfQ0KKyAgICB9LA0KKw0KIA0KICAgICAvKioNCiAgICAgICogVE9ET0MNCkBAIC0y
+NjE4LDYgKzI2NDYsMTAgQEANCiANCiAgICAgICAgICAgdGhpcy5fYmVmb3JlUmVtb3ZlRG9tKCk7
+DQogICAgICAgICAgIHRyeSB7DQorICAgICAgICAgICAgLy8gVGhpcyBwcmV2ZW50cyBhcHBlYXJh
+bmNlIG9mICJNaXhlZC1Db250ZW50IiB3YXJuaW5nIGluIElFIG92ZXIgSFRUUFMNCisgICAgICAg
+ICAgICBpZiAocXguY29yZS5WYXJpYW50LmlzU2V0KCJxeC5jbGllbnQiLCAibXNodG1sIikpIHsN
+CisgICAgICAgICAgICAgICAgdGhpcy5fY2xlYXJOb2Rlc0JhY2tyb3VuZEltYWdlcyhlbGVtKTsN
+CisgICAgICAgICAgICB9DQogICAgICAgICAgICAgdGhpcy5fb2xkUGFyZW50Ll9nZXRUYXJnZXRO
+b2RlKCkucmVtb3ZlQ2hpbGQoZWxlbSk7DQogICAgICAgICAgIH0gY2F0Y2goZSkgew0KICAgICAg
+ICAgICAgIC8vIGlnbm9yZSBleGNlcHRpb24NCkBAIC0yNzE2LDcgKzI3NDgsMTMgQEANCiAgICAg
+ICAgICAgICB2YXIgcGFyZW50Tm9kZSA9IHRoaXMuZ2V0RWxlbWVudCgpLnBhcmVudE5vZGU7DQog
+ICAgICAgICAgICAgaWYgKHBhcmVudE5vZGUpDQogICAgICAgICAgICAgew0KLSAgICAgICAgICAg
+ICAgcGFyZW50Tm9kZS5yZW1vdmVDaGlsZCh0aGlzLmdldEVsZW1lbnQoKSkNCisgICAgICAgICAg
+ICAgIC8vIFRoaXMgcHJldmVudHMgYXBwZWFyYW5jZSBvZiAiTWl4ZWQtQ29udGVudCIgd2Fybmlu
+ZyBpbiBJRSBvdmVyIEhUVFBTDQorICAgICAgICAgICAgICB2YXIgZWxlbSA9IHRoaXMuZ2V0RWxl
+bWVudCgpOw0KKyAgICAgICAgICAgICAgaWYgKHF4LmNvcmUuVmFyaWFudC5pc1NldCgicXguY2xp
+ZW50IiwgIm1zaHRtbCIpKSB7DQorICAgICAgICAgICAgICAgICAgdGhpcy5fY2xlYXJOb2Rlc0Jh
+Y2tyb3VuZEltYWdlcyhlbGVtKTsNCisgICAgICAgICAgICAgIH0NCisNCisgICAgICAgICAgICAg
+IHBhcmVudE5vZGUucmVtb3ZlQ2hpbGQoZWxlbSk7DQogDQogICAgICAgICAgICAgICAvLyBET00g
+ZWxlbWVudCBjaGVjaw0KICAgICAgICAgICAgICAgaWYgKHBhcmVudE5vZGUgJiYgcGFyZW50Tm9k
+ZSAhPT0gdlBhcmVudC5fZ2V0VGFyZ2V0Tm9kZSgpKSB7DQo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

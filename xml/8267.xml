@@ -1,0 +1,122 @@
+<bug>
+          <bug_id>8267</bug_id>
+          
+          <creation_ts>2014-04-16 16:37:00 +0200</creation_ts>
+          <short_desc>Can&#39;t focus input fields with current pointer merge</short_desc>
+          <delta_ts>2014-05-13 09:58:25 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>mobile.core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christian Hagendorn">christian.hagendorn</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Christopher Zuendorf">christopher.zuendorf</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>39996</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2014-04-16 16:37:09 +0200</bug_when>
+            <thetext>Use this playground code with the current master:
+&lt;code&gt;
+var page = new qx.ui.mobile.page.NavigationPage();
+page.setTitle(&quot;Login&quot;);
+page.addListener(&quot;initialize&quot;, function() {
+
+  var button = new qx.ui.mobile.form.Button(&quot;Login&quot;);
+  page.getContent().add(button);
+
+  var user = new qx.ui.mobile.form.TextField();
+  user.setPlaceholder(&quot;tap me!&quot;);
+  page.getContent().add(user);
+  
+  user.addListener(&quot;focus&quot;, function() {
+    button.exclude();
+  });
+  
+  user.addListener(&quot;blur&quot;, function() {
+    button.show();
+  });
+},this);
+
+this.getManager().addDetail(page);
+
+page.show();
+&lt;/code&gt;
+
+Try to tap into the input field. The input field fires an &quot;focus&quot; event, but it doesn&#39;t get the focus.
+
+One issue is the preventDefault fix on PointerCore:231
+https://github.com/qooxdoo/qooxdoo/blob/9c538544a17d4efb0d1a6c7279926f226c3cf16b/framework/source/class/qx/event/handler/PointerCore.js#L231</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40121</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-05-05 14:12:43 +0200</bug_when>
+            <thetext>The root problem of the issue is the event sequence for mobile safari (tested on an iPad). The focus event is based on the simulated mousedown event. But as our focus handling reacts on the pointer events which are fired before the simulated mouse events, the qooxdoo focus event is fired before the simulated mouse vents are fired. This means the handler in the sample removes the button and moves the input element. The simulated mouse event, which is the base for the focus event, is fired on the apps background instead of the input.
+Additionally, We prevented all default actions on simulated mouse events which ofc prevents the focus as well.
+
+So the fix was to remove the preventDefault and trigger the focus on pointerdown manually. 
+
+master: 5294f88c1f6959125038e1b122bb9a2c557612c6</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40127</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2014-05-05 16:44:10 +0200</bug_when>
+            <thetext>The issue still exists with my application. I create a better example to reproduce the issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40146</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-05-06 11:54:42 +0200</bug_when>
+            <thetext>Prevented the default of all simulated mouse events to make sure we ignore the native focus.
+
+master: 02f98cc19ab49ee5604f0cd4d24fb3efd86b664b</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40153</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2014-05-06 17:29:18 +0200</bug_when>
+            <thetext>After this fix...
+the Samsung Galaxy Note 10.1 shows no keyboard at all.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40201</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-05-13 09:58:25 +0200</bug_when>
+            <thetext>After a long an annoying debugging session, we decided to fall back to listening to mouse event in the focus handler which fixed the issues.
+
+master: 5457e6f438097fe1f3cae90d510f057c4b50503a</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

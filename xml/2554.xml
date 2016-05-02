@@ -1,0 +1,89 @@
+<bug>
+          <bug_id>2554</bug_id>
+          
+          <creation_ts>2009-07-07 14:13:00 +0200</creation_ts>
+          <short_desc>Themable properties not set before appear</short_desc>
+          <delta_ts>2010-11-15 09:10:30 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martin Wittemann">martin.wittemann</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          <cc>martin.wittemann</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10798</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-07-07 14:13:41 +0200</bug_when>
+            <thetext>During the recent work on the form validation, I realized that the error tooltip, which should be placed to the widget, will be placed to the mouse on the first time. The placeMethod &quot;mouse&quot; is the default and the desired value &quot;widget&quot; comes from the theme. The appearance of the tooltip will be changed with the setAppearance method right after the creation of the tooltip (qx.ui.tooltip.Manager Line 132).
+
+        this.__sharedErrorToolTip = new qx.ui.tooltip.ToolTip().set({
+          appearance: &quot;tooltip-error&quot;
+        });
+
+After digging deeper in the problem, I realized that it is a problem of the appearance system, which only applies the appearance properties on visible widgets. If the widget is not visible, the apply will be done some time later. (qx.ui.core.queue.Appearance Line 95)
+
+        // Only apply to currently visible widgets
+        if (Visibility.isVisible(obj)) {
+          obj.syncAppearance();
+        } else {
+          obj.$$stateChanges = true;
+        }
+
+
+Thats where the problem with the placeMethod comes in play. The widget is already open so the widget has been placed according to the old placeMethod, mouse. On the second appear of the error tooltip, the placeMethod has already been set to &quot;widget&quot; and everything works as expected.
+
+That could be a problem for all themeable properties which need to be available during opening the widget. So we should offer a way to force the queue to apply all the properties.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10817</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-07-09 09:53:40 +0200</bug_when>
+            <thetext>The solution is to sync the appearance manually. This can be done by using the syncAppearance method on the widget itself. That way, all properties will be set right after the call of the method.
+
+        this.__sharedErrorToolTip = new qx.ui.tooltip.ToolTip().set({
+          appearance: &quot;tooltip-error&quot;
+        });
+        this.__sharedErrorToolTip.syncAppearance();
+
+This will do the job.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10895</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-07-14 16:45:42 +0200</bug_when>
+            <thetext>Just want to note that calling this method influences performance negatively. The idea to not directly apply appearance was that even through initial setup there might be state changes which lead to another re-apply of the appearance. Nothing wrong with fixing it this way, but this should not be called to often ;)</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

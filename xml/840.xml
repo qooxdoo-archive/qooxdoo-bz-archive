@@ -1,0 +1,203 @@
+<bug>
+          <bug_id>840</bug_id>
+          
+          <creation_ts>2008-04-22 16:05:00 +0200</creation_ts>
+          <short_desc>Build without linefeeds can corrupt for-in loops</short_desc>
+          <delta_ts>2014-03-03 15:26:47 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.8-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Hugh Gibson">hgibson</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2975</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-04-22 16:05:14 +0200</bug_when>
+            <thetext>If you enable the flag APPLICATION_LINEBREAKS_BUILD = false in the makefile, some for-in loops are corrupted.
+
+Here&#39;s an example of the code:
+
+for(var $1 inthis.__m_dFieldControls){
+
+In this particular file there are two other for-in loops which are compiled correctly - one before and one after this one. They both iterate over members of &quot;this&quot;.
+
+I hit this when trying to use the testRunner - the compiled file has no linebreaks which means there was a Javascript error with my app.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2976</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-04-23 09:11:48 +0200</bug_when>
+            <thetext>By adding comments into the compiled output by editing the compiler, I&#39;ve traced this down to this block of code in compile.py starting at line 1110:
+
+    #
+    # OPEN: SECOND
+    ##################################
+
+    elif node.type == &quot;second&quot;:
+        # for loop
+        if node.parent.type == &quot;loop&quot; and node.parent.get(&quot;loopType&quot;) == &quot;FOR&quot;:
+            if not node.parent.hasChild(&quot;first&quot;):
+                write(&quot;(;&quot;)
+
+        # operation
+        elif node.parent.type == &quot;operation&quot;:
+            if node.isComplex():
+                # (?: hook operation)
+                if node.parent.get(&quot;operator&quot;) == &quot;HOOK&quot;:
+                    sep()
+                else:
+                    line()
+
+An &quot;IN&quot; statement has just been processed in compileToken and space() has been called to put a space after the &quot;in&quot; word. So global result ends in a space.
+
+Then line() is called in the above code. I can&#39;t see particularly why isComplex() is true at this point - other for loops with similar format aren&#39;t flagged as complex (perhaps it&#39;s due to the format of the body of the loop?)
+
+Anyway, line sets &quot;afterLine&quot; to true. Now, the next block of text is sent out via the write() function which has this snippet:
+
+    # strip remaining whitespaces
+    if (afterLine or afterBreak or afterDivider or afterArea) and result.endswith(&quot; &quot;):
+        result = result.rstrip()
+
+so the space is cleared from the end of result. However, the line is only inserted into the text if &quot;pretty&quot; is true. So, as we are omitting all lines, pretty is false, and the space has been removed.
+
+I&#39;ve tried various fixes for this. The first block of code can be changed like:
+
+            if node.isComplex():
+                # (?: hook operation) or IN
+                if node.parent.get(&quot;operator&quot;) in (&quot;HOOK&quot;, &quot;IN&quot;):
+                    sep()
+                else:
+                    line()
+
+which works OK. Alternatively, it might be perceived that the call to line() there should be protected by &quot;if pretty&quot;. If that is the case, there is another call to line() which is not protected at line 1008, in the block of code that starts with node.type == &quot;loop&quot;:
+
+As a final alternative, the removal of the space at the end of result could be wrong in write() because &quot;pretty&quot; isn&#39;t true. But that might end up giving lots of spaces.
+
+I won&#39;t provide a patch because I&#39;m not sure which option is more correct. I do know that the first option works for the particular cases I found here.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2977</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-04-23 16:03:05 +0200</bug_when>
+            <thetext>Actually, I found that the first fix I had proposed wasn&#39;t sufficient. sep() also gets rid of trailing spaces from the text. Therefore the fix that works is:
+
+        # operation
+        elif node.parent.type == &quot;operation&quot;:
+            if pretty and node.isComplex():
+                # (?: hook operation)
+                if node.parent.get(&quot;operator&quot;) == &quot;HOOK&quot;:
+                    sep()
+                else:
+                    line()
+
+i.e. adding a test on &quot;pretty&quot;. I&#39;m not sure if this will compromise other formats though. All I can say is that it works fine here with the no-line-feeds solution.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3246</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-06-10 09:24:21 +0200</bug_when>
+            <thetext>to Thomas</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3287</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-06-12 16:39:02 +0200</bug_when>
+            <thetext>to thomas</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3399</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-06-16 18:59:07 +0200</bug_when>
+            <thetext>Hugh,
+
+I know this is possibly non-trivial, but could you try to come up with a minimal code example that reproduces the bug? Or attach your application class that triggers it?
+
+Thanks,
+Thomas</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3418</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-06-17 14:34:00 +0200</bug_when>
+            <thetext>I dropped the following code into the skeleton from SVN, file application.js, &quot;main&quot; function. I edited the make file to set the qooxdoo path to ../../.. and added APPLICATION_LINEBREAKS_BUILD = false. 
+
+      var sList = [];
+      for (sField in sList // comment needed
+      )
+        {
+        }
+
+This created the code:
+
+...   var $3=[];for($2 in$3){}  ...
+
+There are a number of conditions necessary to create this problem: the closing bracket of the for loop has to be on the next line and a comment has to be on the same line as the for loop.
+
+I wouldn&#39;t normally write code formatted like that, but it&#39;s what the pretty printer did when rewriting code from 0.6.x to 0.7.x. In the case that triggered this bug report the code in 0.6.x was:
+
+   for (var sField in this.__m_dFieldControls)  // iterate through all controls
+
+which was rewritten to:
+
+         for (var sField in this.__m_dFieldControls      // iterate through all controls
+         )
+
+I hadn&#39;t bothered reporting this as an issue as I didn&#39;t think it would be a priority for you. Maybe I should have done - I can be very picky :-)
+
+Of course it&#39;s possible that people will write code with this format anyway; or some other layout will trigger the problem. So the underlying compilation problem needs to be fixed.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3991</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-07-21 19:15:30 +0200</bug_when>
+            <thetext>I&#39;ve applied Hugh&#39;s suggestion (the &#39;pretty&#39; test in the #OPEN SECOND section; r14701), but with similar tentativeness. The framework seems to run fine with it, let&#39;s see if follow-up issues occur.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39233</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:47 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

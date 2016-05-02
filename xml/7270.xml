@@ -1,0 +1,132 @@
+<bug>
+          <bug_id>7270</bug_id>
+          
+          <creation_ts>2013-02-27 12:00:00 +0100</creation_ts>
+          <short_desc>Move Compile Lint Checking from MClassDependencies.dependencies()</short_desc>
+          <delta_ts>2014-03-03 15:18:57 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>32375</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-27 12:00:52 +0100</bug_when>
+            <thetext>Currently, compile-type lint checking is done in MClassCode.tree(), so is 
+executed everytime this method is called. But this was a compromise, as the 
+lint checks need a class list and this was readily available in 
+MClassCode.tree. 
+
+In hindsight, it seems much cleaner to move the lint check up to the main 
+caller of MClassCode.tree(). Top-level actions like &#39;log&#39; or &#39;compile&#39; have to 
+handle the class list as well, and might have different requirements what to 
+pass in to the Lint checks (e.g. with which config) and can better decide if 
+and when to do that (see e.g. bug#7269).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32376</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-27 12:13:54 +0100</bug_when>
+            <thetext>The current class is actually MClassDependencies, equally ill-suited, but for 
+the same reason (availability of a class list).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32378</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-27 12:59:32 +0100</bug_when>
+            <thetext>Another advantage with moving lint checking out of MClassDependencies is that 
+it is then independent of caching. The lint warnings can be shown everytime 
+when e.g. runCompiled() is run, independent of whether dependency information 
+is from cache or calculated afresh.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32379</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-27 13:05:24 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; Another advantage with moving lint checking out of MClassDependencies is that 
+ it is then independent of caching. The lint warnings can be shown everytime  
+when e.g. runCompiled() is run, independent of whether dependency information  
+is from cache or calculated afresh.
+
+As a down-side, runCompiled() now takes longer to complete, as lint check 
+results are not cached.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32381</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-27 16:39:20 +0100</bug_when>
+            <thetext>Moved compile-time lint checking to CodeGenerator.runCompiled(). Removed code 
+from MClassCode and MClassDependencies.
+
+This might result in no compile-lint checking being done for other top-level 
+actions (like runLogDependencies), which were afflicted with it automatically 
+in the past.  But it might not be desireable for them anyway, and can be 
+re-added on the level of the action if need be.
+
+master: 9689a1b</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33466</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-07-23 15:26:41 +0200</bug_when>
+            <thetext>NB:
+In the course of speeding up lint checking during compile jobs (bug#7279) the 
+whole issue was re-worked. Compile-time &quot;linting&quot; was split up in two check 
+groups,
+(a) one for just unknown symbols, and
+(b) one for the rest of the compile-time lint checks (duplicate map keys, ...).
+
+This appeared sensible as there are different requirements for the two. (b) can 
+be restricted to library-local classes; it&#39;s enough to do it at parse time; and 
+it&#39;s easy and safe to cache. (a) is much more critcial as the functionality of 
+the apps hinge on it; it has to be done on every build run; and it has to 
+include all involved libraries (dependencies of libraries might have changed). 
+
+Both wound up in DependencyLoader. Globals checking (a) is back to class list 
+exploration where it once was. One important insight was that you don&#39;t need 
+the finished app class list to check for unknowns, the lib class list suffices. 
+(b)-type checks are done through MClassCode#lint_warnings.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36286</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:18:57 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,193 @@
+<bug>
+          <bug_id>5660</bug_id>
+          
+          <creation_ts>2011-09-28 18:47:00 +0200</creation_ts>
+          <short_desc>.getInstance() Call Introduces Dependencies of &#39;construct&#39; Member</short_desc>
+          <delta_ts>2014-03-03 15:24:32 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.dependencies</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.6</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>christian.hagendorn</cc>
+    
+    <cc>daniel.kloeters</cc>
+    
+    <cc>Matthias.Hellriegel</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>27028</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-09-28 18:47:24 +0200</bug_when>
+            <thetext>Calling the .getInstance() of a static class introduces a dependency on its 
+&#39;construct&#39; member. But when the generator follows recursive load deps over a 
+.getInstance() call, the &#39;construct&#39; deps of the static class are not being 
+picked up.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27029</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-09-28 18:51:29 +0200</bug_when>
+            <thetext>An example is when an application loads qx.locale.Date:
+
+qx.locale.Date -&gt; __mgr : qx.locale.Manager.getInstance() -&gt; 
+qx.locale.Manager.construct -&gt; qx.core.Environment.get(&quot;locale&quot;) -&gt; 
+qx.bom.client.Locale
+
+The load dependency to qx.locale.Manager is discovered, the dep to 
+qx.bom.client.Locale is not.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27030</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-09-28 19:18:47 +0200</bug_when>
+            <thetext>Checked in a tenative fix. In MClassDependencies._analyzeClassDepsNode, patch 
+classAttribute to &#39;construct&#39; if &#39;getInstance&#39; is discovered. 
+
+The check for &#39;getInstance&#39; in MClassDependencies.findClassForFeature is then 
+not necessary anymore, as it will not occur. Earlier, the lookup chain was in 
+this case redirected to qx.Class.getInstance. But the implementation there does 
+not contribute any significant new dependencies. The only exception is the call 
+&quot;new this&quot;, which unfortunately was not being related to the child&#39;s 
+&#39;construct&#39; member.
+
+With r28818.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27060</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-09-29 18:47:05 +0200</bug_when>
+            <thetext>My fix from yesterday doesn&#39;t seem to work. I think it was an overly optimistic 
+heuristic, to map every occurrence of a &#39;getInstance&#39; call to the &#39;construct&#39; 
+of the corresponding class. There are way too many (thinkable and existing, 
+just check the framework) exceptions to this rule, which would lead dependency 
+detection on the totally  wrong path. So much for pimping the automatic 
+detection...
+
+So I reverted those changes (I should still re-consider mapping &#39;getInstance&#39; 
+to qx.Class in MClassDependencies.findClassForFeature; I&#39;m keeping this bug 
+open for that).
+
+Instead, I fixed the missing dependency directly in the referring class, 
+qx.locale.Date, using
+
+   #require(qx.bom.client.Locale)
+
+The point here is that this is actually a dependency of 
+*qx.locale.Manager.construct*, which is &quot;lifted&quot; to load-time by qx.locale.Date.
+
+This might evolve as a general practice, to #require the deps of a singleton&#39;s 
+&quot;construct&quot; member, when its .getInstance() method is called in load-time 
+position. It is not necessary in run-time position, because the &#39;construct&#39;s 
+run-time deps are fullfilled anyway. So you&#39;ll never have to use 
+#use(qx.bom.client.Locale) etc.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27230</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-10-17 16:40:09 +0200</bug_when>
+            <thetext>A new whack at the issue, re-introducing a mapping of .getInstance to 
+.construct in MClassDependencies.findClassForFeature, but filtered on singleton 
+classes.
+
+Chris, Daniel, could you check on your side things work out?!
+
+With r28937.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27233</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-10-17 16:50:30 +0200</bug_when>
+            <thetext>REPRO:
+
+ There is no simple test app that fails or succeeds depending on this bug being 
+fixed. I use a skeleton that uses
+
+     foo : qx.locale.Manager.getInstance(),
+
+(mimicking the situation in qx.locale.Date), and then check that 
+qx.bom.client.Locale is a &#39;load&#39; dep of the app class.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27242</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-10-18 15:56:25 +0200</bug_when>
+            <thetext>I&#39;m closing this, as Chris or Daniel can re-open it when they try to verify and 
+it fails.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27290</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-10-21 12:33:00 +0200</bug_when>
+            <thetext>The issue reappears when you use 
+
+  foo : qx.locale.Manager.tr(&quot;Bar&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27314</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-10-24 17:52:38 +0200</bug_when>
+            <thetext>This was a very good one, concerning the dependencies introduced by feature 
+keys.
+
+Through the handling of the feature keys, the implementing class/method was 
+detected as a dependency alright. E.g. in the case of qx.locale.Manager.tr -&gt; 
+qx.locale.Manager.create -&gt; qx.com.client.Locale. But the two referenced 
+methods in this check class, .getLocale and .getVariant, where taken as bare 
+function references, and at this point the recursive dependency analysis stops. 
+It was like saying
+
+   foo : qx.bom.client.Locale.getVariant,
+
+which doesn&#39;t need any further recursive exploration. But fact is that these 
+check implementations are actually being *called* when their key is used in 
+qx.core.Environment.get(). So their references have to be treated like calls, 
+and 
+
+generator.code.clazz.MClassDependencies, l382:
+
+   depsItem.isCall = True
+
+fixed this :).
+
+With r28979.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38421</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:32 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

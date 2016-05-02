@@ -1,0 +1,74 @@
+<bug>
+          <bug_id>8393</bug_id>
+          
+          <creation_ts>2014-05-30 15:04:00 +0200</creation_ts>
+          <short_desc>No tap events when moving the mouse while clicking</short_desc>
+          <delta_ts>2014-06-02 14:10:07 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Daniel Wagner">daniel.wagner</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          <cf_browser_version>10</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>40434</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2014-05-30 15:04:52 +0200</bug_when>
+            <thetext>In IE 10, no tap events are fired if the mouse is moved at all between pressing and releasing the button.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40435</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2014-05-30 15:13:55 +0200</bug_when>
+            <thetext>There were two problems here:
+
+1) qx.event.handler.GestureCore._isBelowTapMaxDistance used the pointerType property to get the maximum allowed pixel distance between pointerdown and pointerup events. In IE 10, the value of this property is an integer, not a string as expected. That&#39;s why the check behaved as if the max distance was 0 and no events were fired unless pointerdown and pointerup occurred at the exact same coordinates. Fixed by using the cross-browser getPointerType method instead (with b1097e36ab611d1a231889ff7fb80e4b5efcf169 on master).
+
+2) The browser always fires click events, no matter how far apart the mousedown and mouseup events occurred. So our max distance of 10 pixels feels very small, e.g. when you&#39;re moving the cursor down a list of items and clicking each: If your cursor isn&#39;t very slow, no items will be selected. I increased the max distance to 25 pixels but even that isn&#39;t really enough. We should verify if we really need the distance check, at least when a mouse is used.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40443</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2014-06-02 13:09:34 +0200</bug_when>
+            <thetext>Even removing the max distance check has no effect since there&#39;s another check in GestureCore.gestureFinish that aborts the gesture if the target differs from the one in gesturestart. This is like the native behavior of the &#39;click&#39; event, however a click is always fired on the document.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40444</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2014-06-02 14:10:07 +0200</bug_when>
+            <thetext>We decided to keep the target check since it&#39;s the correct behavior, even if it means sacrificing a small bit of user convenience. Also further increased the max distance value to 50 pixels for the mouse (with 57a3221855c052c2a7c7aff6e04b3bb3b89b8a55).</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

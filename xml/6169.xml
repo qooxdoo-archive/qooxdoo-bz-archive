@@ -1,0 +1,244 @@
+<bug>
+          <bug_id>6169</bug_id>
+          
+          <creation_ts>2012-02-27 14:34:00 +0100</creation_ts>
+          <short_desc>Unclear dependency from qx.lang.Json to qx.core.GlobalError</short_desc>
+          <delta_ts>2014-03-03 15:21:16 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.dependencies</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martin Wittemann">martin.wittemann</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>28648</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-02-27 14:34:17 +0100</bug_when>
+            <thetext>In the current implementation of the storage library, we do have some unclear dependencies which seems to pull in too much classes and with that too much code. I committed the current state with b27ae61143c90bd998b080cf850a63237d18ed4a.
+
+In the end, the library should not contain a reference to qx.Class.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28649</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-02-27 14:45:56 +0100</bug_when>
+            <thetext>I have seen a strange behavior when playing with the json environment key and the excludes. Excluding the JsonImpl class does not have the same effect as setting the json environment key to true.
+
+Same is true for for the global error stuff used in qx.lang.Function (Line 265). Using the exclude key seems only to remove the class itself but not its dependencies. Putting the code into a comment also removes the dependencies and reduces the classes in the build.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28657</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-02-28 09:31:40 +0100</bug_when>
+            <thetext>I found a workaround for my issue by adding an environment check in qx.lang.Function which removed the dependency to qx.event.GlobalError when qx.globalErrorHandling is disabled. This solved my problem but the general issue still exists.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32988</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-06-18 20:15:15 +0200</bug_when>
+            <thetext>While I understand the general intention of the bug, I find it difficult to see 
+the criteria you are looking for. Could you give me an update of the concrete 
+features of the storage library that you want / don&#39;t want to see:
+
+- config:
+  - environment:
+    - json : true (?? - there doesn&#39;t seem to be any documentation on the 
+&#39;json&#39; environment key!?)
+    - qx.GlobalErrorHandling : false (?)
+
+  - exclude:
+    - qx.event.GlobalError (?!)
+
+- qx.lang.Function:
+  - line 265 is a comment !?
+  - qx.event.GlobalError guarded by 
+qx.core.Environment.get(&quot;qx.GlobalErrorHandling&quot;) (?! - there is no commit hash 
+for this change)
+  - @ignore(qx.event.GlobalError.*)  (?)
+
+- build:
+  - no qx.Class
+  - no qx.lang.JsonImpl
+  - no qx.event.GlobalError
+  - with qx.lang.Json (? - what has this all to do with qx.lang.Json?)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32992</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-06-19 09:52:02 +0200</bug_when>
+            <thetext>So, talking with Martin here are a few clarifications:
+
+- The ultimate goal is to get rid of dependencies to qx.Class.
+- In consequence, this means to get rid of qx.event.GlobalError.
+- In consequence, the dependency to qx.lang.Function has to be controlled, 
+and/or its dependency to qx.event.GlobalError (which is used in one place).
+
+- Config:
+  -  env/json : true  -- should remain; it pretends the runtime has a Json 
+implementation.
+  - env/qx.GlobalErrorHandling : false -- should remain
+  - exclude : qx.event.GlobalError  -- drop; this should not be necessary.
+
+- Code:
+  - qx.lang.Function: 
+    - @ignore(GlobalError.*) -- drop; This could actually mutilate other builds 
+that use Function.
+    - create():  qx.core.Environment.get call around GlobalError -- should 
+remain (makes sense anyway).
+  - qx.lang.JsonImpl
+    - construct():  has a hard dependency to qx.lang.Function.
+
+- build:
+  - no qx.Class
+  - no qx.lang.JsonImpl
+  - no qx.event.GlobalError
+  - ok qx.lang.Function
+  - ok qx.lang.Json
+
+Potential misbehavior:
+- config/evn/json:true -&gt; JsonImpl gone, but qx.lang.Function still in
+- static optimization removes qx.lang.Function#create, but leaves 
+qx.event.GlobalError in</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33070</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-06-21 15:28:04 +0200</bug_when>
+            <thetext>qx.event.GlobalError is now not included, not even when removing the explicit 
+&quot;exclude&quot; key from the config, and removing the explicit @ignore from 
+qx.lang.Function.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33074</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-06-24 07:52:20 +0200</bug_when>
+            <thetext>Did you try to use the hash I mentioned in the bugs description to reproduce it? Maybe the issue is already fixed in master.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33082</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-06-24 10:09:37 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; Did you try to use the hash I mentioned in the bugs description to reproduce
+&gt; it? 
+
+No.
+
+&gt; Maybe the issue is already fixed in master.
+
+Sure.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33083</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-06-24 10:13:38 +0200</bug_when>
+            <thetext>One of the issues involved is that the hook operator in qx.lang.Json
+
+  JSON : qx.core.Environment.get(&quot;json&quot;) ? window.JSON : new qx.lang.JsonImpl()
+
+is not being optimized under json:true, so the dependency to qx.lang.JsonImpl stays in.
+
+As this is more of an enhancement (and requires deeper re-writing of the code), re-targeted to 3.0.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33094</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-06-25 11:34:24 +0200</bug_when>
+            <thetext>Fixed, according to the earlier discussion. Here is a summary of the outcomes:
+
+config:
+  - json : true
+  - qx.GlobalErrorHandling : false
+  - no &#39;exclude&#39;
+
+framework classes:
+  - qx.lang.Function: no @ignore(qx.event.GlobalError.*)
+
+build:
+  - no qx.Class
+  - no qx.lang.JsonImpl
+  - no qx.event.GlobalError
+  - no qx.lang.Function
+  - qx.lang.Json
+
+&#39;statics&#39; optimization is re-enabled. The mentioned misbehaviors cannot be 
+observed anymore.
+
+master: 34ea54e</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33107</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2013-06-26 10:08:41 +0200</bug_when>
+            <thetext>Commit 77c4db0 caused qx.Class to be included in qxWeb builds. This can be verified by running the qxWeb test test.Basic:testDependencies.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33113</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-06-26 11:53:31 +0200</bug_when>
+            <thetext>component/standalone/website/module.json now also needs an 
+qx.globalErrorHandling:false env setting.
+
+master: bb62884</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33117</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2013-06-27 09:21:46 +0200</bug_when>
+            <thetext>qx.test.util.DateFormat:testPattern_w_ fails (build version only) and git bisect tells me it&#39;s caused by commit 03bc7b1. Could you please look into this, Thomas?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33118</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-06-27 12:28:43 +0200</bug_when>
+            <thetext>(In reply to comment #12)
+&gt; qx.test.util.DateFormat:testPattern_w_ fails (build version only) and git 
+&gt; bisect tells me it&#39;s caused by commit 03bc7b1. Could you please look 
+&gt; into this, Thomas?
+
+The above commit introduced AST reducing on entire class trees, which uncovered 
+an old bug in the parser where the syntax tree for division operations was 
+constructed wrongly. - Good catch!
+
+master:  d6b2802</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37225</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:16 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

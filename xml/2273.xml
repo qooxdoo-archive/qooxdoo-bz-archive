@@ -1,0 +1,132 @@
+<bug>
+          <bug_id>2273</bug_id>
+          
+          <creation_ts>2009-04-21 20:15:00 +0200</creation_ts>
+          <short_desc>Not enough informations in the qx.data.Array change event</short_desc>
+          <delta_ts>2014-03-03 15:24:05 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Benoît Collignon">b.collignon</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9440</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2009-04-21 20:15:00 +0200</bug_when>
+            <thetext>Hello,
+
+I&#39;m using the new data binding features and I think the change Event should have more datas.
+
+Indeed, the big advantage of binding datas (that include the MEventBubbling functionalities allow to widget/object controllers) is we know what happens when operations are performed and all can be abstracted &quot;without making some specific code happen&quot;. 
+
+I currently work on an abstract Store that can handle an array of &quot;Model Instances&quot; (I have created a model singleton class that can create instances or &quot;load&quot; datas inside generic &quot;model_instance&quot; classes using some &quot;model definitions&quot; - I don&#39;t know if it is clear).
+
+When an update is performed on an item of the array, we know we can call the function &quot;update()&quot; to the items thanks to the _applyEventPropagation function.
+
+But when we add or remove some items, we don&#39;t know what to remove or add from the data model with the data passed in the &quot;change&quot; event.
+
+In order to do so, I have created my own array class that inherits from qx.data.Array and that modifies the behaviour of the splice function. But Maybe it would be nicer to add in the &quot;item&quot; element of the change event&#39;s Data map what is added and or removed (items from the main qx.data.Array) in the future ?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9442</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-04-22 10:11:12 +0200</bug_when>
+            <thetext>@Martin, wouldn&#39;t it be possible to include that info (i.e. added or removed items) with the data event?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9443</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-04-22 10:14:43 +0200</bug_when>
+            <thetext>Regarding &#39;generic &quot;model_instance&quot; classes using some &quot;model
+definitions&quot;&#39;, both of you might want to discuss this directly, in case that is (in part) already offered by the current data binding (i.e. by auto-generating models)??</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9476</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-04-22 14:26:51 +0200</bug_when>
+            <thetext>I&#39;ll take a look if i can integrate the removed and added items in the data of the event.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9482</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-04-22 15:14:07 +0200</bug_when>
+            <thetext>Fixed in revision 18828. 
+I added a items key to the data in the event. This items field will hold either null or an array of items which has been added or removed. Only the splice function can have both, add and remove at the same time and therefore within the same event. As i have checkt the behavior of the native array, only the removed items are contained in the return array and therefore in the array in the event.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9662</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2009-04-25 08:40:07 +0200</bug_when>
+            <thetext>@Martin : Thanks for your quick changes !
+
+@Andreas Ecker :
+
+(In reply to comment #2)
+&gt; Regarding &#39;generic &quot;model_instance&quot; classes using some &quot;model
+&gt; definitions&quot;&#39;, both of you might want to discuss this directly, in case that is
+&gt; (in part) already offered by the current data binding (i.e. by auto-generating
+&gt; models)??
+&gt; 
+
+ In fact, there are some problems in the current way of &quot;auto-generation&quot;. It doesn&#39;t and can&#39;t take into account the validation rules of the model because it is created using the provided data map/json element.
+
+In my model definitions, I introduce some &quot;Fields&quot; that can handle the validation process.
+
+The model definition class extend an abstract model view with methods like load, remove or update (in fact I use it in connexion with a simple rpc to do some modifications a remote database). 
+
+So &quot;my model&quot; should be more considered as a sort of remote ORM (but really simple at this stage). 
+
+The &quot;model_instances&quot; class is defined inside the code of the abstract model class using the &quot;model definition&quot;.
+
+I needed of this modification in the qx.data.Array class because I also have created an &quot;abstract store&quot; that use the model definition as parameter of the construct method (and a &quot;where, order_by, ...&quot; map condition also).
+
+I&#39;m using it in a conjunction with a table widget and use the relevant listeners to know what to do on the &quot;store&quot; (as the table controller doesn&#39;t exist yet and It would be stupid implement things that are on your &quot;todo list&quot; :-) ). The advantage is we work on the store but not on the data directly as the splice is propagated on the data array. So that&#39;s why I needed of theses infos in the map of changeEvent data.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9678</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-04-27 11:21:48 +0200</bug_when>
+            <thetext>Thanks for the detailed explanation. Its always interesting to see how the components are use in ways we never expected. :)
+I did take a note for the validation rule problem. We will think of that the next time we work on the data store layer.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38257</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:05 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

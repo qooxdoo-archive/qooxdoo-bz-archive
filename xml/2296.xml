@@ -1,0 +1,198 @@
+<bug>
+          <bug_id>2296</bug_id>
+          
+          <creation_ts>2009-04-23 19:54:00 +0200</creation_ts>
+          <short_desc>Problem creating resourceURI when the uri is http://server.domain.com</short_desc>
+          <delta_ts>2014-03-03 15:26:19 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>0.8.2</version>
+          <rep_platform>Firefox 3.0</rep_platform>
+          <op_sys>Linux</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Jean-Noel Rivasseau">elvanor</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>3</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9563</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2009-04-23 19:54:12 +0200</bug_when>
+            <thetext>If you use something like this in config.json:
+
+        {
+			&quot;manifest&quot; : &quot;Manifest.json&quot;,
+			&quot;uri&quot;: &quot;http://server.domain.com/js/editor/&quot;
+        },
+
+you get wrongly generated resourceURIs in the loader script (The &quot;:&quot; is url encoded into %3A, which makes Firefox unable to load stuff).
+
+According to a discussion in the ML this url encoding is not the problem, but I *much* doubt it: if I replace the %3A in the loader by just &quot;:&quot; everything works.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9570</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-23 23:13:41 +0200</bug_when>
+            <thetext>The reporter tested with FF 3.0.8 on Linux, his colleague with Safari on OS X, with same results.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9571</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-23 23:34:13 +0200</bug_when>
+            <thetext>My tests (on Linux and WinXP) show that the second slash is missing after both http:/ and http%3A/ .</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9572</commentid>
+              <attachid>491</attachid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2009-04-24 00:08:40 +0200</bug_when>
+            <thetext>Created attachment 491
+config.json
+
+Are you using trunk? How can our results differ? I attach my config.json file for reference</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9573</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-24 00:24:48 +0200</bug_when>
+            <thetext>As for the missing slash:
+This happens in _computeResourceUri(). If this is fixed, both slashes are retained, and the class URIs work fine.
+
+As for resource URIs: 
+In my tests, the Base URL is prepended to the resourceUri, giving something like http://server/a/b/http%3//server/c/d/...
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9616</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-24 14:24:30 +0200</bug_when>
+            <thetext>Have commited a change (r18878) that seems to fix both issues:
+
+- lib uris which are complete (having scheme indicator, netlock,..) are 
+processed without loosing an initial slash. This was due to being too much path 
+oriented.
+
+- url encoding is applied less aggressive (urllib.quote seems to overshoot in 
+this respect). url encoding is applied only to the path part of a uri, so 
+everything that comes after &quot;http://server.some.thing&quot;. This works fine in all 
+major browsers.
+
+The relevant RFC&#39;s seem to state that url encoding might be applied to any part 
+of the uri, as long as you preserve the syntactic separators, which would be 
+&#39;:&#39;, &#39;//&#39; and &#39;:&#39; in our case. But it appears for domain names there is a 
+separate standard in place (IDN, Punycode), to encode characters outside 7-bit 
+ASCII, so I leave it at that.
+
+Will check the reporter&#39;s attachment now.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9617</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-24 14:43:35 +0200</bug_when>
+            <thetext>NB: All major browsers (FF3, IE7, Opera9, Webkit(curr)) suffer from encoding 
+http:// into http%3A//. The http url scheme is not recognized, and such urls 
+are treated as relative from the base url.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9620</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-24 15:32:19 +0200</bug_when>
+            <thetext>I tested the attached config.json in a 0.8.2 gui skeleton, and, indeed, there 
+was only the &#39;:&#39; encoding issue, not the single slash issue. So the second 
+issue must have been introduced after 0.8.2 in the trunk.
+
+After the fix, both occurrences or URIs (qxlibraries and qx.$$loader.uris) are 
+now treated uniformly. (The second occurrence will disappear in the current 
+form when bug#1648 is implemented).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9621</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-24 15:32:21 +0200</bug_when>
+            <thetext>I&#39;m closing this bug as it seems to be fixed in trunk. For 0.8.2 there seems 
+only to be a work-around in post-processing the source load script and 
+replacing %3A occurrences with &#39;:&#39;. You can do this in a separate job that is 
+automatically run after the &#39;source&#39; job, so you don&#39;t have to do it by hand.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39072</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:19 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>491</attachid>
+            <date>2009-04-24 00:08:00 +0200</date>
+            <delta_ts>2009-04-24 00:08:40 +0200</delta_ts>
+            <desc>config.json</desc>
+            <filename>config.json</filename>
+            <type>application/octet-stream</type>
+            <size>1846</size>
+            <attacher>elvanor</attacher>
+            
+              <data encoding="base64">ewogICJuYW1lIiAgICA6ICJlZGl0b3IiLAoKICAiaW5jbHVkZSIgOgogIFsKICAgIHsKICAgICAg
+InBhdGgiIDogIiR7UU9PWERPT19QQVRIfS90b29sL2RhdGEvY29uZmlnL2FwcGxpY2F0aW9uLmpz
+b24iCiAgICB9CiAgXSwKCiAgImV4cG9ydCIgOgogIFsKICAgICJhcGkiLAogICAgImJ1aWxkIiwK
+ICAgICJjbGVhbiIsCiAgICAiZGlzdGNsZWFuIiwKICAgICJmaXgiLAogICAgImluc3BlY3RvciIs
+CiAgICAibGludCIsCiAgICAibWlncmF0aW9uIiwKICAgICJwcmV0dHkiLAogICAgInByb2ZpbGlu
+ZyIsCiAgICAic291cmNlIiwKICAgICJzb3VyY2UtYWxsIiwKICAgICJ0ZXN0IiwKICAgICJ0ZXN0
+LXNvdXJjZSIsCiAgICAidHJhbnNsYXRpb24iCiAgXSwKCiAgImxldCIgOgogIHsKICAgICJBUFBM
+SUNBVElPTiIgIDogImVkaXRvciIsCiAgICAiUU9PWERPT19QQVRIIiA6ICIvb3B0L3Fvb3hkb28v
+IiwKICAgICJRWFRIRU1FIiAgICAgIDogImVkaXRvci50aGVtZS5UaGVtZSIsCiAgICAiQVBJX0VY
+Q0xVREUiICA6IFsicXgubGVnYWN5LioiLCJxeC50ZXN0LioiXSwKICAgICJMT0NBTEVTIiAgICAg
+IDogWyAiZW4iIF0sCiAgICAiUk9PVCIgICAgICAgICA6ICIuIgogIH0sCgogIC8vIFlvdSBvbmx5
+IG5lZWQgdG8gZWRpdCB0aGUgcmVtYWluZGVyIG9mIHRoaXMgZmlsZSwgaWYgeW91IHdhbnQgdG8g
+Y3VzdG9taXplCiAgLy8gc3BlY2lmaWMgam9icywgb3IgYWRkIG93biBqb2IgZGVmaW5pdGlvbnMu
+CgogCiAgImpvYnMiIDoKICB7CiAgICAvLyBVbmNvbW1lbnQgdGhlIGZvbGxvd2luZyBlbnRyeSB0
+byBhZGQgYSBjb250cmliIG9yIGxpYnJhcnkgdG8geW91cgogICAgLy8gcHJvamVjdDsgbWFrZSBz
+dXJlIHRvIGFkYXB0IHRoZSBwYXRoIHRvIHRoZSBNYW5pZmVzdC5qc29uOyBpZiB5b3UgYXJlCiAg
+ICAvLyB1c2luZyBhIGNvbnRyaWI6IGxpYnJhcnksIGl0IHdpbGwgYmUgZG93bmxvYWRlZCBpbnRv
+IHRoZSBwYXRoIHNwZWNpZmllZAogICAgLy8gYnkgdGhlICdjYWNoZS9kb3dubG9hZHMnIGNvbmZp
+ZyBrZXkKICAgICJsaWJyYXJpZXMiIDogCiAgICB7CiAgICAgICJsaWJyYXJ5IiA6CiAgICAgIFsK
+ICAgICAgICB7CgkJCSJtYW5pZmVzdCIgOiAiTWFuaWZlc3QuanNvbiIsCgkJCSJ1cmkiOiAiaHR0
+cDovL3N0YXRpYy5leGFtcGxlLm5ldC9qcy9lZGl0b3IvIgogICAgICAgIH0sCgogICAgICAgIHsK
+ICAgICAgICAgICJtYW5pZmVzdCIgOiAiJHtRT09YRE9PX1BBVEh9ZnJhbWV3b3JrL01hbmlmZXN0
+Lmpzb24iLAogICAgICAgICAgInVyaSIgICAgICA6ICJodHRwOi8vc3RhdGljLmV4YW1wbGUubmV0
+L3Fvb3hkb28vZnJhbWV3b3JrLyIKICAgICAgICB9CiAgICAgIF0KICAgIH0sCgogICAgLy8gSWYg
+eW91IHdhbnQgdG8gdHdlYWsgYSBqb2Igc2V0dGluZywgc2VlIHRoZSBmb2xsb3dpbmcgc2FtcGxl
+IHdoZXJlCiAgICAvLyB0aGUgImZvcm1hdCIgZmVhdHVyZSBvZiB0aGUgImJ1aWxkLXNjcmlwdCIg
+am9iIGlzIG92ZXJyaWRkZW4uCiAgICAvLyBUbyBzZWUgYSBsaXN0IG9mIGF2YWlsYWJsZSBqb2Jz
+LCBpbnZva2UgJ2dlbmVyYXRlLnB5IHgnLgogICAgImJ1aWxkLXNjcmlwdCIgOgogICAgewogICAg
+ICAiY29tcGlsZS1kaXN0IiA6IAogICAgICB7CiAgICAgICAgImNvZGUiIDoKICAgICAgICB7CiAg
+ICAgICAgICAiZm9ybWF0IiA6IGZhbHNlCiAgICAgICAgfQogICAgICB9CiAgICB9LAoKICAgICJi
+dXNkZnNkcmlwdCIgOgogICAgewogICAgICAiY29tcGlsZS1kaXN0IiA6IAogICAgICB7CiAgICAg
+ICAgImNvZGUiIDoKICAgICAgICB7CiAgICAgICAgICAiZm9ybWF0IiA6IGZhbHNlCiAgICAgICAg
+fQogICAgICB9CiAgICB9CiAgfQp9Cg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

@@ -1,0 +1,523 @@
+<bug>
+          <bug_id>2161</bug_id>
+          
+          <creation_ts>2009-03-25 19:39:00 +0100</creation_ts>
+          <short_desc>IE8: support console.* methods</short_desc>
+          <delta_ts>2012-05-16 09:37:19 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>0.7.3</version>
+          <rep_platform>IE 8</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://msdn.microsoft.com/en-us/library/dd565625(VS.85).aspx#_immw</bug_file_loc>
+          
+          
+          <priority>P5</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>0.7.5</target_milestone>
+          
+          <blocked>1434</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Helder Magalhães">helder.magalhaes</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          <cf_browser_version>8</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>8925</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-03-25 19:39:57 +0100</bug_when>
+            <thetext>Now that IE was released in the wild, it would be great to take advantage of it&#39;s console (Firebug-like) support.
+
+While qooxdoo has long supported IE debugging by creating an additional window, supporting the native console.* methods would be nicer, not only for performance but also for stability reasons: for example, I&#39;ve noticed a few issues with IE7 while unloading a qooxdoo application with debug enabled.
+
+For compatibility with previous IE versions, console methods should be detected and the legacy debugging window should be used as a fallback.
+
+I&#39;m reporting this as seen in 0.7.x and didn&#39;t double check for 0.8.x, reason why qooxdoo version wasn&#39;t specified.
+
+Note: according to a few quick tests, performance seems to suffer a bit after a few dozen console messages so this should be better evaluated.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8926</commentid>
+              <attachid>479</attachid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-03-25 19:41:56 +0100</bug_when>
+            <thetext>Created attachment 479
+Test case</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8930</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-03-26 09:05:25 +0100</bug_when>
+            <thetext>This is already supported with qooxdoo 0.8.2. So the bug is specific to 0.7.x. Fixed that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8971</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-03-27 08:47:10 +0100</bug_when>
+            <thetext>To me.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10505</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-06-23 11:19:01 +0200</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10515</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-06-23 14:56:01 +0200</bug_when>
+            <thetext>Fixed in legacy with r19407.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10518</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-06-23 15:38:28 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Fixed in legacy with r19407.
+
+Cool! :-)
+
+I&#39;ve changed the target to 0.7.5 so this may (more easily) be filtered and possibly added to the release notes. ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10522</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-06-23 18:44:52 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; I&#39;ve changed the target to 0.7.5 so this may (more easily) be filtered and
+&gt; possibly added to the release notes. ;-)
+
+After a bit of testing+thinking, I came up with a couple of things which made me reopen this issue.
+
+
+1. The Firebug and window appenders are cleared whenever the page is reloaded (both seems to be due to the side-effect of the reload, not exactly a &quot;feature&quot;). I&#39;ve tried loading the API documentation and made a reload in IE8 and the console contents were not cleared while reloading. So, in order to keep consistency, I&#39;d propose something like:
+
+if(console.clear) {
+  console.clear();
+}
+
+That would make sense in the class constructor in the first logged message. Note that I&#39;m not sure if this may sound aggressive: it might clear valuable messages placed by other frameworks which may be using the console object prior to qooxdoo (and therefore cause negative interference). If one feels like it&#39;s OK as-is (current implementation), then please simply mark the issue fixed again. ;-)  Also, note that I haven&#39;t tested it this applies to the trunk version also (only tested the fresh legacy branch commit).
+
+
+2. Another implementation thought: I&#39;ve that currently noticed that the implementation is something like (for each log level):
+
++          case log.LEVEL_INFO:
++            if (console.info) {
++              console.info(msg);
++            }
++
++            break;
+
+This means that, if a given console method isn&#39;t available (in the given example, &quot;console.info&quot;), the message will *not* be logged at all, which is hardly acceptable. :-|  I&#39;d propose a general fallback or an initial detection of which console methods are available. ;-)
+
+
+3. Finally, if the release notes refer this feature, I&#39;d suggest adding something to clear up the console object availability in IE8: only when the &quot;Developer Tools&quot; window is displayed. If the &quot;Developer Tools&quot; window isn&#39;t displayed, the usual window appender is used. :-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10543</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-06-24 12:50:38 +0200</bug_when>
+            <thetext>Helder, thank you for your hints.
+
+1) I think your suggestion is no problem to implement it in qx 0.7.x (legacy) for 0.8.x (trunk) I have to check it first.  
+
+2) Yes, thats right if the console dosen&#39;t support the method, the message will not be logged. A fallback isn&#39;t possible to implement, because we have only one appender on runtime. I think an initial method detection is a good idea and I will implement this.
+
+3) This is crazy, I haven&#39;t noticed that. When I have tested the console, always the console from the &quot;Developer Tools&quot; was used. It seems to me that the console object is available when the &quot;Developer Tools&quot; is opened the first time.  </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10544</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-06-24 13:47:27 +0200</bug_when>
+            <thetext>Implemented the changes in legacy with r19424.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10570</commentid>
+              <attachid>536</attachid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-06-25 12:27:24 +0200</bug_when>
+            <thetext>Created attachment 536
+Internet Explorer 8 - Console not available before opening Developer Tools
+
+(In reply to comment #8)
+&gt; Helder, thank you for your hints.
+
+:-)
+
+
+&gt; 1) I think your suggestion is no problem to implement it in qx 0.7.x (legacy)
+&gt; for 0.8.x (trunk) I have to check it first.  
+
+This made me not (yet) mark the issue as fixed (which, in my opinion, with the latest changes, it is -- at least for the legacy branch). :-)  Please update the issue&#39;s status whenever this is checked for 0.8.x. ;-)
+
+
+&gt; 3) This is crazy, I haven&#39;t noticed that. When I have tested the console,
+&gt; always the console from the &quot;Developer Tools&quot; was used. It seems to me that the
+&gt; console object is available when the &quot;Developer Tools&quot; is opened the first
+&gt; time.  
+
+I just confirmed this somehow weird behavior: the console object is only available once the &quot;Developer Tools&quot; was previously activated (even when closed afterward). Given that you need to apply in order to report bugs in the IE bug database [1], currently I&#39;m only leaving this for the record. A screenshot of the symptom (opening the attachment &quot;Test case&quot; before opening &quot;Developer Tools&quot;) is attached.
+
+
+(In reply to comment #9)
+&gt; Implemented the changes in legacy with r19424.
+
+Cool, just checked the changes and everything seems OK. :-)
+
+
+[1] https://connect.microsoft.com/IE/Feedback</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10605</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-06-26 16:59:57 +0200</bug_when>
+            <thetext>Implemented also the console.clear() call in qx 0.8.2 if the console support a clear method. This is done with revision 19459 (trunk).
+
+Thank you Helder for collaboration!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10609</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-06-26 17:06:01 +0200</bug_when>
+            <thetext>(In reply to comment #11)
+&gt; Thank you Helder for collaboration!
+
+It&#39;s great being able to contribute. :-)
+
+I&#39;m marking the issue verified although proper verification only occurred for the legacy branch. Nevertheless, given that these are mostly small changes, I&#39;m assuming both are OK.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10616</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-06-29 11:59:49 +0200</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; 3. Finally, if the release notes refer this feature, I&#39;d suggest adding
+&gt; something to clear up the console object availability in IE8: only when the
+&gt; &quot;Developer Tools&quot; window is displayed. If the &quot;Developer Tools&quot; window isn&#39;t
+&gt; displayed, the usual window appender is used. :-)
+
+I noticed the qooxdoo team blogging about this in these week&#39;s post. For posterity, I&#39;m leaving the link [1] for faster finding. :-)
+
+[1] http://news.qooxdoo.org/the-week-in-qooxdoo-2009-06-26</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14383</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-11-24 08:51:13 +0100</bug_when>
+            <thetext>-&gt; CLOSED</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>479</attachid>
+            <date>2009-03-25 19:41:00 +0100</date>
+            <delta_ts>2009-03-25 19:41:56 +0100</delta_ts>
+            <desc>Test case</desc>
+            <filename>IEconsole test.html</filename>
+            <type>text/html</type>
+            <size>1660</size>
+            <attacher>helder.magalhaes</attacher>
+            
+              <data encoding="base64">PGh0bWw+Cgk8aGVhZD4KCQk8dGl0bGU+Q29uc29sZSBsb2dnaW5nIHRlc3Q8L3RpdGxlPgoJCTxz
+Y3JpcHQgdHlwZT0idGV4dC9qYXZhc2NyaXB0Ij4KCQkJLy8gSUU4IGRpc3BsYXlzIGFuIGVycm9y
+IGljb24gKHdpdGggYSByZWQgY3Jvc3MpIGFuZCByZWQgdGV4dAoJCQljb25zb2xlLmVycm9yKCJl
+cnJvciIpOwoJCQkvLyBJRTggZGlzcGxheXMgYW4gaW5mbyBpY29uICh3aXRoIGFuICJpIik7CgkJ
+CWNvbnNvbGUuaW5mbygid2FybiIpOwoJCQkvLyBJRTggZGlzcGxheXMgYW4gaW5mbyBpY29uICh3
+aXRoIGFuICJpIik7CgkJCWNvbnNvbGUuaW5mbygiaW5mbyIpOwoJCQkvLyBJRTggZGlzcGxheXMg
+YW4gaW5mbyBpY29uICh3aXRoIGFuICJpIik7CgkJCWNvbnNvbGUubG9nKCJsb2ciKTsKCQkJLy8g
+SUU4IGlmIGZhaWxlZCwgZGlzcGxheXMgdGhlIGVycm9yIGljb24gYW5kIHByb3ZpZGVkIHRleHQg
+aW4gcmVkIChhcyBlcnJvciBkb2VzKQoJCQljb25zb2xlLmFzc2VydCh0cnVlID09IGZhbHNlLCAi
+YXNzZXJ0Iik7CgkJCS8vIElFOCBjbGVhcnMgdGhlIGNvbnNvbGUgY29udGVudHMgKGFwcGFyZW50
+bHkgbm90IHdvcmtpbmc/KQoJCQkvL2NvbnNvbGUuY2xlYXI7CgoJCQkvKgoJCQl2YXIgbWV0aG9k
+cz0iIjsKCQkJZm9yKG1ldGhvZCBpbiBjb25zb2xlKXsKCQkJCW1ldGhvZHMgKz0gIiIgKyBtZXRo
+b2QgKyAiOyAiOwoJCQl9CgkJCS8vIEZpcmVmb3grRmlyZWJ1ZyBkaXNwbGF5cyAibG9nOyBkZWJ1
+ZzsgaW5mbzsgd2FybjsgZXJyb3I7IGFzc2VydDsgZGlyOyBkaXJ4bWw7IHRyYWNlOyBncm91cDsg
+Z3JvdXBFbmQ7IGdyb3VwQ29sbGFwc2VkOyB0aW1lOyB0aW1lRW5kOyBwcm9maWxlOyBwcm9maWxl
+RW5kOyBjb3VudDsgY2xlYXI7IG5vdGlmeUZpcmVidWc7IGdldEZpcmVidWdFbGVtZW50OyBmaXJl
+YnVnOyAiCgkJCS8vIElFOCBkaXNwbGF5cyAibG9nOyBpbmZvOyB3YXJuOyBlcnJvcjsgYXNzZXJ0
+OyBjbGVhcjsgIgoJCQlhbGVydChtZXRob2RzKTsKCQkJKi8KCQk8L3NjcmlwdD4KCTwvaGVhZD4K
+CTxib2R5PgoJCTxoMT5Db25zb2xlIGxvZ2dpbmcgdGVzdDwvaDE+CgkJPHA+VGhpcyBleGFtcGxl
+IGFzc3VtZXMgYW4gZXhpc3RlbnQgPGNvZGU+Y29uc29sZTwvY29kZT4gb2JqZWN0LjwvcD4KCQk8
+dWw+CgkJCTxsaT5JbiBGaXJlZm94KzxhIGhyZWY9Imh0dHA6Ly93d3cuZ2V0ZmlyZWJ1Zy5jb20v
+Ij5GaXJlYnVnPC9hPiwgdXNlIDxlbT5Ub29sczwvZW0+LCA8ZW0+RmlyZWJ1ZzwvZW0+LCA8ZW0+
+T3BlbiBGaXJlYnVnPC9lbT4gYW5kIGZvY3VzIG9uIHRoZSA8ZW0+Q29uc29sZTwvZW0+IHRhYi48
+L2xpPgoJCQk8bGk+SW4gSUU4LCB1c2UgPGVtPlRvb2xzPC9lbT4sIDxlbT5EZXZlbG9wZXIgVG9v
+bHM8L2VtPiwgYW5kIGZvY3VzIG9uIHRoZSA8ZW0+Q29uc29sZTwvZW0+IHRhYi48L2xpPgoJCTwv
+dWw+CgkJPGgyPlJlZmVyZW5jZXM8L2gyPgoJCTx1bD4KCQkJPGxpPjxhIGhyZWY9Imh0dHA6Ly9t
+c2RuLm1pY3Jvc29mdC5jb20vZW4tdXMvbGlicmFyeS9kZDU2NTYyNShWUy44NSkuYXNweCNfaW1t
+dyI+RGVidWdnaW5nIFNjcmlwdCB3aXRoIHRoZSBEZXZlbG9wZXIgVG9vbHM6IFVzaW5nIENvbnNv
+bGUgdG8gRXhlY3V0ZSBDb2RlIFN0YXRlbWVudHM8L2E+PC9saT4KCQk8L3VsPgoJPC9ib2R5Pgo8
+L2h0bWw+Cg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>536</attachid>
+            <date>2009-06-25 12:27:00 +0200</date>
+            <delta_ts>2009-06-25 12:27:24 +0200</delta_ts>
+            <desc>Internet Explorer 8 - Console not available before opening Developer Tools</desc>
+            <filename>InternetExplorer8-ConsoleNotAvailableBeforeOpeningDeveloperTools.png</filename>
+            <type>image/png</type>
+            <size>13461</size>
+            <attacher>helder.magalhaes</attacher>
+            
+              <data encoding="base64">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
+AElFTkSuQmCC
+</data>
+
+          </attachment>
+      
+
+    </bug>

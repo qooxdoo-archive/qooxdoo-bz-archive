@@ -1,0 +1,184 @@
+<bug>
+          <bug_id>2918</bug_id>
+          
+          <creation_ts>2009-10-12 16:29:00 +0200</creation_ts>
+          <short_desc>Libraries are not re-scanned when the change is on the directory-level</short_desc>
+          <delta_ts>2014-03-03 15:22:44 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>0.8.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>info</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>13108</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-12 16:29:29 +0200</bug_when>
+            <thetext>Changes to directories (deleting a file, copying a file with an older time 
+stamp) do not trigger a re-scan of the library, which they should.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13110</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-12 16:32:36 +0200</bug_when>
+            <thetext>fixed with r20333</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13111</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-12 16:53:09 +0200</bug_when>
+            <thetext>Sebastian reported the following stack trace when running &#39;generate.py api&#39;:
+
+Traceback (most recent call last):
+  File 
+&quot;/Users/Sebastian/Workspace/tweet/WebContent/external/unify/external/qooxdoo/tool/bin/generator.py&quot;, 
+line 165, in &lt;module&gt;
+    main()
+  File 
+&quot;/Users/Sebastian/Workspace/tweet/WebContent/external/unify/external/qooxdoo/tool/bin/generator.py&quot;, 
+line 160, in main
+    generatorObj.run()
+  File 
+&quot;/Users/Sebastian/Workspace/tweet/WebContent/external/unify/external/qooxdoo/tool/pylib/generator/Generator.py&quot;, 
+line 465, in run
+    classList = computeClassList(smartInclude, smartExclude, explicitInclude, 
+explicitExclude, variantSets[0])
+  File 
+&quot;/Users/Sebastian/Workspace/tweet/WebContent/external/unify/external/qooxdoo/tool/pylib/generator/Generator.py&quot;, 
+line 165, in computeClassList
+    classList = self._depLoader.getClassList(smartInclude, smartExclude, 
+explicitInclude, explicitExclude, variants)
+  File 
+&quot;/Users/Sebastian/Workspace/tweet/WebContent/external/unify/external/qooxdoo/tool/pylib/generator/code/DependencyLoader.py&quot;, 
+line 93, in getClassList
+    result = resolveDepsSmartCludes()
+  File 
+&quot;/Users/Sebastian/Workspace/tweet/WebContent/external/unify/external/qooxdoo/tool/pylib/generator/code/DependencyLoader.py&quot;, 
+line 73, in resolveDepsSmartCludes
+    result = self.resolveDependencies(include, block, variants)
+  File 
+&quot;/Users/Sebastian/Workspace/tweet/WebContent/external/unify/external/qooxdoo/tool/pylib/generator/code/DependencyLoader.py&quot;, 
+line 173, in resolveDependencies
+    resolveDependenciesRecurser(item, block, variants, result)
+  File 
+&quot;/Users/Sebastian/Workspace/tweet/WebContent/external/unify/external/qooxdoo/tool/pylib/generator/code/DependencyLoader.py&quot;, 
+line 133, in resolveDependenciesRecurser
+    deps = self.getCombinedDeps(item, variants)
+  File 
+&quot;/Users/Sebastian/Workspace/tweet/WebContent/external/unify/external/qooxdoo/tool/pylib/generator/code/DependencyLoader.py&quot;, 
+line 511, in getCombinedDeps
+    static = self.getDeps(fileId, variants)
+  File 
+&quot;/Users/Sebastian/Workspace/tweet/WebContent/external/unify/external/qooxdoo/tool/pylib/generator/code/DependencyLoader.py&quot;, 
+line 574, in getDeps
+    deps = self._cache.readmulti(cacheId, filePath)
+  File 
+&quot;/Users/Sebastian/Workspace/tweet/WebContent/external/unify/external/qooxdoo/tool/pylib/generator/runtime/Cache.py&quot;, 
+line 78, in readmulti
+    if os.stat(dependsOn).st_mtime &gt; temp[&quot;time&quot;]:
+OSError: [Errno 2] No such file or directory: 
+&#39;/Users/Sebastian/Workspace/tweet/WebContent/external/unify/framework/source/class/unify/control/List.js&#39;
+
+The process bombs on a file that had been removed from the library (List.js). 
+The dependency analysis, which fails at this point, is informed by the global 
+list of available classes from the involved libraries (&quot;self._classes&quot;), and 
+therefore depends on an up-to-date scan result for each library. But the 
+library scanning logic only checked the cached scan result against mtime stamps 
+of contained files, not directories. This would fail in cases where you were
+
+  - removing a file from a lib
+  - adding a file with a time stamp older than the scan cache object (as it 
+would happen when copying files into a directory; the files are new in their 
+location, but their mtime stamp might be older as it is often copied over to 
+the new location by copy program)
+
+Contrary to Sebastian, who wrote that &#39;source&#39; and &#39;build&#39; jobs ran fine, this 
+should have affected those jobs just as well, as this path in the generator is 
+taken for several jobs, including &#39;api&#39;, &#39;source&#39; and &#39;build&#39;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13112</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-12 16:53:15 +0200</bug_when>
+            <thetext>Work-around:
+
+As Sebastian wrote, a work-around is to delete the &quot;lib-*&quot; files from the cache 
+directory. &#39;touch&#39;ing an arbitrary file within the library would have the same 
+effect.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13133</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-12 18:22:02 +0200</bug_when>
+            <thetext>*** Bug 2920 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13138</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-10-12 20:22:49 +0200</bug_when>
+            <thetext>It might not affect source and build because the source files do not have any references to these classes anymore. In these jobs one do a dependency-based inclusion while in the api job one typically have a &quot;ns.*&quot; include for every library.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13548</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-27 09:45:17 +0100</bug_when>
+            <thetext>.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13549</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-27 09:47:24 +0100</bug_when>
+            <thetext>.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13550</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-27 09:47:42 +0100</bug_when>
+            <thetext>.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14633</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:16:13 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37788</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:44 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

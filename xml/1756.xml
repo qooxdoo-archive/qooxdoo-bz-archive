@@ -1,0 +1,198 @@
+<bug>
+          <bug_id>1756</bug_id>
+          
+          <creation_ts>2008-12-17 11:44:00 +0100</creation_ts>
+          <short_desc>Running &#39;lint&#39; then &#39;source&#39; results in &quot;undefined class ...&quot; at runtime</short_desc>
+          <delta_ts>2014-03-03 15:21:36 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>0.8.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>qooxdoo</cc>
+    
+    <cc>tobi</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>6997</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-12-17 11:44:46 +0100</bug_when>
+            <thetext>Running &#39;lint&#39; on a faulty class file, then correcting the fault and running 
+&#39;source&#39; will compile fine. But at runtime you get arbitrary &quot;undefined class&quot; 
+exceptions (like &quot;undefined qx.Theme...&quot;, &quot;undefined qx....&quot;).
+
+A reliable way to resolve the issue is to delete the compile cache. This was 
+reported by Tobi and is reproducable in a simple gui skeleton.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7106</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-12-17 17:17:20 +0100</bug_when>
+            <thetext>to 0.8.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7439</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-01-23 09:22:59 +0100</bug_when>
+            <thetext>up priority</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7895</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-02-18 11:58:37 +0100</bug_when>
+            <thetext>@Sebastian, this problem is related to the caching system and you might have a glue what the problem could be and how to fix it? One possible solution could be to invalidate/remove the cache info exactly of the source class that had the error during the generator run. Is the caching API able to handle such an individual removal?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7899</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-18 12:05:49 +0100</bug_when>
+            <thetext>This should be something different. Any change to the file resets its modification time. All caching is happining with a comparision of the cache to the original file so this should not be an issue in the dependency system.
+
+What is meant with &quot;faulty&quot;. Is the class itself syntactically wrong? Is this ecmalist or the official lint tool?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7911</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-02-18 13:28:38 +0100</bug_when>
+            <thetext>Yes, &#39;lint&#39; refers to our &#39;lint&#39; job, which invokes ecmalint, and &#39;faulty&#39; 
+means having a Javascript syntax error.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7912</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-18 13:47:15 +0100</bug_when>
+            <thetext>So a syntax error means that even the treegenerator fails, which means that it fails before it ever reaches the lint tool, right?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7916</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-02-18 14:49:15 +0100</bug_when>
+            <thetext>Yep.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7921</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-18 15:26:21 +0100</bug_when>
+            <thetext>As said there should be no need to manually do some kind of invalidation.
+
+./tool/bin/create-application -n guitest -t gui
+cd guitest
+nano source/class/guitest/Application.js
+add some invalid code
+./generate.py lint
+Reports error during tree build phase
+Correcting error
+./generate.py source
+Works find
+
+Where should be the error? Seems to work OK for me.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7928</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-02-18 18:33:58 +0100</bug_when>
+            <thetext>Strange: The issue is reproduceable with 0.8.1 SDK, but not with trunk :-\
+
+In 0.8.1, after the lint error the generated guitest.js is much smaller than 
+usual. Moreover, the &#39;uris&#39; part of window.qxloader has a weird sorting, it 
+starts like this:
+
+  uris : [[&quot;../source/class/guitest1/theme/Color.js&quot;,
+&quot;../source/class/guitest1/theme/Decoration.js&quot;,
+&quot;../source/class/guitest1/theme/Font.js&quot;,
+&quot;../source/class/guitest1/theme/Appearance.js&quot;,
+&quot;../source/class/guitest1/theme/Theme.js&quot;,
+&quot;../../../qooxdoo-0.8.1-sdk/framework/source/class/qx/Bootstrap.js&quot;,
+&quot;../../../qooxdoo-0.8.1-sdk/framework/source/class/qx/core/Setting.js&quot;,
+...
+
+Takes no wonder you get &quot;qx is not defined&quot; in the browser...
+
+I have no idea why it goes wrong in the 0.8.1 SDK, and why it works in trunk. 
+I&#39;m not aware of any significant code changes in the source generating routines 
+(other than that little bit of clean-up in Generator.run() after 0.8.1) that 
+would justify that :-(.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7929</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-18 19:19:35 +0100</bug_when>
+            <thetext>So back to Thomas to close it or do something else with it ;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7930</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-18 19:21:26 +0100</bug_when>
+            <thetext>@Thomas: Looking at the result you posted it may be related to the theme configuration which added as some kind of auto-dependency. Maybe in this area something has changed. Only the theme classes are wrong. Starting with Bootstrap.js it looks fine IMO.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8480</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-03-10 15:07:37 +0100</bug_when>
+            <thetext>to 0.8.3. check if it is still reproducable in trunk</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11600</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-08-26 19:19:22 +0200</bug_when>
+            <thetext>down prio for now. this is not nice, but can be covered by docs.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11953</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-08 09:41:25 +0200</bug_when>
+            <thetext>moved from 0.8.3 to 0.9</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13098</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-12 13:58:47 +0200</bug_when>
+            <thetext>The problem is not reproducable anymore. I guess some changes since bug 
+creation fixed it as a side effect (could be the recent work on dependency 
+cache invalidation).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14442</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:14:35 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37354</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:36 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

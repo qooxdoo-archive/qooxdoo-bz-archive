@@ -1,0 +1,169 @@
+<bug>
+          <bug_id>2116</bug_id>
+          
+          <creation_ts>2009-03-16 21:49:00 +0100</creation_ts>
+          <short_desc>Possibility for manual initialization</short_desc>
+          <delta_ts>2014-03-03 15:19:55 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Petr Kobalíček">kobalicek.petr</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>8639</commentid>
+            <who name="Petr Kobalíček">kobalicek.petr</who>
+            <bug_when>2009-03-16 21:49:47 +0100</bug_when>
+            <thetext>Qooxdoo not allows manual initialization of framework. It uses own mechanism to initialize when all scripts loaded. This mechanism can be sometimes limiting, because there are some areas where it&#39;s needed to perform this initialization manually - for example after login, after own loading mechanism, etc.
+
+Current solution to do this is to delete these lines from generated build version:
+
+if (window.qx &amp;&amp; qx.event &amp;&amp; qx.event.handler &amp;&amp;
+qx.event.handler.Application) qx.event.handler.Application.onScriptLoaded();
+
+This is ugly.
+
+Recommended solution:
+
+Add &quot;qx.noInit&quot; property to settings to disable automatic application initialization. This property can be used in qx.core.Init after &quot;ready&quot; event fires to not initialize app (this is my favorite way) or added to code shown in top:
+
+if (window.qx &amp;&amp; qx.event &amp;&amp; qx.event.handler &amp;&amp; 
+qx.event.handler.Application &amp;&amp; !qxsettings[&quot;qx.noInit&quot;])
+{
+  qx.event.handler.Application.onScriptLoaded();
+}
+
+--------------------------------------
+
+This method should be added to qx.code.Init in all cases:
+
+   /**
+    * Explicit application initialization. Can be used to manually initialize
+    * application (internally calls &lt;code&gt;qx.core.Init.__ready()&lt;/code&gt;.
+    *
+    * @note This method can be used only once. Calling it multiple times or
+    * after application was initialized has no effect.
+    *
+    * @return {void}
+    */
+   initApplication : function()
+   {
+     if (!this.__application) this.__ready();
+   },
+
+Please try to solve this bug early, qxbuild really needs this to work</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8640</commentid>
+            <who name="Petr Kobalíček">kobalicek.petr</who>
+            <bug_when>2009-03-16 22:04:20 +0100</bug_when>
+            <thetext>Please and also __ready event needs this code at top:
+
+      // return if application is already initialized
+      if (this.__application) return;
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8665</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-17 15:55:20 +0100</bug_when>
+            <thetext>set milestone</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9082</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-04-02 10:17:14 +0200</bug_when>
+            <thetext>Fabian, something we should look at early in the 0.8.3 stream. If it requires not only some additional API, we might push it to 0.9, though.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9205</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-04-08 15:39:20 +0200</bug_when>
+            <thetext>Fabian, as you mentioned, this might be a duplicate?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9217</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-09 09:42:20 +0200</bug_when>
+            <thetext>Tis feature is on our list for a long time but wasn&#39;t added to bugzilla before. Its no duplicate.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12061</commentid>
+            <who name="Petr Kobalíček">kobalicek.petr</who>
+            <bug_when>2009-09-09 11:42:16 +0200</bug_when>
+            <thetext>Isn&#39;t there a chance to get it into SVN?
+
+I&#39;m using that code and it works well for me (in all tested browsers).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13479</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-23 18:04:57 +0200</bug_when>
+            <thetext>increase prio</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13742</commentid>
+            <who name="Petr Kobalíček">kobalicek.petr</who>
+            <bug_when>2009-10-30 13:24:52 +0100</bug_when>
+            <thetext>Hi, I don&#39;t know if my comments are still valid. It changes a lot in qxbuild and I can postprocess its output to get result I need. So this is not important for me, but I will be happy if I can remove this hack from qxbuild.
+
+Also note that suggested solution is probably not the best one, I think that these should be only control when all scripts were loaded, so only qx.event.handler.Application.onScriptLoaded();
+ needs to be under control.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14752</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:26:07 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0 (for issues with status &quot;NEW&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15059</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-30 11:09:28 +0100</bug_when>
+            <thetext>Hi Petr,
+
+recently Thomas has added an option to specify a custom loader template script in the generator &lt;http://qooxdoo.org/documentation/1.0/tool/generator_config_ref#compile-dist&gt;. I think the best way to solve this is to write your own loader. You will be able to remove a lot of code from the default loader because our loader is very generic. If you have any questions of how to use this feature please contact Thomas via the mailing list.
+
+Please reopen if this is not a viable solution for you.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36686</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:55 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

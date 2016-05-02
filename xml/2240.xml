@@ -1,0 +1,268 @@
+<bug>
+          <bug_id>2240</bug_id>
+          
+          <creation_ts>2009-04-16 00:59:00 +0200</creation_ts>
+          <short_desc>Add the ability to filter cells that do NOT match regex and case sensitivity in qx.ui.table.model.Filtered</short_desc>
+          <delta_ts>2014-03-03 15:23:30 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P5</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Dan Hummon">hummon+qooxdoo</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9300</commentid>
+            <who name="Dan Hummon">hummon+qooxdoo</who>
+            <bug_when>2009-04-16 00:59:27 +0200</bug_when>
+            <thetext>It is difficult to write a regular expression to match the absence of a pattern, so it would be nice if the filtered table model added support to filter on a non-match.
+
+The following code should work:
+
+change the addRegex member function:
+
+addRegex : function(regex, target, ignorecase)
+{
+  var regexarg;
+  if (ignorecase) { regexarg =&#39;gi&#39;; } else { regexarg =&#39;g&#39;; }
+  if (regex != null &amp;&amp; target != null) {
+    var temp = new Array(&quot;regex&quot;, regex, target, regexarg);
+  }
+
+  if (temp != null) {
+    this.Filters.push(temp);
+  } else {
+    throw new Error(&quot;regex cannot be null!&quot;);
+  }
+}
+
+new member function:
+
+addNotRegex : function(regex, target, ignorecase)
+{
+  var regexarg;
+  if (ignorecase) { regexarg =&#39;gi&#39;; } else { regexarg =&#39;g&#39;; }
+  if (regex != null &amp;&amp; target != null) {
+    var temp = new Array(&quot;notregex&quot;, regex, target, regexarg);
+  }
+
+  if (temp != null) {
+    this.Filters.push(temp);
+  } else {
+    throw new Error(&quot;notregex cannot be null!&quot;);
+  }
+}
+
+Change line 265 to:
+
+var the_pattern = new RegExp(this.Filters[i][1], this.Filters[i][3]);
+
+Added lines (at line 268) in &#39;applyFilters&#39; function:
+
+else if (this.Filters[i][0] == &quot;notregex&quot; &amp;&amp; filter_test == false)
+{
+  compareValue = this.getValueById(this.Filters[i][2], row);
+
+  var the_pattern = new RegExp(this.Filters[i][1], this.Filters[i][3]);
+  filter_test = !the_pattern.test(compareValue);
+}
+
+
+Thanks!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9306</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-04-16 09:17:55 +0200</bug_when>
+            <thetext>Hi Dan, could you provide a patch file for this, please? I bet you know how to do it, but it&#39;s also explained at http://qooxdoo.org/community/bugs#patches .
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9329</commentid>
+            <who name="Dan Hummon">hummon+qooxdoo</who>
+            <bug_when>2009-04-16 19:44:34 +0200</bug_when>
+            <thetext>Sure, here&#39;s a patch for Filtered.js:
+
+152,154d151
+&lt;      * @param ignorecase {boolean}
+&lt;      *    If true, the regular expression will ignore case.
+&lt;      *
+159c156
+&lt;     addRegex : function(regex, target, ignorecase)
+---
+&gt;     addRegex : function(regex, target)
+161,162d157
+&lt;       var regexarg;
+&lt;       if (ignorecase) { regexarg =&#39;gi&#39;; } else { regexarg =&#39;g&#39;; }
+164c159
+&lt;         var temp = new Array(&quot;regex&quot;, regex, target, regexarg);
+---
+&gt;         var temp = new Array(&quot;regex&quot;, regex, target);
+176,207d170
+&lt;      * The addNotRegex method is used to add a regular expression filter to the
+&lt;      * table model and filter cells that do not match.
+&lt;      *
+&lt;      * @param regex {String}
+&lt;      *    The regular expression to match against.
+&lt;      *
+&lt;      * @param target {String}
+&lt;      *    The text value of the column to compare against.
+&lt;      *
+&lt;      * @param ignorecase {boolean}
+&lt;      *    If true, the regular expression will ignore case.
+&lt;      *
+&lt;      * @return {void}
+&lt;      *
+&lt;      * @throws TODOC
+&lt;      */
+&lt;     addNotRegex : function(regex, target, ignorecase)
+&lt;     {
+&lt;       var regexarg;
+&lt;       if (ignorecase) { regexarg =&#39;gi&#39;; } else { regexarg =&#39;g&#39;; }
+&lt;       if (regex != null &amp;&amp; target != null) {
+&lt;         var temp = new Array(&quot;notregex&quot;, regex, target, regexarg);
+&lt;       }
+&lt; 
+&lt;       if (temp != null) {
+&lt;         this.Filters.push(temp);
+&lt;       } else {
+&lt;         throw new Error(&quot;notregex cannot be null!&quot;);
+&lt;       }
+&lt;     },
+&lt; 
+&lt;     /**
+302c265
+&lt;             var the_pattern = new RegExp(this.Filters[i][1], this.Filters[i][3]);
+---
+&gt;             var the_pattern = new RegExp(this.Filters[i][1], &#39;g&#39;);
+306,313d268
+&lt;         else if (this.Filters[i][0] == &quot;notregex&quot; &amp;&amp; filter_test == false)
+&lt;         {
+&lt;           compareValue = this.getValueById(this.Filters[i][2], row);
+&lt; 
+&lt;           var the_pattern = new RegExp(this.Filters[i][1], this.Filters[i][3]);
+&lt;           filter_test = !the_pattern.test(compareValue);
+&lt;         }
+&lt; 
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9330</commentid>
+            <who name="Dan Hummon">hummon+qooxdoo</who>
+            <bug_when>2009-04-17 01:35:39 +0200</bug_when>
+            <thetext>Sorry, I just realized I submitted the patch backwards. Here&#39;s the correct one:
+
+151a152,154
+&gt;      * @param ignorecase {boolean}
+&gt;      *    If true, the regular expression will ignore case.
+&gt;      *
+156c159
+&lt;     addRegex : function(regex, target)
+---
+&gt;     addRegex : function(regex, target, ignorecase)
+157a161,162
+&gt;       var regexarg;
+&gt;       if (ignorecase) { regexarg =&#39;gi&#39;; } else { regexarg =&#39;g&#39;; }
+159c164
+&lt;         var temp = new Array(&quot;regex&quot;, regex, target);
+---
+&gt;         var temp = new Array(&quot;regex&quot;, regex, target, regexarg);
+170a176,207
+&gt;      * The addNotRegex method is used to add a regular expression filter to the
+&gt;      * table model and filter cells that do not match.
+&gt;      *
+&gt;      * @param regex {String}
+&gt;      *    The regular expression to match against.
+&gt;      *
+&gt;      * @param target {String}
+&gt;      *    The text value of the column to compare against.
+&gt;      *
+&gt;      * @param ignorecase {boolean}
+&gt;      *    If true, the regular expression will ignore case.
+&gt;      *
+&gt;      * @return {void}
+&gt;      *
+&gt;      * @throws TODOC
+&gt;      */
+&gt;     addNotRegex : function(regex, target, ignorecase)
+&gt;     {
+&gt;       var regexarg;
+&gt;       if (ignorecase) { regexarg =&#39;gi&#39;; } else { regexarg =&#39;g&#39;; }
+&gt;       if (regex != null &amp;&amp; target != null) {
+&gt;         var temp = new Array(&quot;notregex&quot;, regex, target, regexarg);
+&gt;       }
+&gt; 
+&gt;       if (temp != null) {
+&gt;         this.Filters.push(temp);
+&gt;       } else {
+&gt;         throw new Error(&quot;notregex cannot be null!&quot;);
+&gt;       }
+&gt;     },
+&gt; 
+&gt;     /**
+265c302
+&lt;             var the_pattern = new RegExp(this.Filters[i][1], &#39;g&#39;);
+---
+&gt;             var the_pattern = new RegExp(this.Filters[i][1], this.Filters[i][3]);
+268a306,313
+&gt;         else if (this.Filters[i][0] == &quot;notregex&quot; &amp;&amp; filter_test == false)
+&gt;         {
+&gt;           compareValue = this.getValueById(this.Filters[i][2], row);
+&gt; 
+&gt;           var the_pattern = new RegExp(this.Filters[i][1], this.Filters[i][3]);
+&gt;           filter_test = !the_pattern.test(compareValue);
+&gt;         }
+&gt; 
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9363</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-04-17 15:47:12 +0200</bug_when>
+            <thetext>@Martin, could you apply this patch as it doesn&#39;t seem to modify the existing API (except for adding new functionality).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9387</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-04-20 15:30:30 +0200</bug_when>
+            <thetext>Applied the patch in revision 18792.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38038</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:30 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

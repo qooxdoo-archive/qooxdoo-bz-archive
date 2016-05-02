@@ -1,0 +1,175 @@
+<bug>
+          <bug_id>5645</bug_id>
+          
+          <creation_ts>2011-09-26 21:18:00 +0200</creation_ts>
+          <short_desc>Application libraries - Unknown global symbol referenced</short_desc>
+          <delta_ts>2013-12-16 12:45:49 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26963</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-09-26 21:18:03 +0200</bug_when>
+            <thetext>An application has two libraries, config.json:
+
+    &quot;libraries&quot; :
+    {
+      &quot;library&quot; :
+      [
+        {
+          &quot;manifest&quot; : &quot;contrib://qxe/trunk/Manifest.json&quot;
+        },
+        {
+          &quot;manifest&quot; : &quot;../gui/trunk/Manifest.json&quot;
+        }
+      ]
+    }
+
+in &quot;contrib://qxe/trunk/Manifest.json&quot; -&gt; namespace: qxe.ui.wizard
+
+in &quot;../gui/trunk/Manifest.json&quot; -&gt; namespace: qxe.ui.dialog
+
+each one class.
+
+when generating the following happens:
+
+   - Warning: Hint: Unknown global symbol referenced: qxe.ui.dialog.TestDialog (com.p.c.reg.view.FInfo:136)
+
+
+Conclusion: It seems that the class in &quot;../gui/trunk/Manifest.json&quot; is not found and the generator only looks in &quot;contrib://qxe/trunk/Manifest.json&quot; and doesn&#39;t find it! contrib:// might be the difference here!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26965</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-09-26 22:00:36 +0200</bug_when>
+            <thetext>if config.json:
+
+    &quot;libraries&quot; :
+    {
+      &quot;library&quot; :
+      [
+        {
+          &quot;manifest&quot; : &quot;../gui/trunk/Manifest.json&quot;
+        },
+        {
+          &quot;manifest&quot; : &quot;contrib://qxe/trunk/Manifest.json&quot;
+        }
+      ]
+    }
+
+then
+
+   - Warning: Hint: Unknown global symbol referenced: qxe.ui.wizard.Wizard
+(com.p.c.reg.view.PInfo:121)
+
+Still the same problem but now not finding the contrib:// library as it is last!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26966</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-09-26 22:13:59 +0200</bug_when>
+            <thetext>what about precedence?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26968</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-09-27 00:26:10 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; in &quot;contrib://qxe/trunk/Manifest.json&quot; -&gt; namespace: qxe.ui.wizard
+&gt; 
+&gt; in &quot;../gui/trunk/Manifest.json&quot; -&gt; namespace: qxe.ui.dialog
+
+This is not true. The qxe contrib has namespace &quot;qxe&quot; (not &quot;qxe.ui.wizard&quot;), and I&#39;m sure when you check thoroughly the gui library&#39;s Manifest, you will find that provides/namespace is &quot;qx&quot; as well. But you cannot have two libraries with same namespace, and the generator told you so. This is confirmed by the fact that other classes are affected when you invert the order of the libraries in the config.
+
+You should really check your understanding by formulating such things as questions on the mailing list, before raising poorly founded bugs.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26969</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-09-27 08:22:14 +0200</bug_when>
+            <thetext>Thomas!
+
+Read &quot;The art of war&quot; by Sun Tzu!
+
+Reporting of bugs is not an evil action! Good faith you know...
+
+I guess the doc here could be extended so it is explained in better detail what is meant by namespace. Namespace for the package defined in Manifest.json or the actual namespace of a class like qxe.ui.wizard for the Wizard class...
+
+Then this report never had been given in.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26970</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-09-27 09:00:49 +0200</bug_when>
+            <thetext>if we now change Manifest.json in the locale (not contrib://) lib from
+
+  &quot;provides&quot; :
+  {
+    &quot;namespace&quot;   : &quot;qxe&quot;,
+    &quot;encoding&quot;    : &quot;utf-8&quot;,
+
+to
+
+  &quot;provides&quot; :
+  {
+    &quot;namespace&quot;   : &quot;gui&quot;,
+    &quot;encoding&quot;    : &quot;utf-8&quot;,
+
+then suddenly the errors disappear! NB! the namespaces of the classes are the same in respective lib.
+
+This was funny! It means that the namespace defined in Manifest.json does not seem to be a real namespace related to the classes of a lib. Instead it seems to be a pseudo-namespace intended for the generator.
+
+Am I thinking correctly?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26971</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-09-27 10:04:35 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; then suddenly the errors disappear! NB! the namespaces of the classes are the
+&gt; same in respective lib.
+&gt; 
+&gt; This was funny! It means that the namespace defined in Manifest.json does not
+&gt; seem to be a real namespace related to the classes of a lib. Instead it seems
+&gt; to be a pseudo-namespace intended for the generator.
+
+It is the namespace of the library, must be unique, and is also used by the qooxdoo runtime. In that sense it is quite real. But although everything is geared towards it, a library is basically just a container, and consistency between its id and the package names of the contained classes is not enforced. If you feel this consistency should be enforced, or at least checked, please open a proper bug (not a &quot;mailing list&quot; bug like this that hops from one issue to another).</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

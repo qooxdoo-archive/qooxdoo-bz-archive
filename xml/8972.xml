@@ -1,0 +1,109 @@
+<bug>
+          <bug_id>8972</bug_id>
+          
+          <creation_ts>2015-03-02 11:25:00 +0100</creation_ts>
+          <short_desc>qx.bom.element.AnimationCss.__onAnimationStart breaks</short_desc>
+          <delta_ts>2015-06-10 11:52:27 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>website.animation</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter>romeo.kenfacktsakem</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>42666</commentid>
+            <who name="">romeo.kenfacktsakem</who>
+            <bug_when>2015-03-02 11:25:52 +0100</bug_when>
+            <thetext>qx.bom.element.AnimationCss.__onAnimationStart breaks when a child element is animated with css since there is no $$animation on the target</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42668</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-03-02 12:54:34 +0100</bug_when>
+            <thetext>You have to have an native animation on the child to get that bug reproduced. Here is a sample to reproduce: 
+
+
+var c = new qx.ui.container.Composite();
+c.set({
+  width: 200,
+  height: 200,
+  backgroundColor: &quot;red&quot;
+});
+c.setLayout(new qx.ui.layout.Canvas());
+var w = new qx.ui.core.Widget();
+w.set({
+  width: 100,
+  height: 100,
+  backgroundColor: &quot;blue&quot;
+});
+
+c.add(w);
+this.getRoot().add(c);
+
+window.setTimeout(function() { 
+  console.log(&quot;go&quot;);
+  var cEl = c.getContentElement().getDomElement();
+  var wEl = w.getContentElement().getDomElement();
+  
+  qx.bom.element.Animation.animate(cEl, {
+    duration: 2000,
+    keyFrames : {
+      0: {&quot;background-color&quot;: &quot;red&quot;},
+      100: {&quot;background-color&quot;: &quot;green&quot;}
+    }
+  });
+  
+  var frames = &quot;@-webkit-keyframes myanim {0% {opacity: 1; } 100% { opacity: 0; }} #w {-webkit-animation: myanim 1000ms linear 1;}&quot;;
+
+  qx.bom.Stylesheet.createElement(frames);
+  q(wEl).setAttribute(&quot;id&quot;, &quot;w&quot;);
+}, 1000);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42792</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-03-10 16:32:46 +0100</bug_when>
+            <thetext>This could affect three methods in the animation class:
+__onAnimationStart
+__onAnimationIteration
+__onAnimationEnd
+
+The later two already have a guarding condition for the wrong target  so adding this to the first one which breaks in this scenario was quite easy and obvious. 
+
+master: 3914ad54c703de4a82ff97d1fe82524105ba1d13
+4.1.x: 2df69070ccef1caa3aba1cc2860ab2949645d1ba</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

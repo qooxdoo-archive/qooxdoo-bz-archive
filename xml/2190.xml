@@ -1,0 +1,126 @@
+<bug>
+          <bug_id>2190</bug_id>
+          
+          <creation_ts>2009-04-01 17:59:00 +0200</creation_ts>
+          <short_desc>Generator: Compiler generates wrong code when optimizing variants</short_desc>
+          <delta_ts>2014-03-03 15:23:56 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>blocker</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Fabian Jakobs">fabian.jakobs</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>mngo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9071</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-01 17:59:39 +0200</bug_when>
+            <thetext>If the following code is compiled with the variant &quot;qx.debug&quot;:&quot;off&quot; the compiler generates wrong code:
+
+function() {
+  if (true) {
+  } else if (qx.core.Variant.isSet(&quot;qx.debug&quot;, &quot;on&quot;)) {
+    var pw = 3;
+  } else {}
+  foo();
+}
+
+This is generated:
+
+function(){if(true){}else{}var pwfoo();
+}
+
+
+After &quot;var pw&quot; is a semicolon missing</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9089</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-02 15:16:41 +0200</bug_when>
+            <thetext>There seems to be a work-around if you curly-block the enclosing &quot;else&quot; branch:
+
+function() {
+  if (true) {
+  } else {          // &lt;- added opening curly
+    if (qx.core.Variant.isSet(&quot;qx.debug&quot;, &quot;on&quot;)) {
+    var pw = 3;
+    } else {}
+  }                   // &lt;- added closing curly
+  foo();
+}
+
+results in:
+
+function(){if(true){}else{{};
+var pw;
+}foo();</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9100</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-02 17:08:13 +0200</bug_when>
+            <thetext>[BUG #2190] fixed issue with missing semi-colon after variant purging; there 
+was an issue in complex if-else situations that the rescued var decls from the 
+purged block were added to a context that didn&#39;t allow for multiple statements 
+without a block, e.g. the &#39;else&#39; statement.
+
+The solution was to move the rescued var decls up to the next enclosing block 
+or top-level, and only handle the replacement from the if-inlining locally.
+
+Fixed with r18636.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9106</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-02 18:05:33 +0200</bug_when>
+            <thetext>The offending part in the old tree was:
+
+          &lt;elseStatement column=&quot;2&quot; line=&quot;4&quot;&gt;
+            &lt;block column=&quot;6&quot; line=&quot;6&quot; breakBefore=&quot;false&quot; eolBefore=&quot;false&quot;/&gt;
+            &lt;definitionList line=&quot;4&quot;&gt;
+              &lt;definition column=&quot;4&quot; line=&quot;5&quot; identifier=&quot;pw&quot;/&gt;
+            &lt;/definitionList&gt;
+          &lt;/elseStatement&gt;
+
+i.e. the elseStatement that can only take *either* a block *or* a single 
+statement, contained both.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38201</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:56 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,347 @@
+<bug>
+          <bug_id>8700</bug_id>
+          
+          <creation_ts>2014-11-17 17:39:00 +0100</creation_ts>
+          <short_desc>Some elements do not get their $$widget reset on Widget dispose()</short_desc>
+          <delta_ts>2015-02-13 08:13:29 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Cajus Pollmeier">pollmeier</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>41593</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2014-11-17 17:39:53 +0100</bug_when>
+            <thetext>Using our web application with firefox, randomly leads to exceptions in framework/source/class/qx/event/handler/Pointer.js, line 122. Firefox complains with the message from the bug summary.
+
+target contains a &quot;HTMLDocumentPrototype&quot; in this case. Looks like beeing an ordinary &quot;document&quot; object.
+
+A quick workaround was to add a check for the presence of &quot;getAttribute&quot;:
+
+diff --git a/framework/source/class/qx/event/handler/Pointer.js b/framework/source/class/qx/event/handler/Pointer.js
+index e7dd9a4..fdab1d0 100644
+--- a/framework/source/class/qx/event/handler/Pointer.js
++++ b/framework/source/class/qx/event/handler/Pointer.js
+@@ -119,7 +119,7 @@ qx.Class.define(&quot;qx.event.handler.Pointer&quot;,
+       }
+ 
+       // respect anonymous elements
+-      while (target &amp;&amp; target.getAttribute(&quot;qxanonymous&quot;)) {
++      while (target &amp;&amp; target.getAttribute &amp;&amp; target.getAttribute(&quot;qxanonymous&quot;)) {
+         target = target.parentNode
+       }
+
+I&#39;m not sure where exactly this event comes from, so I can&#39;t tell you how to savely reproduce that one. Fact is that it happens from time to time. Maybe you can see in the framework code where it might come from and if the quickfix is good or not.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41595</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-11-18 09:10:40 +0100</bug_when>
+            <thetext>Oh my, this is not good. I have a bad feeling when we fix it the way you proposed as this is only masquerading the consequences and does not fix the root issue. But without knowing how to reproduces its hard for us to get our head around that issue. We never had it before, not even in the nightly testing. So is there any chance you could give us more details on how we could get it reproduces?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41627</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2014-11-18 13:43:39 +0100</bug_when>
+            <thetext>I spend some hours to find a way to reproduce it and finally tracked it down.
+
+There is a list with a couple of listitems in it. If I move the mouse over the last item, the error occurs on Firefox. This is almost stock qooxdoo, but the list has a small modification over the ordinary qx:
+
+Because of the design requirements, I needed to add &quot;first&quot; and &quot;last&quot; states to the list items. So the inherited class only adds/overrides these methods:
+
+8&lt;----------------------------------
+
+    _onAddChild : function(e)
+    {   
+      this.base(arguments, e); 
+      this.__refreshStates();
+    },  
+
+    _onRemoveChild : function(e)
+    {   
+      this.base(arguments, e); 
+      this.__refreshStates();
+    },  
+
+    __refreshStates : function()
+    {   
+      var chs = this.getChildrenContainer().getChildren();
+      for (var i = 0; i &lt; chs.length; i++) {
+        if (i === 0) {
+          chs[i].addState(&quot;first&quot;);
+        } else if (i == chs.length - 1) {
+          chs[i].removeState(&quot;first&quot;);
+          chs[i].addState(&quot;last&quot;);
+        } else {
+          chs[i].removeState(&quot;first&quot;);
+          chs[i].removeState(&quot;last&quot;);
+        }
+
+      }
+    }
+
+8&lt;----------------------------------
+
+If I skip __refreshStates, it works. I&#39;m wondering how this actually relates to the event and it&#39;s handler. I&#39;ve commented that method now, because the visual impact is &quot;low&quot;. If you&#39;ve any idea on how that can happen, please let me know ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41642</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-11-20 07:57:00 +0100</bug_when>
+            <thetext>This sounds in deed strange and I have no idea at the moment how those two things correspond. We will check if and see if we can reproduce the issue based on your input.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41780</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-12-02 11:35:41 +0100</bug_when>
+            <thetext>Tried to reproduce it with the given sample code but did not get it. Could you try the following code in the online playground and see if you can reproduce the issue? Maybe something else is missing or I got the wrong FF version...
+
+http://tinyurl.com/ofky3ta
+
+
+qx.Class.define(&quot;MyList&quot;, {
+  extend : qx.ui.form.List,
+  members : {
+    _onAddChild : function(e) {   
+      this.base(arguments, e); 
+      this.__refreshStates();
+    },  
+
+    _onRemoveChild : function(e)
+    {   
+      this.base(arguments, e); 
+      this.__refreshStates();
+    },  
+
+    __refreshStates : function()
+    {   
+      var chs = this.getChildrenContainer().getChildren();
+      for (var i = 0; i &lt; chs.length; i++) {
+        if (i === 0) {
+          chs[i].addState(&quot;first&quot;);
+        } else if (i == chs.length - 1) {
+          chs[i].removeState(&quot;first&quot;);
+          chs[i].addState(&quot;last&quot;);
+        } else {
+          chs[i].removeState(&quot;first&quot;);
+          chs[i].removeState(&quot;last&quot;);
+        }
+      }
+    }
+  }
+});
+
+var l = new MyList();
+for (var i = 0; i &lt; 10; i++) {
+  l.add(new qx.ui.form.ListItem(&quot;Item &quot; + i));
+}
+this.getRoot().add(l);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42433</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2015-02-10 13:01:17 +0100</bug_when>
+            <thetext>A similar one:
+
+I&#39;m in qx.ui.core.EventHandler ~300 of master. It happens if a user of the GUI
+does a &quot;very nervous drag&#39;n drop&quot; gesture. The exception is triggered because
+widgetOriginalTarget has no method isAnonymous(). So the debugger stopps at the
+while line:
+
+      // Keep original target of DOM event, otherwise map it to the original
+      var orig = domEvent.getOriginalTarget();
+      if (orig)
+      {
+        var widgetOriginalTarget = qx.ui.core.Widget.getWidgetByElement(orig);
+        while (widgetOriginalTarget &amp;&amp; widgetOriginalTarget.isAnonymous()) {
+          widgetOriginalTarget = widgetOriginalTarget.getLayoutParent();
+        }
+      ...
+
+Inspecting stuff on the console tells me:
+
+&gt; orig.$$widget
+&lt; &quot;15261-0&quot;
+
+&gt; qx.core.ObjectRegistry.__registry[&quot;15261-0&quot;].classname
+&lt; &quot;qx.event.Timer&quot;
+
+&gt; var err = new Error();
+&lt; undefined
+&gt; err.stack
+&quot;Error
+    at eval (eval at evaluate (unknown source), &lt;anonymous&gt;:1:11)
+    at Object.InjectedScript._evaluateOn (&lt;anonymous&gt;:777:55)
+    at Object.InjectedScript._evaluateAndWrap (&lt;anonymous&gt;:710:34)
+    at Object.InjectedScript.evaluateOnCallFrame (&lt;anonymous&gt;:828:21)
+    at qx.Class.define.members._dispatchEvent (http://localhost/external/qooxdoo/framework/source/class/qx/ui/core/EventHandler.js:300:61)
+    at qx.Class.define.members.dispatchEvent (http://localhost/external/qooxdoo/framework/source/class/qx/event/dispatch/AbstractBubbling.js:241:28)
+    at qx.Class.define.members.dispatchEvent (http://localhost/external/qooxdoo/framework/source/class/qx/event/Manager.js:873:20)
+    at Object.qx.Class.define.statics.fireEvent (http://localhost/external/qooxdoo/framework/source/class/qx/event/Registration.js:304:38)
+    at qx.Class.define.members._fireEvent (http://localhost/external/qooxdoo/framework/source/class/qx/event/handler/Gesture.js:187:31)
+    at qx.Bootstrap.define.members.__handleRollImpulse (http://localhost/external/qooxdoo/framework/source/class/qx/event/handler/GestureCore.js:450:12)&quot;
+
+Looks like the nervous gesture is a rollImpulse. Well. What so ever. I&#39;d like to track this down. Can you please give me a pointer on who&#39;s maintaining $$widget? Or do you have some idea why there&#39;s some obviously wrong assignment?
+
+Because it is hard to reproduce, there must be some kind of race condition out there, and I&#39;ve a few of these places worked around by modifying the qx code - which is not good as you said.
+
+The debugger is still open. If you need some more information from whatever passed the stacktrace, please let me know.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42436</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2015-02-10 13:32:21 +0100</bug_when>
+            <thetext>The widget.$$hash itself is a recycled one that comes from the __freeHashes array in this case.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42437</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2015-02-10 13:32:59 +0100</bug_when>
+            <thetext>Sorry. I meant the obj.$$widget hash.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42443</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2015-02-10 16:48:53 +0100</bug_when>
+            <thetext>I&#39;ve spend some more time with this. Here&#39;s what happens:
+
+* a mouse movement starts with holding down the left button
+  on an area that is intended for DND
+
+* the user is kind of nervous and quickly decides to let
+  the button go
+
+* the gui created an DND qx.ui.basic.Image that is shown
+  during the DND process, it gets disposed when the button
+  goes away
+
+* GestureCore thinks it has detected a &quot;roll&quot; event and
+  fires it
+
+* the event handler loads the current target by using $$widget,
+  checks if it is anonymous or not
+
+* because the widget is already disposed, the hash lookup
+  is delivering a random object that has been created in the
+  meantime
+
+* in qx.ui.basic.Image, getContentElement() delivers null on
+  $$disposed, which makes it inpossible for the qx.ui.core.Widget
+  destructor to reset the $$widget which is still in the DOM</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42450</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-02-11 08:54:01 +0100</bug_when>
+            <thetext>(In reply to comment #8)
+
+Thanks a lot for the investigation. That sounds really like a strange case in deed which we should fix!
+
+&gt; * a mouse movement starts with holding down the left button
+&gt;   on an area that is intended for DND
+&gt; 
+&gt; * the user is kind of nervous and quickly decides to let
+&gt;   the button go
+&gt; 
+&gt; * the gui created an DND qx.ui.basic.Image that is shown
+&gt;   during the DND process, it gets disposed when the button
+&gt;   goes away
+&gt; 
+&gt; * GestureCore thinks it has detected a &quot;roll&quot; event and
+&gt;   fires it
+&gt; 
+&gt; * the event handler loads the current target by using $$widget,
+&gt;   checks if it is anonymous or not
+&gt; 
+&gt; * because the widget is already disposed, the hash lookup
+&gt;   is delivering a random object that has been created in the
+&gt;   meantime
+&gt; 
+&gt; * in qx.ui.basic.Image, getContentElement() delivers null on
+&gt;   $$disposed, which makes it inpossible for the qx.ui.core.Widget
+&gt;   destructor to reset the $$widget which is still in the DOM
+
+I think the best fix would be to add the remove of the $$widget in the images destructor because it has the special handling for the content elements. In the worst case, the image has three content elements which all should be handled correctly. Could you give that a try in your scenario to see if that fixes the issue? I think that would be easier that me trying to reproduce the issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42454</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2015-02-11 09:22:23 +0100</bug_when>
+            <thetext>If the image is the best place to do it, then this seems to heal the effect:
+
+
+diff --git a/framework/source/class/qx/ui/basic/Image.js b/framework/source/class/qx/ui/basic/Image.js
+index e05d18b..34563f5 100644
+--- a/framework/source/class/qx/ui/basic/Image.js
++++ b/framework/source/class/qx/ui/basic/Image.js
+@@ -974,6 +974,10 @@ qx.Class.define(&quot;qx.ui.basic.Image&quot;,
+   */
+ 
+   destruct : function() {
++    if (this.__currentContentElement) {
++      this.__currentContentElement.setAttribute(&quot;$$widget&quot;, null, true);
++    }
++
+     delete this.__currentContentElement;
+     if (this.__wrapper) {
+       delete this.__wrapper;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42466</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-02-12 09:24:26 +0100</bug_when>
+            <thetext>https://github.com/qooxdoo/qooxdoo/pull/120
+
+Thanks for the pull request. I just checked it and saw that removing the attribute from __currentContentElement could not be enough as the image can have three content elements stored, one for each mode. Iterating over the __contentElements map would be the right thing to do. Could you check that fix in your setup to see if that also works? If so, I will add it to the image. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42488</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2015-02-12 15:32:35 +0100</bug_when>
+            <thetext>Looping thru the content elements works, too. I&#39;ve updated the PR.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42490</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-02-13 08:13:29 +0100</bug_when>
+            <thetext>Thanks you very much. Merged the pull request and cherry-picked the changes to the branch. As always, a pleasure working with you. :)
+
+master: 69cb6cba72384fde5d7559310b2ddd9c8564864a
+4.1.x: 061e0ca6e3a4414baba4203277057e4c01d355b4</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

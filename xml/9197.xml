@@ -1,0 +1,168 @@
+<bug>
+          <bug_id>9197</bug_id>
+          
+          <creation_ts>2015-08-19 13:58:00 +0200</creation_ts>
+          <short_desc>qx.util.Uri.parseUri() doesn&#39;t support ipv6 addresses</short_desc>
+          <delta_ts>2015-09-25 17:50:34 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>4.1.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mathieu Veurman">mveurman</reporter>
+          <assigned_to name="Mathieu Veurman">mveurman</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>43498</commentid>
+            <who name="Mathieu Veurman">mveurman</who>
+            <bug_when>2015-08-19 13:58:06 +0200</bug_when>
+            <thetext>parseUri() doesn&#39;t support ipv6 addresses. The regular expressions (strict and loose) are missing support for it.
+
+This can be seen by going to for example http://www.regex101.com, and the entering the regex for &#39;strict&#39;: 
+
+^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)
+
+Entering as test expression:
+http://127.0.0.1:8080/xxxx/yyyy.html will result in these groups:
+1.	`http`
+2.	`127.0.0.1:8080`
+6.	`127.0.0.1`
+7.	`8080`
+8.	`/xxxx/yyyy.html`
+9.	`/xxxx/yyyy.html`
+10.	`/xxxx/`
+11.	`yyyy.html`
+
+But entering test string:
+http://[::1]:8080/xxxx/yyyy.html will result in:
+1.	`http`
+2.	`[:`
+6.	`[`
+7.	``
+8.	`:1]:8080/xxxx/yyyy.html`
+9.	`:1]:8080/xxxx/yyyy.html`
+10.	`:1]:8080/xxxx/`
+11.	`yyyy.html`</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43499</commentid>
+            <who name="Mathieu Veurman">mveurman</who>
+            <bug_when>2015-08-19 14:01:20 +0200</bug_when>
+            <thetext>I have a suggestion for a fix. Use these values in .../framework/source/class/qx/util/Uri.js (line 50):
+
+        parser: {
+          strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?(?:(\[[0-9A-Fa-f:]+\])|([^:\/?#\[\]]*))?(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+          loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?(?:(\[[0-9A-Za-z:]+\])|([^:\/?#\[\]]*))?(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+        }
+
+
+
+And add the following tests to .../framework/source/class/qx/test/util/Uri.js:
+
+    &quot;test: parseUri() with ipv6 loopback address&quot;: function() {
+        var url = &quot;http://[::1]:80/foo/bar?affe=true#here&quot;,
+            result = this.Uri.parseUri(url);
+
+        // Some integration tests, parseUri is better covered here
+        // http://stevenlevithan.com/demo/parseuri/js/
+        this.assertEquals(&quot;http&quot;, result.protocol);
+        this.assertEquals(&quot;[::1]&quot;, result.host);
+        this.assertEquals(&quot;80&quot;, result.port);
+        this.assertEquals(&quot;/foo/bar?affe=true#here&quot;, result.relative);
+        this.assertEquals(&quot;here&quot;, result.anchor);
+      },
+      
+      &quot;test: parseUri() with ipv6 address&quot;: function() {
+          var url = &quot;http://[FE80:0000:0000:0000:0202:B3FF:FE1E:8329]:80/foo/bar?affe=true#here&quot;,
+              result = this.Uri.parseUri(url);
+
+          // Some integration tests, parseUri is better covered here
+          // http://stevenlevithan.com/demo/parseuri/js/
+          this.assertEquals(&quot;http&quot;, result.protocol);
+          this.assertEquals(&quot;[FE80:0000:0000:0000:0202:B3FF:FE1E:8329]&quot;, result.host);
+          this.assertEquals(&quot;80&quot;, result.port);
+          this.assertEquals(&quot;/foo/bar?affe=true#here&quot;, result.relative);
+          this.assertEquals(&quot;here&quot;, result.anchor);
+        }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43500</commentid>
+            <who name="Mathieu Veurman">mveurman</who>
+            <bug_when>2015-08-19 14:03:07 +0200</bug_when>
+            <thetext>Ofcourse I see a mistake after posting. The loose one should be:
+
+          loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?(?:(\[[0-9A-Fa-f:]+\])|([^:\/?#\[\]]*))?(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43501</commentid>
+            <who name="Mathieu Veurman">mveurman</who>
+            <bug_when>2015-08-19 18:41:56 +0200</bug_when>
+            <thetext>Hmm, let me get back to the proper solution, since my current regexes do not seem to do the trick for a 100%</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43502</commentid>
+            <who name="Mathieu Veurman">mveurman</who>
+            <bug_when>2015-08-19 18:52:34 +0200</bug_when>
+            <thetext>Ok,
+
+my final verdict is:
+
+          strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?((?:\[[0-9A-Fa-f:]+\])|(?:[^:\/?#\[\]]*))(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+          loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?((?:\[[0-9A-Fa-f:]+\])|(?:[^:\/?#\[\]]*))(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43503</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-08-20 16:02:14 +0200</bug_when>
+            <thetext>Mathieu, thanks for proposing these enhancements for IPv6.
+
+As you&#39;ve certainly noticed by now the bug tracker isn&#39;t ideal for suggesting or modifying code contributions. Therefore please create a pull request at Github instead, see https://github.com/qooxdoo/qooxdoo/pulls . 
+
+Just prefix the PR&#39;s title with this bug number, i.e. [BUG #9197], and add a reference to the PR to this bug report. Given your proposed changes are stable and appropriate (unit tests should definitely be added), we&#39;d review and apply it to the framework code base. Thanks again and good luck.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43505</commentid>
+            <who name="Mathieu Veurman">mveurman</who>
+            <bug_when>2015-08-21 11:15:30 +0200</bug_when>
+            <thetext>Here you go:
+
+https://github.com/qooxdoo/qooxdoo/pull/143</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43571</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-09-25 17:50:34 +0200</bug_when>
+            <thetext>Mathieu, thanks, merged into master with 7b2dca9.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

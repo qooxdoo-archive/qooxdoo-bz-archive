@@ -1,0 +1,185 @@
+<bug>
+          <bug_id>2225</bug_id>
+          
+          <creation_ts>2009-04-09 10:20:00 +0200</creation_ts>
+          <short_desc>Rethought aspect support</short_desc>
+          <delta_ts>2014-03-03 08:48:12 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          <blocked>3084</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Sebastian Werner">info</reporter>
+          <assigned_to name="Andreas Ecker">qooxdoo</assigned_to>
+          <cc>fabian.jakobs</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9223</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-09 10:20:31 +0200</bug_when>
+            <thetext>Is there really still a need for the aspect support in qooxdoo (or even the profiling support?).
+
+First issue is that in the current configuration of the build-system even the build version, which should be optimized, have wrappers for &quot;qx.aspects&quot; in the Class.js code which is not good, as this results in one or two additional function calls in every class construction and this ways slow down the whole framework. This should be a first easy step to modify the base.json accordingly.
+
+The old idea to wrap every function (which leads to a massive slow down) is except for profiling nothing really needed in my opinion. It would be interested if anybody use this aspect support in the real world.
+
+Other than that profiling support in the browser is as good as never before, so why we stuck on our own half-baked implementation here. The tools available for Firefox and Internet Explorer (and maybe even Opera and Safari) are ahead of our internal tool. It would be better to have a simple profiling tool like YUI. Easy understandable function-by-function comparision - that would be neat.
+
+It would be a good thing, in my opinion, to clean up the core classes from this legacy code.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9505</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-23 10:28:50 +0200</bug_when>
+            <thetext>This is a valid point. Technologically the AOP support is interesting but it&#39;s hard to setup. I don&#39;t think anyone is actually using it. At least in the core team we don&#39;t really use it. I don&#39;t see the two additional function calls in Class.define as problem unless someone can prove that it really slows down class construction but I see the problem that we have code, which is not used regularly used and not very well tested.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9569</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-23 22:00:54 +0200</bug_when>
+            <thetext>I think we all know that function calls are expensive. At least in situations where they are used massively. The event system was improved earlier by leaps regarding this only with removal of too many function calls. The same currently happens in jQuery. I think we do not need another proof here that function calls are expensive.
+
+The point I want to highlight is that these function calls are there even if nobody (-0.001%) need them ;) When you load about 400-1000 classes - which is quite typical in qooxdoo this means about 1000 function calls to much.
+
+YUI&#39;s profiler uses post-wrapping of functions instead. It rewrites the specified methods of a few functions as given in the profiler configuration. That&#39;s much nicer as it keep&#39;s the overhead in a more lazy fashion and separate the whole bunch of code from the framework core. The original argumentation for have this kind of patching in qx.Class.define was to be able to really get every method patched, but I really don&#39;t see why this is needed (argument #1) and why the post-attaching should work worse (argument #2).
+
+Finally a profiler like the YUI profiler would be a huge win regarding usability. As Fabian mentioned the current setup is quite complicated. Still not sure if it&#39;s worth at all to have an own profiler. But as the profiler code is basically already there it may be the better choice to modify it instead of removing it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9644</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-04-24 19:14:25 +0200</bug_when>
+            <thetext>I&#39;m in favor of having qoxodoo AOP support for all browsers. Certainly true is, that we don&#39;t use it as much as we  could - and probably should. I&#39;m not only thinking of profiling, but extracting other debugging info like call traces. Adoption is basically not existent IMHO due to lack of proper documentation and some practical use cases. Am I mistaken, or isn&#39;t there zero documentation for this? I&#39;m quite sure it could have saved us quite some time already when debugging issues.
+
+Let us think about practical ways to improve this and bring it to a convincing level as the rest of the framework. This does include removing features that are irrelevant or technically infeasible. There should certainly not be a significant performance impact, at least not for build versions. As suggested it would also be a very practical feature to limit wrapping in a smart way to those functions that are of real interest. If this could be achieved by post wrapping as suggested, this could become a really handy interactive debugging help, maybe integrated into the inspector?
+
+Lets collect the shortcomings and suggestions for the AOP stuff, either here or on a separate wiki page. What do you think?
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9645</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-24 19:23:05 +0200</bug_when>
+            <thetext>Just to be sure it is in all heads: I think that AOP is also possible for 99% cases to be applied after class creation. This might be a better thing as it is doable in application code or on Firebug/Commandline etc.
+
+This means to replace the current solution with a more practical light-weight post-load alternative.
+
+What do you think?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9646</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-24 19:26:39 +0200</bug_when>
+            <thetext>e.g. 
+
+qx.core.Aspect.wrapMethod(qx.ui.basic.Label, &quot;setTextColor&quot;, &quot;before&quot;, function() {
+  anyOtherCommand();
+});
+
+The only issue here is that this might be some work to get done in the event listener code as in this case there are hard function references.
+
+Though, when used in the first lines of an application this might still not be a problem at all. In fact 0.8.x do a lot less before main() than the previous releases.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13715</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-10-29 17:19:57 +0100</bug_when>
+            <thetext>Any news on this one?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14762</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:26:15 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0 (for issues with status &quot;NEW&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15737</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-12-11 13:26:52 +0100</bug_when>
+            <thetext>As mentioned earlier AOP won&#39;t be removed for 1.0, but as comments suggest, one should re-evaluate its current implementation and address some of its shortcomings (lack of docs and practical use). If we continue to keep it in the framework, maybe even feature AOP like other frameworks (see Dojo, etc.), we should be satisfied with implementation and usefulness. 
+
+Moved to 1.1 with high prio for now, but it may take longer to address this (potential deps to other issues like bug #2471?).
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17452</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-23 09:27:21 +0100</bug_when>
+            <thetext>to Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17556</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-26 13:14:53 +0100</bug_when>
+            <thetext>I set up a test to check if aspects a big performance impact if NOT turned on, which means only the check is executed:
+
+var start = new Date();
+for (var i = 0; i &lt; 5000; i++) {
+  qx.core.Variant.isSet(&quot;qx.aspects&quot;, &quot;on&quot;)
+}
+var end = new Date();
+alert((end - start));​
+
+I used 5000 calls because that seems to be a common number for an application startup (source and build). Tested that in the feed reader, playground and testrunner.
+
+Here are the results of the measurements:
+
+FF 3.6: 9 ms
+FF 3.5: 10 ms
+FF 3.0: 12 ms
+FF 2.0: 16 ms
+
+IE8: 78 ms
+IE6: 109 ms
+
+Webkit: 6ms
+Safari: 5 ms
+Chrome: 8 ms
+
+For most of the browsers it not that big number. I removed the Performance Keyword and moved the bug back to the pool.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17582</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-29 15:26:35 +0200</bug_when>
+            <thetext>Andreas, what do you think? Do we still need the aspects support?
+
+I wasted some thought about it and I think we don&#39;t need it anymore for some reasons. The main reason why we added it was profiling. But the browser profilers are now superior to the aspects in qooxdoo. For using the whole thing in a live application it is way too slow. So I think there is no reason to keep it in the code and – more important – to maintain it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36174</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:48:12 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

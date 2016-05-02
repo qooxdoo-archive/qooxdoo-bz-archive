@@ -1,0 +1,265 @@
+<bug>
+          <bug_id>2654</bug_id>
+          
+          <creation_ts>2009-08-05 10:06:00 +0200</creation_ts>
+          <short_desc>qx.bom/History : fire an event on history stack length change + manage state position in stack</short_desc>
+          <delta_ts>2014-03-03 15:20:40 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Benoît Collignon">b.collignon</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>11201</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2009-08-05 10:06:30 +0200</bug_when>
+            <thetext>Hello,
+
+I&#39;d like to use qx navigation buttons (&#39;next&#39; and &#39;prev&#39;) for an application that use the qx.bom.History class. It&#39;s useful for me as this app is called in an &quot;iframed window&quot;.
+
+However, I had to patch a bit the current class to make it work.
+
+My add-ons are:
+
+__length:1,
+__pos:0,
+
+as private members...
+
+I added the following data events: changePosition, changeLength. 
+
+
+and this code:
+
+qx.bom.History.getInstance().__timer.addListener(&quot;interval&quot;, function(e) 
+{
+       var l = window.history.length;
+       
+       if (this.__length!=l) this.fireDataEvent(&#39;changeLength&#39;,l);
+       this.__length=l;
+});
+
+qx.bom.History.getInstance().navigateBack = function() 
+{
+       qx.event.Timer.once(function() {history.back();}, 0);
+       this.__pos--;
+};
+
+qx.bom.History.getInstance().navigateForward = function() 
+{
+       qx.event.Timer.once(function() {history.forward();}, 0);
+       this.__pos++;
+};
+
+qx.bom.History.getLength = function()
+{
+       return this.__length;
+};
+
+qx.bom.History.getPosition = function()
+{
+       return this.__pos;
+};
+
+In my app, I can so use this kind of code (this.next and this.prev are qx.ui.form.Button instances):
+
+var this._history = qx.bom.History.getInstance();
+this._history.addListener(&quot;changeLength&quot;, function(e)
+{
+            var l = e.getData();
+            switch (l)
+		{
+			case 1:
+				this.next.setEnabled(false);
+				this.prev.setEnabled(false);
+				break;
+			case 2:
+				this.next.setEnabled(false);
+				this.prev.setEnabled(true);
+				break;
+			default:
+				this.next.setEnabled(true);
+				this.prev.setEnabled(true);
+		}
+}, this);
+
+
+this._history.addListener(&quot;changePosition&quot;, function(e)
+{
+var p = e.getData(); var l = this._history.getLength();
+switch (p)
+{
+      case 0:
+      case 1: 
+      if  (l==2)
+      {
+          this.next.toggleEnabled();
+          this.prev.toggleEnabled();
+      }
+      break;
+}
+},this);
+
+If these new private members are expressed as properties, the code may be even simpler. And also notice, the navigation would continue to work if the user cleans the browser history (thanks to the timer and the new event).
+
+PS: I also noticed it&#39;s impossible to put &#39;/&#39; chars in the uri because all is URIencoded. I don&#39;t know if it&#39;s &quot;url syntactically correct&quot; to put some &#39;/&#39; after &#39;#&#39; but I also patched the history class to manage it and it seems to be recognized in any browser.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11202</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2009-08-05 11:03:41 +0200</bug_when>
+            <thetext>Ok, it seems there are some fixes to do in my previous code in order to make it work completely (sorry)... But the main idea is there.
+
+(In reply to comment #0)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11251</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-08-10 11:37:47 +0200</bug_when>
+            <thetext>@Fabian, any chance you reviewed the proposed changes to the History class?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11283</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-08-11 15:32:19 +0200</bug_when>
+            <thetext>I&#39;ll be on holiday for the next two weeks. I&#39;ll review the patch when I&#39;m back.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11290</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2009-08-11 17:10:41 +0200</bug_when>
+            <thetext>Notice that &quot;my example app code&quot; doesn&#39;t work completely here, I had to add some modifications (in fact, it was just to introduce the issue). Furthermore, I proposed to specify the length and the position as properties but it&#39;s not possible because they are linked to the internal window.history.length that is &quot;read only&quot;.
+
+I can provide a complete working example if desired.
+
+Regards,
+
+Benoît.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14809</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:26:44 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0 (for issues with status &quot;NEW&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14934</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-25 18:37:50 +0100</bug_when>
+            <thetext>I see some general problems with your addition. The biggest problem is that you cannot really know the position and length of the stack. Assume this workflow:
+
+
+1. user gets open you app (stack: 0, pos: 0)
+2. user navigates forward (stack: 1, pos: 1)
+3. user hits reload (stack: 0, pos: 0)
+4. user hits back (stack: ?, pos: -1) (this will not trigger a reload and the app will think it is at position -1)
+
+So the browser maintains its own location stack and it is not possible to know what it is.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14936</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2009-11-25 18:51:43 +0100</bug_when>
+            <thetext>You&#39;re right but in my case, the prev and next buttons aren&#39;t yet enabled when the user reloads in the third operation. I don&#39;t have free time to attach my &quot;supposed-to-work&quot; code today but I&#39;ll take the time for this tomorrow...
+
+Best,
+
+Benoît.
+
+(In reply to comment #6)
+&gt; I see some general problems with your addition. The biggest problem is that you
+&gt; cannot really know the position and length of the stack. Assume this workflow:
+&gt; 
+&gt; 
+&gt; 1. user gets open you app (stack: 0, pos: 0)
+&gt; 2. user navigates forward (stack: 1, pos: 1)
+&gt; 3. user hits reload (stack: 0, pos: 0)
+&gt; 4. user hits back (stack: ?, pos: -1) (this will not trigger a reload and the
+&gt; app will think it is at position -1)
+&gt; 
+&gt; So the browser maintains its own location stack and it is not possible to know
+&gt; what it is.
+&gt; 
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14939</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2009-11-25 19:04:38 +0100</bug_when>
+            <thetext>Oops, OK, now I see exactly what you mean... In fact, I already seen this kind of problem too. In order to avoid it, I launched the app in an iframe - so the browser nav buttons weren&#39;t available. So, when the app was reloaded, the &quot;app&quot; nav buttons states were reset to init - it is a filemanager app, so the iframe window is a efficient choice. 
+
+Sorry, I didn&#39;t remember of that (I posted this bug some times ago)...
+
+Best,
+
+Benoît.   
+
+(In reply to comment #7)
+&gt; You&#39;re right but in my case, the prev and next buttons aren&#39;t yet enabled when
+&gt; the user reloads in the third operation. I don&#39;t have free time to attach my
+&gt; &quot;supposed-to-work&quot; code today but I&#39;ll take the time for this tomorrow...
+&gt; 
+&gt; Best,
+&gt; 
+&gt; Benoît.
+&gt; 
+&gt; (In reply to comment #6)
+&gt; &gt; I see some general problems with your addition. The biggest problem is that you
+&gt; &gt; cannot really know the position and length of the stack. Assume this workflow:
+&gt; &gt; 
+&gt; &gt; 
+&gt; &gt; 1. user gets open you app (stack: 0, pos: 0)
+&gt; &gt; 2. user navigates forward (stack: 1, pos: 1)
+&gt; &gt; 3. user hits reload (stack: 0, pos: 0)
+&gt; &gt; 4. user hits back (stack: ?, pos: -1) (this will not trigger a reload and the
+&gt; &gt; app will think it is at position -1)
+&gt; &gt; 
+&gt; &gt; So the browser maintains its own location stack and it is not possible to know
+&gt; &gt; what it is.
+&gt; &gt; 
+&gt; 
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36981</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:40 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

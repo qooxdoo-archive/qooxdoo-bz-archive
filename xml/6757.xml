@@ -1,0 +1,127 @@
+<bug>
+          <bug_id>6757</bug_id>
+          
+          <creation_ts>2012-08-30 08:42:00 +0200</creation_ts>
+          <short_desc>Layout issues with firefox 15</short_desc>
+          <delta_ts>2012-09-03 09:21:57 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>2.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>critical</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          <cc>tunelaurajamais</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30529</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2012-08-30 08:42:37 +0200</bug_when>
+            <thetext>Yesterday, the automatic update to Firefox 15 has started.
+
+Firefox 15 now suddenly displays some layout elements not correctly.
+
+The problem is that BorderImages were previously automatically filled, but this behaviour has been changed with Firefox 15. Now Firefox 15 always expacts &quot;border-image: ... fill&quot;. See http://dbaron.org/log/20120612-border-image.
+
+The Qooxdoo code looks like this:
+
+-- ----------------------------------------------
+qx.Class.define(&quot;qx.ui.decoration.css3.BorderImage&quot;,
+
+    getMarkup : function()
+    {
+      var fill = this.getFill() &amp;&amp;
+        qx.core.Environment.get(&quot;css.borderimage.standardsyntax&quot;) ? &quot; fill&quot; : &quot;&quot;;
+
+      this.__markup = [
+        &quot;&lt;div style=&#39;&quot;,
+        qx.bom.element.Style.compile({
+          &quot;borderImage&quot; : &#39;url(&quot;&#39; + source + &#39;&quot;) &#39; + slice.join(&quot; &quot;) + fill + &quot; &quot; + repeat,
+
+-- ----------------------------------------------
+
+The problem is that qx.core.Environment.get(&quot;css.borderimage.standardsyntax&quot;) is always false for Firefox 15. This problem is always false due to https://bugzilla.mozilla.org/show_bug.cgi?id=778137. 
+
+I would recommend the following Qooxdoo fix:
+   var fill = (    this.getFill() &amp;&amp; qx.core.Environment.get(&quot;css.borderimage.standardsyntax&quot;)
+                || isFirefoxGreaterOrEqual15() &amp;&amp; this.getFill()!=&quot;no&quot; ) ? &quot; fill&quot; : &quot;&quot;;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30533</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2012-08-30 10:19:00 +0200</bug_when>
+            <thetext>To Alex - I have already talked to him.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30534</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2012-08-30 11:45:43 +0200</bug_when>
+            <thetext>This issue is already fixed within the framework. 
+
+The check of &#39;qx.core.Environment.get(&quot;css.borderimage.standardsyntax&quot;)&#39; returns &#39;true&#39; for Firefox 15 and greater. 
+
+The &#39;fill&#39; property of the &#39;qx.ui.decoration.css3.BorderImage&#39; class defaults to &#39;true&#39;. 
+
+So the code
+
+--snip--
+var fill = this.getFill() &amp;&amp; qx.core.Environment.get(&quot;css.borderimage.standardsyntax&quot;) ? &quot; fill&quot; :
+&quot;&quot;;
+--snip--
+
+will return &#39;fill&#39; as value and results in adding this to the CSS definition.
+
+So the only fix to deliver is: make sure Firefox 15 is using the standard syntax of borderImage. This is already implemented since August 1st.
+
+I&#39;ll close this one as FIXED.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30536</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2012-08-30 13:01:59 +0200</bug_when>
+            <thetext>Verified.
+
+Alex is right.
+I initially made two local patches for Firefox 15:
+  1. A patch that replaces &quot;this.getFill()&quot; with &quot;true&quot;
+  2. The patch described by the already fixed bug 6683.
+
+Since I had to made these two changed to get it running, I assumed that these two changes were really needed. But I also works when omitting change 1.)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30565</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-09-03 09:21:57 +0200</bug_when>
+            <thetext>*** Bug 6763 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

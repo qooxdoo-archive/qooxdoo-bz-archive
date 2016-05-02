@@ -1,0 +1,184 @@
+<bug>
+          <bug_id>8952</bug_id>
+          
+          <creation_ts>2015-02-18 08:00:00 +0100</creation_ts>
+          <short_desc>FSM does not handle constant TERMINATE</short_desc>
+          <delta_ts>2015-02-23 11:45:29 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.1.1</target_milestone>
+          
+          <blocked>8953</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter>bader</reporter>
+          <assigned_to name="Derrell Lipman">derrell.lipman</assigned_to>
+          <cc>derrell.lipman</cc>
+    
+    <cc>qooxdoo</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>42568</commentid>
+            <who name="">bader</who>
+            <bug_when>2015-02-18 08:00:29 +0100</bug_when>
+            <thetext>I built a FiniteStateMachine and used the constant qx.util.fsm.FiniteStateMachine.StateChange.TERMINATE in one transition to end the fsm. I then run into https://github.com/qooxdoo/qooxdoo/blob/master/framework/source/class/qx/util/fsm/FiniteStateMachine.js#L1124 and it seems that this constant is treated nowhere.
+
+I will probably fix it today.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42570</commentid>
+            <who name="">bader</who>
+            <bug_when>2015-02-18 09:45:12 +0100</bug_when>
+            <thetext>Please mind PR: https://github.com/qooxdoo/qooxdoo/pull/122</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42572</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-02-18 10:46:06 +0100</bug_when>
+            <thetext>Thanks for the PR. Just glancing over it, you might want to address some obvious issues, e.g.:
+
+* Error:  type --&gt; event.getType() ??
+https://github.com/qooxdoo/qooxdoo/pull/122/files#diff-9fd8a2243d84f5ec507d3fcb5110036dR793
+(Hint: please &quot;generate.py lint&quot; your local code before commits)
+
+* Typo:  &quot;beacuse&quot; --&gt; &quot;because&quot;
+
+* Question: &quot;convenience function&quot; isTerminated() really useful (&quot;KISS&quot;)?
+
+
+We should ask @Derrell as the original FSM author for a brief review of your PR, I&#39;ll add him as a watcher.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42573</commentid>
+            <who name="">bader</who>
+            <bug_when>2015-02-18 11:06:52 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+
+&gt; * Error:  type --&gt; event.getType() ??
+&gt; https://github.com/qooxdoo/qooxdoo/pull/122/files#diff-9fd8a2243d84f5ec507d3fcb5110036dR793
+&gt; (Hint: please &quot;generate.py lint&quot; your local code before commits)
+&gt; 
+&gt; * Typo:  &quot;beacuse&quot; --&gt; &quot;because&quot;
+
+Fixed. I usually run the lint check, dunno why I didn&#39;t this time.
+
+&gt; * Question: &quot;convenience function&quot; isTerminated() really useful (&quot;KISS&quot;)?
+
+For me, it is. I forward an event to the fsm, but it might be terminated. So I check if it&#39;s terminated and start it eventually. In this particular situation it&#39;s hard to track the fsm&#39;s state by the event listener (see #8953). I guess others find that useful as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42574</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2015-02-18 16:12:13 +0100</bug_when>
+            <thetext>I&#39;ll look at this. Thanks for the report!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42576</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2015-02-18 17:04:47 +0100</bug_when>
+            <thetext>These changes generally look good. Please see my line notes in github. One of those -- handling an event after termination -- needs a resolution.
+
+The two pull requests, for the two different bugs (8952 and 8953), seem to be partially, but not completely, merged, e.g., Andreas&#39; suggested change regarding thisState seems to be in one but not the other). Combining the pull requests is fine since these two issues are highly related, but please let me know which is the definitive one to be pulled.
+
+The existing tests for FSM are minimal -- I think I wrote FSM before there was even a test framework in qooxdoo -- but we should add tests for these new features. Do you think you could add tests in qx.test.util.Fsm?
+
+I guess I had foreseen the need to terminate an FSM and added the manifest constant for it, but somehow neglected to fully implement the feature. In my uses of FSM over the years, I&#39;ve never needed to terminate one, so I didn&#39;t detect this. I guess no one else ever did either. Thanks for this!
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42579</commentid>
+            <who name="">bader</who>
+            <bug_when>2015-02-19 09:26:46 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; The two pull requests, for the two different bugs (8952 and 8953), seem to be
+&gt; partially, but not completely, merged, e.g., Andreas&#39; suggested change
+&gt; regarding thisState seems to be in one but not the other). Combining the pull
+&gt; requests is fine since these two issues are highly related, but please let me
+&gt; know which is the definitive one to be pulled.
+
+It&#39;s actually not to merged PR, but a single one. The final commit in PR #122 is the one to be pulled.
+ 
+&gt; The existing tests for FSM are minimal -- I think I wrote FSM before there was
+&gt; even a test framework in qooxdoo -- but we should add tests for these new
+&gt; features. Do you think you could add tests in qx.test.util.Fsm?
+
+Generally yes, but I need to find some time for this. Maybe on the weekend.
+
+&gt; I guess I had foreseen the need to terminate an FSM and added the manifest
+&gt; constant for it, but somehow neglected to fully implement the feature. In my
+&gt; uses of FSM over the years, I&#39;ve never needed to terminate one, so I didn&#39;t
+&gt; detect this. I guess no one else ever did either. Thanks for this!
+
+You&#39;re welcome. I&#39;m using a fsm that in some states calls other fsms and waits for them to terminated in order to proceed. That&#39;s the reason I need the event. But I must also check if the sub fsm isn&#39;t running already, thus the terminated state.
+
+Greetings,
+
+Markus</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42592</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2015-02-19 21:10:23 +0100</bug_when>
+            <thetext>Final pull request looks good. I tested it against the demobrowser FSM Mice Maze example, for backward compatibility. 
+
+Merged 64f503e.
+
+Please submit some unit tests for the new &quot;terminated&quot; functionality some time soon.
+
+Thanks!
+
+Derrell
+
+@Martin, I&#39;ll leave this bug open for you to close at your convenience.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42595</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-02-20 11:33:53 +0100</bug_when>
+            <thetext>@Derrell, as a bug fix piggybacked by backward-compatible changes only, would you mind applying it to branch_4_1_x as well?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42597</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2015-02-20 16:08:52 +0100</bug_when>
+            <thetext>Applied to branch_4_1_x too.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42612</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-02-23 11:45:29 +0100</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; @Martin, I&#39;ll leave this bug open for you to close at your convenience.
+
+I&#39;m fine if its ok for you. :)</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

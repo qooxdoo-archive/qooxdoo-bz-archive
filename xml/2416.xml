@@ -1,0 +1,177 @@
+<bug>
+          <bug_id>2416</bug_id>
+          
+          <creation_ts>2009-05-25 17:16:00 +0200</creation_ts>
+          <short_desc>Cache: Add file locking to synchronize access to cache items</short_desc>
+          <delta_ts>2009-10-27 09:42:00 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10109</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-05-25 17:16:51 +0200</bug_when>
+            <thetext>Add a file locking mechanism, to synchronize access to cache items. Currently, 
+concurrent runs of the generator using the same cache can result in
+intermittend access errors, due to two processes accessing the same cache item. 
+This prevents e.g. running a generator process for more than one application in 
+the framework at any one time.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10881</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-14 12:01:27 +0200</bug_when>
+            <thetext>Status update:
+
+I see two general strategies:
+- flocking (file locking), as supported by the OS
+- using temp. files as semaphores
+
+I tried an experimental implementation for cross-platform flocking (which I 
+find preferable for ACID reasons), using fcntl on Posix and msvcrt on Win32. It 
+didn&#39;t work out, and there is much debate about the general usefulness of 
+msvcrt for such tasks in the community. Non-standard modules like the win32* 
+modules might provide a better API on Windows, but their general availability 
+has to be checked.
+
+Using a temporary file as a semaphore has the advantage of being cross-platform 
+and needing only standard modules, but is tricky to get right. Relevant 
+Internet postings suggest that this call to os.open
+
+  os.open(lockfile, os.O_CREAT|os.O_EXCL|os.O_RDWR)
+
+is the only safe options, as the O_CREAT flag guarantees an atomic action 
+cross-platform (e.g. see
+http://www.evanfosmark.com/2009/01/cross-platform-file-locking-support-in-python/). 
+I haven&#39;t tested this, but expect a run-time penalty as it causes a major 
+increase on file system I/O (which is already the bottleneck of the generator). 
+Our cache has easily 3,000 objects. Creating and deleting temp. files for each 
+of them in rapid succession sounds like a major overhead. We&#39;ll have to measure 
+this...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10892</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-14 15:21:00 +0200</bug_when>
+            <thetext>Add a locking for the whole cache directory, to detect concurrent access to the 
+cache by two separate generator processes. This is to prevent intermittent 
+errors due to race conditions for cache objects (and maybe worse).
+
+With r19588.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10908</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-15 14:54:26 +0200</bug_when>
+            <thetext>I changed two major things of the global cache locking:
+
+(a) I established a single cache object for the whole generator run; in normal 
+cases all jobs would use the same cache; this cache will be locked at the 
+beginning of the generator run, and released at the end. Before, each job would 
+create its own cache object and lock the cache indiviually; this could result 
+in another process locking the cache in between jobs, which would terminate the 
+current generator run (bad e.g. when building the demos :). Those jobs that use 
+a differing cache create their own cache object for the time of their run.
+
+(b) The individual job is now releasing the current lock when invoking a 
+sub-process via the &quot;shell&quot; config key; this allows the parent process to 
+release the lock while invoking a child process synchronously (where the parent 
+cannot do anything anyway); important for e.g. the Demobrowser which invokes a 
+generator sub-process to build the demos. Again, a competing process could 
+&quot;steal&quot; the lock between the parent and the child, but, oh well, it&#39;s only at 
+one point during Demobrowser builds, and early enough so that recovering is not 
+too costly. The situation might change if we get generator runs that invoke a 
+lot of other generator runs as childs.
+
+With r19599.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10910</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-15 15:09:21 +0200</bug_when>
+            <thetext>to me.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10924</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-15 19:17:57 +0200</bug_when>
+            <thetext>I&#39;ve added file-level locking for cache objects! My test runs suggest that it 
+does not impede generator performance. If anybody makes experiences to the 
+contrary, please add a comment here to that end.
+
+This does not obliviate the cache-level locking that we currently have, it&#39;s 
+just to test run time behaviour. In order to remove the cache-level lock, I 
+have to implement collision recovery (like retries), which isn&#39;t done yet.
+
+With r19609.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10976</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-20 17:56:42 +0200</bug_when>
+            <thetext>Added interrupt handling through the ordinary exception handling for 
+KeyboardInterrupt. This is one approach I found (The other would be using 
+signal.signal(), but let&#39;s see how far we get with this simpler one). 
+
+The implementation uses an InterruptRegistry class, which is used in the 
+interrupt handler. All modules can use a common instance of this class to 
+register their specific handlers with. The first consumer is the Cache module 
+(naturally), which tries to unlock locked files. Clean-up actions for cache 
+lock files are logged with the -v CL switch. Since locking the file with 
+filetool.lock and adding the file name to the list of locked cache files is not 
+atomic, inconsistencies can appear (The same applies for the filetool.unlock 
+action). But the sequencing of statements is hopefully such that it is robust 
+in these cases (trying to remove an non-existing lock file will not hurt).
+
+With r19647.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13181</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-14 14:45:42 +0200</bug_when>
+            <thetext>Resolving this, as the current implementation seems to work nicely. Retries 
+after lock collisions have been implemented, too.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13182</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-14 14:46:28 +0200</bug_when>
+            <thetext>Closing it.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

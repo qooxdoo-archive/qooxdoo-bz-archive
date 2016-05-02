@@ -1,0 +1,516 @@
+<bug>
+          <bug_id>4384</bug_id>
+          
+          <creation_ts>2010-11-30 00:55:00 +0100</creation_ts>
+          <short_desc>Generator compression of json resources</short_desc>
+          <delta_ts>2014-03-03 08:46:07 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21626</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-11-30 00:55:45 +0100</bug_when>
+            <thetext>This is an attached (not finished testing fully yet) feature for the generator.
+
+Two functions:
+- convert a json associative array to a json array
+- minify by removing [ \t\n\r]
+
+I hope everything has been included correctly now.
+
+Space saving about (and then about!) 55-66%. It depends of course on the size of the keys and number of whitespaces metioned above.
+
+The result is faster loading.
+
+Data binding still works fine.
+
+This might lead to a renewed recoding of the data binding which might result in a faster execution!?!?!?
+
+Manual chapter is on its way. Will soon be attached.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21627</commentid>
+              <attachid>847</attachid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-11-30 00:57:01 +0100</bug_when>
+            <thetext>Created attachment 847
+compress-json</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21628</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-30 08:34:57 +0100</bug_when>
+            <thetext>Thanks for the report and the patch!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21630</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-30 10:43:14 +0100</bug_when>
+            <thetext>What is the *general* use case for that?!
+
+I don&#39;t like the idea of changing Json semantics, by chaning maps into arrays (this functionality is commented out in the patch anyway).
+
+For white space removal, there are plenty of tools available (e.g. jsonlint).
+
+I don&#39;t see what this has to do with data binding.
+
+It looks very specifc to your current project. Put any Json transformations that you need to do in a dedicated script, and call it from the generator with the &#39;shell&#39; key.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21636</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-11-30 13:57:49 +0100</bug_when>
+            <thetext>&gt;What is the *general* use case for that?!
+
+var langStore = this.__languageStore = new qx.data.store.Json(&quot;lang.json&quot;);
+langStore.addListener(&quot;changeModel&quot;, function()
+{
+  var languages = this.__languageStore.getModel().getLanguages();
+  var languageCL = new qx.data.controller.List(languages, this.__languageSB, &quot;[1]&quot;);
+}, this);
+
+Comment:
+this.__languageSB -&gt; SelectBox
+
+200 languages 3 items for every language
+220 countries 3-4 items for each
+x number of variants
+...there are many more examples!
+
+----&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; SLOW execution! Faster with converted json arrays.
+
+&gt;I don&#39;t like the idea of changing Json semantics, by chaning maps into arrays
+&gt;(this functionality is commented out in the patch anyway).
+
+This is a misunderstanding. The conversion is following the json syntax, i.e. it can be read by any json parser. Additionally, no one is going to look at the runnable code, as little as looking at the generated javascript code. The argument is not really consequent or solid. The source json file is always there as you created it.
+
+&gt;For white space removal, there are plenty of tools available (e.g. jsonlint).
+
+simplejson will take care of that as an alternative.
+
+&gt;I don&#39;t see what this has to do with data binding.
+
+See above! (indirectly)
+
+&gt;It looks very specifc to your current project. Put any Json transformations
+that you need to do in a dedicated script, and call it from the generator with
+the &#39;shell&#39; key.
+
+It is not specific. See above. Hope you understand better now.
+
+Any bigger application needs this kind of functionality if it is going to be global and faster.
+
+
+We will make a new update later today. You got a very early version.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21640</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-11-30 14:58:49 +0100</bug_when>
+            <thetext>I forgot one important thing:
+
+220 countries with 6 lines each -&gt; one file for each language (200) -&gt; 200 files!!
+200 languages with 4 lines each -&gt; 1 file ----&gt; with translations -&gt; 200!!!
+then variants....
+and maybe locale combinations...etc.
+
+this is general enough.
+
+Just imagine if we would use .po files....from a speed perspective.
+
+But I understand your reaction if you have not faced the problems we face. Small programs (&lt;100 000 lines of code) won&#39;t have the problem.
+
+I also have to remind you on that user experience is subjective so EVERY single fraction of a second we can save, the more positive the user will be.
+
+Think big, multilingual, multisite, global etc. then you get the big companies interested in qooxdoo.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21641</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-30 15:13:05 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; &gt;I don&#39;t like the idea of changing Json semantics, by chaning maps into arrays
+&gt; &gt;(this functionality is commented out in the patch anyway).
+&gt; 
+&gt; This is a misunderstanding. The conversion is following the json syntax, i.e.
+&gt; it can be read by any json parser. 
+
+I&#39;m not questioning the syntax but the semantics. Putting an array in a place where there used to be a map is a change in the semantic structure of the particular Json data. 
+
+&gt; Additionally, no one is going to look at the
+&gt; runnable code, as little as looking at the generated javascript code. The
+&gt; argument is not really consequent or solid. The source json file is always
+&gt; there as you created it.
+
+This can only work when the consumer of the Json data is aware of this change, and this is hardly generic.
+
+&gt; 
+&gt; &gt;For white space removal, there are plenty of tools available (e.g. jsonlint).
+&gt; 
+&gt; simplejson will take care of that as an alternative.
+
+So why don&#39;t you use it?!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21644</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-30 15:27:18 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; I forgot one important thing:
+&gt; 
+&gt; 220 countries with 6 lines each -&gt; one file for each language (200) -&gt; 200
+&gt; files!!
+&gt; 200 languages with 4 lines each -&gt; 1 file ----&gt; with translations -&gt; 200!!!
+&gt; then variants....
+&gt; and maybe locale combinations...etc.
+
+I&#39;m taking from this that your &quot;lang.json&quot; is big. Still it is a custom, application-specific data file, and I don&#39;t see why the treatment of custom data files should be part of the generator. Generator integration with the &#39;shell&#39; key is good enough for these purposes.
+
+&gt; 
+&gt; this is general enough.
+
+You&#39;re mixing size with generality.
+
+&gt; Just imagine if we would use .po files....from a speed perspective.
+&gt; 
+&gt; But I understand your reaction if you have not faced the problems we face.
+&gt; Small programs (&lt;100 000 lines of code) won&#39;t have the problem.
+
+Big programs use generated I18N parts, which seems like the tool you should look at (see the &#39;i18n-with-boot&#39; section in http://tinyurl.com/33abnq7). See the Feedreader for a coding example.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21645</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-11-30 16:16:24 +0100</bug_when>
+            <thetext>&gt;I&#39;m taking from this that your &quot;lang.json&quot; is big. Still it is a custom,
+&gt;application-specific data file, and I don&#39;t see why the treatment of custom
+&gt;data files should be part of the generator. Generator integration with the
+&gt;&#39;shell&#39; key is good enough for these purposes.
+
+It is big enough... If you mean that it is custom, then all data is custom.
+
+Json is general? yes, I suppose
+do developers use json in their apps? yes, I suppose
+do developers want applications be as small and fast as possible? yes, I suppose
+
+&gt;You&#39;re mixing size with generality.
+
+Not at all. If a language, territory and variant switching is not general, then nothing is general. All multilingual apps need it. It is rather a question if you want to support multilingual apps with higher demands for maybe 100 languages.... and not only 5 or 6 as of today, or not! Our scenario is different than yours.
+
+&gt;Big programs use generated I18N parts, which seems like the tool you should
+&gt;look at (see the &#39;i18n-with-boot&#39; section in http://tinyurl.com/33abnq7). See
+&gt;the Feedreader for a coding example.
+
+We do too. How would we else be able to run our huge app....? To use .po files with the WHOLE language string as a key is EVEN slower. Additionally, json is the choice where extra data in the structure is necessary.
+
+Have you really tested what you are assuming? It seems that you have not cause you do not seem to understand the problem.
+
+Fair enough, if you do not want to use it, ok for us, but the code is here for anyone to use. Soon upgraded when I get the correct version.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21707</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-12-02 16:18:47 +0100</bug_when>
+            <thetext>Correct version this time.
+
+Simplejson used
+
+Separated the conversion and compression of json files. Now even more general as you wished.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21708</commentid>
+              <attachid>851</attachid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-12-02 16:20:18 +0100</bug_when>
+            <thetext>Created attachment 851
+Change name to process-json</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35421</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:07 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="1" ispatch="1" isprivate="0" isurl="0">
+            <attachid>847</attachid>
+            <date>2010-11-30 00:57:00 +0100</date>
+            <delta_ts>2010-12-02 16:20:18 +0100</delta_ts>
+            <desc>compress-json</desc>
+            <filename>json-compress.diff</filename>
+            <type>text/plain</type>
+            <size>6997</size>
+            <attacher>dev</attacher>
+            
+              <data encoding="base64">SW5kZXg6IHRvb2wvZGF0YS9jb25maWcvY29uZmlnX3NjaGVtYS5qc29uCj09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KLS0t
+IHRvb2wvZGF0YS9jb25maWcvY29uZmlnX3NjaGVtYS5qc29uCShyZXZpc2lvbiAyNDA1NCkKKysr
+IHRvb2wvZGF0YS9jb25maWcvY29uZmlnX3NjaGVtYS5qc29uCSh3b3JraW5nIGNvcHkpCkBAIC0z
+MjEsNiArMzIxLDQ5IEBACiAgICAgICAgICAgICB7CiAgICAgICAgICAgICAgICJkZXNjciIgOiAi
+RGVmaW5lIHZhcmlhbnRzIGZvciB0aGUgZ2VuZXJhdGVkIGFwcGxpY2F0aW9uLiIsCiAgICAgICAg
+ICAgICB9CisgICAgICAgICAgfSwKKworICAgICAgICAgICJjb21wcmVzcy1qc29uIiA6CisgICAg
+ICAgICAgeworICAgICAgICAgICAgImRlc2NyIiA6ICJDb21wcmVzc2VzIGFuZCBjb252ZXJ0cyBq
+c29uIHRvIGEgbW9yZSBjb21wYWN0IGpzb24gcmVzb3VyY2UgZmlsZS4iLAorICAgICAgICAgICAg
+InR5cGUiICA6ICJtYXAiLAorICAgICAgICAgICAgImNoaWxkcmVuIiA6CisgICAgICAgICAgICB7
+CisgICAgICAgICAgICAgICJmaWxlcyIgOgorICAgICAgICAgICAgICB7CisgICAgICAgICAgICAg
+ICAgImRlc2NyIiA6ICJtYXAgd2l0aCBlbnRyaWVzIiwKKyAgICAgICAgICAgICAgICAidHlwZSIg
+IDogIm1hcCIsCisgICAgICAgICAgICAgICAgImNoaWxkcmVuIiA6CisgICAgICAgICAgICAgICAg
+eworICAgICAgICAgICAgICAgICAgIjxvdXRwdXRfanNvbl9maWxlPiIgOgorICAgICAgICAgICAg
+ICAgICAgeworICAgICAgICAgICAgICAgICAgICAiZGVzY3IiIDogInBhdGggb2Ygb3V0cHV0IGZp
+bGU7IG1heSBiZSByZWxhdGl2ZSB0byB0aGUgY29uZmlnIGZpbGUgbG9jYXRpb24iLAorICAgICAg
+ICAgICAgICAgICAgICAidHlwZSIgIDogIm1hcCIsCisgICAgICAgICAgICAgICAgICAgICJjaGls
+ZHJlbiIgOgorICAgICAgICAgICAgICAgICAgICB7CisgICAgICAgICAgICAgICAgICAgICAgImlu
+cHV0IiA6CisgICAgICAgICAgICAgICAgICAgICAgeworICAgICAgICAgICAgICAgICAgICAgICAg
+ImRlc2NyIiAgOiAibGlzdHMgdGhlIGlucHV0IGpzb24gZmlsZXMgKGZpbGUgZ2xvYnMgYWxsb3dl
+ZCk7IG1heSBiZSByZWxhdGl2ZSB0byBjb25maWcgZmlsZSBsb2NhdGlvbiIsCisgICAgICAgICAg
+ICAgICAgICAgICAgICAib2NjdXJzIiA6ICJyZXF1aXJlZCIsCisgICAgICAgICAgICAgICAgICAg
+ICAgICAidHlwZSIgICA6ICJsaXN0IiwKKyAgICAgICAgICAgICAgICAgICAgICAgICJjaGlsZHJl
+biIgOgorICAgICAgICAgICAgICAgICAgICAgICAgWworICAgICAgICAgICAgICAgICAgICAgICAg
+ICB7CisgICAgICAgICAgICAgICAgICAgICAgICAgICAgImRlc2NyIiA6ICJwYXRoIHRvIGFuIGlu
+cHV0IGpzb24gZmlsZSIsCisgICAgICAgICAgICAgICAgICAgICAgICAgICAgInR5cGUiICA6ICJz
+dHJpbmciCisgICAgICAgICAgICAgICAgICAgICAgICAgIH0KKyAgICAgICAgICAgICAgICAgICAg
+ICAgIF0sCisgICAgICAgICAgICAgICAgICAgICAgfSwKKyAgICAgICAgICAgICAgICAgICAgICAi
+Y29udmVydCIgOgorICAgICAgICAgICAgICAgICAgICAgIHsKKyAgICAgICAgICAgICAgICAgICAg
+ICAgICJkZXNjciIgOiAid2hldGhlciB0byBjb252ZXJ0IGpzb24gYXNzb2NpYXRpdmUgdG8ganNv
+biBhcnJheS4iLAorICAgICAgICAgICAgICAgICAgICAgICAgInR5cGUiICA6ICJib29sZWFuIgor
+ICAgICAgICAgICAgICAgICAgICAgIH0KKyAgICAgICAgICAgICAgICAgICAgfQorICAgICAgICAg
+ICAgICAgICAgfQorICAgICAgICAgICAgICAgIH0KKyAgICAgICAgICAgICAgfQorICAgICAgICAg
+ICAgfQogICAgICAgICAgIH0KICAgICAgICAgfQogICAgICAgfQpJbmRleDogdG9vbC9weWxpYi9n
+ZW5lcmF0b3IvY29uZmlnL0xhbmcucHkKPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQotLS0gdG9vbC9weWxpYi9nZW5lcmF0
+b3IvY29uZmlnL0xhbmcucHkJKHJldmlzaW9uIDI0MDU0KQorKysgdG9vbC9weWxpYi9nZW5lcmF0
+b3IvY29uZmlnL0xhbmcucHkJKHdvcmtpbmcgY29weSkKQEAgLTU0LDYgKzU0LDcgQEAKICAgICAg
+ICAgICAgICAgICAiY29tYmluZS1pbWFnZXMiOiB0eXBlcy5EaWN0VHlwZSwKICAgICAgICAgICAg
+ICAgICAiY29tcGlsZSIgICAgICAgOiB0eXBlcy5EaWN0VHlwZSwKICAgICAgICAgICAgICAgICAi
+Y29tcGlsZS1vcHRpb25zIiAgOiB0eXBlcy5EaWN0VHlwZSwKKyAgICAgICAgICAgICAgICAiY29t
+cHJlc3MtanNvbiIgOiB0eXBlcy5EaWN0VHlwZSwKICAgICAgICAgICAgICAgICAiY29weS1maWxl
+cyIgICAgOiB0eXBlcy5EaWN0VHlwZSwKICAgICAgICAgICAgICAgICAiY29weS1yZXNvdXJjZXMi
+ICAgOiB0eXBlcy5EaWN0VHlwZSwKICAgICAgICAgICAgICAgICAiZGVwZW5kZW5jaWVzIiAgOiB0
+eXBlcy5EaWN0VHlwZSwKSW5kZXg6IHRvb2wvcHlsaWIvZ2VuZXJhdG9yL0dlbmVyYXRvci5weQo9
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09Ci0tLSB0b29sL3B5bGliL2dlbmVyYXRvci9HZW5lcmF0b3IucHkJKHJldmlzaW9u
+IDI0MDU0KQorKysgdG9vbC9weWxpYi9nZW5lcmF0b3IvR2VuZXJhdG9yLnB5CSh3b3JraW5nIGNv
+cHkpCkBAIC0xMTIsNiArMTEyLDExIEBACiAgICAgICAgICAgICAgICJ0eXBlIiAgIDogIkpTaW1w
+bGVKb2IiCiAgICAgICAgICAgICB9LAogCisgICAgICAgICAgICAiY29tcHJlc3MtanNvbiIgOgor
+ICAgICAgICAgICAgeworICAgICAgICAgICAgICAidHlwZSIgICA6ICJKU2ltcGxlSm9iIgorICAg
+ICAgICAgICAgfSwKKwogICAgICAgICAgICAgImNsZWFuLWZpbGVzIiA6CiAgICAgICAgICAgICB7
+CiAgICAgICAgICAgICAgICJ0eXBlIiAgIDogIkpTaW1wbGVKb2IiCkBAIC01MDAsNiArNTA1LDgg
+QEAKICAgICAgICAgICAgICAgICAgICAgc2VsZi5ydW5Db3B5RmlsZXMoKQogICAgICAgICAgICAg
+ICAgIGVsaWYgdHJpZ2dlciA9PSAiY29tYmluZS1pbWFnZXMiOgogICAgICAgICAgICAgICAgICAg
+ICBzZWxmLnJ1bkltYWdlQ29tYmluaW5nKCkKKyAgICAgICAgICAgICAgICBlbGlmIHRyaWdnZXIg
+PT0gImNvbXByZXNzLWpzb24iOgorICAgICAgICAgICAgICAgICAgICBzZWxmLnJ1bkpzb25Db21w
+cmVzc2lvbigpCiAgICAgICAgICAgICAgICAgZWxpZiB0cmlnZ2VyID09ICJjbGVhbi1maWxlcyI6
+CiAgICAgICAgICAgICAgICAgICAgIHNlbGYucnVuQ2xlYW4oKQogICAgICAgICAgICAgICAgIGVs
+aWYgdHJpZ2dlciA9PSAibWlncmF0ZS1maWxlcyI6CkBAIC0xNTY0LDcgKzE1NzEsNyBAQAogCiAg
+ICAgICAgIGltYWdlcyA9IHNlbGYuX2pvYi5nZXQoImNvbWJpbmUtaW1hZ2VzL2ltYWdlcyIsIHt9
+KQogICAgICAgICBmb3IgaW1hZ2UsIGltZ3NwZWMgaW4gaW1hZ2VzLml0ZXJpdGVtcygpOgotICAg
+ICAgICAgICAgc2VsZi5fY29uc29sZS5pbmZvKCJDcmVhdGluZyBpbWFnZSAlcyIgJSBpbWFnZSkK
+KyAgICAgICAgICAgIHNlbGYuX2NvbnNvbGUuaW5mbygiQ29tYmluZSBpbWFnZSAlcyIgJSBpbWFn
+ZSkKICAgICAgICAgICAgIHNlbGYuX2NvbnNvbGUuaW5kZW50KCkKICAgICAgICAgICAgIGltYWdl
+SWQ9IGdldEltYWdlSWQoaW1hZ2UsIGltZ3NwZWMuZ2V0KCdwcmVmaXgnLCBbXSkpCiAgICAgICAg
+ICAgICBpbWFnZSAgPSBzZWxmLl9jb25maWcuYWJzUGF0aChpbWFnZSkgICMgYWJzIG91dHB1dCBw
+YXRoCkBAIC0xNjExLDYgKzE2MTgsODQgQEAKICAgICAgICAgcmV0dXJuCiAKIAorICAgIGRlZiBy
+dW5Kc29uQ29tcHJlc3Npb24oc2VsZik6CisgICAgICAgICIiIkdvIHRocm91Z2ggYSBsaXN0IG9m
+IGpzb24gZmlsZXMsIGV2ZW50dWFsbHkgY29udmVydCBqc29uIGFzc29jaWF0aXZlIHRvIGpzb24g
+YXJyYXkgYW5kIGNvbXByZXNzIiIiCisKKyAgICAgICAgaWYgbm90IHNlbGYuX2pvYi5nZXQoImNv
+bXByZXNzLWpzb24iLCBGYWxzZSk6CisgICAgICAgICAgICByZXR1cm4KKworICAgICAgICBhcHBm
+aWxlcyA9IHNlbGYuX2pvYi5nZXQoImNvbXByZXNzLWpzb24vZmlsZXMiLFtdKQorCisgICAgICAg
+IGlmIGFwcGZpbGVzOgorICAgICAgICAgICAgc291cmNlUm9vdCA9IHNlbGYuX2pvYi5nZXQoImNv
+bXByZXNzLWpzb24vc291cmNlIiwgInNvdXJjZSIpCisgICAgICAgICAgICBzb3VyY2VSb290ID0g
+c2VsZi5fY29uZmlnLmFic1BhdGgoc291cmNlUm9vdCkKKworICAgICAgICAgICAgYnVpbGRSb290
+ICA9IHNlbGYuX2pvYi5nZXQoImNvbXByZXNzLWpzb24vdGFyZ2V0IiwgImJ1aWxkIikKKyAgICAg
+ICAgICAgIGJ1aWxkUm9vdCAgPSBzZWxmLl9jb25maWcuYWJzUGF0aChidWlsZFJvb3QpCisKKyAg
+ICAgICAgICAgIHNlbGYuX2NvbnNvbGUuaW5mbygiQ29tcHJlc3NpbmcgcmVzb3VyY2UgZmlsZXMu
+Li4iKQorICAgICAgICAgICAgc2VsZi5fY29uc29sZS5pbmRlbnQoKQorCisgICAgICAgICAgICBm
+b3IgZmlsZSBpbiBhcHBmaWxlczoKKyAgICAgICAgICAgICAgICAjIG9wZW4gYW5kIHJlYWQgZmls
+ZQorICAgICAgICAgICAgICAgIHNyY2ZpbGUgPSBvcy5wYXRoLmpvaW4oc291cmNlUm9vdCwgZmls
+ZSkKKworICAgICAgICAgICAgICAgIGlmIChvcy5wYXRoLmlzZGlyKHNyY2ZpbGUpKToKKyAgICAg
+ICAgICAgICAgICAgICAgZGVzdGZpbGUgPSBvcy5wYXRoLmpvaW4oYnVpbGRSb290LCBmaWxlKQor
+ICAgICAgICAgICAgICAgIGVsc2U6CisgICAgICAgICAgICAgICAgICAgIGRlc3RmaWxlID0gb3Mu
+cGF0aC5qb2luKGJ1aWxkUm9vdCwgZmlsZSkKKworICAgICAgICAgICAgICAgIHNlbGYuX2NvbnNv
+bGUuaW5mbygiZmlsZTogJXMgLT4gJXMiICUgKGZpbGUsIGRlc3RmaWxlKSkKKyAgICAgICAgICAg
+ICAgICBzZWxmLl9jb25zb2xlLmluZGVudCgpCisKKyAgICAgICAgICAgICAgICAjIG9wZW4gYW5k
+IHdyaXRlIHRvIGZpbGUKKyAgICAgICAgICAgICAgICBmaWxlcCA9IG9wZW4oc3JjZmlsZSwgInIi
+KQorICAgICAgICAgICAgICAgIHRleHQgPSBmaWxlcC5yZWFkKCkKKyAgICAgICAgICAgICAgICBm
+aWxlcC5jbG9zZSgpCisKKyAgICAgICAgICAgICAgICBpZiBzZWxmLl9qb2IuZ2V0KCJjb21wcmVz
+cy1qc29uL2NvbnZlcnQiKSA9PSAidHJ1ZSI6CisgICAgICAgICAgICAgICAgICAgICMgY29udmVy
+dGluZyBqc29uIGFzc29jaWF0aXZlIGFycmF5IHRvIGpzb24gYXJyYXkKKyAgICAgICAgICAgICAg
+ICAgICAgc2VsZi5fY29uc29sZS5kZWJ1ZygiY29udmVydGluZyIpCisKKyMgICAgICAgICAgICAg
+ICAgICAgIHRleHQgPSByZS5zdWIoJ3soPzpbIFx0XG5ccl0qLio/WyBcdFxuXHJdKjpbIFx0XG5c
+cl0qKC4qPylbIFx0XG5ccl0qKHwsKSkqfScsICdbXDFcMl0nLCB0ZXh0KQorCisgICAgICAgICAg
+ICAgICAgIyBjb21wcmVzc2luZyBmaWxlCisgICAgICAgICAgICAgICAgc2VsZi5fY29uc29sZS5p
+bmZvKCJjb21wcmVzc2luZyIpCisKKyAgICAgICAgICAgICAgICAjIENvbW1lbnRzIGFyZSBub3Qg
+ZGVmaW5lZCBpbiB0aGUgc3ludGF4IG9mIGpzb24gYXQgd3d3Lmpzb24ub3JnCisgICAgICAgICAg
+ICAgICAgIworICAgICAgICAgICAgICAgICMgTmV2ZXJ0aGVsZXNzIHNvbWUgcGVvcGxlIHRoaW5r
+IGl0IGlzIHVzZWZ1bCB3aGVuIGYuaS4ganNvbiBpcyB1c2VkIGFzIGEgY29uZmlndXJhdGlvbiBm
+aWxlCisgICAgICAgICAgICAgICAgIyBhbmQgdGhlcmVmb3JlIHdlIHN0cmlwIGl0IG91dCBpZiBj
+b21tZW50IGJsb2NrcyBleGlzdCBpbiB0aGUgZmlsZS4KKyAgICAgICAgICAgICAgICAjIAorCQkJ
+CQkJCQkjIHJlbW92ZSAvLyBjb21tZW50cworICAgICAgICAgICAgICAgIHRlbXAgPSB0ZXh0Cisg
+ICAgICAgICAgICAgICAgdGV4dCA9IHJlLnN1YigiLy8uKj8oXHJcbj98XG4pIiwgIiIsIHRleHQs
+IHJlLlMpCisKKyAgICAgICAgICAgICAgICAjIHJlbW92ZSBtdWx0aSlsaW5lIGNvbW1lbnRzIC8q
+IC4uLiAqLworICAgICAgICAgICAgICAgIHRleHQgPSByZS5zdWIoIi9cKig/Oi58W1xyXG5dKSo/
+XCovIiwgIiIsIHRleHQsIHJlLlMpCisKKyAgICAgICAgICAgICAgICBpZiB0ZW1wICE9IHRleHQ6
+CisgICAgICAgICAgICAgICAgICAgIHNlbGYuX2NvbnNvbGUuaW5mbygicmVtb3ZlZCBjb21tZW50
+KHMpLCB3aGljaCBpcyBub3QgcHVyZSBqc29uIHN5bnRheCIpCisKKyAgICAgICAgICAgICAgICAj
+IFJlbW92ZSBzcGFjZSBvdXRzaWRlIHN0cmluZyBxdW90ZXMKKyAgICAgICAgICAgICAgICAjCisJ
+CQkJCQkJCSMgZG91YmxlIHF1b3RlczogcmVtb3ZlIHNwYWNlcyBvdXRzaWRlIHF1b3RlcyAiLi4u
+IgorICAgICAgICAgICAgICAgICMgc2luZ2xlIHF1b3Rlczogbm90IHZhbGlkIHF1b3RlcyBhY2Nv
+cmRpbmcgdG8gd3d3Lmpzb24ub3JnICcuLi4nLgorCQkJCQkJCQkjIGlmIHF1b3RlcyAnLi4uJyBz
+aG91bGQgYmUgYWxsb3dlZDogJyAoPz0oPz0oW14iXSoiW14iXSoiKSpbXiJdKiQpKD89KFteXCdd
+KlwnW15cJ10qXCcpKlteXCddKiQpKScKKyAgICAgICAgICAgICAgICB0ZXh0ID0gcmUuc3ViKCcg
+KD89KFteIl0qIlteIl0qIikqW14iXSokKScsICIiLCB0ZXh0KQorCisJCQkJCQkJCSMgcmVtb3Zl
+IG5ld2xpbmVzIGFuZCB0YWJzCisgICAgICAgICAgICAgICAgdGV4dCA9IHJlLnN1YigiW1xuXHRd
+IiwgIiIsIHRleHQpCisKKyAgICAgICAgICAgICAgICBzZWxmLl9jb25zb2xlLm91dGRlbnQoKQor
+CisgICAgICAgICAgICAgICAgZmlsZXAgPSBvcGVuKGRlc3RmaWxlLCAidyIpCisgICAgICAgICAg
+ICAgICAgZmlsZXAud3JpdGUodGV4dCkKKyAgICAgICAgICAgICAgICBmaWxlcC5jbG9zZSgpCisK
+KyAgICAgICAgICAgIHNlbGYuX2NvbnNvbGUub3V0ZGVudCgpCisKKwogICAgIGRlZiBydW5DbGVh
+bihzZWxmKToKIAogICAgICAgICBkZWYgaXNMb2NhbFBhdGgocGF0aCk6Cg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>851</attachid>
+            <date>2010-12-02 16:20:00 +0100</date>
+            <delta_ts>2010-12-02 16:20:18 +0100</delta_ts>
+            <desc>Change name to process-json</desc>
+            <filename>process-json.diff</filename>
+            <type>text/plain</type>
+            <size>5438</size>
+            <attacher>dev</attacher>
+            
+              <data encoding="base64">SW5kZXg6IHRvb2wvcHlsaWIvZ2VuZXJhdG9yL2NvbmZpZy9MYW5nLnB5Cj09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KLS0t
+IHRvb2wvcHlsaWIvZ2VuZXJhdG9yL2NvbmZpZy9MYW5nLnB5CShyZXZpc2lvbiAyNDEzMSkKKysr
+IHRvb2wvcHlsaWIvZ2VuZXJhdG9yL2NvbmZpZy9MYW5nLnB5CSh3b3JraW5nIGNvcHkpCkBAIC01
+NCw2ICs1NCw3IEBACiAgICAgICAgICAgICAgICAgImNvbWJpbmUtaW1hZ2VzIjogdHlwZXMuRGlj
+dFR5cGUsCiAgICAgICAgICAgICAgICAgImNvbXBpbGUiICAgICAgIDogdHlwZXMuRGljdFR5cGUs
+CiAgICAgICAgICAgICAgICAgImNvbXBpbGUtb3B0aW9ucyIgIDogdHlwZXMuRGljdFR5cGUsCisg
+ICAgICAgICAgICAgICAgInByb2Nlc3MtanNvbiIgOiB0eXBlcy5EaWN0VHlwZSwKICAgICAgICAg
+ICAgICAgICAiY29weS1maWxlcyIgICAgOiB0eXBlcy5EaWN0VHlwZSwKICAgICAgICAgICAgICAg
+ICAiY29weS1yZXNvdXJjZXMiICAgOiB0eXBlcy5EaWN0VHlwZSwKICAgICAgICAgICAgICAgICAi
+ZGVwZW5kZW5jaWVzIiAgOiB0eXBlcy5EaWN0VHlwZSwKCkluZGV4OiB0b29sL3B5bGliL2dlbmVy
+YXRvci9HZW5lcmF0b3IucHkKPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PQotLS0gdG9vbC9weWxpYi9nZW5lcmF0b3IvR2Vu
+ZXJhdG9yLnB5CShyZXZpc2lvbiAyNDE2NCkKKysrIHRvb2wvcHlsaWIvZ2VuZXJhdG9yL0dlbmVy
+YXRvci5weQkod29ya2luZyBjb3B5KQpAQCAtMTEyLDYgKzExMiwxMSBAQAogICAgICAgICAgICAg
+ICAidHlwZSIgICA6ICJKU2ltcGxlSm9iIgogICAgICAgICAgICAgfSwKIAorICAgICAgICAgICAg
+InByb2Nlc3MtanNvbiIgOgorICAgICAgICAgICAgeworICAgICAgICAgICAgICAidHlwZSIgICA6
+ICJKU2ltcGxlSm9iIgorICAgICAgICAgICAgfSwKKwogICAgICAgICAgICAgImNsZWFuLWZpbGVz
+IiA6CiAgICAgICAgICAgICB7CiAgICAgICAgICAgICAgICJ0eXBlIiAgIDogIkpTaW1wbGVKb2Ii
+CkBAIC01MDAsNiArNTA1LDggQEAKICAgICAgICAgICAgICAgICAgICAgc2VsZi5ydW5Db3B5Rmls
+ZXMoKQogICAgICAgICAgICAgICAgIGVsaWYgdHJpZ2dlciA9PSAiY29tYmluZS1pbWFnZXMiOgog
+ICAgICAgICAgICAgICAgICAgICBzZWxmLnJ1bkltYWdlQ29tYmluaW5nKCkKKyAgICAgICAgICAg
+ICAgICBlbGlmIHRyaWdnZXIgPT0gInByb2Nlc3MtanNvbiI6CisgICAgICAgICAgICAgICAgICAg
+IHNlbGYucnVuUHJvY2Vzc0pzb24oKQogICAgICAgICAgICAgICAgIGVsaWYgdHJpZ2dlciA9PSAi
+Y2xlYW4tZmlsZXMiOgogICAgICAgICAgICAgICAgICAgICBzZWxmLnJ1bkNsZWFuKCkKICAgICAg
+ICAgICAgICAgICBlbGlmIHRyaWdnZXIgPT0gIm1pZ3JhdGUtZmlsZXMiOgpAQCAtMTYxMSw2ICsx
+NjE4LDEwOSBAQAogICAgICAgICByZXR1cm4KIAogCisgICAgZGVmIHJ1blByb2Nlc3NKc29uKHNl
+bGYpOgorICAgICAgICAiIiJHbyB0aHJvdWdoIGEgbGlzdCBvZiBqc29uIGZpbGVzLCBldmVudHVh
+bGx5IGNvbnZlcnQganNvbiBhc3NvY2lhdGl2ZSB0byBqc29uIGFycmF5IGFuZCBjb21wcmVzcyIi
+IgorCisgICAgICAgIGRlZiBzdHJpcENvbW1lbnRzKHRleHQpOgorICAgICAgICAgICAgIyBDb21t
+ZW50cyBhcmUgbm90IGRlZmluZWQgaW4gdGhlIHN5bnRheCBvZiBqc29uIGF0IHd3dy5qc29uLm9y
+ZworICAgICAgICAgICAgIworICAgICAgICAgICAgIyBOZXZlcnRoZWxlc3Mgc29tZSBwZW9wbGUg
+dGhpbmsgaXQgaXMgdXNlZnVsIHdoZW4gZi5pLiBqc29uIGlzIHVzZWQgYXMgYSBjb25maWd1cmF0
+aW9uIGZpbGUKKyAgICAgICAgICAgICMgYW5kIHRoZXJlZm9yZSB3ZSBzdHJpcCBpdCBvdXQgaWYg
+Y29tbWVudCBibG9ja3MgZXhpc3QgaW4gdGhlIGZpbGUuCisgICAgICAgICAgICAjIAorICAgICAg
+ICAgICAgIyByZW1vdmUgLy8gY29tbWVudHMKKyAgICAgICAgICAgIHRlbXAgPSB0ZXh0CisgICAg
+ICAgICAgICB0ZXh0ID0gcmUuc3ViKCIvLy4qPyhcclxuP3xcbikiLCAiIiwgdGV4dCwgcmUuTSkK
+KworICAgICAgICAgICAgIyByZW1vdmUgbXVsdGkpbGluZSBjb21tZW50cyAvKiAuLi4gKi8KKyAg
+ICAgICAgICAgIHRleHQgPSByZS5zdWIoIi9cKig/Oi58W1xyXG5dKSo/XCovIiwgIiIsIHRleHQs
+IHJlLlMpCisKKyAgICAgICAgICAgIGlmIHRlbXAgIT0gdGV4dDoKKyAgICAgICAgICAgICAgICBz
+ZWxmLl9jb25zb2xlLmluZm8oInJlbW92ZWQgY29tbWVudChzKSwgd2hpY2ggaXMgbm90IHB1cmUg
+anNvbiBzeW50YXgiKQorCisgICAgICAgICAgICByZXR1cm4gdGV4dAorCisgICAgICAgIGRlZiBv
+YmplY3RfdG9fYXJyYXkoZGN0KToKKyAgICAgICAgICAgIGlmICdfX21vZGVsX18nIGluIGRjdDoK
+KyAgICAgICAgICAgICAgICByZXR1cm4gZGN0CisKKyAgICAgICAgICAgIHJldHVybiBbdiBmb3Ig
+aywgdiBpbiBkY3QuaXRlcml0ZW1zKCldCisKKyAgICAgICAgIyAtLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCisKKyAg
+ICAgICAgaWYgbm90IHNlbGYuX2pvYi5nZXQoInByb2Nlc3MtanNvbiIsIEZhbHNlKToKKyAgICAg
+ICAgICAgIHJldHVybgorCisgICAgICAgIGFwcGZpbGVzID0gc2VsZi5fam9iLmdldCgicHJvY2Vz
+cy1qc29uL2ZpbGVzIixbXSkKKworICAgICAgICBpZiBhcHBmaWxlczoKKyAgICAgICAgICAgIHNv
+dXJjZVJvb3QgPSBzZWxmLl9qb2IuZ2V0KCJwcm9jZXNzLWpzb24vc291cmNlIiwgInNvdXJjZSIp
+CisgICAgICAgICAgICBzb3VyY2VSb290ID0gc2VsZi5fY29uZmlnLmFic1BhdGgoc291cmNlUm9v
+dCkKKworICAgICAgICAgICAgc2VsZi5fY29uc29sZS5pbmZvKCJzb3VyY2UgOiAlcyIgJSBzb3Vy
+Y2VSb290KQorCisgICAgICAgICAgICBidWlsZFJvb3QgID0gc2VsZi5fam9iLmdldCgicHJvY2Vz
+cy1qc29uL3RhcmdldCIsICJidWlsZCIpCisgICAgICAgICAgICBidWlsZFJvb3QgID0gc2VsZi5f
+Y29uZmlnLmFic1BhdGgoYnVpbGRSb290KQorCisgICAgICAgICAgICBzZWxmLl9jb25zb2xlLmlu
+Zm8oInRhcmdldCA6ICVzXG4iICUgYnVpbGRSb290KQorCisgICAgICAgICAgICBzZWxmLl9jb25z
+b2xlLmluZm8oIlByb2Nlc3NpbmcgZmlsZXMuLi4iKQorICAgICAgICAgICAgc2VsZi5fY29uc29s
+ZS5pbmRlbnQoKQorCisgICAgICAgICAgICBmb3IgYXBwZmlsZSBpbiBhcHBmaWxlczoKKyAgICAg
+ICAgICAgICAgICBhcHBhdGggPSBvcy5wYXRoLnNwbGl0KGFwcGZpbGUpWzBdCisKKyAgICAgICAg
+ICAgICAgICAjIHJlc29sdmUgZmlsZSBnbG9icworICAgICAgICAgICAgICAgIGZpbGVwYXRocyA9
+IGdsb2IuZ2xvYihvcy5wYXRoLmpvaW4oc291cmNlUm9vdCwgYXBwZmlsZSkpCisKKyAgICAgICAg
+ICAgICAgICBmb3IgZmlsZXBhdGggaW4gZmlsZXBhdGhzOgorICAgICAgICAgICAgICAgICAgICBm
+aWxlID0gb3MucGF0aC5zcGxpdChmaWxlcGF0aClbMV0KKworICAgICAgICAgICAgICAgICAgICBz
+cmNmaWxlID0gb3MucGF0aC5qb2luKHNvdXJjZVJvb3QsIGFwcGF0aCwgZmlsZSkKKworICAgICAg
+ICAgICAgICAgICAgICAjIG9wZW4gYW5kIHJlYWQgZmlsZQorICAgICAgICAgICAgICAgICAgICB0
+ZXh0ID0gZmlsZXRvb2wucmVhZChzcmNmaWxlKQorCisgICAgICAgICAgICAgICAgICAgIHRleHQg
+PSBzdHJpcENvbW1lbnRzKHRleHQpCisKKyAgICAgICAgICAgICAgICAgICAgcHJldHR5ID0gNAor
+ICAgICAgICAgICAgICAgICAgICBjb21wcmVzcyA9IE5vbmUKKyAgICAgICAgICAgICAgICAgICAg
+cHJvY2Vzc2luZ19tc2cgPSBOb25lCisgICAgICAgICAgICAgICAgICAgIGNvbnZlcnNpb24gPSBO
+b25lCisgICAgICAgICAgICAgICAgICAgIGNvbnZlcnQgPSBzZWxmLl9qb2IuZ2V0KCJwcm9jZXNz
+LWpzb24vY29udmVydCIpCisKKyAgICAgICAgICAgICAgICAgICAgaWYgY29udmVydCA9PSAidHJ1
+ZSI6CisgICAgICAgICAgICAgICAgICAgICAgICAjIGNvbnZlcnRpbmcganNvbiBtYXBzIHRvIGpz
+b24gYXJyYXkKKyAgICAgICAgICAgICAgICAgICAgICAgIGNvbnZlcnNpb24gPSBvYmplY3RfdG9f
+YXJyYXkKKyAgICAgICAgICAgICAgICAgICAgICAgIHByb2Nlc3NpbmdfbXNnID0gImNvbnZlcnRp
+bmciCisKKyAgICAgICAgICAgICAgICAgICAgaWYgc2VsZi5fam9iLmdldCgicHJvY2Vzcy1qc29u
+L2NvbXByZXNzIikgPT0gInRydWUiIG9yIG5vdCBjb252ZXJ0IG9yIGNvbnZlcnQgPT0gImZhbHNl
+IjoKKyAgICAgICAgICAgICAgICAgICAgICAgICMgY29tcHJlc3NpbmcganNvbmoKKyAgICAgICAg
+ICAgICAgICAgICAgICAgIGNvbXByZXNzID0gKCcsJywnOicpCisgICAgICAgICAgICAgICAgICAg
+ICAgICBwcmV0dHkgPSBOb25lCisKKyAgICAgICAgICAgICAgICAgICAgICAgIGlmIHByb2Nlc3Np
+bmdfbXNnIGlzIE5vbmU6CisgICAgICAgICAgICAgICAgICAgICAgICAgICAgcHJvY2Vzc2luZ19t
+c2cgPSAiY29tcHJlc3NpbmciCisgICAgICAgICAgICAgICAgICAgICAgICBlbHNlOgorICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgIHByb2Nlc3NpbmdfbXNnICs9ICIgYW5kIGNvbXByZXNzaW5n
+IgorCisgICAgICAgICAgICAgICAgICAgIHRyeToKKyAgICAgICAgICAgICAgICAgICAgICAgIHRl
+eHQgPSBqc29uLmxvYWRzKHRleHQsIG9iamVjdF9ob29rID0gY29udmVyc2lvbikKKworICAgICAg
+ICAgICAgICAgICAgICAgICAgIyBjb21wcmVzc2luZyBmaWxlCisgICAgICAgICAgICAgICAgICAg
+ICAgICB0ZXh0ID0ganNvbi5kdW1wcyh0ZXh0LCBlbnN1cmVfYXNjaWkgPSBGYWxzZSwgc2VwYXJh
+dG9ycyA9IGNvbXByZXNzLCBpbmRlbnQgPSBwcmV0dHkpCisgICAgICAgICAgICAgICAgICAgIGV4
+Y2VwdCBWYWx1ZUVycm9yLCBlOgorICAgICAgICAgICAgICAgICAgICAgICAgZS5hcmdzID0gKGUu
+YXJnc1swXSArICJcbkZpbGU6ICVzIiAlIGZpbGUsKSArIGUuYXJnc1sxOl0KKyAgICAgICAgICAg
+ICAgICAgICAgICAgIHJhaXNlIGUKKworICAgICAgICAgICAgICAgICAgICBzZWxmLl9jb25zb2xl
+LmluZm8oIlsgIiArIHByb2Nlc3NpbmdfbXNnICsgIiBdIHskc291cmNlfS8lcyAtPiB7JHRhcmdl
+dH0vJXMiICUgKGZpbGUsIGZpbGUpKQorCisgICAgICAgICAgICAgICAgICAgIGRlc3RmaWxlID0g
+b3MucGF0aC5qb2luKGJ1aWxkUm9vdCwgYXBwYXRoLCBmaWxlKQorCisgICAgICAgICAgICAgICAg
+ICAgIGZpbGV0b29sLnNhdmUoZGVzdGZpbGUsIHRleHQpCisKKyAgICAgICAgICAgIHNlbGYuX2Nv
+bnNvbGUub3V0ZGVudCgpCisKKwogICAgIGRlZiBydW5DbGVhbihzZWxmKToKIAogICAgICAgICBk
+ZWYgaXNMb2NhbFBhdGgocGF0aCk6Cgo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

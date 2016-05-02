@@ -1,0 +1,580 @@
+<bug>
+          <bug_id>2373</bug_id>
+          
+          <creation_ts>2009-05-13 03:29:00 +0200</creation_ts>
+          <short_desc>Implement filtering of tree values</short_desc>
+          <delta_ts>2014-03-03 08:47:53 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          <blocked>2853</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="asmith">agtilden</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>andrewm</cc>
+    
+    <cc>gradinf</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9928</commentid>
+            <who name="asmith">agtilden</who>
+            <bug_when>2009-05-13 03:29:55 +0200</bug_when>
+            <thetext>The qx.data.controller.IControllerDelegate interface contains a method called filter with the following description: 
+
+&quot;Filter checks the current data and returns a boolean if the data should appera in the filtered data set or not.&quot; 
+
+The typo in that description is for another bug :-)
+
+The qx.data.controller.Tree class has a delegate property with the following description: 
+
+&quot;Delegation object, which can have one ore more functionf defined by the #IControllerDelegate Interface.&quot;
+
+Again the typo in that description is for another bug report :-)
+
+This bug report is for the following issue:
+
+If a delegate implements the filter method and is then set on a qx.data.controller.Tree instance the filter method is ignored.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9929</commentid>
+            <who name="asmith">agtilden</who>
+            <bug_when>2009-05-13 03:38:50 +0200</bug_when>
+            <thetext>On the mailing list [http://article.gmane.org/gmane.comp.lang.javascript.qooxdoo.devel/21468] Martin suggested using a similar approach to the one used in qx.data.controller.List to handle this.
+
+I&#39;m not sure that a user wants a filtered tree to behave exactly like a filtered list. I think that each node will need to have a reference to its parent so that the proper folder structure can be recreated for the filtered results. 
+
+I&#39;ll try to explain with some ascii art:
+
+CARS
+|
+----\Mercedes
+         |
+        \S500 Sedan
+        \C300 Coupe
+        \ML55 Van
+----\BMW
+         |
+        \740iL Sedan
+        \328x Coupe
+
+If a user wants to filter this list by the word &quot;Sedan&quot; they probably want to see a tree that looks like this:
+
+CARS
+|
+----\Mercedes
+         |
+        \S500 Sedan
+----\BMW
+         |
+        \740iL Sedan
+
+Not like this:
+CARS
+|
+----\S500 Sedan
+----\740iL Sedan
+
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9936</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-05-13 10:20:33 +0200</bug_when>
+            <thetext>Thanks for the bug report. 
+Two things i fixed immediately, the typos. ;)
+
+As for the filtering itself, I can only agree with your second comment. The user does want exactly the structure you shown in the example.
+As soon as I tackle that problem, i will see how i can implement a way to have it like that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10248</commentid>
+              <attachid>519</attachid>
+            <who name="asmith">agtilden</who>
+            <bug_when>2009-05-31 23:42:31 +0200</bug_when>
+            <thetext>Created attachment 519
+naive tree filtering attempt
+
+This patch implements filtering a tree with the behavior described in comment #1.
+
+The approach taken is to recurse through the tree and test each node according to the filter provided by the delegate. Each node is then marked with a boolean filtered value. When filtered = true it means the node should be filtered or pruned from the visible tree. In addition a reference to the parent node is attached. The reason to keep the parent node is so that a child can &quot;un&quot;-filter its parent if the parent fails the filter test but the child passes.
+
+While this seems to work for me -- I would not suggest taking this patch without some serious review. I don&#39;t know javascript and I&#39;m just getting my feet wet with qooxdoo.
+
+-a.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10287</commentid>
+              <attachid>523</attachid>
+            <who name="asmith">agtilden</who>
+            <bug_when>2009-06-05 05:15:38 +0200</bug_when>
+            <thetext>Created attachment 523
+a better tree filter
+
+After using the earlier filter for a while it became clear that users usually want to see child nodes of branches that pass their filter test. 
+
+From the earlier example if a user types &quot;Mercedes&quot; they want to see this:
+
+CARS
+|
+----\Mercedes
+         |
+        \S500 Sedan
+        \C300 Coupe
+        \ML55 Van
+
+
+Not this: 
+
+CARS
+|
+----\Mercedes
+
+
+This patch implements this behavior. Same caveats apply :-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16586</commentid>
+              <attachid>706</attachid>
+            <who name="asmith">agtilden</who>
+            <bug_when>2010-01-29 05:37:42 +0100</bug_when>
+            <thetext>Created attachment 706
+equivalent to &quot;a better tree filter&quot; but updated to patch cleanly against 1.0.1 source</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25073</commentid>
+            <who name="Andrew Manson">andrewm</who>
+            <bug_when>2011-06-13 17:43:59 +0200</bug_when>
+            <thetext>Has there been any movement on including the patch in the code? I need this feature and would like to know where the work currently stands. 
+
+Thanks!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25083</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-06-14 11:00:16 +0200</bug_when>
+            <thetext>Hey,
+there has not been any efforts recently on that. Sorry...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25084</commentid>
+            <who name="Andrew Manson">andrewm</who>
+            <bug_when>2011-06-14 11:05:59 +0200</bug_when>
+            <thetext>That&#39;s ok, thanks for letting me know. I notice there was no comment on the latest patch put forward by in attachment 706, does anyone know if this was tested? 
+
+Also is the idea of using a filtered model in the tree widget now superseded by the Virtual framework?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25099</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-06-15 09:50:10 +0200</bug_when>
+            <thetext>(In reply to comment #8)
+&gt; That&#39;s ok, thanks for letting me know. I notice there was no comment on the
+&gt; latest patch put forward by in attachment 706 [details], does anyone know if this was
+&gt; tested? 
+We in the core team haven&#39;t tested it.
+
+&gt; Also is the idea of using a filtered model in the tree widget now superseded by
+&gt; the Virtual framework?
+Filtering for the new virtual tree is not implemented yet, but in a separate issue report (bug #5198)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25106</commentid>
+            <who name="Andrew Manson">andrewm</who>
+            <bug_when>2011-06-15 11:02:11 +0200</bug_when>
+            <thetext>Ok thanks for your information so far. I don&#39;t mean to press you on this but with regards to this implementation vs the new virtual, can you comment on what will be your focus going forward? 
+
+It may be possible that we will have a small amount of time to create some core patches in the near future to support this issue, if you feel that the current implementation of the tree widget will be deprecated once the virtual system matures then it would serve us better to put our time into helping out with the virtual system (bug #5198). 
+
+Can you comment on what *your* focus would be going forward so that we can make some more clear business decisions regarding what we will do going forward. 
+
+I&#39;m not pressing for a decision, just your opinion will be quite helpful. 
+
+Thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25116</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-06-16 08:50:16 +0200</bug_when>
+            <thetext>(In reply to comment #10)
+&gt; Ok thanks for your information so far. I don&#39;t mean to press you on this but
+&gt; with regards to this implementation vs the new virtual, can you comment on what
+&gt; will be your focus going forward?
+
+The current focus is on the virtual stuff as this can be used in a wider range of use cases.  
+
+
+&gt; It may be possible that we will have a small amount of time to create some core
+&gt; patches in the near future to support this issue, if you feel that the current
+&gt; implementation of the tree widget will be deprecated once the virtual system
+&gt; matures then it would serve us better to put our time into helping out with the
+&gt; virtual system (bug #5198). 
+
+The current implementation will not be deprecated in the near or mid future. It offers a convenient API for most of the users. So no plans to get rid of that widget!
+
+
+&gt; Can you comment on what *your* focus would be going forward so that we can make
+&gt; some more clear business decisions regarding what we will do going forward. 
+
+It depends on the use case you have. If you expect huge amounts of data, you should definitely go with the virtual stuff. Even if not, its a matter of taste. I would prefer the new stuff because its new, but I love everything new so it&#39;s up to you! :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36060</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:47:53 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>519</attachid>
+            <date>2009-05-31 23:42:00 +0200</date>
+            <delta_ts>2009-05-31 23:42:31 +0200</delta_ts>
+            <desc>naive tree filtering attempt</desc>
+            <filename>treefilter.patch</filename>
+            <type>text/plain</type>
+            <size>4509</size>
+            <attacher>agtilden</attacher>
+            
+              <data encoding="base64">LS0tIFRyZWUuanMJMjAwOS0wNS0zMSAxNzoxNjo1Mi4wMDAwMDAwMDAgLTA0MDAKKysrIG15VHJl
+ZS5qcwkyMDA5LTA1LTMxIDE3OjM1OjQ0LjAwMDAwMDAwMCAtMDQwMApAQCAtMjIxLDYgKzIyMSw3
+IEBACiAgICAgICovCiAgICAgX2FwcGx5RGVsZWdhdGU6IGZ1bmN0aW9uKHZhbHVlLCBvbGQpIHsK
+ICAgICAgIHRoaXMuX3NldENvbmZpZ3VyZUl0ZW0odmFsdWUsIG9sZCk7CisgICAgICB0aGlzLl9z
+ZXRGaWx0ZXIodmFsdWUsIG9sZCk7CiAgICAgICB0aGlzLl9zZXRDcmVhdGVJdGVtKHZhbHVlLCBv
+bGQpOwogICAgICAgdGhpcy5fc2V0QmluZEl0ZW0odmFsdWUsIG9sZCk7CiAgICAgfSwKQEAgLTQz
+MCw2ICs0MzEsNyBAQAogICAgICAqICAgZGF0YSBpbiB0aGUgY3VycmVudCBzdWJ0cmVlLgogICAg
+ICAqLwogICAgIF9fdXBkYXRlVHJlZUNoaWxkcmVuOiBmdW5jdGlvbihyb290Tm9kZSwgbW9kZWxO
+b2RlKSB7CisgICAgICB2YXIgc2tpcHBlZE5vZGVzID0gMDsKICAgICAgIC8vIGlnbm9yZSBpdGVt
+cyB3aGljaCBkb250IGhhdmUgY2hpbGRyZW4KICAgICAgIGlmIChtb2RlbE5vZGVbImdldCIgKyBx
+eC5sYW5nLlN0cmluZy5maXJzdFVwKHRoaXMuZ2V0Q2hpbGRQYXRoKCkpXSA9PSB1bmRlZmluZWQp
+IHsKICAgICAgICAgcmV0dXJuOwpAQCAtNDcwLDIzICs0NzIsMzAgQEAKICAgICAgICAgICAgIH0g
+ICAgICAgIAogICAgICAgICAgICAgLy8gcmVtb3ZlIHRoZSBpdGVtIGF0IGl0cyBvbGQgcGxhY2Ug
+KHdpbGwgcmVtb3ZlIHRoZSBzZWxlY3Rpb24pCiAgICAgICAgICAgICByb290Tm9kZS5yZW1vdmVB
+dChvbGRJbmRleCk7CisJICAgIGlmICghIGNoaWxkcmVuLmdldEl0ZW0oaSkuZ2V0VXNlckRhdGEo
+ImZpbHRlcmVkIikpIHsKICAgICAgICAgICAgIC8vIGFkZCB0aGUgbm9kZSBhdCB0aGUgY3VycmVu
+dCBwb3NpdGlvbgogICAgICAgICAgICAgcm9vdE5vZGUuYWRkQXQoY3VycmVudE5vZGUsIGkpOwog
+ICAgICAgICAgICAgLy8gc2VsZWN0IGl0IGFnYWluIGlmIGl0IHdhcyBzZWxlY3RlZAogICAgICAg
+ICAgICAgaWYgKHdhc1NlbGVjdGVkKSB7CiAgICAgICAgICAgICAgIHRoaXMuZ2V0VGFyZ2V0KCku
+YWRkVG9TZWxlY3Rpb24oY3VycmVudE5vZGUpOwogICAgICAgICAgICAgfQotICAgICAgICAgICAg
+CisJICAgIH0gZWxzZSB7CisJCXNraXBwZWROb2RlcyArPSAxOworCSAgICB9CiAgICAgICAgICAg
+Ly8gaWYgdGhlIG5vZGUgaXMgbmV3IAogICAgICAgICAgIH0gZWxzZSB7CisJICAgIHZhciBtb2Rl
+bE5vZGUgPSBjaGlsZHJlbi5nZXRJdGVtKGkpOworCSAgICBpZiAoISBtb2RlbE5vZGUuZ2V0VXNl
+ckRhdGEoImZpbHRlcmVkIikpIHsKICAgICAgICAgICAgIC8vIGFkZCB0aGUgY2hpbGQgbm9kZQog
+ICAgICAgICAgICAgdmFyIHRyZWVOb2RlID0gdGhpcy5fY3JlYXRlSXRlbSgpOwotICAgICAgICAg
+ICAgdHJlZU5vZGUuc2V0VXNlckRhdGEoIm1vZGVsIiwgY2hpbGRyZW4uZ2V0SXRlbShpKSk7Ci0g
+ICAgICAgICAgICByb290Tm9kZS5hZGRBdCh0cmVlTm9kZSwgaSk7Ci0gICAgICAgICAgICB0aGlz
+Ll9fYWRkQmluZGluZyhjaGlsZHJlbi5nZXRJdGVtKGkpLCB0cmVlTm9kZSk7Ci0KKwkJdHJlZU5v
+ZGUuc2V0VXNlckRhdGEoIm1vZGVsIiwgbW9kZWxOb2RlKTsKKwkJcm9vdE5vZGUuYWRkQXQodHJl
+ZU5vZGUsIGkgLSBza2lwcGVkTm9kZXMpOworCQl0aGlzLl9fYWRkQmluZGluZyhtb2RlbE5vZGUs
+IHRyZWVOb2RlKTsKICAgICAgICAgICAgIC8vIGFkZCBhbGwgY2hpbGRyZW4gcmVjdXJzaXZlICAg
+ICAgICAKLSAgICAgICAgICAgIHRoaXMuX191cGRhdGVUcmVlQ2hpbGRyZW4odHJlZU5vZGUsIGNo
+aWxkcmVuLmdldEl0ZW0oaSkpOyAgICAgICAgICAgIAorCQl0aGlzLl9fdXBkYXRlVHJlZUNoaWxk
+cmVuKHRyZWVOb2RlLCBtb2RlbE5vZGUpOworCSAgICB9IGVsc2UgeworCQlza2lwcGVkTm9kZXMg
+Kz0gMTsKKwkgICAgfQogICAgICAgICAgIH0KICAgICAgICAgfQogICAgICAgfQpAQCAtNDk4LDYg
+KzUwNyw1NiBAQAogICAgIH0sCiAgICAgCiAgICAgCisgICAgLyoKKyAgICAgKiBXYWxrIHRoZSB0
+cmVlIGFuZCB0ZXN0IGVhY2ggbm9kZSBhY2NvcmRpbmcgdG8gdGhlIGZpbHRlci4KKyAgICAgKi8K
+KyAgICBmaWx0ZXJUcmVlOiBmdW5jdGlvbigpIHsKKwl2YXIgdGhhdCA9IHRoaXM7CisJdmFyIGRl
+bGVnYXRlID0gdGhhdC5nZXREZWxlZ2F0ZSgpOworCWlmIChkZWxlZ2F0ZSA9PT0gbnVsbCB8fCBk
+ZWxlZ2F0ZS5maWx0ZXIgPT09IG51bGwpIHsKKwkgICAgcmV0dXJuOworCX0KKwkvLyByZWN1cnNp
+dmVseSB3YWxrIHRoZSBtb2RlbCBhbmQgZmxhZyBub2RlcyBhcyBmaWx0ZXJlZCBvciBub3QKKwkv
+LyAiZmlsdGVyZWQiIG1lYW5zIHRoZXkgc2hvdWxkIGJlIHBydW5lZCBmcm9tIHRoZSB0cmVlCisJ
+ZnVuY3Rpb24gZmlsdGVyTm9kZXMgKGZpbHRlciwgbm9kZSkgeworCSAgICBpZiAobm9kZVsiZ2V0
+IiArIHF4LmxhbmcuU3RyaW5nLmZpcnN0VXAodGhhdC5nZXRDaGlsZFBhdGgoKSldID09IHVuZGVm
+aW5lZCkgeworCQlyZXR1cm47CisJICAgIH0KKwkgICAgdmFyIGNoaWxkcmVuID0gbm9kZVsiZ2V0
+IiArIHF4LmxhbmcuU3RyaW5nLmZpcnN0VXAodGhhdC5nZXRDaGlsZFBhdGgoKSldKCk7CisJICAg
+IHZhciBwYXJlbnROZWVkc0ZsYWcgPSB0cnVlOworCSAgICBmb3IgKHZhciBpID0gMDsgaSA8IGNo
+aWxkcmVuLmxlbmd0aDsgaSsrKSB7CisJCXZhciBjaGlsZE5vZGUgPSBjaGlsZHJlbi5nZXRJdGVt
+KGkpOworCQlpZiAoZGVsZWdhdGUuZmlsdGVyKGNoaWxkTm9kZSkpIHsKKwkJICAgIC8vIHdlIG5l
+ZWQgdG8ga2VlcCB0cmFjayBvZiB0aGUgcGFyZW50IHNvIHRoYXQgd2UgY2FuIG1hcmsKKwkJICAg
+IC8vIGdyYW5kcGFyZW50cyBpZiBhIGZpbHRlciBvbmx5IGtlZXBzIGEgc2Vjb25kIGdlbmVyYXRp
+b24gbm9kZS4KKwkJICAgIGNoaWxkTm9kZS5zZXRVc2VyRGF0YSgicGFyZW50Iiwgbm9kZSk7CisJ
+CSAgICBjaGlsZE5vZGUuc2V0VXNlckRhdGEoImZpbHRlcmVkIiwgZmFsc2UpOworCQkgICAgLy8g
+d2hlbiB3ZSBmaW5kIGEgbm9kZSB0aGF0IHBhc3NlcyB3ZSBuZWVkIHRvIG1ha2Ugc3VyZQorCQkg
+ICAgLy8gYWxsIHRoZSBhbmNlc3RvcnMgYXJlIHRhZ2dlZCBhcyAia2VlcGVycyIKKwkJICAgIGlm
+IChwYXJlbnROZWVkc0ZsYWcpIHsKKwkJCW5vZGUuc2V0VXNlckRhdGEoImZpbHRlcmVkIiwgZmFs
+c2UpOworCQkJd2hpbGUgKChub2RlID0gbm9kZS5nZXRVc2VyRGF0YSgicGFyZW50IikpKSB7CisJ
+CQkgICAgaWYgKG5vZGUuZ2V0VXNlckRhdGEoImZpbHRlcmVkIikgPT09IGZhbHNlKSB7CisJCQkJ
+Ly8gdGhpcyBwYXJlbnQgaGFzIGFscmVhZHkgYmVlbiAidW4iLWZpbHRlcmVkCisJCQkJLy8gbm8g
+bmVlZCB0byBnbyBiYWNrIGFueSBmdXJ0aGVyCisJCQkJYnJlYWs7CisJCQkgICAgfQorCQkJICAg
+IG5vZGUuc2V0VXNlckRhdGEoImZpbHRlcmVkIiwgZmFsc2UpOworCQkJfQorCQkJcGFyZW50TmVl
+ZHNGbGFnID0gZmFsc2U7CisJCSAgICB9CisJCX0gZWxzZSB7CisJCSAgICBjaGlsZE5vZGUuc2V0
+VXNlckRhdGEoImZpbHRlcmVkIiwgdHJ1ZSk7CisJCX0KKwkJZmlsdGVyTm9kZXMoZmlsdGVyLCBj
+aGlsZE5vZGUpOworCSAgICB9CisJfQorCisJZmlsdGVyTm9kZXMoZGVsZWdhdGUuZmlsdGVyLCB0
+aGF0LmdldE1vZGVsKCkpOworCXRoYXQuX19idWlsZFRyZWUoKTsKKyAgICB9LAorCisKICAgICAv
+KioKICAgICAgKiBSZW1vdmVzIGFsbCBmb2xkZXJzIGFuZCBiaW5kaW5ncyBmb3IgdGhlIGN1cnJl
+bnQgc2V0IHRhcmdldC4KICAgICAgKi8KQEAgLTcyNyw2ICs3ODYsMjMgQEAKICAgICAKICAgICAK
+ICAgICAvKioKKyAgICAgKiBBcHBseS1NZXRob2QgZm9yIHNldHRpbmcgdGhlIGZpbHRlci4KKyAg
+ICAgKgorICAgICAqIEBwYXJhbSB2YWx1ZSB7RnVuY3Rpb258bnVsbH0gVGhlIG5ldyBmaWx0ZXIg
+ZnVuY3Rpb24uCisgICAgICogQHBhcmFtIG9sZCB7RnVuY3Rpb258bnVsbH0gVGhlIG9sZCBmaWx0
+ZXIgZnVuY3Rpb24uCisgICAgICovCisgICAgX3NldEZpbHRlcjogZnVuY3Rpb24odmFsdWUsIG9s
+ZCkgeworICAgICAgLy8gaWYgYSBuZXcgZmlsdGVyIGZ1bmN0aW9uIGlzIHNldAorICAgICAgaWYg
+KHZhbHVlICE9IG51bGwgJiYgdmFsdWUuZmlsdGVyICE9IG51bGwpIHsKKyAgICAgICAgLy8gZG8g
+bm90aGluZyBpZiB0aGUgZmlsdGVyIGZ1bmN0aW9uIGRpZCBub3QgY2hhbmdlCisgICAgICAgIGlm
+IChvbGQgIT0gbnVsbCAmJiBvbGQuZmlsdGVyICE9IG51bGwgJiYgdmFsdWUuZmlsdGVyID09IG9s
+ZC5maWx0ZXIpIHsKKyAgICAgICAgICByZXR1cm47CisgICAgICAgIH0KKyAgICAgIH0KKyAgICB9
+LAorCisKKyAgICAvKioKICAgICAgKiBIZWxwZXIgbWV0aG9kIGZvciBhcHBseWluZyB0aGUgZGVs
+ZWdhdGUgSXQgY2hlY2tzIGlmIGEgYmluZEl0ZW0gCiAgICAgICogaXMgc2V0IGVuZCBpbnZva2Vz
+IHRoZSBpbml0aWFsIHByb2Nlc3MgdG8gYXBwbHkgdGhlIHRoZSBnaXZlbiBmdW5jdGlvbi4KICAg
+ICAgKiAK
+</data>
+
+          </attachment>
+          <attachment isobsolete="1" ispatch="1" isprivate="0" isurl="0">
+            <attachid>523</attachid>
+            <date>2009-06-05 05:15:00 +0200</date>
+            <delta_ts>2010-01-29 05:37:42 +0100</delta_ts>
+            <desc>a better tree filter</desc>
+            <filename>treefilter2.patch</filename>
+            <type>text/plain</type>
+            <size>5638</size>
+            <attacher>agtilden</attacher>
+            
+              <data encoding="base64">LS0tIC9Vc2Vycy9hc21pdGgvRG9jdW1lbnRzL3Byb2plY3RzL3Fvb3hkb28tc3ZuL3RydW5rL3Fv
+b3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9kYXRhL2NvbnRyb2xsZXIvVHJlZS5qcwky
+MDA5LTA1LTMxIDE3OjE2OjUyLjAwMDAwMDAwMCAtMDQwMAorKysgbXlUcmVlLmpzCTIwMDktMDYt
+MDQgMjM6MDg6MDguMDAwMDAwMDAwIC0wNDAwCkBAIC0yMjEsNiArMjIxLDcgQEAKICAgICAgKi8K
+ICAgICBfYXBwbHlEZWxlZ2F0ZTogZnVuY3Rpb24odmFsdWUsIG9sZCkgewogICAgICAgdGhpcy5f
+c2V0Q29uZmlndXJlSXRlbSh2YWx1ZSwgb2xkKTsKKyAgICAgIHRoaXMuX3NldEZpbHRlcih2YWx1
+ZSwgb2xkKTsKICAgICAgIHRoaXMuX3NldENyZWF0ZUl0ZW0odmFsdWUsIG9sZCk7CiAgICAgICB0
+aGlzLl9zZXRCaW5kSXRlbSh2YWx1ZSwgb2xkKTsKICAgICB9LApAQCAtNDMwLDYgKzQzMSw3IEBA
+CiAgICAgICogICBkYXRhIGluIHRoZSBjdXJyZW50IHN1YnRyZWUuCiAgICAgICovCiAgICAgX191
+cGRhdGVUcmVlQ2hpbGRyZW46IGZ1bmN0aW9uKHJvb3ROb2RlLCBtb2RlbE5vZGUpIHsKKyAgICAg
+IHZhciBza2lwcGVkTm9kZXMgPSAwOwogICAgICAgLy8gaWdub3JlIGl0ZW1zIHdoaWNoIGRvbnQg
+aGF2ZSBjaGlsZHJlbgogICAgICAgaWYgKG1vZGVsTm9kZVsiZ2V0IiArIHF4LmxhbmcuU3RyaW5n
+LmZpcnN0VXAodGhpcy5nZXRDaGlsZFBhdGgoKSldID09IHVuZGVmaW5lZCkgewogICAgICAgICBy
+ZXR1cm47CkBAIC00NzAsMjMgKzQ3MiwzMCBAQAogICAgICAgICAgICAgfSAgICAgICAgCiAgICAg
+ICAgICAgICAvLyByZW1vdmUgdGhlIGl0ZW0gYXQgaXRzIG9sZCBwbGFjZSAod2lsbCByZW1vdmUg
+dGhlIHNlbGVjdGlvbikKICAgICAgICAgICAgIHJvb3ROb2RlLnJlbW92ZUF0KG9sZEluZGV4KTsK
+KwkgICAgaWYgKCEgY2hpbGRyZW4uZ2V0SXRlbShpKS5nZXRVc2VyRGF0YSgiZmlsdGVyZWQiKSB8
+fCBjaGlsZHJlbi5nZXRJdGVtKGkpLmdldFVzZXJEYXRhKCJyZXN0b3JlZCIpKSB7CiAgICAgICAg
+ICAgICAvLyBhZGQgdGhlIG5vZGUgYXQgdGhlIGN1cnJlbnQgcG9zaXRpb24KICAgICAgICAgICAg
+IHJvb3ROb2RlLmFkZEF0KGN1cnJlbnROb2RlLCBpKTsKICAgICAgICAgICAgIC8vIHNlbGVjdCBp
+dCBhZ2FpbiBpZiBpdCB3YXMgc2VsZWN0ZWQKICAgICAgICAgICAgIGlmICh3YXNTZWxlY3RlZCkg
+ewogICAgICAgICAgICAgICB0aGlzLmdldFRhcmdldCgpLmFkZFRvU2VsZWN0aW9uKGN1cnJlbnRO
+b2RlKTsKICAgICAgICAgICAgIH0KLSAgICAgICAgICAgIAorCSAgICB9IGVsc2UgeworCQlza2lw
+cGVkTm9kZXMgKz0gMTsKKwkgICAgfQogICAgICAgICAgIC8vIGlmIHRoZSBub2RlIGlzIG5ldyAK
+ICAgICAgICAgICB9IGVsc2UgeworCSAgICB2YXIgbW9kZWxOb2RlID0gY2hpbGRyZW4uZ2V0SXRl
+bShpKTsKKwkgICAgaWYgKCEgbW9kZWxOb2RlLmdldFVzZXJEYXRhKCJmaWx0ZXJlZCIpIHx8IGNo
+aWxkcmVuLmdldEl0ZW0oaSkuZ2V0VXNlckRhdGEoInJlc3RvcmVkIikpIHsKICAgICAgICAgICAg
+IC8vIGFkZCB0aGUgY2hpbGQgbm9kZQogICAgICAgICAgICAgdmFyIHRyZWVOb2RlID0gdGhpcy5f
+Y3JlYXRlSXRlbSgpOwotICAgICAgICAgICAgdHJlZU5vZGUuc2V0VXNlckRhdGEoIm1vZGVsIiwg
+Y2hpbGRyZW4uZ2V0SXRlbShpKSk7Ci0gICAgICAgICAgICByb290Tm9kZS5hZGRBdCh0cmVlTm9k
+ZSwgaSk7Ci0gICAgICAgICAgICB0aGlzLl9fYWRkQmluZGluZyhjaGlsZHJlbi5nZXRJdGVtKGkp
+LCB0cmVlTm9kZSk7Ci0KKwkJdHJlZU5vZGUuc2V0VXNlckRhdGEoIm1vZGVsIiwgbW9kZWxOb2Rl
+KTsKKwkJcm9vdE5vZGUuYWRkQXQodHJlZU5vZGUsIGkgLSBza2lwcGVkTm9kZXMpOworCQl0aGlz
+Ll9fYWRkQmluZGluZyhtb2RlbE5vZGUsIHRyZWVOb2RlKTsKICAgICAgICAgICAgIC8vIGFkZCBh
+bGwgY2hpbGRyZW4gcmVjdXJzaXZlICAgICAgICAKLSAgICAgICAgICAgIHRoaXMuX191cGRhdGVU
+cmVlQ2hpbGRyZW4odHJlZU5vZGUsIGNoaWxkcmVuLmdldEl0ZW0oaSkpOyAgICAgICAgICAgIAor
+CQl0aGlzLl9fdXBkYXRlVHJlZUNoaWxkcmVuKHRyZWVOb2RlLCBtb2RlbE5vZGUpOworCSAgICB9
+IGVsc2UgeworCQlza2lwcGVkTm9kZXMgKz0gMTsKKwkgICAgfQogICAgICAgICAgIH0KICAgICAg
+ICAgfQogICAgICAgfQpAQCAtNDk4LDYgKzUwNyw4MyBAQAogICAgIH0sCiAgICAgCiAgICAgCisg
+ICAgLyoKKyAgICAgKiBXYWxrIHRoZSB0cmVlIGFuZCB0ZXN0IGVhY2ggbm9kZSBhY2NvcmRpbmcg
+dG8gdGhlIGZpbHRlci4KKyAgICAgKi8KKyAgICBmaWx0ZXJUcmVlOiBmdW5jdGlvbigpIHsKKwl2
+YXIgdGhhdCA9IHRoaXM7CisJdmFyIGRlbGVnYXRlID0gdGhhdC5nZXREZWxlZ2F0ZSgpOworCWlm
+IChkZWxlZ2F0ZSA9PT0gbnVsbCB8fCBkZWxlZ2F0ZS5maWx0ZXIgPT09IG51bGwpIHsKKwkgICAg
+cmV0dXJuOworCX0KKwkvLyByZWN1cnNpdmVseSB3YWxrIHRoZSBtb2RlbCBhbmQgZmxhZyBub2Rl
+cyBhcyBmaWx0ZXJlZCBvciBub3QKKwkvLyAiZmlsdGVyZWQgPT09IHRydWUiIG1lYW5zIGEgbm9k
+ZSBzaG91bGQgYmUgcHJ1bmVkIGZyb20gdGhlIHRyZWUKKwkvLyAicmVzdG9yZWQiIG1lYW5zIGEg
+Y2hpbGQgbm9kZSBoYXMgcGFzc2VkIHRoZSBmaWx0ZXIgdGVzdAorCS8vIHRoZSBkaXN0aW5jdGlv
+biBiZXR3ZWVuIGZpbHRlcmVkIGFuZCByZXN0b3JlZCBpcyBpbXBvcnRhbnQgYmVjYXVzZSBjaGls
+ZHJlbiBvZgorICAgICAgICAvLyB1bmZpbHRlcmVkIGJyYW5jaGVzIHNob3VsZCBhbHdheXMgYmUg
+ZGlzcGxheWVkIHdoaWxlIGNoaWxkcmVuIG9mIHJlc3RvcmVkCisgICAgICAgIC8vIGJyYW5jaGVz
+IHNob3VsZCBvbmx5IGJlIGRpc3BsYXllZCBpZiB0aGV5IGFjdHVhbGx5IHBhc3MgdGhlIGZpbHRl
+ciB0ZXN0CisJIGZ1bmN0aW9uIGZpbHRlck5vZGVzIChmaWx0ZXIsIG5vZGUpIHsKKwkgICAgIHZh
+ciBsZWFmTm9kZSA9IGZhbHNlOworCSAgICAgdmFyIGNoaWxkcmVuID0gbnVsbDsKKwkgICAgIHZh
+ciBmaWx0ZXJlZCA9IGRlbGVnYXRlLmZpbHRlcihub2RlKTsKKworCSAgICAgaWYgKG5vZGVbImdl
+dCIgKyBxeC5sYW5nLlN0cmluZy5maXJzdFVwKHRoYXQuZ2V0Q2hpbGRQYXRoKCkpXSA9PSB1bmRl
+ZmluZWQpIHsKKwkJIGxlYWZOb2RlID0gdHJ1ZTsKKwkgICAgIH0gZWxzZSB7CisJCSBjaGlsZHJl
+biA9IG5vZGVbImdldCIgKyBxeC5sYW5nLlN0cmluZy5maXJzdFVwKHRoYXQuZ2V0Q2hpbGRQYXRo
+KCkpXSgpOworCQkgaWYgKGNoaWxkcmVuLmxlbmd0aCA9PT0gMCkgeworCQkgICAgIGxlYWZOb2Rl
+ID0gdHJ1ZTsKKwkJIH0KKwkgICAgIH0KKworCSAgICAgaWYgKCEgbGVhZk5vZGUpIHsKKwkJIGZv
+ciAodmFyIGkgPSAwOyBpIDwgY2hpbGRyZW4ubGVuZ3RoOyBpKyspIHsKKwkJICAgICB2YXIgY2hp
+bGROb2RlID0gY2hpbGRyZW4uZ2V0SXRlbShpKTsKKwkJICAgICAvLyB3ZSBuZWVkIHRvIGtlZXAg
+dHJhY2sgb2YgdGhlIHBhcmVudCBzbyB0aGF0IHdlIGNhbiByZXN0b3JlCisJCSAgICAgLy8gZ3Jh
+bmRwYXJlbnRzIGlmIGEgZmlsdGVyIG9ubHkga2VlcHMgYSBzZWNvbmQgZ2VuZXJhdGlvbiBub2Rl
+LgorCQkgICAgIGNoaWxkTm9kZS5zZXRVc2VyRGF0YSgicGFyZW50Iiwgbm9kZSk7CisJCSB9CisJ
+ICAgICB9CisKKwkgICAgIG5vZGUuc2V0VXNlckRhdGEoImZpbHRlcmVkIiwgZmlsdGVyZWQpOwor
+CSAgICAgbm9kZS5zZXRVc2VyRGF0YSgicmVzdG9yZWQiLCBmYWxzZSk7CisKKwkgICAgIC8vIHdo
+ZW4gd2UgZmluZCBhIG5vZGUgdGhhdCBwYXNzZXMgd2UgbmVlZCB0byBtYWtlIHN1cmUKKwkgICAg
+IC8vIGFsbCB0aGUgYW5jZXN0b3JzIGFyZSB0YWdnZWQgYXMgImtlZXBlcnMiCisJICAgICBpZiAo
+ZmlsdGVyZWQgPT09IGZhbHNlKSB7CisJCSB3aGlsZSAoKG5vZGUgPSBub2RlLmdldFVzZXJEYXRh
+KCJwYXJlbnQiKSkpIHsKKwkJICAgICBpZiAobm9kZS5nZXRVc2VyRGF0YSgiZmlsdGVyZWQiKSA9
+PT0gZmFsc2UgfHwgbm9kZS5nZXRVc2VyRGF0YSgicmVzdG9yZWQiKSA9PT0gdHJ1ZSkgeworCQkJ
+IC8vIHRoaXMgcGFyZW50IGhhcyBhbHJlYWR5IGJlZW4gInVuIi1maWx0ZXJlZAorCQkJIC8vIG5v
+IG5lZWQgdG8gd2FsayBhbnkgZnVydGhlcgorCQkJIGJyZWFrOworCQkgICAgIH0KKwkJICAgICBl
+bHNlIHsKKwkJCSBub2RlLnNldFVzZXJEYXRhKCJyZXN0b3JlZCIsIHRydWUpOworCQkgICAgIH0K
+KwkJIH0KKwkgICAgIH0gZWxzZSB7CisJCSAvLyBpZiB3ZSBkaWRuJ3QgcGFzcyB0aGUgZmlsdGVy
+IHRlc3QgYnV0IG91ciBwYXJlbnQgZGlkIHdlIHNob3VsZCBkaXNwbGF5IGFueXdheQorCQkgaWYg
+KG5vZGUuZ2V0VXNlckRhdGEoInBhcmVudCIpKSB7CisJCSAgICAgdmFyIHBhcmVudCA9IG5vZGUu
+Z2V0VXNlckRhdGEoInBhcmVudCIpOworCQkgICAgIGlmIChwYXJlbnQuZ2V0VXNlckRhdGEoImZp
+bHRlcmVkIikgPT09IGZhbHNlKSB7CisJCQkgbm9kZS5zZXRVc2VyRGF0YSgiZmlsdGVyZWQiLCBm
+YWxzZSk7CisJCSAgICAgfQorCQkgfQorCSAgICAgfQorCisJICAgICBpZiAoISBsZWFmTm9kZSkg
+eworCQkgY29uc29sZS5sb2cobm9kZSAmJiAobm9kZS5nZXROYW1lKCkgKyAiIGlzIG5vdCBhIGxl
+YWYgbm9kZSIpKTsKKwkJIGZvciAodmFyIGkgPSAwOyBpIDwgY2hpbGRyZW4ubGVuZ3RoOyBpKysp
+IHsKKwkJICAgICBmaWx0ZXJOb2RlcyhmaWx0ZXIsIGNoaWxkcmVuLmdldEl0ZW0oaSkpOworCQkg
+fQorCSAgICAgfQorCX0KKworCWZpbHRlck5vZGVzKGRlbGVnYXRlLmZpbHRlciwgdGhhdC5nZXRN
+b2RlbCgpKTsKKwl0aGF0Ll9fYnVpbGRUcmVlKCk7CisgfSwKKworCiAgICAgLyoqCiAgICAgICog
+UmVtb3ZlcyBhbGwgZm9sZGVycyBhbmQgYmluZGluZ3MgZm9yIHRoZSBjdXJyZW50IHNldCB0YXJn
+ZXQuCiAgICAgICovCkBAIC03MjcsNiArODEzLDIzIEBACiAgICAgCiAgICAgCiAgICAgLyoqCisg
+ICAgICogQXBwbHktTWV0aG9kIGZvciBzZXR0aW5nIHRoZSBmaWx0ZXIuCisgICAgICoKKyAgICAg
+KiBAcGFyYW0gdmFsdWUge0Z1bmN0aW9ufG51bGx9IFRoZSBuZXcgZmlsdGVyIGZ1bmN0aW9uLgor
+ICAgICAqIEBwYXJhbSBvbGQge0Z1bmN0aW9ufG51bGx9IFRoZSBvbGQgZmlsdGVyIGZ1bmN0aW9u
+LgorICAgICAqLworICAgIF9zZXRGaWx0ZXI6IGZ1bmN0aW9uKHZhbHVlLCBvbGQpIHsKKyAgICAg
+IC8vIGlmIGEgbmV3IGZpbHRlciBmdW5jdGlvbiBpcyBzZXQKKyAgICAgIGlmICh2YWx1ZSAhPSBu
+dWxsICYmIHZhbHVlLmZpbHRlciAhPSBudWxsKSB7CisgICAgICAgIC8vIGRvIG5vdGhpbmcgaWYg
+dGhlIGZpbHRlciBmdW5jdGlvbiBkaWQgbm90IGNoYW5nZQorICAgICAgICBpZiAob2xkICE9IG51
+bGwgJiYgb2xkLmZpbHRlciAhPSBudWxsICYmIHZhbHVlLmZpbHRlciA9PSBvbGQuZmlsdGVyKSB7
+CisgICAgICAgICAgcmV0dXJuOworICAgICAgICB9CisgICAgICB9CisgICAgfSwKKworCisgICAg
+LyoqCiAgICAgICogSGVscGVyIG1ldGhvZCBmb3IgYXBwbHlpbmcgdGhlIGRlbGVnYXRlIEl0IGNo
+ZWNrcyBpZiBhIGJpbmRJdGVtIAogICAgICAqIGlzIHNldCBlbmQgaW52b2tlcyB0aGUgaW5pdGlh
+bCBwcm9jZXNzIHRvIGFwcGx5IHRoZSB0aGUgZ2l2ZW4gZnVuY3Rpb24uCiAgICAgICogCg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>706</attachid>
+            <date>2010-01-29 05:37:00 +0100</date>
+            <delta_ts>2010-01-29 05:37:42 +0100</delta_ts>
+            <desc>equivalent to &quot;a better tree filter&quot; but updated to patch cleanly against 1.0.1 source</desc>
+            <filename>filtered-tree-1.0.1.patch</filename>
+            <type>text/plain</type>
+            <size>5977</size>
+            <attacher>agtilden</attacher>
+            
+              <data encoding="base64">LS0tIFRyZWUuanMJMjAwOS0xMi0xNiAwNjozNjozNS4wMDAwMDAwMDAgLTA1MDAKKysrIFRyZWUt
+MS4wLjEuanMJMjAxMC0wMS0yOCAyMzoyMzo1Mi4wMDAwMDAwMDAgLTA1MDAKQEAgLTIyMCw2ICsy
+MjAsNyBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LmRhdGEuY29udHJvbGxlci5UcmVlCiAgICAgICov
+CiAgICAgX2FwcGx5RGVsZWdhdGU6IGZ1bmN0aW9uKHZhbHVlLCBvbGQpIHsKICAgICAgIHRoaXMu
+X3NldENvbmZpZ3VyZUl0ZW0odmFsdWUsIG9sZCk7CisgICAgICB0aGlzLl9zZXRGaWx0ZXIodmFs
+dWUsIG9sZCk7CiAgICAgICB0aGlzLl9zZXRDcmVhdGVJdGVtKHZhbHVlLCBvbGQpOwogICAgICAg
+dGhpcy5fc2V0QmluZEl0ZW0odmFsdWUsIG9sZCk7CiAgICAgfSwKQEAgLTQ3Miw2ICs0NzMsNyBA
+QCBxeC5DbGFzcy5kZWZpbmUoInF4LmRhdGEuY29udHJvbGxlci5UcmVlCiAgICAgICogICBkYXRh
+IGluIHRoZSBjdXJyZW50IHN1YnRyZWUuCiAgICAgICovCiAgICAgX191cGRhdGVUcmVlQ2hpbGRy
+ZW46IGZ1bmN0aW9uKHJvb3ROb2RlLCBtb2RlbE5vZGUpIHsKKyAgICAgIHZhciBza2lwcGVkTm9k
+ZXMgPSAwOwogICAgICAgLy8gaWdub3JlIGl0ZW1zIHdoaWNoIGRvbid0IGhhdmUgY2hpbGRyZW4K
+ICAgICAgIGlmIChtb2RlbE5vZGVbImdldCIgKyBxeC5sYW5nLlN0cmluZy5maXJzdFVwKHRoaXMu
+Z2V0Q2hpbGRQYXRoKCkpXSA9PSB1bmRlZmluZWQpIHsKICAgICAgICAgcmV0dXJuOwpAQCAtNTI1
+LDIzICs1MjcsMzIgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC5kYXRhLmNvbnRyb2xsZXIuVHJlZQog
+ICAgICAgICAgICAgfQogICAgICAgICAgICAgLy8gcmVtb3ZlIHRoZSBpdGVtIGF0IGl0cyBvbGQg
+cGxhY2UgKHdpbGwgcmVtb3ZlIHRoZSBzZWxlY3Rpb24pCiAgICAgICAgICAgICByb290Tm9kZS5y
+ZW1vdmVBdChvbGRJbmRleCk7Ci0gICAgICAgICAgICAvLyBhZGQgdGhlIG5vZGUgYXQgdGhlIGN1
+cnJlbnQgcG9zaXRpb24KLSAgICAgICAgICAgIHJvb3ROb2RlLmFkZEF0KGN1cnJlbnROb2RlLCBp
+KTsKLSAgICAgICAgICAgIC8vIHNlbGVjdCBpdCBhZ2FpbiBpZiBpdCB3YXMgc2VsZWN0ZWQKLSAg
+ICAgICAgICAgIGlmICh3YXNTZWxlY3RlZCkgewotICAgICAgICAgICAgICB0aGlzLmdldFRhcmdl
+dCgpLmFkZFRvU2VsZWN0aW9uKGN1cnJlbnROb2RlKTsKLSAgICAgICAgICAgIH0KLQorCSAgICBp
+ZiAoISBjaGlsZHJlbi5nZXRJdGVtKGkpLmdldFVzZXJEYXRhKCJmaWx0ZXJlZCIpIHx8IGNoaWxk
+cmVuLmdldEl0ZW0oaSkuZ2V0VXNlckRhdGEoInJlc3RvcmVkIikpCisJICAgIHsKKwkgICAgICAv
+LyBhZGQgdGhlIG5vZGUgYXQgdGhlIGN1cnJlbnQgcG9zaXRpb24KKyAgICAgICAgICAgICAgcm9v
+dE5vZGUuYWRkQXQoY3VycmVudE5vZGUsIGkpOworICAgICAgICAgICAgICAvLyBzZWxlY3QgaXQg
+YWdhaW4gaWYgaXQgd2FzIHNlbGVjdGVkCisgICAgICAgICAgICAgIGlmICh3YXNTZWxlY3RlZCkg
+eworICAgICAgICAgICAgICAgIHRoaXMuZ2V0VGFyZ2V0KCkuYWRkVG9TZWxlY3Rpb24oY3VycmVu
+dE5vZGUpOworICAgICAgICAgICAgICB9CisJICAgIH0gZWxzZSB7CisJCXNraXBwZWROb2RlcyAr
+PSAxOworCSAgICB9CiAgICAgICAgICAgLy8gaWYgdGhlIG5vZGUgaXMgbmV3CiAgICAgICAgICAg
+fSBlbHNlIHsKLSAgICAgICAgICAgIC8vIGFkZCB0aGUgY2hpbGQgbm9kZQotICAgICAgICAgICAg
+dmFyIHRyZWVOb2RlID0gdGhpcy5fY3JlYXRlSXRlbSgpOwotICAgICAgICAgICAgdHJlZU5vZGUu
+c2V0TW9kZWwoY2hpbGRyZW4uZ2V0SXRlbShpKSk7Ci0gICAgICAgICAgICByb290Tm9kZS5hZGRB
+dCh0cmVlTm9kZSwgaSk7Ci0gICAgICAgICAgICB0aGlzLl9fYWRkQmluZGluZyhjaGlsZHJlbi5n
+ZXRJdGVtKGkpLCB0cmVlTm9kZSk7Ci0KLSAgICAgICAgICAgIC8vIGFkZCBhbGwgY2hpbGRyZW4g
+cmVjdXJzaXZlCi0gICAgICAgICAgICB0aGlzLl9fdXBkYXRlVHJlZUNoaWxkcmVuKHRyZWVOb2Rl
+LCBjaGlsZHJlbi5nZXRJdGVtKGkpKTsKKwkgICAgaWYgKCEgY2hpbGRyZW4uZ2V0SXRlbShpKS5n
+ZXRVc2VyRGF0YSgiZmlsdGVyZWQiKSB8fCBjaGlsZHJlbi5nZXRJdGVtKGkpLmdldFVzZXJEYXRh
+KCJyZXN0b3JlZCIpKQorCSAgICAgIHsKKyAgICAgICAgICAgICAgICAvLyBhZGQgdGhlIGNoaWxk
+IG5vZGUKKwkgICAgICAgIHZhciB0cmVlTm9kZSA9IHRoaXMuX2NyZWF0ZUl0ZW0oKTsKKwkJdHJl
+ZU5vZGUuc2V0TW9kZWwoY2hpbGRyZW4uZ2V0SXRlbShpKSk7CisJCXJvb3ROb2RlLmFkZEF0KHRy
+ZWVOb2RlLCBpIC0gc2tpcHBlZE5vZGVzKTsKKyAgICAgICAgICAgICAgICB0aGlzLl9fYWRkQmlu
+ZGluZyhjaGlsZHJlbi5nZXRJdGVtKGkpLCB0cmVlTm9kZSk7CisKKyAgICAgICAgICAgICAgICAv
+LyBhZGQgYWxsIGNoaWxkcmVuIHJlY3Vyc2l2ZQorICAgICAgICAgICAgICAgIHRoaXMuX191cGRh
+dGVUcmVlQ2hpbGRyZW4odHJlZU5vZGUsIGNoaWxkcmVuLmdldEl0ZW0oaSkpOworCSAgICAgIH0g
+ZWxzZSB7CisJCSAgc2tpcHBlZE5vZGVzICs9IDE7CisJICAgICAgfQogICAgICAgICAgIH0KICAg
+ICAgICAgfQogICAgICAgfQpAQCAtNTUyLDYgKzU2Myw4MiBAQCBxeC5DbGFzcy5kZWZpbmUoInF4
+LmRhdGEuY29udHJvbGxlci5UcmVlCiAgICAgICB9CiAgICAgfSwKIAorICAgIC8qCisgICAgICog
+V2FsayB0aGUgdHJlZSBhbmQgdGVzdCBlYWNoIG5vZGUgYWNjb3JkaW5nIHRvIHRoZSBmaWx0ZXIu
+CisgICAgICovCisgICAgZmlsdGVyVHJlZTogZnVuY3Rpb24oKSB7CisJdmFyIHRoYXQgPSB0aGlz
+OworCXZhciBkZWxlZ2F0ZSA9IHRoYXQuZ2V0RGVsZWdhdGUoKTsKKwlpZiAoZGVsZWdhdGUgPT09
+IG51bGwgfHwgZGVsZWdhdGUuZmlsdGVyID09PSBudWxsKSB7CisJICAgIHJldHVybjsKKwl9CisJ
+Ly8gcmVjdXJzaXZlbHkgd2FsayB0aGUgbW9kZWwgYW5kIGZsYWcgbm9kZXMgYXMgZmlsdGVyZWQg
+b3Igbm90CisJLy8gImZpbHRlcmVkID09PSB0cnVlIiBtZWFucyBhIG5vZGUgc2hvdWxkIGJlIHBy
+dW5lZCBmcm9tIHRoZSB0cmVlCisJLy8gInJlc3RvcmVkIiBtZWFucyBhIGNoaWxkIG5vZGUgaGFz
+IHBhc3NlZCB0aGUgZmlsdGVyIHRlc3QKKwkvLyB0aGUgZGlzdGluY3Rpb24gYmV0d2VlbiBmaWx0
+ZXJlZCBhbmQgcmVzdG9yZWQgaXMgaW1wb3J0YW50IGJlY2F1c2UgY2hpbGRyZW4gb2YKKyAgICAg
+ICAgLy8gdW5maWx0ZXJlZCBicmFuY2hlcyBzaG91bGQgYWx3YXlzIGJlIGRpc3BsYXllZCB3aGls
+ZSBjaGlsZHJlbiBvZiByZXN0b3JlZAorICAgICAgICAvLyBicmFuY2hlcyBzaG91bGQgb25seSBi
+ZSBkaXNwbGF5ZWQgaWYgdGhleSBhY3R1YWxseSBwYXNzIHRoZSBmaWx0ZXIgdGVzdAorCSBmdW5j
+dGlvbiBmaWx0ZXJOb2RlcyAoZmlsdGVyLCBub2RlKSB7CisJICAgICB2YXIgbGVhZk5vZGUgPSBm
+YWxzZTsKKwkgICAgIHZhciBjaGlsZHJlbiA9IG51bGw7CisJICAgICB2YXIgZmlsdGVyZWQgPSBk
+ZWxlZ2F0ZS5maWx0ZXIobm9kZSk7CisKKwkgICAgIGlmIChub2RlWyJnZXQiICsgcXgubGFuZy5T
+dHJpbmcuZmlyc3RVcCh0aGF0LmdldENoaWxkUGF0aCgpKV0gPT0gdW5kZWZpbmVkKSB7CisJCSBs
+ZWFmTm9kZSA9IHRydWU7CisJICAgICB9IGVsc2UgeworCQkgY2hpbGRyZW4gPSBub2RlWyJnZXQi
+ICsgcXgubGFuZy5TdHJpbmcuZmlyc3RVcCh0aGF0LmdldENoaWxkUGF0aCgpKV0oKTsKKwkJIGlm
+IChjaGlsZHJlbi5sZW5ndGggPT09IDApIHsKKwkJICAgICBsZWFmTm9kZSA9IHRydWU7CisJCSB9
+CisJICAgICB9CisKKwkgICAgIGlmICghIGxlYWZOb2RlKSB7CisJCSBmb3IgKHZhciBpID0gMDsg
+aSA8IGNoaWxkcmVuLmxlbmd0aDsgaSsrKSB7CisJCSAgICAgdmFyIGNoaWxkTm9kZSA9IGNoaWxk
+cmVuLmdldEl0ZW0oaSk7CisJCSAgICAgLy8gd2UgbmVlZCB0byBrZWVwIHRyYWNrIG9mIHRoZSBw
+YXJlbnQgc28gdGhhdCB3ZSBjYW4gcmVzdG9yZQorCQkgICAgIC8vIGdyYW5kcGFyZW50cyBpZiBh
+IGZpbHRlciBvbmx5IGtlZXBzIGEgc2Vjb25kIGdlbmVyYXRpb24gbm9kZS4KKwkJICAgICBjaGls
+ZE5vZGUuc2V0VXNlckRhdGEoInBhcmVudCIsIG5vZGUpOworCQkgfQorCSAgICAgfQorCisJICAg
+ICBub2RlLnNldFVzZXJEYXRhKCJmaWx0ZXJlZCIsIGZpbHRlcmVkKTsKKwkgICAgIG5vZGUuc2V0
+VXNlckRhdGEoInJlc3RvcmVkIiwgZmFsc2UpOworCisJICAgICAvLyB3aGVuIHdlIGZpbmQgYSBu
+b2RlIHRoYXQgcGFzc2VzIHdlIG5lZWQgdG8gbWFrZSBzdXJlCisJICAgICAvLyBhbGwgdGhlIGFu
+Y2VzdG9ycyBhcmUgdGFnZ2VkIGFzICJrZWVwZXJzIgorCSAgICAgaWYgKGZpbHRlcmVkID09PSBm
+YWxzZSkgeworCQkgd2hpbGUgKChub2RlID0gbm9kZS5nZXRVc2VyRGF0YSgicGFyZW50IikpKSB7
+CisJCSAgICAgaWYgKG5vZGUuZ2V0VXNlckRhdGEoImZpbHRlcmVkIikgPT09IGZhbHNlIHx8IG5v
+ZGUuZ2V0VXNlckRhdGEoInJlc3RvcmVkIikgPT09IHRydWUpIHsKKwkJCSAvLyB0aGlzIHBhcmVu
+dCBoYXMgYWxyZWFkeSBiZWVuICJ1biItZmlsdGVyZWQKKwkJCSAvLyBubyBuZWVkIHRvIHdhbGsg
+YW55IGZ1cnRoZXIKKwkJCSBicmVhazsKKwkJICAgICB9CisJCSAgICAgZWxzZSB7CisJCQkgbm9k
+ZS5zZXRVc2VyRGF0YSgicmVzdG9yZWQiLCB0cnVlKTsKKwkJICAgICB9CisJCSB9CisJICAgICB9
+IGVsc2UgeworCQkgLy8gaWYgd2UgZGlkbid0IHBhc3MgdGhlIGZpbHRlciB0ZXN0IGJ1dCBvdXIg
+cGFyZW50IGRpZCB3ZSBzaG91bGQgZGlzcGxheSBhbnl3YXkKKwkJIGlmIChub2RlLmdldFVzZXJE
+YXRhKCJwYXJlbnQiKSkgeworCQkgICAgIHZhciBwYXJlbnQgPSBub2RlLmdldFVzZXJEYXRhKCJw
+YXJlbnQiKTsKKwkJICAgICBpZiAocGFyZW50LmdldFVzZXJEYXRhKCJmaWx0ZXJlZCIpID09PSBm
+YWxzZSkgeworCQkJIG5vZGUuc2V0VXNlckRhdGEoImZpbHRlcmVkIiwgZmFsc2UpOworCQkgICAg
+IH0KKwkJIH0KKwkgICAgIH0KKworCSAgICAgaWYgKCEgbGVhZk5vZGUpIHsKKwkJIGNvbnNvbGUu
+bG9nKG5vZGUgJiYgKG5vZGUuZ2V0TmFtZSgpICsgIiBpcyBub3QgYSBsZWFmIG5vZGUiKSk7CisJ
+CSBmb3IgKHZhciBpID0gMDsgaSA8IGNoaWxkcmVuLmxlbmd0aDsgaSsrKSB7CisJCSAgICAgZmls
+dGVyTm9kZXMoZmlsdGVyLCBjaGlsZHJlbi5nZXRJdGVtKGkpKTsKKwkJIH0KKwkgICAgIH0KKwl9
+CisKKwlmaWx0ZXJOb2RlcyhkZWxlZ2F0ZS5maWx0ZXIsIHRoYXQuZ2V0TW9kZWwoKSk7CisJdGhh
+dC5fX2J1aWxkVHJlZSgpOworIH0sCisKIAogICAgIC8qKgogICAgICAqIFJlbW92ZXMgYWxsIGZv
+bGRlcnMgYW5kIGJpbmRpbmdzIGZvciB0aGUgY3VycmVudCBzZXQgdGFyZ2V0LgpAQCAtODc2LDYg
+Kzk2MywyMSBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LmRhdGEuY29udHJvbGxlci5UcmVlCiAgICAg
+ICAgIH0KICAgICAgICAgdGhpcy5fX2J1aWxkVHJlZSgpOwogICAgICAgfQorICAgIH0sCisKKyAg
+ICAvKiBBcHBseS1NZXRob2QgZm9yIHNldHRpbmcgdGhlIGZpbHRlci4KKyAgICAgKgorICAgICAq
+IEBwYXJhbSB2YWx1ZSB7RnVuY3Rpb258bnVsbH0gVGhlIG5ldyBmaWx0ZXIgZnVuY3Rpb24uCisg
+ICAgICogQHBhcmFtIG9sZCB7RnVuY3Rpb258bnVsbH0gVGhlIG9sZCBmaWx0ZXIgZnVuY3Rpb24u
+CisgICAgICovCisgICAgX3NldEZpbHRlcjogZnVuY3Rpb24odmFsdWUsIG9sZCkgeworICAgICAg
+Ly8gaWYgYSBuZXcgZmlsdGVyIGZ1bmN0aW9uIGlzIHNldAorICAgICAgaWYgKHZhbHVlICE9IG51
+bGwgJiYgdmFsdWUuZmlsdGVyICE9IG51bGwpIHsKKyAgICAgICAgLy8gZG8gbm90aGluZyBpZiB0
+aGUgZmlsdGVyIGZ1bmN0aW9uIGRpZCBub3QgY2hhbmdlCisgICAgICAgIGlmIChvbGQgIT0gbnVs
+bCAmJiBvbGQuZmlsdGVyICE9IG51bGwgJiYgdmFsdWUuZmlsdGVyID09IG9sZC5maWx0ZXIpIHsK
+KwkgICAgcmV0dXJuOworICAgICAgICB9CisgICAgICB9CiAgICAgfQogICB9LAogCg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

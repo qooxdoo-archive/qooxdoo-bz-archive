@@ -1,0 +1,147 @@
+<bug>
+          <bug_id>3502</bug_id>
+          
+          <creation_ts>2010-03-05 23:10:00 +0100</creation_ts>
+          <short_desc>Context menu mixin &quot;qx.ui.table.MTableContextMenu&quot; fails to display a context menu on various Windows browsers.</short_desc>
+          <delta_ts>2014-03-03 15:20:23 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://cc.cogneato.com/qxtablebug/</bug_file_loc>
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Nick Watkins">karbon</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>karbon</cc>
+    
+    <cc>schnepe2</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>17142</commentid>
+            <who name="Nick Watkins">karbon</who>
+            <bug_when>2010-03-05 23:10:40 +0100</bug_when>
+            <thetext>The column-specific context menu mixin &quot;qx.ui.table.MTableContextMenu&quot; does not display a context menu on any Windows browser I checked. No browsers display an error associated with the problem.
+
+I develop on a Mac (OSX 10.5.8), and the context menu DOES work on the following browsers:
+Safari 4.0.4
+Chrome 5.0.307.11 Beta
+Firefox 3.5.8
+
+The browsers I was able to test on Windows where my example does NOT work:
+Safari 4.0.4 (Windows XP)
+Internet Explorer 8.0.6001.18702 (Windows XP)
+Firefox 3.5.8 (Windows XP, Windows 7)
+Chrome, latest stable and beta as of 3/4/10 (Windows XP, Windows 7)
+
+The problem can also be observed at http://demo.qooxdoo.org/current/demobrowser/#table~Table_Context_Menu.html.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17145</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-03-06 16:19:39 +0100</bug_when>
+            <thetext>Yes, we&#39;ve had a few reports of MTableContextMenu failing with Windows browsers. I don&#39;t have a decent Windows development environment set up right now. If anyone wants to try to work on this, I&#39;d be glad for the help. We did have a report from Mustafa Sak that the following is a workaround, and may be applicable to fixing the mixin:
+
+var optionMenu = new qx.ui.menu.Menu;
+table.setContextMenu(optionMenu);
+ 
+table.addListener(&quot;mousedown&quot;, function(){
+   optionMenu.removeAll();
+   optionMenu.add(new qx.ui.menu.Button(&quot;Test &quot; + Math.random()));
+}); 
+ 
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17146</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-08 09:50:39 +0100</bug_when>
+            <thetext>To chris</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18461</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-05-21 17:52:30 +0200</bug_when>
+            <thetext>I&#39;m accepting this bug, but I can&#39;t test it until bug 3709 is fixed; I need a &quot;build&quot; version for Windows testing.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18462</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-05-21 17:58:12 +0200</bug_when>
+            <thetext>Dave Baggett writes:
+
+    I&#39;ve found that if you disable the focus indicator, like so:
+
+    widget.getPaneScroller(0).setShowCellFocusIndicator(false);
+
+    then the context menu works. So it appears that the focus indicator eats
+    contextMenu events.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18467</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-05-22 17:00:09 +0200</bug_when>
+            <thetext>Should be fixed in r22236. Tested in Linux Firefox and on Windows Firefox and IE.
+
+Assigning to Martin to resolve to FIXED since I can&#39;t do it until the dependency, bug 3709, is closed.
+
+Events are dispatched in different orders on Linux and Windows. On Windows, by
+the time the contextmenu event was dispatched, the information about where the
+user had clicked had been discarded. This commit corrects that. The cell upon
+which a mousedown event occurs is saved and no longer discarded by any of the
+various mouseup handlers. I&#39;ve added a big &quot;INVARIANT&quot; comment that will
+hopefully prevent people form re-adding clearing of the object which tracks
+the mousedown location.
+
+As a nice side effect of this fix, the various Table events that are generated
+to the user now properly contain the row and column in which the event
+occurred. Previously, the object containing the click location was cleared
+BEFORE issuing the events to the user, so the row and column members of the
+event data was always null.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18468</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-05-22 17:01:50 +0200</bug_when>
+            <thetext>Ok, I managed to remove the dependency. Marking as fixed.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36864</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:23 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

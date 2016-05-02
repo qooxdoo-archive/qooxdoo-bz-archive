@@ -1,0 +1,161 @@
+<bug>
+          <bug_id>1196</bug_id>
+          
+          <creation_ts>2008-08-18 15:27:00 +0200</creation_ts>
+          <short_desc>Optimize private / protected Member-Variables initialized with &quot;null&quot;</short_desc>
+          <delta_ts>2014-03-03 15:18:56 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tino Butz">tinobutz</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>4422</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2008-08-18 15:27:25 +0200</bug_when>
+            <thetext>To opitimize code size (and use of memory) in the compiled version, it would be great when the generator could remove private and protected variables that were initialized with &quot;null&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5239</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-04 15:14:43 +0200</bug_when>
+            <thetext>Would result into smaller code and less processing needed by qx.Class.define.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17612</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-31 10:10:16 +0200</bug_when>
+            <thetext>--&gt; Thomas</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20789</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-10-20 12:46:11 +0200</bug_when>
+            <thetext>It has to be tested whether e.g. removal of private initialization affects 
+program semantics, esp. in the 
+
+  if (this.__mypriv == null)
+
+and
+
+  if (this.__mypriv === null)
+
+cases.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20826</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-10-21 18:15:33 +0200</bug_when>
+            <thetext>I&#39;ve tentatively implemented this for privates, and the results are not really 
+convincing. In short, removing member initializers changes the semantics of 
+program code using (think: reading) them, and the size gain is in the promille 
+range, rather in the percent range, for the tested apps (Feedreader, 
+Playground, mail client app). Also, performance gains in the client are 
+uncertain.
+
+Code Semantics:
+
+Having a member attribute in the class initialized with &#39;null&#39;, as opposed to 
+not having it at all, results in slightly different behaviour, e.g. when 
+testing for this member. Here are various tests and whether their outcome 
+differs between the two:
+
+      &quot;foo&quot; in this                                 ==&gt; DIFFER
+      this.foo == null                          ==&gt; Same
+      this.foo === null                       ==&gt; DIFFER
+      this.foo == undefined               ==&gt; Same
+      this.foo === undefined             ==&gt; DIFFER
+      typeof(this.foo)== &quot;undefined&quot;  ==&gt; DIFFER
+
+See the app in Bug/1196 in the qooxdoo-contrib repository. This leaves code 
+with only the equality checking for null or undefined as being stable across 
+this optimization. Applying this optimization would require of all involved 
+code (framework, app code, libraries, ...) to ONLY use those two test, which 
+seems like a severe restriction.
+
+Size gains:
+
+The size gains overall where in the range of 2K per 500K code (0.4%). In the 
+mail application that uses parts where privates are not equally distributed, 
+best ratios where in the 2% range (e.g. 998 bytes gain on a 50K package), best 
+absolute gain was 11K on an 800K package (1.41%).
+
+Client Performance:
+
+Testing performance gains in the various browser showed no speed-up at all. I 
+used a vanilla gui skeleton, and added 1,000 distinct member attributes of the 
+form &quot;__p&lt;number&gt;:null,&quot;. As measurement I used the standard &quot;Load runtime&quot; 
+output of qx.core.Init in the source version. I tested with Chromium 6.0.480.0, 
+Opera 10.1 and 10.6, Firefox 3.5 and 3.6, and IE 8.
+
+Given the constraints that they impose and the relative meager gains they 
+provide, I&#39;m closing this bug as WONTFIX. Should new aspect arise, it can be 
+re-opened.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20827</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-10-21 18:50:52 +0200</bug_when>
+            <thetext>This patch would be applied to 
+ecmascript.transform.optimizer.privateoptimizer.py, to remove &#39;null&#39; 
+initialized privates:
+
+@@ -112,7 +113,7 @@
+
+ def update(node, privates):
+     if node.hasChildren():
+-        for child in node.children:
++        for child in node.children[:]:
+             update(child, privates)
+
+@@ -154,7 +155,10 @@
+         name = node.set(&quot;name&quot;, repl)
+         
+     elif node.type == &quot;keyvalue&quot;:
+-        name = node.set(&quot;key&quot;, repl)    
++        if treeutil.selectNode(node, &quot;value/constant[@value=&#39;null&#39;]&quot;):
++            node.parent.removeChild(node)
++        else:
++            name = node.set(&quot;key&quot;, repl)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36276</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:18:56 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

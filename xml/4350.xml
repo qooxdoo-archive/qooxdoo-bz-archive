@@ -1,0 +1,130 @@
+<bug>
+          <bug_id>4350</bug_id>
+          
+          <creation_ts>2010-11-22 08:41:00 +0100</creation_ts>
+          <short_desc>@font-face css and ui components</short_desc>
+          <delta_ts>2014-03-03 15:24:26 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.5</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christiaan Willemsen">cwillemsen</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          <cc>martin.wittemann</cc>
+    
+    <cc>tristan.koch</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21443</commentid>
+            <who name="Christiaan Willemsen">cwillemsen</who>
+            <bug_when>2010-11-22 08:41:27 +0100</bug_when>
+            <thetext>Hi there,
+
+I experimented a bit with the CSS3 @font-face rule to use a cross-platform, cross-browser custom font. This basically works, but there are some things that initially go wrong.
+
+first of, the browser only loads the font, when it needs it, and before that time, it will render text with another font. This means that qooxdoo will try to render any text in the old font, therefore text fields will be sized as the old font. However when the font is loaded, the browser will replace the old font for the new one. This results in text fields beeing cut of: &quot;this is text&quot; will look like &quot;this is ...&quot; for exampele.
+
+The solution is actually easy but not very elegant: make a div in the index.html containing some text with a style using the @font-face font. This div needs to be visible in order for the browser to load it (display:none css will not work here!). You can however make the text it the same color as the background to not show it. It&#39;s probably possible to do this in qooxdoo is some nicer way though... maybee you know how?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21485</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-23 09:09:21 +0100</bug_when>
+            <thetext>Thanks for the Report Chris. Currently we don&#39;t have support for that but as your report shows, we should add it. 
+But I&#39;m sorry, don&#39;t know a better workaround for you currently. Havent read much about the webfonts so I&#39;m not an expert in that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24232</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-04-28 11:18:20 +0200</bug_when>
+            <thetext>*** Bug 4710 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24233</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-04-28 11:21:50 +0200</bug_when>
+            <thetext>Been working on this for a while under bug #4710 before I noticed this report. Here&#39;s the current status:
+
+Created web fonts Manager and Validator classes. The Manager keeps track of which web fonts are already loaded, adding @font-face rules as necessary. Validators basically use the method described by Christiaan to check if a web font is available. I agree it&#39;s not a pretty solution, but I couldn&#39;t find a better one out there and the Web Font Loader by Google/TypeKit works the same way.
+
+Also created a WebFont class that inherits from qx.bom.Font. It basically requests web fonts from the Manager and propagates the &quot;fontValid&quot; and &quot;fontInvalid&quot; events from the Validator so widgets using web fonts can recalculate their sizes.
+
+Open tasks:
+1) Integration with font themes. As of now, instances of qx.bom.webfonts.WebFont can be created by the user but not implicitly by defining a custom font theme. We could add a new key to the font theme definition, e.g.:
+
+  fonts :
+  {
+    &quot;coolWebFont&quot; :
+    {
+      size: 22,
+      family: [&quot;monospace&quot;],              
+      sources:
+      [
+        {
+          family: &quot;GorillaRegular&quot;,
+          uris: [ &quot;http://172.17.13.186/webfonts/gorilla/gorilla-webfont.eot&quot;,
+                  &quot;http://172.17.13.186/webfonts/gorilla/gorilla-webfont.woff&quot;,
+                  &quot;http://172.17.13.186/webfonts/gorilla/gorilla-webfont.ttf&quot; ]
+        },
+        {
+          family: &quot;DueDateRegular&quot;,
+          uris: [ &quot;http://172.17.13.186/webfonts/duedate/duedate-webfont.eot&quot;,
+                  &quot;http://172.17.13.186/webfonts/duedate/duedate-webfont.woff&quot;,
+                  &quot;http://172.17.13.186/webfonts/duedate/duedate-webfont.ttf&quot; ]
+        }
+      ]
+    }
+  }
+
+qx.theme.manager.Font would create an instance of qx.bom.webfonts.Webfont (instead of qx.bom.Font) if it encounters this key.
+
+2) Layout updates
+Widgets need to be informed if/when a web font was applied so they can recalculate their own size and trigger a layout update. I suggest that in the &quot;_applyFont&quot; method, widgets should check if the font is an instance of qx.bom.webfonts.WebFont and register a listener for the &quot;fontValid&quot; event. In the callback, they would e.g. set this.__invalidContentSize to true and call qx.ui.core.queue.Layout.add(this);
+
+
+Comments, ideas and suggestions welcome :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24344</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-05-06 10:56:36 +0200</bug_when>
+            <thetext>Took longer than expected, mostly because of IE 6-8 being even more buggy than usual. Fixed with r27068.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38388</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:26 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,150 @@
+<bug>
+          <bug_id>8102</bug_id>
+          
+          <creation_ts>2014-02-10 18:06:00 +0100</creation_ts>
+          <short_desc>Device types should be classified by their screen dpi</short_desc>
+          <delta_ts>2014-02-13 16:34:45 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>mobile.core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>4.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christopher Zuendorf">christopher.zuendorf</reporter>
+          <assigned_to name="Christopher Zuendorf">christopher.zuendorf</assigned_to>
+          
+          <qa_contact name="Christopher Zuendorf">christopher.zuendorf</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>35011</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2014-02-10 18:06:28 +0100</bug_when>
+            <thetext>As a qooxdoo developer reported, the device.type returns a wrong value for Firefox OS:
+
+&quot;For FireFox OS in ZTE mobile:
+
+var deviceType = qx.core.Environment.get(&quot;device.type&quot;); =&gt; desktop
+
+The apache log for this device,
+
+[09/Feb/2014:22:19:18 +0100] &quot;GET / HTTP/1.1&quot; 200 481 &quot;-&quot; &quot;Mozilla/5.0
+(Mobile; ZTEOPEN; rv:18.1) Gecko/18.1 Firefox/18.1&quot;
+
+Is there a way to detect it well.?
+
+Best Regards.&quot;
+
+
+
+With CSS3 it is now possible to detect the device dpi through media query &quot;resolution&quot;.
+
+We should classify the target devices by their device dpi (instead of using the user agent), for detecting their device type class.
+
+The dpi detection is available for a lot of devices:
+
+http://mnt.github.io/dpitest/#ios
+
+As a fallback, we re-use our device type detection based upon the user agent.
+
+
+With this new logic we should able to classify nearly every next generation device, as a &quot;mobile&quot;,&quot;tablet&quot; or &quot;desktop&quot; device.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35012</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2014-02-10 18:08:57 +0100</bug_when>
+            <thetext>I found a very helpful article about classifying the devices upon their dpi:
+
+http://mobile.smashingmagazine.com/2013/03/21/responsive-web-design-with-physical-units/</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35013</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2014-02-10 19:01:51 +0100</bug_when>
+            <thetext>Master:
+
+ea8a346c3f1a1e16e08ba9b468ce645951600597
+
+Added method detectTypeByDPI() for enabling new classification by dpi</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35021</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2014-02-11 08:59:12 +0100</bug_when>
+            <thetext>These changes break the build version of most of our demo apps: The new code tries to access document.body.offsetWidth, which may not be ready when the environment values are queried at startup.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35024</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2014-02-11 10:53:13 +0100</bug_when>
+            <thetext>Reverted those changes.
+
+Instead of detecting device type on dpi in qx.core.Environment, we should provide a helper class in the util namespace.
+
+
+    /**
+    * Detects the device type based upon the device dpi.
+    * @return {String|null} the device type if dpi could be detected or null.
+    */
+    detectDeviceTypeByDPI : function() {
+      if (window.matchMedia) {
+        for (var i = 90; i &lt; 300; i = i + 10) {
+          if (window.matchMedia(&quot;(max-resolution:&quot; + i + &quot;dpi)&quot;).matches) {
+            var score;
+            if (document.body.offsetWidth &lt; document.body.offsetHeight) {
+              score = document.body.offsetWidth / i;
+            } else {
+              score = document.body.offsetHeight / i;
+            }
+
+            if (score &lt; 3.25) {
+              return &quot;mobile&quot;;
+            } else if (score &lt;= 8) {
+              return &quot;tablet&quot;;
+            } else {
+              return &quot;desktop&quot;;
+            }
+          }
+        }
+      }
+      return null;
+    },</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35055</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2014-02-13 16:34:45 +0100</bug_when>
+            <thetext>As we are not able to get the real device screen size in inch, the linked solution is useless for us.
+
+Only Google Chrome and Windows Phone 8 support CSS3 resolution media query.
+But the returned dpi is changed when font scale factor of the web site is increased.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

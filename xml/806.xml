@@ -1,0 +1,127 @@
+<bug>
+          <bug_id>806</bug_id>
+          
+          <creation_ts>2008-03-19 11:04:00 +0100</creation_ts>
+          <short_desc>Table with no rows retains focus indicator</short_desc>
+          <delta_ts>2008-08-07 15:41:20 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>0.7.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Denis">nomus</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2900</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-03-19 11:04:39 +0100</bug_when>
+            <thetext>Table whose rows were deleted can retain focus indicator which is not eliminable. To see the problem, run the following code, then click on the table’s pane, press “Down” key and after that “Up” key. You will see focus indicator.
+
+Code snippet:
+
+var nextId = 0;
+var createRandomRows = function(rowCount) {
+  var rowData = [];
+  var now = new Date().getTime();
+  var dateRange = 400 * 24 * 60 * 60 * 1000; // 400 days
+  for (var row = 0; row &lt; rowCount; row++) {
+    var date = new Date(now + Math.random() * dateRange - dateRange / 2);
+    rowData.push([ nextId++, Math.random() * 10000, date, (Math.random() &gt; 0.5) ]);
+  }
+  return rowData;
+};
+
+var nRowQty = 10;
+var rowData = createRandomRows(nRowQty);
+
+var tableModel = new qx.ui.table.model.Simple();
+tableModel.setColumns([ &quot;ID&quot;, &quot;A number&quot;, &quot;A date&quot;, &quot;Boolean test&quot; ]);
+tableModel.setData(rowData);
+var table = new qx.ui.table.Table(tableModel);
+table.set({ left:10, top:10, width:500, height:300, border:&quot;inset-thin&quot; });
+table.setFocusedCell(1, 1, false);
+tableModel.removeRows(0, nRowQty);
+table.addToDocument();
+
+
+A possible way to avoid this problem is to apply the following patch to Table.moveFocusedCell:
+
+
+qx.Class.patch(qx.ui.table.Table,
+    qx.Mixin.define(&quot;lle5ui.patch.qx.ui.table.Table&quot;,
+    {
+        members :
+        {
+            moveFocusedCell : function(deltaX, deltaY)
+            {
+              var col = this._focusedCol;
+              var row = this._focusedRow;
+
+              if (deltaX != 0)
+              {
+                var columnModel = this.getTableColumnModel();
+                var x = columnModel.getVisibleX(col);
+                var colCount = columnModel.getVisibleColumnCount();
+                x = qx.lang.Number.limit(x + deltaX, 0, colCount - 1);
+                col = columnModel.getVisibleColumnAtX(x);
+              }
+
+              if (deltaY != 0)
+              {
+                var tableModel = this.getTableModel();
+                if (row &gt;= 0 || deltaY &gt; 0) {
+                    row = qx.lang.Number.limit(row + deltaY, 0, tableModel.getRowCount() - 1);
+                }
+              }
+
+              this.setFocusedCell(col, row, true);
+            }
+        }
+    })
+);
+
+
+By the way, is there any way to defocus (remove focus from) a previously focused cell?
+
+Best regards,
+Denis</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4226</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-08-07 15:41:20 +0200</bug_when>
+            <thetext>This is fixed in the 0.8 table and should be fixed in legacy_0_7_x as well</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

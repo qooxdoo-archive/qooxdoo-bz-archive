@@ -1,0 +1,224 @@
+<bug>
+          <bug_id>4294</bug_id>
+          
+          <creation_ts>2010-11-08 08:42:00 +0100</creation_ts>
+          <short_desc>Deprecate qx.util.Json</short_desc>
+          <delta_ts>2011-07-25 09:53:18 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.5</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tristan Koch">tristan.koch</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          <cc>greg</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21142</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2010-11-08 08:42:38 +0100</bug_when>
+            <thetext>qx.util.Json and qx.lang.Json do both serialize JavaScript values to JSON and parse JSON to values respectively. In the framework, qx.util.Json is used in the qx.io.remote namespace. However, qx.lang.Json seems to be the more modern implementation, because it uses the native JSON object if present.
+
+If util.Json and lang.Json are functionally identical, qx.lang.Json should be used. It appears they are for the most part, but more research is required. 
+
+One thing missing in qx.lang.Json is the pretty printing.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24101</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-04-18 13:49:19 +0200</bug_when>
+            <thetext>Also see bug 1400</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24103</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-04-18 14:31:51 +0200</bug_when>
+            <thetext>Bug 3335 (&quot;Deprecate qx.util.Json&quot;) is marked resolved fixed. However, qx.util.Json is still not deprecated. Anybody have more details?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24105</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-04-18 15:09:35 +0200</bug_when>
+            <thetext>It should be evaluated whether the old date handling found in qx.util.Json can be emulated with the reviver function that can be passed to qx.lang.Json.parse. If so, it should be checked whether performance suffers considerably.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24458</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-05-12 09:42:20 +0200</bug_when>
+            <thetext>In CSS, with &quot;overflow: visible&quot; the child&#39;s minWidth wins over the parent&#39;s maxWidth. With &quot;overflow: hidden&quot;, the parent&#39;s maxWidth is enforced.
+
+See https://gist.github.com/561cf31c516e93b707b1 for an example.
+
+@Martin: Please tell me when you start working on this bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24459</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-05-12 09:43:44 +0200</bug_when>
+            <thetext>Please ignore the previous comment.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24535</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-05-16 10:31:43 +0200</bug_when>
+            <thetext>Added test qx.test.lang.Json#testParseLegacyDate</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24537</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-05-16 10:49:24 +0200</bug_when>
+            <thetext>Added test qx.test.lang.Json#testStringifyLegacyDate</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24808</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-05-31 14:49:17 +0200</bug_when>
+            <thetext>The legacy date conversion is configured with qx.io.remote.Rpc.CONVERT_DATES. It is the only place in the framework where it&#39;s still in use under some circumstances. For backwards-compatibility, the global qx.util.Json.CONVERT_DATES is still read and takes precedence.
+
+Note: Since util.Json is now deprecated, lang.Json is used instead in io.remote.*. If special requirements rule out the usage of lang.Json (that is, whenever eval is required and no Json parsed is invalid) the parsing can still be done manually (set parseJson to false in remote.Request).
+
+With r27476 on trunk.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24852</commentid>
+              <attachid>995</attachid>
+            <who name="Greg Beaver">greg</who>
+            <bug_when>2011-06-04 06:04:29 +0200</bug_when>
+            <thetext>Created attachment 995
+better fix for the bug, revert the breakage from last commit
+
+see bug 5191, the fix commit for this breaks all remote rpc calls, and needs to be reverted.
+
+Instead, the parsing needs to be done at the top of the function.  I recommend a try/catch block.  First, try using qx.lang.Json.parse(), and then fall back to qx.util.Json.parse() if and only if there is an exception AND we have enabled parsing old date junk.  Patch as follows and attached.
+
+Index: remote/Rpc.js
+===================================================================
+--- remote/Rpc.js	(revision 27506)
++++ remote/Rpc.js	(working copy)
+@@ -594,6 +594,16 @@
+       req.addListener(&quot;completed&quot;, function(evt)
+       {
+         response = evt.getContent();
++        try {
++          response = qx.lang.Json.parse(response);
++        } catch (e) {
++          // fallback in case we have old-fashioned non-JSON qooxdoo dates
++          if (self._isConvertDates()) {
++            response = qx.util.Json.parse(response, false);
++          } else {
++            throw e;
++          }
++        }
+         id = response[&quot;id&quot;];
+ 
+         if (id != this.getSequenceNumber())
+@@ -619,16 +629,8 @@
+         else
+         {
+ 
+-          // Response as JSON string
+           result = response[&quot;result&quot;];
+ 
+-          // Parse
+-          if (self._isConvertDates()) {
+-            result = result &amp;&amp; result.length &gt; 0 ? eval(&#39;(&#39; + result + &#39;)&#39;) : null;
+-          } else {
+-            result = qx.lang.Json.parse(result);
+-          }
+-
+           if (refreshSession)
+           {
+             result = eval(&quot;(&quot; + result + &quot;)&quot;);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24876</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-06 09:50:40 +0200</bug_when>
+            <thetext>Moved parsing as suggested, but I don&#39;t see why qx.util.Json is required?
+
+Please also see my comments for bug 5191.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24932</commentid>
+            <who name="Greg Beaver">greg</who>
+            <bug_when>2011-06-06 17:09:10 +0200</bug_when>
+            <thetext>the purpose of using qx.util.Json as a backup was to allow it to parse if the thing has the old non-json dates in it.  You could probably just nix that and put in eval() directly, a whole class is unnecessary for a 1-liner.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24933</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-06 17:22:29 +0200</bug_when>
+            <thetext>That&#39;s what I did originally, was just wondering if there is a reason to reintroduce.
+
+I applied some fixes to Rpc. Can you please check again with at least r27553?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24957</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-07 10:39:34 +0200</bug_when>
+            <thetext>As discussed, it is not necessary to keep the whole class qx.util.Json to emulate the old behavior. If you find bugs related to the switch, please check bug 5194.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>995</attachid>
+            <date>2011-06-04 06:04:00 +0200</date>
+            <delta_ts>2011-06-04 06:04:29 +0200</delta_ts>
+            <desc>better fix for the bug, revert the breakage from last commit</desc>
+            <filename>fix4294.patch.txt</filename>
+            <type>text/plain</type>
+            <size>1137</size>
+            <attacher>greg</attacher>
+            
+              <data encoding="base64">SW5kZXg6IHJlbW90ZS9ScGMuanMKPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQotLS0gcmVtb3RlL1JwYy5qcwkocmV2aXNp
+b24gMjc1MDYpCisrKyByZW1vdGUvUnBjLmpzCSh3b3JraW5nIGNvcHkpCkBAIC01OTQsNiArNTk0
+LDE2IEBACiAgICAgICByZXEuYWRkTGlzdGVuZXIoImNvbXBsZXRlZCIsIGZ1bmN0aW9uKGV2dCkK
+ICAgICAgIHsKICAgICAgICAgcmVzcG9uc2UgPSBldnQuZ2V0Q29udGVudCgpOworICAgICAgICB0
+cnkgeworICAgICAgICAgIHJlc3BvbnNlID0gcXgubGFuZy5Kc29uLnBhcnNlKHJlc3BvbnNlKTsK
+KyAgICAgICAgfSBjYXRjaCAoZSkgeworICAgICAgICAgIC8vIGZhbGxiYWNrIGluIGNhc2Ugd2Ug
+aGF2ZSBvbGQtZmFzaGlvbmVkIG5vbi1KU09OIHFvb3hkb28gZGF0ZXMKKyAgICAgICAgICBpZiAo
+c2VsZi5faXNDb252ZXJ0RGF0ZXMoKSkgeworICAgICAgICAgICAgcmVzcG9uc2UgPSBxeC51dGls
+Lkpzb24ucGFyc2UocmVzcG9uc2UsIGZhbHNlKTsKKyAgICAgICAgICB9IGVsc2UgeworICAgICAg
+ICAgICAgdGhyb3cgZTsKKyAgICAgICAgICB9CisgICAgICAgIH0KICAgICAgICAgaWQgPSByZXNw
+b25zZVsiaWQiXTsKIAogICAgICAgICBpZiAoaWQgIT0gdGhpcy5nZXRTZXF1ZW5jZU51bWJlcigp
+KQpAQCAtNjE5LDE2ICs2MjksOCBAQAogICAgICAgICBlbHNlCiAgICAgICAgIHsKIAotICAgICAg
+ICAgIC8vIFJlc3BvbnNlIGFzIEpTT04gc3RyaW5nCiAgICAgICAgICAgcmVzdWx0ID0gcmVzcG9u
+c2VbInJlc3VsdCJdOwogCi0gICAgICAgICAgLy8gUGFyc2UKLSAgICAgICAgICBpZiAoc2VsZi5f
+aXNDb252ZXJ0RGF0ZXMoKSkgewotICAgICAgICAgICAgcmVzdWx0ID0gcmVzdWx0ICYmIHJlc3Vs
+dC5sZW5ndGggPiAwID8gZXZhbCgnKCcgKyByZXN1bHQgKyAnKScpIDogbnVsbDsKLSAgICAgICAg
+ICB9IGVsc2UgewotICAgICAgICAgICAgcmVzdWx0ID0gcXgubGFuZy5Kc29uLnBhcnNlKHJlc3Vs
+dCk7Ci0gICAgICAgICAgfQotCiAgICAgICAgICAgaWYgKHJlZnJlc2hTZXNzaW9uKQogICAgICAg
+ICAgIHsKICAgICAgICAgICAgIHJlc3VsdCA9IGV2YWwoIigiICsgcmVzdWx0ICsgIikiKTsK
+</data>
+
+          </attachment>
+      
+
+    </bug>

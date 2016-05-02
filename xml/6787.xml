@@ -1,0 +1,130 @@
+<bug>
+          <bug_id>6787</bug_id>
+          
+          <creation_ts>2012-09-06 14:08:00 +0200</creation_ts>
+          <short_desc>qx.data.Array does not support Array methods and qx.ui.list.List only supports these arrays</short_desc>
+          <delta_ts>2013-05-23 10:08:06 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Johannes Kissel">johannes.kissel</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30626</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2012-09-06 14:08:58 +0200</bug_when>
+            <thetext>So you always have to wrap your data in a qx.data.Array where they get copied or you have to resign the cool Array methods. OK, you can also do toArray(), but ...
+
+The easiest solution from my point of view would be to create an oberserved array class bases on the native Array and allow this as type for the model property of the list.
+
+http://tinyurl.com/8js5p6u</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30638</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-09-07 08:24:33 +0200</bug_when>
+            <thetext>What your suggesting is a huge step. The current data array is one of the keys of all data binding in qooxdoo and not easily to be replaced. 
+Still, your prototype looks nice but I see one problem with this approach. Extending the native array means that all methods are available. This is basically good but you have to override them anyway because the data array needs to fire events on most actions. But in one case, the availability is not good and that is the regular square bracket access of arrays. I&#39;m quite happy that the current data array does not allow to access the data that ways. Reading the data would not be a problem but setting it can not be monitored (on every browser) so there can&#39;t be a change event.
+Still, you spoke of a missing support for methods. What are the methods missing in the data array?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30640</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2012-09-07 09:50:22 +0200</bug_when>
+            <thetext>Well, basically the functional methods in qx.lang.normalize.Array.
+
+I see, that the qx.data.Array is still needed. But I&#39;d use the observed array inside of (I call it) registries, which are basically high level data stores. Users of a registry cannot (or at least are not supposed to) access the array directly, it is only modified and (more important!) queried by the registry. That&#39;s why the functional array methods are so important to me.
+
+The missing piece is binding the registry model to a list which displays the registered items. The observed array implements only a small part of qx.data.IListData, but the interface is also too big for the qx.ui.list.List: only the change event and getItem are needed. And the interface is not even used, the list checks for an instance of the implementation.
+
+If you feel bad about introducing a &quot;small&quot; IListData and changing the model check to this interface, I can help myself by implementing a _getModel() in my registry, which hides the toArray(). That would also be OK. Or is adding the array methods to the data array the solution? ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30708</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-09-17 08:53:54 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; Well, basically the functional methods in qx.lang.normalize.Array.
+That would be:
+
+lastIndexOf
+filter
+map
+some
+every
+reduce
+reduceRight
+
+We should add those to the data array.
+
+
+&gt; I see, that the qx.data.Array is still needed. But I&#39;d use the observed array
+&gt; inside of (I call it) registries, which are basically high level data stores.
+&gt; Users of a registry cannot (or at least are not supposed to) access the array
+&gt; directly, it is only modified and (more important!) queried by the registry.
+&gt; That&#39;s why the functional array methods are so important to me.
+Thats a valid use use for a separate array implementation.
+
+&gt; The missing piece is binding the registry model to a list which displays the
+&gt; registered items. The observed array implements only a small part of
+&gt; qx.data.IListData, but the interface is also too big for the qx.ui.list.List:
+&gt; only the change event and getItem are needed. And the interface is not even
+&gt; used, the list checks for an instance of the implementation.
+The Interface describes the Array which is used within all the data binding controllers so there might be methods in not used by one controller but by another. As usually the data array is used, that approach fitted out needs.
+
+But referencing the data array directly is a bug and should be fixed. There should always be a check on the interface and not on the instance.
+
+
+&gt; If you feel bad about introducing a &quot;small&quot; IListData and changing the model
+&gt; check to this interface, I can help myself by implementing a _getModel() in my
+&gt; registry, which hides the toArray(). That would also be OK. Or is adding the
+&gt; array methods to the data array the solution? ;-)
+
+I think we should do both, add the missing methods and change the checks of the list. But changing the interface is a bit too much for me. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31776</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-12-20 10:20:01 +0100</bug_when>
+            <thetext>As suggested, did the two things. 
+1. Added the listed methods to the data array
+master: a7f4965b52af79dbd37776e094a7b53dff58212e
+
+2. Modified the list to accept IListData types as model.
+master: 1f73b7af3f18668e8a798e332e5f21823b6d8239</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

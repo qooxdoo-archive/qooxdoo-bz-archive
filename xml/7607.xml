@@ -1,0 +1,204 @@
+<bug>
+          <bug_id>7607</bug_id>
+          
+          <creation_ts>2013-07-30 09:56:00 +0200</creation_ts>
+          <short_desc>Generator accept config files with trailing comma</short_desc>
+          <delta_ts>2014-03-03 15:20:27 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>3.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>3.5</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christian Hagendorn">christian.hagendorn</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>richard.sternagel</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>33506</commentid>
+              <attachid>1273</attachid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2013-07-30 09:56:56 +0200</bug_when>
+            <thetext>Created attachment 1273
+Example config.json
+
+I attach an example to reproduce this issue.
+
+The let section has an trailing comma. A generator run works without any problems also the validate-config doesn&#39;t shows an error with the trailing comma.
+
+I would expect that a config with trailing comma doesn&#39;t work, because the Json file is invalid.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33575</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-08-07 10:08:47 +0200</bug_when>
+            <thetext>Strictly speaking, also the comments we are using in Json files are invalid 
+:-). So yes, the new(er) Json parser that we are using allows trailing commas, 
+which I consider a Good Thing. As these config files are only consumed by our 
+own tools, and are not passed to third-party components, this should not be a 
+problem, or is it?!
+
+Do you see a concrete problem with this? We could make at least the &#39;validate&#39; 
+jobs be more picky, but then it might also complain about the comments.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33595</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2013-08-08 16:51:07 +0200</bug_when>
+            <thetext>I have written an own ruby script to read some values from the let section. The script can work with comments, but not with trailing comma.
+
+I would prefer to get a warning when the &#39;validate&#39; job is running.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33617</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-08-12 18:28:02 +0200</bug_when>
+            <thetext>demjson.decode(string, strict=True, allow_comments=True)
+
+(be strict in every aspect except allowing comments).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33623</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-08-13 16:39:23 +0200</bug_when>
+            <thetext>This cannot be treated in the validator, as the validator only gets the parsed 
+interned object and only checks the schema, not the syntax.
+
+As noted in another comment it would be possible to influence the demjson 
+parser to be strict (exempting comments) but this has to be controlled on an 
+individual level [1]. We don&#39;t currently have either the invocation interface 
+for this (the parser is called through misc/json.py), nor the configuration 
+interface (you&#39;d basically need a config.json option for each demjson option).
+
+A better approach would be to leave the Generator as it is. Instead, we have 
+the command line utility &#39;jsonlint.py&#39; in tool/bin. Rather than just wrapping 
+demjson&#39;s jsonlint (as is currently done), this tool could call demjson.parse 
+directly, exposing all its options as command line arguments. Then Chris could 
+run this tool to assure that the Json he is writing conforms to the individual 
+level of strictness/non-strictness of any 3rd-party tool he is feeding it into.
+
+But given all these efforts, and only to comply with an unknown external 
+script, why not just run the external script on the Json and fix whatever this 
+particular Json implementation is not contempt with?! Hence
+
+-&gt; wontfix
+
+[1] Configuration options of demjson (demjson.py):
+        self._allow_any_type_at_start = not strict
+        self._allow_all_numeric_signs = not strict
+        self._allow_comments = not strict
+        self._allow_control_char_in_string = not strict
+        self._allow_hex_numbers = not strict
+        self._allow_initial_decimal_point = not strict
+        self._allow_js_string_escapes = not strict
+        self._allow_non_numbers = not strict
+        self._allow_nonescape_characters = not strict  # &quot;\z&quot; -&gt; &quot;z&quot;
+        self._allow_nonstring_keys = not strict
+        self._allow_omitted_array_elements = not strict
+        self._allow_single_quoted_strings = not strict
+        self._allow_trailing_comma_in_literal = not strict
+        self._allow_undefined_values = not strict
+        self._allow_unicode_format_control_chars = not strict
+        self._allow_unicode_whitespace = not strict
+        self._allow_octal_numbers = False</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33630</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2013-08-14 12:01:15 +0200</bug_when>
+            <thetext>If that helps you could use &quot;jshint&quot; (as npm package - globally installed) [1]:
+
+jshint ~/Downloads/config.json
+/Users/rsternagel/Downloads/config.json: line 51, col 25, Unexpected comma.
+
+1 error
+
+You can then either tailor the output via &quot;--reporter&quot; [2] or just use the exit code.
+
+[1] http://jshint.com/docs/
+[2] http://jshint.com/docs/config/</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36895</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:27 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1273</attachid>
+            <date>2013-07-30 09:56:00 +0200</date>
+            <delta_ts>2013-07-30 09:56:56 +0200</delta_ts>
+            <desc>Example config.json</desc>
+            <filename>config.json</filename>
+            <type>application/json</type>
+            <size>1967</size>
+            <attacher>christian.hagendorn</attacher>
+            
+              <data encoding="base64">ewogICJuYW1lIiAgICA6ICJ0ZXN0IiwKCiAgImluY2x1ZGUiIDoKICBbCiAgICB7CiAgICAgICJw
+YXRoIiA6ICIke1FPT1hET09fUEFUSH0vdG9vbC9kYXRhL2NvbmZpZy9hcHBsaWNhdGlvbi5qc29u
+IgogICAgfQogIF0sCgogICJleHBvcnQiIDoKICBbCiAgICAiYXBpIiwKICAgICJhcGktZGF0YSIs
+CiAgICAiYnVpbGQiLAogICAgImNsZWFuIiwKICAgICJkaXN0Y2xlYW4iLAogICAgImZpeCIsCiAg
+ICAiaW5mbyIsCiAgICAiaW5zcGVjdG9yIiwKICAgICJsaW50IiwKICAgICJtaWdyYXRpb24iLAog
+ICAgInByZXR0eSIsCiAgICAicHJvZmlsaW5nIiwKICAgICJzb3VyY2UiLAogICAgInNvdXJjZS1h
+bGwiLAogICAgInNvdXJjZS1oeWJyaWQiLAogICAgInNvdXJjZS1zZXJ2ZXIiLAogICAgInNvdXJj
+ZS1zZXJ2ZXItcmVsb2FkIiwKICAgICJzb3VyY2UtaHR0cGQtY29uZmlnIiwKICAgICJzaW11bGF0
+aW9uLWJ1aWxkIiwKICAgICJzaW11bGF0aW9uLXJ1biIsCiAgICAidGVzdCIsCiAgICAidGVzdC1z
+b3VyY2UiLAogICAgInRyYW5zbGF0aW9uIiwKICAgICJ2YWxpZGF0ZS1jb25maWciLAogICAgInZh
+bGlkYXRlLW1hbmlmZXN0IiwKICAgICJ3YXRjaCIKICBdLAoKICAiZGVmYXVsdC1qb2IiIDogInNv
+dXJjZS1oeWJyaWQiLAoKICAibGV0IiA6CiAgewogICAgIkFQUExJQ0FUSU9OIiAgOiAidGVzdCIs
+CiAgICAiUU9PWERPT19QQVRIIiA6ICIuLi9leHRlcm5hbHMvcW9veGRvbyIsCiAgICAiUVhUSEVN
+RSIgICAgICA6ICJ0ZXN0LnRoZW1lLlRoZW1lIiwKICAgICJBUElfRVhDTFVERSIgIDogWyJxeC50
+ZXN0LioiLCAiJHtBUFBMSUNBVElPTn0udGhlbWUuKiIsICIke0FQUExJQ0FUSU9OfS50ZXN0Lioi
+LCAiJHtBUFBMSUNBVElPTn0uc2ltdWxhdGlvbi4qIl0sCiAgICAiTE9DQUxFUyIgICAgICA6IFsg
+ImVuIiBdLAogICAgIkNBQ0hFIiAgICAgICAgOiAiJHtUTVBESVJ9L3F4JHtRT09YRE9PX1ZFUlNJ
+T059L2NhY2hlIiwKICAgICJST09UIiAgICAgICAgIDogIi4iLAogIH0sCgogIC8vIFlvdSBvbmx5
+IG5lZWQgdG8gZWRpdCB0aGUgcmVtYWluZGVyIG9mIHRoaXMgZmlsZSwgaWYgeW91IHdhbnQgdG8g
+Y3VzdG9taXplCiAgLy8gc3BlY2lmaWMgam9icywgb3IgYWRkIG93biBqb2IgZGVmaW5pdGlvbnMu
+CgogICJqb2JzIiA6CiAgewogICAgLy8gVW5jb21tZW50IHRoZSBmb2xsb3dpbmcgZW50cnkgdG8g
+YWRkIGEgY29udHJpYiBvciBsaWJyYXJ5IHRvIHlvdXIKICAgIC8vIHByb2plY3Q7IG1ha2Ugc3Vy
+ZSB0byBhZGFwdCB0aGUgcGF0aCB0byB0aGUgTWFuaWZlc3QuanNvbjsgaWYgeW91IGFyZQogICAg
+Ly8gdXNpbmcgYSBjb250cmliOiBsaWJyYXJ5LCBpdCB3aWxsIGJlIGRvd25sb2FkZWQgaW50byB0
+aGUgcGF0aCBzcGVjaWZpZWQKICAgIC8vIGJ5IHRoZSAnY2FjaGUvZG93bmxvYWRzJyBjb25maWcg
+a2V5CiAgICAvKgogICAgImxpYnJhcmllcyIgOgogICAgewogICAgICAibGlicmFyeSIgOgogICAg
+ICBbCiAgICAgICAgewogICAgICAgICAgIm1hbmlmZXN0IiA6ICJjb250cmliOi8vU2tlbGV0b25B
+cHBsaWNhdGlvbi90cnVuay9NYW5pZmVzdC5qc29uIgogICAgICAgIH0KICAgICAgXQogICAgfQog
+ICAgKi8KCiAgICAvLyBJZiB5b3Ugd2FudCB0byB0d2VhayBhIGpvYiBzZXR0aW5nLCBzZWUgdGhl
+IGZvbGxvd2luZyBzYW1wbGUgd2hlcmUKICAgIC8vIHRoZSAiZm9ybWF0IiBmZWF0dXJlIG9mIHRo
+ZSAiYnVpbGQtc2NyaXB0IiBqb2IgaXMgb3ZlcnJpZGRlbi4KICAgIC8vIFRvIHNlZSBhIGxpc3Qg
+b2YgYXZhaWxhYmxlIGpvYnMsIGludm9rZSAnZ2VuZXJhdGUucHkgeCcuCgkvKgogICAgLCJidWls
+ZC1zY3JpcHQiIDoKICAgIHsKICAgICAgImNvbXBpbGUtb3B0aW9ucyIgOgogICAgICB7CiAgICAg
+ICAgImNvZGUiIDoKICAgICAgICB7CiAgICAgICAgICAiZm9ybWF0IiA6IGZhbHNlCiAgICAgICAg
+fQogICAgICB9CiAgICB9CiAgICAqLwogIH0KfQo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

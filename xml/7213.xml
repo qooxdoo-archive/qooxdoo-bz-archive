@@ -1,0 +1,132 @@
+<bug>
+          <bug_id>7213</bug_id>
+          
+          <creation_ts>2013-02-07 12:12:00 +0100</creation_ts>
+          <short_desc>Generator IPC: Provide an Inter-Process Communication Interface</short_desc>
+          <delta_ts>2014-03-03 08:46:51 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>32175</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-07 12:12:51 +0100</bug_when>
+            <thetext>The issue is to offload Generator functionality to modules living in another 
+process, pot. written in a foreign lanuage.
+
+So this bug is about generic interfaces (like defining a textual protocol over 
+sockets), and the infrastructure in the core Generator to make use of them.
+
+This would allow to break up Generator functionality, experiment with different 
+implementations, and provide functionality in foreign programming languages. 
+The core Generator would be more of a &#39;glue&#39; for the external parts.
+
+This could also be leveraged for parallelism (e.g. many slave processes 
+compiling class files). A first attempt in this regard has been made with 
+bug#2366 (using Pyro), parallelizing multiple Generator processes. This bug 
+goes beyond it, as it doesn&#39;t rely on a Generator process on the other side.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32177</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-07 12:51:21 +0100</bug_when>
+            <thetext>Serialized AST Format:
+
+A central point of this bug would be defining and implementing a textual 
+serialized format for our syntax trees. Many core activities of the Generator 
+revolve around ASTs (producing them, consuming them), like parsing, 
+compressing, optimizations, dependency analysis, etc. A serialization format 
+would allow to pass ASTs from and to foreign modules, allowing modules in 
+totally different languages work with each other. 
+
+The format should be textual, as it is easiest to parse and produce in any 
+given language or runtime. My current idea is an S-expression syntax where each 
+expression defines a node with possible subnodes, as
+
+  (&lt;node-type&gt; (&lt;attributes&gt;) (&lt;child-nodes&gt;))
+
+So the AST for the program &quot;var a = 3 + 4;&quot; would be
+
+  (var ( (line 1) (column 1) (value &quot;var&quot;))
+    ( (definition ( (line 1) (column 5) )
+        ( (assignment ( (line 1) (column 5) (operator &quot;ASSIGN&quot;) (value &quot;=&quot;))
+            ( (identifier ((line 1) (column 5) (value &quot;a&quot;)) ())
+              (operation ( (line 1) (column 11) (operator &quot;ADD&quot;) (value &quot;+&quot;))
+                ( (constant ((line 1) (column 9) (constantType &quot;number&quot;) 
+(detail &quot;int&quot;) (value &quot;3&quot;)) ())
+                  (constant ((line 1) (column 9) (constantType &quot;number&quot;) 
+(detail &quot;int&quot;) (value &quot;4&quot;)) ())
+                ))))))))
+
+
+An additional concern here are scopes:
+
+Currently, scope information is maintained along with the AST, as a &quot;shadow 
+tree&quot; of scope nodes that are linked to the corresponding AST nodes. This 
+linking is via references in code, but you wouldn&#39;t want to embed a scope 
+definition with e.g. every var in the AST that belongs to it (too much 
+repetition). The solution would be to use labels as references, so e.g. many 
+vars can refer to the same scope they belong to using the same label:
+
+  defining a scope (e.g. for a function definition) is reflected in an 
+attribute of this node like:
+
+     (scope (new #4711AC)         // &lt;--- unique label within tree
+                 (parent #4712AB)     // &lt;--- reference to parent scope, global 
+scope gets label #global)
+     )
+
+  referencing a scope (e.g. for a scoped variable) is reflected in the same 
+attribute, with additional properties:
+
+     (scope (parent #4711AC)
+                 (kind  &quot;decl&quot;)             // &lt;--- the other being &quot;use&quot;, for 
+use locations
+     )
+
+A tree walker could assign the labels to the scope nodes before serializing the 
+AST.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35687</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:51 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

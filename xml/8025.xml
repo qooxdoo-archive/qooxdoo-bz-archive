@@ -1,0 +1,152 @@
+<bug>
+          <bug_id>8025</bug_id>
+          
+          <creation_ts>2014-01-08 23:27:00 +0100</creation_ts>
+          <short_desc>Allow arbitrary objects in mobile SelectBox model, not just strings</short_desc>
+          <delta_ts>2015-01-13 07:58:36 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>mobile.widget</component>
+          <version>3.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter>itkach</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="Christopher Zuendorf">christopher.zuendorf</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>34729</commentid>
+            <who name="">itkach</who>
+            <bug_when>2014-01-08 23:27:19 +0100</bug_when>
+            <thetext>Using mobile SelectBox is very awkward for anything but simplest string-only choices. SelectBox should provide a mechanism similar to one in List, which allows to have arbitrary objects in the model and configure how it is rendered via delegate. I was able to achieve this by subclassing SelectBox and Menu as shown below, but I think it&#39;s too complex and not generic enough for a common use case like this. 
+
+Here SelectBox is given the name of an attribute to be used to retrieve item label from a model object:
+
+qx.Class.define(&quot;my.SelectBox&quot;, {
+
+  extend: qx.ui.mobile.form.SelectBox,
+
+  construct: function(labelAttr) {
+    this.labelAttr = labelAttr;
+    this.base(arguments);
+    this.addListener(&quot;tap&quot;, function(e) {
+      //request focus so that it leaves previous widget
+      //such as text field and makes virtual keyboard go away
+      e.getTarget().getContainerElement().focus();
+    }, this);
+  },
+
+  members: {
+    _render : function() {
+      if(this.getModel() != null &amp;&amp; this.getModel().length &gt; 0) {
+        var selectedItem = this.getModel().getItem(this.getSelection());
+        var value;
+        if (selectedItem &amp;&amp; this.labelAttr) {
+          value = selectedItem[this.labelAttr];
+        }
+        else {
+          value = selectedItem;
+        }
+        this._setAttribute(&quot;value&quot;, value);
+      }
+      this._domUpdated();
+    },
+
+    _createSelectionDialog : function() {
+
+      new my.SelectBoxMenu(this.labelAttr);
+    }
+  }
+});
+
+qx.Class.define(&quot;my.SelectBoxMenu&quot;, {
+
+  extend: qx.ui.mobile.dialog.Menu,
+
+  construct: function(labelAttr) {
+    this.labelAttr = labelAttr;
+    this.base(arguments);
+    // Special appearance for SelectBox menu items.
+    this.setSelectedItemClass(&quot;selectbox-selected&quot;);
+    this.setUnselectedItemClass(&quot;selectbox-unselected&quot;);
+
+    // Hide selectionDialog on tap on blocker.
+    this.setHideOnBlockerClick(true);
+  },
+
+  members: {
+    _createSelectionList: function() {
+      var selectionList = this.base(arguments);
+      var labelAttr = this.labelAttr;
+      if (labelAttr) {
+        var delegate = selectionList.getDelegate();
+        var myDelegate = {
+          configureItem: function(item, data, row) {
+            delegate.configureItem(item, data[labelAttr], row);
+          }
+        };
+        selectionList.setDelegate(myDelegate);
+      }
+      return selectionList;
+    }
+  }
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34739</commentid>
+            <who name="">itkach</who>
+            <bug_when>2014-01-09 22:07:21 +0100</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; 
+&gt;     _createSelectionDialog : function() {
+&gt; 
+&gt;       new my.SelectBoxMenu(this.labelAttr);
+&gt;     }
+&gt;   }
+&gt; });
+&gt; 
+
+This of course should read
+
+ _createSelectionDialog : function() {
+      return new mobileup.SelectBoxMenu(this.labelAttr);
+ }
+
+(return is missing)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42162</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-01-13 07:58:36 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

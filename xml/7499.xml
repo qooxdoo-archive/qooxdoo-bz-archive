@@ -1,0 +1,119 @@
+<bug>
+          <bug_id>7499</bug_id>
+          
+          <creation_ts>2013-06-28 17:45:00 +0200</creation_ts>
+          <short_desc>Optimization combination breaks build</short_desc>
+          <delta_ts>2014-03-03 15:20:03 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Cajus Pollmeier">pollmeier</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>pollmeier</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>33150</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2013-06-28 17:45:40 +0200</bug_when>
+            <thetext>When building an application it sometimes comes to the point that the resulting build contains js errors:
+
+ * Chrome
+
+   Uncaught SyntaxError: Unexpected token &amp;&amp; /test/script/foobar-webkit.js:210
+
+ * Firefox
+
+   SyntaxError: missing ; before statement @ https://bj.gonicus.de/test/script/foobar-gecko.js:210
+
+Digging into it points to a combination of optimization flags. Here&#39;s the status:
+
+Works:
+
+    &quot;=optimize&quot; : [&quot;basecalls&quot;, &quot;comments&quot;, &quot;privates&quot;, &quot;strings&quot;, &quot;variables&quot;, &quot;variants&quot;]
+
+Fails:
+    &quot;=optimize&quot; : [&quot;basecalls&quot;, &quot;comments&quot;, &quot;privates&quot;, &quot;strings&quot;, &quot;variables&quot;, &quot;variants&quot;, &quot;whitespace&quot;]
+
+Works:
+    &quot;=optimize&quot; : [&quot;whitespace&quot;]
+
+Fails:
+    &quot;=optimize&quot; : [&quot;variants&quot;, &quot;whitespace&quot;]</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33151</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-06-28 21:59:43 +0200</bug_when>
+            <thetext>Another essential ingredient to reproduce the issue is to generate variant builds, e.g. with
+
+   environment : { engine.name : [gecko, webkit] }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33152</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-06-28 22:03:54 +0200</bug_when>
+            <thetext>Another bit of information is that ostensibly qx.ui.container.Composite causes it, as it is not terminated with a semi-colon. (In most situations this semi-colon is inserted correctly by the Generator). 
+
+Using all this information allows to reproduce the issue in Playground, which has the advantage of including all framework classes (not just qx.ui.container.Composite).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33170</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-07-01 16:49:54 +0200</bug_when>
+            <thetext>The issue was with &#39;if&#39; loop reductions during variant optimization, where a 
+faulty tree could be constructed (when lifting &#39;var&#39;s from the pruned branch of 
+the loop). On serializing the tree that resulted in &#39;var&#39; statements not being 
+terminated properly befor the next statement which caused the runtime error. 
+The issue was only introduced in master. I think especially the &#39;engine.name&#39; 
+optimization brought this to light, as this results in a lot of different &#39;if&#39; 
+constructs being reduced.
+
+Please verify on your side.
+
+master: e201436</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33180</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2013-07-02 08:36:01 +0200</bug_when>
+            <thetext>The fix seems to works well here. Thanks!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36737</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:03 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

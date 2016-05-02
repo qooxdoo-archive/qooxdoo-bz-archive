@@ -1,0 +1,273 @@
+<bug>
+          <bug_id>961</bug_id>
+          
+          <creation_ts>2008-06-12 10:55:00 +0200</creation_ts>
+          <short_desc>qx.ui.embed.Iframe: blocker node sometimes not rendered correctly</short_desc>
+          <delta_ts>2014-03-03 15:25:36 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>0.7.4</version>
+          <rep_platform>IE</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.7.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Ulrich Berger">ulrich.berger</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>3265</commentid>
+            <who name="Ulrich Berger">ulrich.berger</who>
+            <bug_when>2008-06-12 10:55:57 +0200</bug_when>
+            <thetext>In IE the blocker node sometimes &quot;blocks&quot; the Iframe, means the Iframe does not react on mouse scrolling.
+
+This changes in Iframe.release() and Iframe._applyElement() slove the problem:
+
+    release : function()
+    {
+      if (this._blockerNode) {
+&gt;      if (qx.core.Variant.isSet(&quot;qx.client&quot;, &quot;mshtml&quot;)) {
+&gt;        this._blockerParent.removeChild(this._blockerNode);
+&gt;        this._blockerParent.appendChild(this._blockerNode);
+&gt;      }
+        this._blockerNode.style.display = &quot;none&quot;;
+      }
+    },
+
+    _applyElement : function(value, old)
+    {
+      var iframeNode = this.setIframeNode(this._generateIframeElement());
+      var blockerNode = this.setBlockerNode(this._generateBlockerElement());
+
+      this._syncSource();
+      this._syncScrolling();
+
+      value.appendChild(iframeNode);
+      value.appendChild(blockerNode);
+
+&gt;    this._blockerParent = value;
+
+      this.base(arguments, value, old);
+    },</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3266</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-06-12 11:09:06 +0200</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3267</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-06-12 11:21:59 +0200</bug_when>
+            <thetext>fixed in rev. 13936
+
+please verify, whether it is fixed now</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3354</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-06-13 16:57:05 +0200</bug_when>
+            <thetext>still does not work in IE6</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3356</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-06-16 12:31:17 +0200</bug_when>
+            <thetext>fixed rev. 13954</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3358</commentid>
+            <who name="Ulrich Berger">ulrich.berger</who>
+            <bug_when>2008-06-16 13:20:20 +0200</bug_when>
+            <thetext>Works</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3359</commentid>
+            <who name="Ulrich Berger">ulrich.berger</who>
+            <bug_when>2008-06-16 13:20:45 +0200</bug_when>
+            <thetext>closing</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3449</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-06-20 08:56:21 +0200</bug_when>
+            <thetext>I&#39;m getting a problem with the code from revision 13959 when running the testRunner application under IE7 in XP.
+
+The removeChild call in function release:
+
+    release : function()
+    {
+      if (this._blockerNode)
+      {
+        if (qx.core.Variant.isSet(&quot;qx.client&quot;, &quot;mshtml&quot;))
+        {
+          var blockerParent = this.getElement();
+          blockerParent.removeChild(this._blockerNode);
+          blockerParent.appendChild(this._blockerNode);
+
+generates an &quot;invalid argument&quot; error. I&#39;ve gone into the debugger and it appears to be a valid div. But this command line returns false:
+
+this._blockerNode.parentElement == blockerParent
+false
+
+so something strange is going on.
+
+Also, _generateBlockerElement has this line:
+
+      var blockerEl = qx.ui.embed.Iframe._blocker = document.createElement(&quot;div&quot;);
+
+That&#39;s the only place the qx.ui.embed.Iframe._blocker is referenced - should it be deleted?
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3451</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-06-20 09:41:47 +0200</bug_when>
+            <thetext>Thanks for finding this. It is related to our extended border imlementation (&quot;inset&quot;, &quot;outset&quot;, ...) in IE, which inserts an additional DIV in between the lement and its children. This leads to the strange behaviour you have observed. Fortunately in 0.8 this is much cleaner :-)
+
+I have fixed it now. (rev. 14003)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3454</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-06-20 16:09:14 +0200</bug_when>
+            <thetext>Still not working for Ulrich. This code does work for him:
+
+
+
+    block : function()
+   {
+     if (this._blockerNode &amp;&amp; 
+        (!this._blockerNode.parentElement || qx.core.Variant.isSet(&quot;qx.client&quot;, &quot;gecko&quot;))) {
+       this._getBlockerParent().appendChild(this._blockerNode);
+     }
+   },
+
+
+   /**
+    * Release the blocker set by {@link #block}.
+    *
+    * @type member
+    */
+   release : function()
+   {
+     if (this._blockerNode &amp;&amp; 
+        (this._blockerNode.parentElement || qx.core.Variant.isSet(&quot;qx.client&quot;, &quot;gecko&quot;))) {
+       this._getBlockerParent().removeChild(this._blockerNode);
+     }
+   },</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3455</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-06-20 16:45:16 +0200</bug_when>
+            <thetext>see last comment</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3469</commentid>
+            <who name="Ulrich Berger">ulrich.berger</who>
+            <bug_when>2008-06-23 11:49:59 +0200</bug_when>
+            <thetext>After testing my code in different browsers here comes an update for FF:
+
+    block : function()
+    {
+      if (this._blockerNode &amp;&amp; 
+         (!this._blockerNode.parentElement || 
+         (qx.core.Variant.isSet(&quot;qx.client&quot;, &quot;gecko&quot;) &amp;&amp; !this._blockerNode.parentNode))) {
+        this._getBlockerParent().appendChild(this._blockerNode);
+      }
+    },
+
+    release : function()
+    {
+      if (this._blockerNode &amp;&amp; 
+         (this._blockerNode.parentElement || 
+         (qx.core.Variant.isSet(&quot;qx.client&quot;, &quot;gecko&quot;) &amp;&amp; this._blockerNode.parentNode))) {
+        this._getBlockerParent().removeChild(this._blockerNode);
+      }
+    },</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3624</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-07-02 15:25:10 +0200</bug_when>
+            <thetext>does work now</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3996</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-07-22 10:33:15 +0200</bug_when>
+            <thetext>This fix breaks the Undo/Redo of the HtmlArea component in IE. We need to find another solution for this bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3997</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-07-22 10:33:34 +0200</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5951</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-10-22 15:43:56 +0200</bug_when>
+            <thetext>.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5952</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-10-22 15:46:32 +0200</bug_when>
+            <thetext>I&#39;ve just checked the current state of this bug concerning the HtmlArea component. In short: the current implementation is working for the Undo/Redo of the HtmlArea.
+
+@Ulrich
+Does the current implemenation also work out for you and the problem you described? If so I can close this bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6169</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-11-07 16:37:43 +0100</bug_when>
+            <thetext>@Alex, @Ulrich please determine the current state of this issue asap, thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6345</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-11-19 13:52:32 +0100</bug_when>
+            <thetext>current state seems to be working.
+
+-&gt; CLOSING</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38809</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:36 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

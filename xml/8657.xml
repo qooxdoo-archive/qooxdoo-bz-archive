@@ -1,0 +1,91 @@
+<bug>
+          <bug_id>8657</bug_id>
+          
+          <creation_ts>2014-10-27 11:25:00 +0100</creation_ts>
+          <short_desc>IOS8: .getWidgetByElement() returns wrong object</short_desc>
+          <delta_ts>2014-12-16 11:44:30 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>iOS</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mustafa Sak">mustafa.sak</reporter>
+          <assigned_to name="Mustafa Sak">mustafa.sak</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>41452</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-10-27 11:25:32 +0100</bug_when>
+            <thetext>qx.ui.core.Widget.getWidgetByElement() returns wrong object instance, after a widget was destroyed.
+
+Guess you have a window widget with a text field as child element. This text field has a listener for &quot;focusout&quot; events. On closing the window we will destroy the window. The &quot;focusout&quot; event on the text field will be fired anyway. But a call of .getWidgetByElement() inside the event handler does not returning the text field widget. This can cause in a wrong event target or an exception.
+
+
+I could note this behavior only on IOS8 Mobile Safari.
+
+Recommend to return the expected widget instance.
+
+I will try to demonstrate this behavior on a playground example.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41455</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-10-27 17:23:45 +0100</bug_when>
+            <thetext>This issue occurs because of an race condition. The difference between Mobile Safari and other browser was the fact of various focus handling.
+
+The UI blocker widget is storing current active and focused widget DOM elements on blocking. And tries to restore them on unblock.
+
+Usually their is a time gap between block and unblock, so the previously active element can be disposed in the meantime. But the blocker is not taking that into account. First there is no way to check on DOM elements if they are already disposed. Normally the $$widget attribute should be deleted on disposing. But if the disposing was triggered by a parent element, the qx.html instance of the DOM element will be disposed before the widget instance can delete the $$widget attribute. So qx.bom.Element.activate tries to re activate a widget by a wrong widget hash. That hash can be reused in the meantime by another object.
+
+Because the problem just occurs on the UI blocker widget, I will store the widget instances of active and focused elements. That instances are able to be check if they are disposed or not.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41456</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-10-27 17:25:03 +0100</bug_when>
+            <thetext>Committed into master: 07dfebebd378bf6b21f7187ef076b72d7ff71c82</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41479</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-11-03 10:08:45 +0100</bug_when>
+            <thetext>As this is a bug fix, it would be good to have it in the branch as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41487</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-11-04 12:23:54 +0100</bug_when>
+            <thetext>Committed into branch_4_0_x : 1304edfdbb707e04013579c26a1e5fe8aaf0f49c</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

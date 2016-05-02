@@ -1,0 +1,209 @@
+<bug>
+          <bug_id>6553</bug_id>
+          
+          <creation_ts>2012-06-22 18:29:00 +0200</creation_ts>
+          <short_desc>Dynamic resize stopped working in qx.Mobile</short_desc>
+          <delta_ts>2014-03-03 08:46:01 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>mobile.layout</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Christopher Zuendorf">christopher.zuendorf</assigned_to>
+          
+          <qa_contact name="Christopher Zuendorf">christopher.zuendorf</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>29890</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2012-06-22 18:29:25 +0200</bug_when>
+            <thetext>The MResize mixin for qx.Mobile is supposed to resize widgets which include it, in such cases where CSS can not properly size the widget. This worked until commit 7e458d8047b8e9c3d91c97f79fec012900b8b918 which removed the following call from the constructor:
+
+   this.addListener(&quot;domupdated&quot;, this.fixSize, this);
+
+In more recent commits, the constructor has been removed entirely.
+
+It is important that resizing occur at the earliest possible time (i.e., not by a timer, as was implemented in the above commit 7e458d8, because enclosed widgets must also be able to resize themselves to their parent. The resizing must occur at &quot;domupdated&quot; time.
+
+The following patch fixes the problem for current master:
+
+
+diff --git a/framework/source/class/qx/ui/mobile/core/MResize.js b/framework/source/class/qx/ui/mobile/core/MResize.js
+index 1933773..de773b8 100644
+--- a/framework/source/class/qx/ui/mobile/core/MResize.js
++++ b/framework/source/class/qx/ui/mobile/core/MResize.js
+@@ -25,6 +25,11 @@
+  */
+ qx.Mixin.define(&quot;qx.ui.mobile.core.MResize&quot;,
+ {
++  construct : function()
++  {
++    this.addListener(&quot;domupdated&quot;, this.fixSize, this);
++  },
++
+   /*
+   *****************************************************************************
+      PROPERTIES</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29892</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2012-06-22 18:53:26 +0200</bug_when>
+            <thetext>The previous patch worked fine in the source version, but failed in the build version. There is a race condition. This patch solves it for both. 
+
+
+diff --git a/framework/source/class/qx/ui/mobile/core/MResize.js b/framework/source/class/qx/ui/mobile/core/MResize.js
+index 1933773..0facefc 100644
+--- a/framework/source/class/qx/ui/mobile/core/MResize.js
++++ b/framework/source/class/qx/ui/mobile/core/MResize.js
+@@ -25,6 +25,11 @@
+  */
+ qx.Mixin.define(&quot;qx.ui.mobile.core.MResize&quot;,
+ {
++  construct : function()
++  {
++    this.addListener(&quot;domupdated&quot;, this.fixSize, this);
++  },
++
+   /*
+   *****************************************************************************
+      PROPERTIES
+@@ -76,7 +81,7 @@ qx.Mixin.define(&quot;qx.ui.mobile.core.MResize&quot;,
+     /**
+      * Resizes the container element to the height of the parent element.
+      */
+-    fixSize : function()
++    fixSize : function(e)
+     {
+       var parent = this.getLayoutParent();
+ 
+@@ -84,8 +89,20 @@ qx.Mixin.define(&quot;qx.ui.mobile.core.MResize&quot;,
+         var height = parent.getContainerElement().offsetHeight;
+         var width = parent.getContainerElement().offsetWidth;
+         
+-        // Only fix size, when value are above zero.
++        // If sizes are still zero, we need to come back a tiny bit later.
+         if(height == 0 || width == 0) {
++          
++          // But only do this once, in case sizes were actually set to zero.
++          if (e !== true) {
++            qx.util.TimerManager.getInstance().start(
++              function()
++              {
++                // Pass &#39;true&#39; this time, to prevent further attempts.
++                this.fixSize(true);
++              },
++              0,
++              this);
++          }
+           return;
+         }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29896</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2012-06-22 23:06:28 +0200</bug_when>
+            <thetext>Hi Derrell,
+
+the MResize class was mainly intended to fix flickering on qx.Mobile Tablet support, and its page transitions.
+
+In testing, we discovered, that all those event listeners were not the best solution, because they prevent relayouting of the page after transition.
+
+Also the timer was a hot fix, because you cannot be sure, that rendering is really done within 1000 milliseconds.
+
+That is why the the constructor was removed, and fixSize and releaseFixedSize are called on layouting logic in Card.js.
+
+It fixes size on animationStart, and releases any size fix on animationEnd.
+
+This is the best solution, and removed all known bugs in qx.Mobile regarding page layouting.
+
+Do you use MResize in another class than card layout?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29904</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2012-06-23 17:09:45 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; Do you use MResize in another class than card layout?
+
+Yes, I do. My work requires more than just a layout; it requires both a special container and a layout. The container itself needs to have its size adjusted by fixSize() once the available size is known.
+
+If MResize is really intended only for the Card layout, I&#39;d suggest that either the methods in the mixin be placed directly in Card.js, or the mixin be moved from qx.ui.mobile.core.MResize to qx.ui.mobile.layout.MResize, and well-commented as to its intended use. Having it in qx.ui.mobile.core indicates that it is intended to be of general usefulness.
+
+If it were moved or combined into Card.js, I would copy that functionality to my own library. That seems silly, though. If the (latest) patch I supplied doesn&#39;t impede the mixin&#39;s use for transitions in the Card layout, then applying the patch makes MResize a generally useful mixin for many other purposes, such as mine.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29905</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2012-06-24 08:58:42 +0200</bug_when>
+            <thetext>&quot;If MResize is really intended only for the Card layout, I&#39;d suggest that either
+the methods in the mixin be placed directly in Card.js, or the mixin be moved
+from qx.ui.mobile.core.MResize to qx.ui.mobile.layout.MResize, and
+well-commented as to its intended use.&quot;
+
+Sounds like a good idea. 
+
+The reason why I removed any listener on domupdated or appear: the fix height was not sure reproducable.
+
+For example: in build version, the mobile page was half the size and not usable, and in source version everything worked fine. FixSize should be called after browser rendering finished. 
+
+I am sure you can easily reproduce this bug, if you use the previous MResize class, and build your application.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29906</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2012-06-24 16:06:21 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; The reason why I removed any listener on domupdated or appear: the fix height
+&gt; was not sure reproducable.
+&gt; 
+&gt; For example: in build version, the mobile page was half the size and not
+&gt; usable, and in source version everything worked fine. FixSize should be called
+&gt; after browser rendering finished. 
+&gt; 
+&gt; I am sure you can easily reproduce this bug, if you use the previous MResize
+&gt; class, and build your application.
+
+Yes, I was able to reproduce this bug on 22 June. That&#39;s why I provided the new patch, in Comment 1 of this bug. The new patch seems to have reliably fixed that unreliability issue. I&#39;ve had no problems with source or build versions since applying the Comment 1 patch.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35384</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:01 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

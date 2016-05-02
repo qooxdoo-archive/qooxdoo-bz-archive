@@ -1,0 +1,213 @@
+<bug>
+          <bug_id>1016</bug_id>
+          
+          <creation_ts>2008-06-30 16:35:00 +0200</creation_ts>
+          <short_desc>Safari complains on trying to set &quot;Referer&quot; HTTP header</short_desc>
+          <delta_ts>2014-03-03 15:22:15 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>master</version>
+          <rep_platform>Safari</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P5</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>0.7.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Helder Magalhães">helder.magalhaes</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Safari</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>3567</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-06-30 16:35:32 +0200</bug_when>
+            <thetext>Trying to set &quot;Referer&quot; HTTP header on Safari displays a security warning in debug console: &quot;Refused to set unsafe header Referer&quot;.
+
+Repetitive usage of remote requests (pooling) makes it appear as if a memory leak exists, due to the (also repetitive) internal logging.
+
+While the code is disabled in 0.8 trunk, with a &quot;call for feedback&quot; comment, it&#39;s still seen in 0.7.x (legacy) trunk.
+
+Although seen in Safari (for Windows 3.0.1), this will likely apply to any WebKit-based browser.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3568</commentid>
+              <attachid>313</attachid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-06-30 16:40:16 +0200</bug_when>
+            <thetext>Created attachment 313
+Proposed patch for legacy_0_7_x
+
+Completely disabling the code (seen in 0.8 trunk) can also be an option. Browser should take the responsibility on this, after all...
+
+Attached patch uses a browser variant in order to skip the security warning - this way, no cross-browser breaks will likely arise from it. :-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3576</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-06-30 17:36:32 +0200</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3590</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-07-01 09:57:36 +0200</bug_when>
+            <thetext>fixed in rev. 14215</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3737</commentid>
+            <who name="Andreas Junghans">andreas.junghans</who>
+            <bug_when>2008-07-10 11:33:22 +0200</bug_when>
+            <thetext>The Java backend uses the referer header, and Firefox doesn&#39;t send one by default (see here: http://www.mercurytide.co.uk/whitepapers/issues-working-with-ajax/ ). Even when not using a backend that evaluates the referrer, it&#39;s still useful to have it set correctly, e.g. when looking at server log files.
+
+I suggest to either go with the patch proposed by Helder or to invert the browser check and only set the header in Gecko based browsers.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3738</commentid>
+            <who name="Andreas Junghans">andreas.junghans</who>
+            <bug_when>2008-07-10 11:42:13 +0200</bug_when>
+            <thetext>Oops, the code is already correct (at least if we want to stay with the &quot;not Safari&quot; vs. &quot;only Gecko&quot; solution). I only looked at the diff between the last two revisions, and it looked like setting the referrer had been removed completely. Sorry for the noise!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3744</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-07-10 17:13:40 +0200</bug_when>
+            <thetext>Cool, now I know why we set the referrrer in the first place :-) I have added your statement, why we need it as a comment to the code.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3745</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-07-10 17:23:58 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; and Firefox doesn&#39;t send one by default
+(...)
+&gt; I suggest to either go with the patch proposed by Helder or to invert the
+&gt; browser check and only set the header in Gecko based browsers.
+
+I&#39;d stick with the latter solution (I didn&#39;t knew that this was a gecko-specific issue). I believe setting the header in Firefox variant only is much cleaner than filtering the Webkit variant... :-) May prevent from future issues with browsers which may, for example, simply discard the request or (worse) throw a JS error when this is attempted - instead of a warning as Webkit did! ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3747</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-07-10 17:41:04 +0200</bug_when>
+            <thetext>Actually, this is not a Java backend-specific issue.  We jointly (the developers of the Java, PHP, and perl backends) corrected a security issue that Andreas J had identified, a while back, that depends on Referer matching.  The values that may be specified for a class in the PHP backend are defined like this, with, I think, similar configurable parameters in the other backends:
+
+/*
+ * Method Accessibility values
+ *
+ * Possible values are:
+ *
+ *   &quot;public&quot; -
+ *     The method may be called from any session, and without any checking of
+ *     who the Referer is.
+ *
+ *   &quot;domain&quot; -
+ *     The method may only be called by a script obtained via a web page
+ *     loaded from this server.  The Referer must match the request URI,
+ *     through the domain part.
+ *
+ *   &quot;session&quot; -
+ *     The Referer must match the Referer of the very first RPC request
+ *     issued during the session.
+ *
+ *   &quot;fail&quot; -
+ *     Access is denied
+ */
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3750</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-07-11 10:18:43 +0200</bug_when>
+            <thetext>I would like to keep it the way it is now. Setting the referrer does work in all current browsers except Safari/WebKit. If we change it to set it only on FF, we would need to make sure that the referrer is always correct in the other browsers. We would need to test this on all other browser. I don&#39;t have the time to do this at the moment. If someone is willing to test it and non FF browsers work as expected, I&#39;ll change it to make it an FF only action.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3751</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-07-11 10:35:42 +0200</bug_when>
+            <thetext>(In reply to comment #9)
+&gt; I would like to keep it the way it is now. Setting the referrer does work in
+&gt; all current browsers except Safari/WebKit. If we change it to set it only on
+&gt; FF, we would need to make sure that the referrer is always correct in the other
+&gt; browsers. We would need to test this on all other browser. I don&#39;t have the
+&gt; time to do this at the moment. If someone is willing to test it and non FF
+&gt; browsers work as expected, I&#39;ll change it to make it an FF only action.
+
+Me neither... :-|
+I agree on your approach - only suggestion is that a TODO: is added within the code (which will use the Webkit variant), pointing to this particular issue, in order to allow a future revision of it. This may avoid spooky comments in the future about why the hell one did it this way (as Webkit properly deals with it and even refuses do it when it&#39;s a Firefox problem in fact). ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3752</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-07-11 11:01:33 +0200</bug_when>
+            <thetext>I already did that :-)
+
+
+      // The Java backend uses the referer header, and Firefox doesn&#39;t send one by
+      // default (see here:
+      // http://www.mercurytide.co.uk/whitepapers/issues-working-with-ajax/ ). Even when
+      // not using a backend that evaluates the referrer, it&#39;s still useful to have it
+      // set correctly, e.g. when looking at server log files.
+      if (!qx.core.Variant.isSet(&quot;qx.client&quot;, &quot;webkit&quot;))
+      {
+        // avoid &quot;Refused to set unsafe header Referer&quot; in Safari and other Webkit-based browsers
+        vRequest.setRequestHeader(&#39;Referer&#39;, window.location.href);
+      }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37603</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:15 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>313</attachid>
+            <date>2008-06-30 16:40:00 +0200</date>
+            <delta_ts>2008-06-30 16:40:16 +0200</delta_ts>
+            <desc>Proposed patch for legacy_0_7_x</desc>
+            <filename>XHR-UnsecureHeader-Safari.patch</filename>
+            <type>text/plain</type>
+            <size>680</size>
+            <attacher>helder.magalhaes</attacher>
+            
+              <data encoding="base64">SW5kZXg6IFhtbEh0dHBUcmFuc3BvcnQuanMNCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0NCi0tLSBYbWxIdHRwVHJhbnNw
+b3J0LmpzCShyZXZpc2lvbiAxNDIxMSkNCisrKyBYbWxIdHRwVHJhbnNwb3J0LmpzCSh3b3JraW5n
+IGNvcHkpDQpAQCAtMjY4LDcgKzI2OCwxMCBAQA0KICAgICAgIC8vICAgQXBwbHlpbmcgcmVxdWVz
+dCBoZWFkZXIKICAgICAgIC8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+CiAgICAgICAvLyBBZGQgYSBSZWZlcmVyIGhlYWRlcgotICAgICAgdlJlcXVlc3Quc2V0UmVxdWVz
+dEhlYWRlcignUmVmZXJlcicsIHdpbmRvdy5sb2NhdGlvbi5ocmVmKTsKKyAgICAgIGlmICghcXgu
+Y29yZS5WYXJpYW50LmlzU2V0KCJxeC5jbGllbnQiLCAid2Via2l0IikpIHsKKyAgICAgICAgLy8g
+YXZvaWQgIlJlZnVzZWQgdG8gc2V0IHVuc2FmZSBoZWFkZXIgUmVmZXJlciIgaW4gU2FmYXJpIGFu
+ZCBvdGhlciBXZWJraXQtYmFzZWQgYnJvd3NlcnMKKyAgICAgICAgdlJlcXVlc3Quc2V0UmVxdWVz
+dEhlYWRlcignUmVmZXJlcicsIHdpbmRvdy5sb2NhdGlvbi5ocmVmKTsKKyAgICAgIH0KIAogICAg
+ICAgdmFyIHZSZXF1ZXN0SGVhZGVycyA9IHRoaXMuZ2V0UmVxdWVzdEhlYWRlcnMoKTsKIAo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

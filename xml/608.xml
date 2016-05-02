@@ -1,0 +1,161 @@
+<bug>
+          <bug_id>608</bug_id>
+          
+          <creation_ts>2007-08-30 15:57:00 +0200</creation_ts>
+          <short_desc>TreeVirtual.setColumnVisibilityButtonVisible(false) causes error if tree has additional columns</short_desc>
+          <delta_ts>2014-03-03 15:25:30 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>0.7.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P5</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Denis">nomus</reporter>
+          <assigned_to name="Sebastian Werner">info</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2162</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2007-08-30 15:57:54 +0200</bug_when>
+            <thetext>If treevirtual has additional columns then attempt to set columnVisibilityButtonVisible = false causes error.
+
+Code snippet:
+
+var tree = new qx.ui.treevirtual.TreeVirtual([&quot;Name&quot;, &quot;Size&quot;, &quot;Type&quot;]);
+tree.set({
+    backgroundColor : &quot;white&quot;,
+    border : &quot;inset-thin&quot;,
+    left : 10,
+    top : 10,
+    width : &quot;40%&quot;,
+    height : 400
+});
+tree.setStatusBarVisible(false);
+var resizeBehavior = tree.getTableColumnModel().getBehavior();
+resizeBehavior.set(0, { width:&quot;1*&quot; });
+resizeBehavior.set(1, { width:&quot;10%&quot; });
+resizeBehavior.set(2, { width:&quot;15%&quot; });
+tree.addToDocument();
+var dataModel = tree.getDataModel();
+var root = dataModel.addBranch(null, &quot;Root&quot;, true);
+var f1 = dataModel.addBranch(root, &quot;Folder 1&quot;, false);
+var id;
+for (var i = 1; i &lt; 10; i++) {
+    id = dataModel.addLeaf(f1, &quot;File 1&quot; + i);
+    dataModel.setColumnData(id, 1, i);
+    dataModel.setColumnData(id, 2, &quot;File &quot; + i);
+}
+var f2 = dataModel.addBranch(root, &quot;Folder 2&quot;, false);
+for (var i = 1; i &lt; 5; i++) {
+    id = dataModel.addLeaf(f2, &quot;File 2&quot; + i);
+    dataModel.setColumnData(id, 1, i);
+    dataModel.setColumnData(id, 2, &quot;File &quot; + i);
+}
+dataModel.setData();
+var btn1 = new qx.ui.form.Button(&quot;Button 1&quot;);
+btn1.set({
+    left : 10,
+    top : 450
+});
+btn1.addEventListener(&quot;execute&quot;, function(evt) {
+    tree.setColumnVisibilityButtonVisible(false);
+}, tree);
+btn1.addToDocument();
+
+
+Best regards,
+Dioc</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2167</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2007-08-30 19:27:21 +0200</bug_when>
+            <thetext>
+- Sebastian/Fabian, see legacy_0_7_x checkin r9588 which shows where this
+  error occurs.  I suspect one of you could find the cause of this way faster
+  than I can.  We&#39;re into Displayable handing here, and I&#39;m not yet a wizard
+  in that black art.  I&#39;ll leave it for one of you.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2169</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-08-30 20:56:35 +0200</bug_when>
+            <thetext>The change committed to SVN (r9588) makes nothing better. It makes it slower and hide the error in some way. Let&#39;s better find the original problem. First I would suggest to remove your hack again and then reduce the example until the error gets away so we can find the problematic line. These lines of code will not be changed before 0.8 - so I would say we should have a workaround or fix for the problematic example. All other changes - especially in this area (display handling) - may lead to more problems than they fix. So think about this as unchangable for the moment. Sorry about that, but keeping it stable with as less tests as possible, this is the only way.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2170</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2007-08-30 22:29:03 +0200</bug_when>
+            <thetext>Of course this isn&#39;t a fix for this!  I put those lines in there so you could see where the
+problem was, not as a solution.
+
+There is already a tiny test program in the bug report that
+demonstrates the problem.  I see exactly what it&#39;s doing.  The test
+program asks to remove the column visibility button.  Within the table
+code, it&#39;s then calling setDisplay(false) which is generating the
+error.  The element being removed is apparently not a child of the dom
+parent it&#39;s being removed from.
+
+Since you&#39;re redoing all of this code, and I don&#39;t understand the
+current code, I&#39;m going to leave this bug unsolved for now.  We&#39;ll
+revisit it in 0.8, I guess.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2222</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-09-11 14:02:15 +0200</bug_when>
+            <thetext>We should check this in 0.8 again.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3315</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-06-12 17:10:22 +0200</bug_when>
+            <thetext>-&gt; sw</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3426</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-06-17 15:07:26 +0200</bug_when>
+            <thetext>Looks like one of these typical layout issues of 0.7. Will close this bug. 
+Don&#39;t think issues like this will happen in the new layout code.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38768</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:30 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

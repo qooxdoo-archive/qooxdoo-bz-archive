@@ -1,0 +1,154 @@
+<bug>
+          <bug_id>6961</bug_id>
+          
+          <creation_ts>2012-11-05 16:12:00 +0100</creation_ts>
+          <short_desc>bom.element.Dimenstion getWidth/getHeight might have 1 pixel fewer than needed</short_desc>
+          <delta_ts>2014-03-03 15:19:56 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>2.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tobias Tost">ttost</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>31198</commentid>
+            <who name="Tobias Tost">ttost</who>
+            <bug_when>2012-11-05 16:12:01 +0100</bug_when>
+            <thetext>There&#39;s already a workaround in bom.Label:
+
+      // detect size
+      var size = qx.bom.element.Dimension.getSize(element);
+
+      // Under Mac at least with Firefox 3.0 alpha 6 and earlier
+      // there was an issue that the text size calculation returns
+      // a size which is a bit too small and results into ellipsis
+      // even under the measured size.
+      // Linux shows the same bug (FF 3.0.6)
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=450422
+      // Also FF4 with Windows7 shows the same issue see bug #4961
+      if ((qx.core.Environment.get(&quot;engine.name&quot;) == &quot;gecko&quot;)) {
+        size.width++;
+      }
+      // IE9 has problems with the text size calculation for details have a look at bug #4038
+      if ((qx.core.Environment.get(&quot;engine.name&quot;) == &quot;mshtml&quot;) &amp;&amp; parseFloat(qx.core.Environment.get(&quot;engine.version&quot;)) &gt;= 9) {
+        size.width++;
+      }
+
+
+bom.Dimension.getWidth already has a special case for gecko-browsers to use getBoundingClientRect instead of offsetWidth - sadly, we ran into several positions where the latest chrome also reported 1 pixel less offsetWidth than proper rounding of the bounding rectangle would give. 
+
+I fixed this locally by changing getWidth to
+
+getWidth : qx.core.Environment.select(&quot;engine.name&quot;,
+    {
+      &quot;default&quot; : function(element)
+      {
+        // we need to calculate that ourselves to make sure that we get the correct
+        // measurement instead of floored values that chrome and firefox tend to give here
+        // - using floor(+1) to fix integer-handling issues as IE 9 uses)
+        if (element.getBoundingClientRect)
+        {
+          var rect = element.getBoundingClientRect();
+          return Math.floor(rect.right - rect.left + 1.0);
+        }
+        else
+        {
+          return element.offsetWidth;
+        }
+      }
+    }),
+
+where floor(right-left+1) should be proper for all situations. The computational overhead should be considerably low compared to the better reliability and cleaner code (as the &quot;width++&quot;-hacks from bom.label could be removed etc.)
+
+Solution tested on chrome 23.0.1271.60 beta-m, IE 9 and FF 16.0.2 for win32 and mac (except for IE9, of course)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31210</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-11-06 09:12:24 +0100</bug_when>
+            <thetext>Thanks for the report. Sounds like something valuable we should check and add!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32953</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-06-17 12:02:47 +0200</bug_when>
+            <thetext>Just wanted to fix that. Do you have a sample where chrome does have that offset problem as well? Or is it just about cleaning up the code we already have?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32954</commentid>
+            <who name="Tobias Tost">ttost</who>
+            <bug_when>2013-06-17 12:13:25 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; Just wanted to fix that. Do you have a sample where chrome does have that
+&gt; offset problem as well? Or is it just about cleaning up the code we already
+&gt; have?
+
+To be honest, I do not exactly remember the situation, anymore. ;)
+But offsetWidth and getBoundingClientRect return completely different values - while offsetWidth is the HTML width, getBoundingClientRect is the actually rendered width (and thus might be floating point if the element is transformed by CSS)
+
+Meanwhile, I changed the code to this locally:
+
+getWidth : qx.core.Environment.select(&quot;engine.name&quot;,
+    {
+      &quot;mshtml&quot; : function(element)
+      {
+          // special treatment for IE to prevent ellipsis where none should be needed
+          return element.offsetWidth + 1;
+      },
+
+      &quot;default&quot; : function(element)
+      {
+          return element.offsetWidth;
+      }
+    }),
+
+while offsetWidth is more expensive (as its a enforcing-synchronous-layout call into DOM), it gives the result we look for: the actual measurement of the DomElement. IE seems to need another pixel to prevent all the labels that size according to its content from getting &quot;ellipsised&quot;. ;)
+
+Maybe this is not a real &quot;issue&quot; for qooxdoo, but we got several issues due to that behaviour.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32966</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-06-18 09:00:50 +0200</bug_when>
+            <thetext>Ah I see. So as long as we don&#39;t have any reproducible issue, I mark this bug as wroksforme.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36692</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:56 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

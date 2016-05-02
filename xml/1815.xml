@@ -1,0 +1,160 @@
+<bug>
+          <bug_id>1815</bug_id>
+          
+          <creation_ts>2008-12-23 13:44:00 +0100</creation_ts>
+          <short_desc>&quot;Content-Length&quot; header seems to be missing on POST requests</short_desc>
+          <delta_ts>2012-05-16 09:43:50 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>0.8.1</version>
+          <rep_platform>Firefox 3.0</rep_platform>
+          <op_sys>Linux</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Philipp T.">philipp</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>3</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>7231</commentid>
+            <who name="Philipp T.">philipp</who>
+            <bug_when>2008-12-23 13:44:07 +0100</bug_when>
+            <thetext>Disclaimer: I&#39;m completely new to qooxdoo (and very impressed, by the way), so it&#39;s not completely unlikely that I just didn&#39;t understand the manual.
+
+Anyway: I&#39;ve been trying to use &quot;qx.io.remote.Request&quot; in order to execute POST requests against a ruby/webrick servlet, and it seems to me as if no &quot;Content-Length&quot; header is sent along with the request. One could argue that this is not a bug, but a feature, but even if I&#39;m trying to set the &quot;Content-Length&quot; header manually by invoking setRequestHeader(), the header is not sent to the server (which, in turn, throws an exception because it requires the header to be present. I&#39;m pretty sure that the server part works, because I&#39;ve succesfully connected against it using the YUI and Prototype libraries (if it helps, I can send you a simplified version of the server and/or the YUI/Prototype client implementations).
+
+I&#39;m sorry for mixing up multiple issues in one bug - I just don&#39;t see a better way.
+So: Are you intentionally not sending the &quot;Content-Length&quot; header respectively removing it if it has been set manually? I&#39;ve grepped through the complete framework, but didn&#39;t find any references to this particular header, but somewhere on the way from my JavaScript code to the HTTP layer this header seems to get lost. Do you have any ideas what I might be doing wrong?
+
+My JavaScript code looks like this:
+        var myData = {
+            command_name: &quot;cook&quot;,
+            param_values: { ingredient: [&quot;mascarpone&quot;, &quot;marzipan&quot;] }
+        };
+        req = new qx.io.remote.Request(&quot;rhcp/execute&quot;, &quot;POST&quot;, &quot;application/json&quot;);
+        jsonData = qx.util.Json.stringify(myData);
+        alert(&quot;JSON : &quot; + jsonData);
+        req.data = jsonData;
+        req.setProhibitCaching(false);
+        alert(&quot;length : &quot; + jsonData.length);
+        req.addListener(&quot;completed&quot;, function(e) {
+          alert(e.getContent());
+        });
+
+        req.setRequestHeader(&quot;ContentLength&quot;, &quot;&quot; + jsonData.length);
+        req.setRequestHeader(&quot;Content-length&quot;, 42);
+        req.setRequestHeader(&quot;Content-Lungth&quot;, &quot;42&quot;);
+        req.setRequestHeader(&quot;foo&quot;, &quot;bar&quot;);        
+        req.setRequestHeader(&quot;foo-bar&quot;, &quot;baz&quot;);
+        // Sending
+        req.send();
+        });
+
+As you can see, I already tried various ways of setting other request headers, but when I take a look at the HTTP request that is being sent, I can see all headers but the &quot;Content-Length&quot; header I want to include:
+
+http://localhost:42000/rhcp/execute
+
+
+
+POST /rhcp/execute HTTP/1.1
+
+Host: localhost:42000
+
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.5) Gecko/2008121621 Ubuntu/8.04 (hardy) Firefox/3.0.5
+
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+
+Accept-Language: en-us,en;q=0.5
+
+Accept-Encoding: gzip,deflate
+
+Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7
+
+Keep-Alive: 300
+
+Connection: keep-alive
+
+Content-Type: application/x-www-form-urlencoded
+
+X-Qooxdoo-Response-Type: application/json
+
+ContentLength: 79
+
+Content-Lungth: 42
+
+foo: bar
+
+foo-bar: baz
+
+Referer: http://localhost:42000/
+
+Pragma: no-cache
+
+Cache-Control: no-cache
+
+
+Thank you very much for your time - I seriously hope this question is not too stupid, but I just don&#39;t see anything else I can try to make this work.
+
+Philipp</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7232</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-12-23 15:03:03 +0100</bug_when>
+            <thetext>I think this is just a misunderstanding.  Instead of setting 
+
+          req.data = jsonData;
+
+you need to set the &#39;data&#39; property:
+
+        req.setData(jsonData);
+
+Then the Content-Length header is set automatically.  I suspect that you weren&#39;t getting that header because the browser insists (probably for security reasons) on setting it based on the length of the actual data.
+
+Derrell
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7233</commentid>
+            <who name="Philipp T.">philipp</who>
+            <bug_when>2008-12-23 23:09:07 +0100</bug_when>
+            <thetext>Hi Derrell,
+
+thank you very much for your prompt reply. Using setData() instead of directly setting data does the trick - sorry for this.
+
+I&#39;ll try to write this down in a blog post or something like this - maybe this helps the next guy running into this problem.
+
+Thanks again - both for the answer and this great framework.
+Merry christmas,
+Philipp</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

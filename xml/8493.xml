@@ -1,0 +1,113 @@
+<bug>
+          <bug_id>8493</bug_id>
+          
+          <creation_ts>2014-07-22 08:32:00 +0200</creation_ts>
+          <short_desc>TouchEvent is fired on wrong position (element) when displaying a pdf in an iframe in chrome</short_desc>
+          <delta_ts>2014-12-16 11:44:23 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>4.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Alex Gölkel">goelkel.a</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>tobias.oberrauch</cc>
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>40812</commentid>
+            <who name="Alex Gölkel">goelkel.a</who>
+            <bug_when>2014-07-22 08:32:57 +0200</bug_when>
+            <thetext>When tapping a pdf displayed in an iframe, the touch event is fired on the wrong position.
+For a test, open this url and tap the upper part of the pdf. The buttons above the PDF will be pressed.
+http://www.alex-goelkel.de/pdftest (Qooxdoo 4.0)
+or
+http://www.alex-goelkel.de/pdftest2 (Qooxdoo 4.0.1)
+
+See this video, too:
+www.alex-goelkel.de/pdftest/record.avi
+
+Unfortunately, the bug doesn&#39;t happen in the playground, but you can see the code here:
+http://tinyurl.com/pv5grt5
+
+First, I thought it is a bug in Chrome, and I filed a bug report here. 
+https://code.google.com/p/chromium/issues/detail?id=389052
+Find some more information there.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41306</commentid>
+            <who name="Tobias Oberrauch">tobias.oberrauch</who>
+            <bug_when>2014-10-02 11:04:27 +0200</bug_when>
+            <thetext>Hi Alex,
+
+I tried to reproduce this behavior on several environments but I can&#39;t reproduce it. 
+- Windows 8 with Chrome 37.0.2062.124 (touch device)
+- Windows 7 with Chrome 37.0.2062.124 m (emulated)
+- Ubuntu 13.10 with Chrome 37.0.2062.120 (emulated IPAD)
+
+Are you using Windows 7?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41307</commentid>
+            <who name="Tobias Oberrauch">tobias.oberrauch</who>
+            <bug_when>2014-10-02 11:25:30 +0200</bug_when>
+            <thetext>I also checked it with Windows 7 and Chromium 38.0.2066.0 (279255) 64-bit and can&#39;t reproduce it</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41308</commentid>
+            <who name="Tobias Oberrauch">tobias.oberrauch</who>
+            <bug_when>2014-10-02 12:16:45 +0200</bug_when>
+            <thetext>Hi Alex,
+
+so, finally I could reproduce it.
+Sorry. It was my mistake. I missunderstood your description.
+
+Cheers Tobias</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41318</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-10-06 15:13:06 +0200</bug_when>
+            <thetext>All right, this is a hard one to reproduce bug finally got the key to do so.
+First of all, you have to set the chrome to &quot;Notebook with touch&quot; in the emulation to make sure you have touch events instead of mouse events. 
+The second critical thing for reproduction is the source of the iframe (which explains why its working in the playground) It has to be on the same domain. Simply copying the code from the playground over to a skeleton does not work. But with a local file (doesn&#39;t have to be a pdf, blank html file is good enough) it can be reproduced.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41321</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-10-06 16:33:10 +0200</bug_when>
+            <thetext>I finally got the bug! The problem is the iframe itself and the detection of the events target in the pointer core layer. As touch events native target property tends to be wrong, we use the native elementFromPoint function to query for the target based on the given coordinates. Unfortunately, we always used the method attached to the top document instead of using the document given in the dom event itself. This explains the offset we had in the given sample. Using the document in the event fixed the issue.
+
+master: d0b873d476caf9cc40fd42a098aa511000cf867a
+4.0.x: 1be90a042b8ef0ffe6b87849723a5804ae14a148</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,137 @@
+<bug>
+          <bug_id>4886</bug_id>
+          
+          <creation_ts>2011-03-28 11:37:00 +0200</creation_ts>
+          <short_desc>The hash value for objects are not unique over frames</short_desc>
+          <delta_ts>2011-06-21 13:21:36 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>1.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>critical</bug_severity>
+          <target_milestone>1.5</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christian Hagendorn">christian.hagendorn</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          <cc>daniel.wagner</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>23651</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-03-28 11:37:52 +0200</bug_when>
+            <thetext>The current ObjectRegistry doesn&#39;t support a unique hash code generation over several frames.
+
+This occurs problems with e.q. the event system, when more than one qooxdoo application (e.q. Testrunner) exists in several frames. The event system needs a unique id for each object to store a internal data structure to dispatch events. But when the event system handles object form a other frame, it could happen that there are two objects with the same unique id.
+
+We should improve the ObjectRegistry that the id is unique over frames.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23663</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-03-28 13:33:23 +0200</bug_when>
+            <thetext>Added a check in the defer block which now assure that an already created ObjectRegistry is used when possible.
+
+Done on trunk with r26188.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23673</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-03-28 17:54:17 +0200</bug_when>
+            <thetext>Reloading the frame destroys the application in the top frame. Reverted the last change with r26213.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23703</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-03-29 13:14:32 +0200</bug_when>
+            <thetext>We decided to fix the issue in the next release. The changes have big impact to the qooxdoo core and we need more time to test the impacts.
+
+A possible solution is to share one ObjectRegestry. This could be done with the defer block. But the shutdown method have to assure the only the objects from the window scope are removed.
+
+&lt;snip&gt;
+defer : function(statics)
+  {
+    // We have to assure that the hash code generation is unique over frames
+    // otherwise we could get several problems for e.q. with the event
+    // system [bug #4886].
+   
+    // Assure a permission denied failure (same origin policy)  
+    try
+    {
+      // ignore if we are the top window
+      if (window.top === window) {
+        return;
+      }
+  
+      // check the top frame
+      if (window.top.qx &amp;&amp; window.top.qx.core &amp;&amp; window.top.qx.core.ObjectRegistry) {
+        qx.core.ObjectRegistry = window.top.qx.core.ObjectRegistry;
+        return;
+      }
+  
+      // check all other frames
+      var queue = [];
+      var frames = window.top.frames;
+      for (var i = 0; i &lt; frames.length; i++) {
+        queue.push(frames[i]);
+      }
+  
+      while(queue.length &gt; 0)
+      {
+        var frame = queue.pop(); 
+        if (frame.qx &amp;&amp; frame.qx.core &amp;&amp; frame.qx.core.ObjectRegistry) {
+          qx.core.ObjectRegistry = frame.qx.core.ObjectRegistry;
+          return;
+        }
+  
+        frames = frame.frames;
+        for (var i = 0; i &lt; frames.length; i++) {
+          queue.push(frames[i]);
+        }
+      }
+    } catch(ex) {}
+  } 
+&lt;/snip&gt;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23704</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-03-29 13:19:21 +0200</bug_when>
+            <thetext>Removed the code on trunk with r26273.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24981</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-06-08 10:25:09 +0200</bug_when>
+            <thetext>Added a post id to the hash code. The post id is the frame position in the top window. The fix is only applied to the trunk and not to the branch, because the fix has a big impact but it is not so critical for the 1_4_x.
+
+Fixed on trunk with r27601.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

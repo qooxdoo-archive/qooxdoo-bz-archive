@@ -1,0 +1,310 @@
+<bug>
+          <bug_id>5582</bug_id>
+          
+          <creation_ts>2011-09-02 14:25:00 +0200</creation_ts>
+          <short_desc>qx.ui.list.List doesn&#39;t trigger changeSelection event</short_desc>
+          <delta_ts>2012-02-15 08:43:20 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.virtual</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Erol Demircan">edemircan</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          <cc>katja.deutschmann</cc>
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26670</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2011-09-02 14:25:29 +0200</bug_when>
+            <thetext>Hey guys,
+
+The selection of the list is never filled with current selected data and so the changeSelection is never triggered
+
+example code for the playground:
+https://gist.github.com/1188482
+
+Thanks in advance,
+Erol Demircan</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26671</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2011-09-02 14:41:43 +0200</bug_when>
+            <thetext>Oh I&#39;m sorry the selection is being filled but the changeSelection is never triggered!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26676</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-09-05 11:03:14 +0200</bug_when>
+            <thetext>Hi Erol,
+
+that&#39;s the intended behavior. The list&#39;s &quot;changeSelection&quot; event should only be fired if the selection itself changes, i.e. you assign a new data.Array.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26677</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2011-09-05 11:18:30 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; Hi Erol,
+&gt; 
+&gt; that&#39;s the intended behavior. The list&#39;s &quot;changeSelection&quot; event should only be
+&gt; fired if the selection itself changes, i.e. you assign a new data.Array.
+
+Hello Daniel, with all due respect, I do not really agree with you.
+
+According to the API &quot;changeSelection&quot; is fired on change of the property #selection and selection property is the Current selected items.
+
+So I&#39;m sorry if I&#39;m wrong but API says otherwise.
+
+And it&#39;s not logical that the change of selection gives me the right result and the &quot;changeSelection&quot; isn&#39;t. And if it&#39;s logical what is the difference between those two?
+
+//is triggered
+list.getSelection().addListener(&quot;change&quot;, function(e) {
+  this.debug(&quot;Selection: &quot; + list.getSelection().getItem(0));
+}, this);
+
+//isn&#39;t
+list.addListener(&quot;changeSelection&quot;, function(e) {
+  this.debug(&quot;changeSelection triggered&quot;);
+  alert(&quot;Hello World!&quot;);
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26717</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-09-07 17:52:26 +0200</bug_when>
+            <thetext>Hello Erol,
+this is, as Daniel said intended behavior. The &quot;changeSelection&quot; event belongs to the selection property and indicates the change of the value of that property (and only that, not its content). As this property holds the data array having the selected items, it is only fired when the reference to this array changes. So setting a new selection array would fire that event. 
+The change event of the selection array on the other hand, indicates a change of the content of the selection array itself. 
+This behavior reflects the possibilities you have to have to change the selection as well. You have to possibility to set a totally new array containing some new items, or you can manipulate the current array in place e.g. use setItem, push or pop. Thats why we have those two events.
+I hope that made it a bit clearer.
+Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26725</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2011-09-08 08:16:12 +0200</bug_when>
+            <thetext>Hey Martin :),
+
+Ok I get it I am used to use the changeSelection event because the qx.ui.form.List. That&#39;s why I thought that this would behave the same but that is not the case. By the way I did try to assign a new qx.data.Array to the list before I replied to Daniel and the event was again not triggered. I have updated my gist example maybe you can take look at it.
+
+Thanks guys.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26727</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-09-08 08:32:05 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Ok I get it I am used to use the changeSelection event because the
+&gt; qx.ui.form.List. That&#39;s why I thought that this would behave the same but that
+&gt; is not the case. 
+True, that can be confusing. We decided to go that way because the property is named selection and usually the change event to the property is then named change&lt;propertyname&gt; which then leads to this name.
+
+&gt; By the way I did try to assign a new qx.data.Array to the list
+&gt; before I replied to Daniel and the event was again not triggered. I have
+&gt; updated my gist example maybe you can take look at it.
+
+Yes, you assign the new array to the lists model and not to the selection property. Here is the button listener from your example modified to work the way expected:
+
+button.addListener(&quot;execute&quot;,function(){
+  var newArray = new qx.data.Array([2]);
+  list.setSelection(newArray);
+  this.debug(&quot;new array is set&quot;);
+},this);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26728</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2011-09-08 08:41:42 +0200</bug_when>
+            <thetext>Yes but when I try that the UI isn&#39;t updated with the proper data. So I thought maybe I have to use both method&#39;s and that also did not work! I only saw &quot;c&quot; in the list and the event&#39;s where gone. 
+
+var button = new qx.ui.form.Button(&quot;Clickie&quot;);
+button.addListener(&quot;execute&quot;,function(){
+  var newArray = new qx.data.Array([&quot;a&quot;,&quot;b&quot;, &quot;c&quot;]);
+  list.setModel(newArray);
+  list.setSelection(newArray);
+  this.debug(&quot;new array is set&quot;);
+},this);
+
+Thanks for the quick reply Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26729</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-09-08 08:51:33 +0200</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; Yes but when I try that the UI isn&#39;t updated with the proper data. So I thought
+&gt; maybe I have to use both method&#39;s and that also did not work! I only saw &quot;c&quot; in
+&gt; the list and the event&#39;s where gone. 
+&gt; 
+&gt; var button = new qx.ui.form.Button(&quot;Clickie&quot;);
+&gt; button.addListener(&quot;execute&quot;,function(){
+&gt;   var newArray = new qx.data.Array([&quot;a&quot;,&quot;b&quot;, &quot;c&quot;]);
+&gt;   list.setModel(newArray);
+&gt;   list.setSelection(newArray);
+&gt;   this.debug(&quot;new array is set&quot;);
+&gt; },this);
+&gt; 
+&gt; Thanks for the quick reply Martin
+
+What your code is doing is that you set new data as model and after that, you select everything which is in the model. But the selection mode of the list is &quot;single&quot; by default which is why it only selects one item. I wonder why this works anyway because the selection removes the items it can not select so the box should contain only one model in the end, right?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26733</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2011-09-08 10:16:34 +0200</bug_when>
+            <thetext>(In reply to comment #8)
+&gt; What your code is doing is that you set new data as model and after that, you
+&gt; select everything which is in the model. But the selection mode of the list is
+&gt; &quot;single&quot; by default which is why it only selects one item. I wonder why this
+&gt; works anyway because the selection removes the items it can not select so the
+&gt; box should contain only one model in the end, right?
+
+:) argg, yeah you are right the selection mode wasn&#39;t the right one.
+
+But if I get it right when :
+1 setSelection function is used to select one or multiple items.
+2 setModel function is to provide the list with the new data.
+3 I click on a item in the list &quot;changeSelection&quot; is not triggered.
+4 I use the setSelection function to set a item in the list and the 
+  &quot;changeSelection&quot; is triggered!!
+
+points 3 and 4 confuses me, I think I have to get used to it!
+
+But now I found this behavior that the change event of selection is not triggered, after I renew the data in the list which contained data and select some of the new data afterwards with the setSelection function. Is this because I use it the wrong way?
+
+var button = new qx.ui.form.Button(&quot;Clickie&quot;);
+button.addListener(&quot;execute&quot;,function(){
+  var newArray = new qx.data.Array([1,2,3,4,5,6]);
+  list.setModel(newArray);
+  list.setSelection(new qx.data.Array(newArray.getItem(1), newArray.getItem(2)));
+},this);
+
+//is never triggered after I renewed the data
+list.getSelection().addListener(&quot;change&quot;, function(e) {
+    this.debug(&quot;Selection: &quot; + list.getSelection().getItem(0));
+}, this);
+
+
+
+And thanks again Martin for the quick reply and the info.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26736</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2011-09-08 10:27:13 +0200</bug_when>
+            <thetext>By the way the virtual list is much faster when the data is really large and you use custom item thanks for this development guys.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26747</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-09-09 13:00:27 +0200</bug_when>
+            <thetext>(In reply to comment #9)
+&gt; But if I get it right when :
+&gt; 1 setSelection function is used to select one or multiple items.
+More or less. the setSelection is a plain property setter which sets a new selection array which then, can contain new items to select (or not). It only exchanges the container which holds the selected items.
+
+&gt; 2 setModel function is to provide the list with the new data.
+Right.
+
+&gt; 3 I click on a item in the list &quot;changeSelection&quot; is not triggered.
+Right, because the content of the selection array changes and not the selection container itself.
+
+&gt; 4 I use the setSelection function to set a item in the list and the 
+&gt;   &quot;changeSelection&quot; is triggered!!
+Yes, because you change the container.
+
+
+&gt; points 3 and 4 confuses me, I think I have to get used to it!
+
+To keep it simple, just don&#39;t exchange the selection container (the selection array itself) if there is no need to it. If you want to change the selection, replace the items in the array and thats it.
+
+&gt; 
+&gt; But now I found this behavior that the change event of selection is not
+&gt; triggered, after I renew the data in the list which contained data and select
+&gt; some of the new data afterwards with the setSelection function. Is this because
+&gt; I use it the wrong way?
+&gt; 
+&gt; var button = new qx.ui.form.Button(&quot;Clickie&quot;);
+&gt; button.addListener(&quot;execute&quot;,function(){
+&gt;   var newArray = new qx.data.Array([1,2,3,4,5,6]);
+&gt;   list.setModel(newArray);
+&gt;   list.setSelection(new qx.data.Array(newArray.getItem(1),
+&gt; newArray.getItem(2)));
+&gt; },this);
+&gt; 
+&gt; //is never triggered after I renewed the data
+&gt; list.getSelection().addListener(&quot;change&quot;, function(e) {
+&gt;     this.debug(&quot;Selection: &quot; + list.getSelection().getItem(0));
+&gt; }, this);
+
+Of course this get never triggered. In the line you attach the listener, you get yourself a reference to an array with the getSelection method to which you attach the listener. But in the buttons event handler, you create a new array for the selection which now gets the change events.
+As I said, don&#39;t replace the selection array, only the items.
+
+list.setSelection(new qx.data.Array(newArray.getItem(1), newArray.getItem(2)));
+should be
+list.getSelection().setItem(0, newArray.getItem(1));</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26750</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2011-09-09 13:34:31 +0200</bug_when>
+            <thetext>Hey Martin thanks for the reply, all the explanations and the examples.
+It&#39;s all clear now because the explanations. I was accustomed to use the qx.ui.form.List in combination with qx.data.controller.List where you didn&#39;t or couldn&#39;t change the selection array with these methods. But it&#39;s all clear now stay out of the selection array:), or use it the right way Hahaha :).
+
+By</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26756</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-09-12 08:24:54 +0200</bug_when>
+            <thetext>(In reply to comment #12)
+&gt; Hey Martin thanks for the reply, all the explanations and the examples.
+Your welcome. :)
+
+&gt; It&#39;s all clear now because the explanations. I was accustomed to use the
+&gt; qx.ui.form.List in combination with qx.data.controller.List where you didn&#39;t or
+&gt; couldn&#39;t change the selection array with these methods. 
+You can but only the selection the controller exposes. Its the same API in fact. ;)
+
+&gt; But it&#39;s all clear now stay out of the selection array:), or use it the right way Hahaha :).
+Thats the way to go. :D</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28536</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-02-15 08:43:20 +0100</bug_when>
+            <thetext>*** Bug 6110 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

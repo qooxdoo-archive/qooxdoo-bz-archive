@@ -1,0 +1,105 @@
+<bug>
+          <bug_id>5651</bug_id>
+          
+          <creation_ts>2011-09-28 12:47:00 +0200</creation_ts>
+          <short_desc>Crashing simultaneous multireading of cache</short_desc>
+          <delta_ts>2014-03-03 15:20:58 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.6</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>27008</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-09-28 12:47:20 +0200</bug_when>
+            <thetext>Running two shells FC15 with each of them running:
+
+shell 1. ./generate.py
+
+shell 2. ./generate.py
+
+in the first shell we get the following printout
+
+&gt;&gt;&gt; Collecting classes  \
+Error: Could not read cache from /tmp/qx1.6/cache
+Error: Could not read cache from /tmp/qx1.6/cache
+
+
+In second shell no problem.
+
+Conclusion: Thread crashing? If so then the error message is not good enough. If not the generator already protects against multithread crashing then it would be reasonable to make it thread safe or not reuse same cache for different resources at the same time.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27120</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-10-06 15:04:00 +0200</bug_when>
+            <thetext>
+
+(In reply to comment #1)
+&gt; Running two shells FC15 with each of them running:
+&gt; 
+&gt; shell 1. ./generate.py
+&gt; 
+&gt; shell 2. ./generate.py
+&gt; 
+&gt; in the first shell we get the following printout
+&gt; 
+&gt; &gt;&gt;&gt; Collecting classes  \
+&gt; Error: Could not read cache from /tmp/qx1.6/cache
+&gt; Error: Could not read cache from /tmp/qx1.6/cache
+&gt; 
+&gt; 
+&gt; In second shell no problem.
+&gt; 
+&gt; Conclusion: Thread crashing? If so then the error message is not good enough.
+
+It is most likely from a race condition when two processes want to access the same cache object. This is ok, as the &quot;losing&quot; process doesn&#39;t block forever, but goes on to calculate the object afresh after a few retries, so you only get a small time penalty from the collision. Both processes produce correct results.
+
+We had massive concurrent build processes on the same cache, without any problems, and with only a few such messages. Only if this message shows up *massively* (like hundreds or thousands of times), you need to investigate as this hints at a general problem accessing the cache (e.g. changed privileges).
+
+I&#39;ve changed the message into an extended warning.
+
+With r28861.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37106</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:58 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

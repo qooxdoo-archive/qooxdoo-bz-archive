@@ -1,0 +1,149 @@
+<bug>
+          <bug_id>484</bug_id>
+          
+          <creation_ts>2007-06-12 15:36:00 +0200</creation_ts>
+          <short_desc>variable optimization:  wrong substitution of function names</short_desc>
+          <delta_ts>2008-06-05 14:29:09 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="David Werner">david.werner</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>1559</commentid>
+            <who name="David Werner">david.werner</who>
+            <bug_when>2007-06-12 15:36:15 +0200</bug_when>
+            <thetext>var isMshtml = qx.core.Client.getInstance().isMshtml();
+
+... will be optimized to ...
+
+var $4=qx.core.Client.getInstance().$4();
+
+Needless to say, there is no function $4(). The problem seem to be variables and  functions with the same name, if used in the same scope.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1724</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2007-07-02 19:03:32 +0200</bug_when>
+            <thetext>Cannot reproduce - awaiting further info from Dave.
+
+compile test.js:
+qx.Proto.test = function (x1)
+{
+  var x2 = this;
+  f1(x1,true);
+
+  var isMshtml = qx.core.Client.getInstance().isMshtml();
+
+  function f1(x3,x4)
+  {
+    var x5 = f2(23);
+  }
+
+  function f2(x6)
+  {
+    return;
+  }
+}
+
+with generator.py --class-path=. --generate-compiled-script --compiled-script-file=test.jsc --optimize-strings --optimize-variables --cache-directory=./.qxcache --add-new-lines
+yields:
+
+$=];if(!window.qxsettings)qxsettings={};
+if(qxsettings[&quot;qx.version&quot;]==undefined)qxsettings[&quot;qx.version&quot;]=&quot;0.0&quot;;
+if(qxsettings[&quot;qx.isSource&quot;]==undefined)qxsettings[&quot;qx.isSource&quot;]=false;
+if(!window.qxvariants)qxvariants={};
+qx.Proto.test=function($0){var $1=this;
+$3($0,
+true);
+var $2=qx.core.Client.getInstance().isMshtml();
+function $3($4,
+$5){var $6=$7(23);
+}function $7($8){return;
+}};
+
+As you can see the method call &#39;isMshtml()&#39; is not substituted by $2 (or any other compiled var name).
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1729</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2007-07-03 13:54:24 +0200</bug_when>
+            <thetext>Definitely not reproducable in 0.7 (Dave is using 06.5/0.6.6). It looks like a bug fixed in variableoptimizer.py in March by Fabian, then reported on qooxdoo-devel. From the conversation:
+
+&quot;
+From: Fabian Jakobs &lt;[EMAIL PROTECTED]&gt;
+To: qooxdoo Development &lt;qooxdoo-devel@lists.sourceforge.net&gt;
+Sent: Monday, 26 March, 2007 7:00:12 PM
+Subject: Re: [qooxdoo-devel] Possible bug in make build?
+
+Hello Simon,
+
+with the help of your code I was able to reproduce and solve this 
+problem. There was really a nasty bug in the variable optimizer.
+
+This is the reduced problem:
+
+function()
+{
+    // this works
+    this.foo.b(b);
+    this.b(b);
+    this.a().b
+       
+    // this doesn&#39;t
+    this.a().b()
+
+    var b = 1;
+}
+
+
+
+the first three lines are optimized correctly but the &#39;b&#39; in the last 
+line is replaced by the compressed variable name of the variable &#39;b&#39;.
+
+this.a().$0();
+var $0 = 1;
+
+
+
+We have fixed it in the trunk and in the legacy 0.6 branch now. If you 
+want this fix you could update to legacy 0.6 in svn. Thanks for your bug 
+report.
+&quot;</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

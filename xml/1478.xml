@@ -1,0 +1,200 @@
+<bug>
+          <bug_id>1478</bug_id>
+          
+          <creation_ts>2008-10-16 14:31:00 +0200</creation_ts>
+          <short_desc>Ecmalint.py: Detection of global or undefined identifiers is incorrect</short_desc>
+          <delta_ts>2014-03-03 15:23:53 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Jonathan Weiß">qooxdoo-bugs</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>fabian.jakobs</cc>
+    
+    <cc>qooxdoo-bugs</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>5865</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2008-10-16 14:31:05 +0200</bug_when>
+            <thetext>Lines like these
+
+this.assertIdentical(this._doc.getDomElement().childNodes[0], 
+el1.getDomElement());
+
+cause errors like
+
+/Users/jrass/workspace/qooxdoo.trunk/framework/source/class/qx/test/html/Element.js 
+(130,48): Use of undefined or global identifier &#39;childNodes&#39;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5869</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-10-16 19:06:59 +0200</bug_when>
+            <thetext>The error shows when running ecmalint.py on framework/source/class/qx/test/html/Element.js</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5891</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-10-20 14:38:47 +0200</bug_when>
+            <thetext>I know this problem. Lint has some problems with certain combinations of method calls and map accessors.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7510</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-01-30 17:19:10 +0100</bug_when>
+            <thetext>@Fabian: Is this something you can fix? Or should I look into it?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7667</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-02-10 16:07:21 +0100</bug_when>
+            <thetext>It would be nice if you could take a look at his issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7807</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-02-17 10:23:22 +0100</bug_when>
+            <thetext>fixed with r17874, adding more special-case treatment for assembled variables 
+in Scope module. BTW, in contrast to my earlier assumptions the variable 
+optimizer shared this bug with ecmalint :-).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8123</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-02-27 18:22:44 +0100</bug_when>
+            <thetext>@Thomas, this shows still up, apparently when there are several chained getters before the actual array access as in qx.data.controller.List: e.g. 
+this.getTarget().getChildren()[i] makes lint think a global getChildren variable exists.
+
+Beware that I&#39;d like to optimize this code anyway, once you&#39;ve fixed the issue. Would be nice to come up with an independent test infrastructure to cover all such lint tests.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8125</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-02-27 18:26:54 +0100</bug_when>
+            <thetext>Well, just committed the optimized JS code (qx.data.controller.List) before it gets stale. Another such issue is present in feedreader.Application.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8353</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-03-06 17:23:21 +0100</bug_when>
+            <thetext>to 0.8.3</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9054</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-04-01 11:25:11 +0200</bug_when>
+            <thetext>Another variant of this: qx.test.data.controller.Tree.js
+
+     this.assertEquals(&quot;a&quot;, this.__tree.getRoot().getChildren()[0].getLabel(), 
+&quot;First node has a wrong name&quot;);
+
+results in :
+
+  Tree.js (764,40): Use of undefined or global identifier &#39;getChildren&#39;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9187</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2009-04-07 15:32:23 +0200</bug_when>
+            <thetext>Also jump labels are not recognized:
+
+function test()
+{
+
+classloop:
+
+for (var i=0; i&lt;this.tmap.length; i++)
+{
+  // (snipp)
+  break classloop;
+}
+
+
+}</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9212</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-08 19:04:29 +0200</bug_when>
+            <thetext>(In reply to comment #10)
+
+I&#39;ve opened a separate bug for this (bug#2221).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9213</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-08 19:34:37 +0200</bug_when>
+            <thetext>I&#39;ve reworked the usedVariablesIterator() in Scope.py, which is the central 
+method when finding occurrences of uses of each variable (ie. references to a 
+variable, as opposed to the places where it is being declared and prob. 
+initialized (with a &quot;var&quot; statement)). 
+
+Formally, a variable would be a bare identifier (like &quot;foo&quot;) that is not a key 
+word (like &quot;while&quot;), or the leftmost identifier in a complex, &quot;chained&quot; 
+expression of identifiers (like &quot;foo.bar.baz&quot;, where &quot;foo&quot; would be the 
+variable).
+
+The major issue here, and a recurring cause of misdetection in the form of 
+false positives (regarding an identifier as a variable when it was not), was 
+finding out if an identifier in a chained expression was the first one (trivial 
+as it sounds), because all those possible chaines, with function call 
+application (&quot;(...)&quot;) and accessor applications (&quot;[...]&quot;) mixed in, created all 
+kinds of different patterns in our abstract syntax tree. I.e. an expression of 
+the form &quot;this.__tree.getRoot().getChildren().getLabel()&quot; would produce a 
+syntax tree sufficiently different from a very similar term like 
+&quot;this.__tree.getRoot().getChildren()[0].getLabel()&quot;.
+
+The old algorithm tried to capture all those various tree patterns in various 
+case tests, which was very error prone since the next combination of 
+identifiers, &quot;.&quot;, &quot;()&quot; and &quot;[]&quot; could present a new pattern not yet covered, 
+resulting in wrong answers whether any given identifier in the chain was the 
+first.
+
+The new implementation follows a different way. For any given identifier it 
+climbs up the syntax tree, to find the root node of such a chained expression. 
+From this root node, it then descends to the leftmost leaf. This is the first 
+identifier in the chain, and is compared against the given identifier.
+
+Results look good so far, so I&#39;m closing this bug. - Fingers crossed :).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38179</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:53 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

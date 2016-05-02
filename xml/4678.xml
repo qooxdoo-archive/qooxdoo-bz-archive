@@ -1,0 +1,117 @@
+<bug>
+          <bug_id>4678</bug_id>
+          
+          <creation_ts>2011-02-16 15:58:00 +0100</creation_ts>
+          <short_desc>DateFormat does not Support Locale Change</short_desc>
+          <delta_ts>2014-03-03 15:19:52 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.dev.util</component>
+          <version>1.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.5</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Gabriel Munteanu">jajalinux</assigned_to>
+          
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>22781</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-02-16 15:58:15 +0100</bug_when>
+            <thetext>The qx.util.format.DateFormat class uses locale information, but does only 
+evaluate the current locale at object construction time (see e.g. 
+this.__locale). After that, a DateFormat object does not heed to locale changes 
+anymore. This is strange, and should be revised.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22786</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-02-17 08:27:39 +0100</bug_when>
+            <thetext>I think this could be a good enhancement for all using the DateFormat. But still, we need to keep a way to get the date format for a specific local that does not change.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24104</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-04-18 15:05:32 +0200</bug_when>
+            <thetext>If a user creates a new DateFormat object specifying the locale like this:
+var myDF = new qx.util.DateFormat(&quot;yyyy-mm-dd&quot;,&quot;fr_FR&quot;);
+this sets this.__locale to &quot;fr_FR&quot; .
+I can&#39;t know if he wants to keep it like this in his app, or keep it in sync with a changing locale.
+My proposal is to have the user place a code like this:
+this.__myDF = new qx.util.DateFormat(&quot;yyyy-mm-dd&quot;,newLocalechanged);
+in his &quot;changeLocale&quot; event listener function.
+
+It would seem a little more likely that a user that creates his DateFormat object like this:
+var myDF = new qx.util.DateFormat(&quot;yyyy-mm-dd&quot;);
+to expect it to sync with any changes in locale.
+we could do the sync only for this case, though it is still not so intuitive as having the user coding it explicitly in the &quot;changeLocale&quot; event listener.
+
+In conclusion, I propose to write this case in the docs or in the manual, that if someone wants this behavior to code it in his &quot;changeLocale&quot; event listener.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24109</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-04-18 16:24:23 +0200</bug_when>
+            <thetext>Good point, I&#39;ll think about that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24127</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-04-19 10:30:28 +0200</bug_when>
+            <thetext>I&#39;ve talked with Andreas and Martin, and the behaviour should be like this.
+
+1) new qx.util.format.DateFormat(&quot;yyyy-mm-dd&quot;) [without locale parameter]:
+The object instance should automatically adapt to the global locale. As the DateFormat is so intrinsically related to a locale, I think this is what most people expect, especially as you have the second form of the constructor as alternative.
+
+2) new qx.util.format.DateFormat(&quot;yyyy-mm-dd&quot;, &quot;fr_FR&quot;) [with locale parameter]:
+The locale should stay what was given in the constructor across global locale changes; the object instance retains its own locale, which can only be changed via explicit method calls.
+
+3) To enable this behaviour, my suggestion is to add a property &#39;locale&#39; to the class:
+- if the constructor is called w/o locale parameter, the value of this property falls back to the global locale; this can be achieved by establishing a one-way data binding from qx.locale.Manager#locale to qx.util.format.DateFormat#locale at this point, which would also automatically reflect changes
+- if the consturctor is called w/ locale parameter, this parameter will go into the property; it can later be changed with &#39;setLocale&#39;
+- &#39;resetLocale&#39; wouldn&#39;t change anything in the first case (the data binding would take care of this), and would go back to the constructor param value in the second
+
+Please also check the API doc of the class, if this behaviour is sufficiently reflected. If that is the case I&#39;m not sure we need additional documentation, as anybody should be clear that if you use the second case (explicit locale param), and want to sync with global locale changes automatically later, you need to establish an event listener that calls setLocale. (As the DateFormat class has no other state than the format string, I wouldn&#39;t bother with this, and simply create a new DateLocale object instead).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24210</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-04-26 11:29:23 +0200</bug_when>
+            <thetext>fixed on trunk with rev. 26922.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36665</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:52 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

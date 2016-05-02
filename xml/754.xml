@@ -1,0 +1,134 @@
+<bug>
+          <bug_id>754</bug_id>
+          
+          <creation_ts>2008-01-10 22:22:00 +0100</creation_ts>
+          <short_desc>Wrong behavior of working with array of objects</short_desc>
+          <delta_ts>2012-05-16 09:33:55 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>0.7.2</version>
+          <rep_platform>IE</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="saaj">id</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2658</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2008-01-10 22:22:02 +0100</bug_when>
+            <thetext>I&#39;ve code like
+
+ var btnArray = [];           
+ btnArray[&quot;edit&quot;]   = new qx.ui.form.Button(&quot;Edit&quot;);
+ btnArray[&quot;add&quot;]    = new qx.ui.form.Button(&quot;Add&quot;);
+
+and have setter part
+
+      for(var btnItem in btnArray) 
+      {
+            //debug
+      	this.debug(typeof(btnArray[btnItem]));     	
+      	if(typeof(btnArray[btnItem]) != &quot;object&quot;)
+      	{
+      	  this.debug(btnArray[btnItem]);
+      	}
+            //actual
+      	btnArray[btnItem].set({
+      		width                   : 100,
+      		paddingLeft             : 5
+      	});      	      	      	
+      } 
+So i use FireFox 2.0 for testing and all works fine. I have correct number of log entries:
+  DEBUG: custom.Application[16]: object
+  DEBUG: custom.Application[16]: object
+
+In IE6 i have
+
+DEBUG: custom.Application[20]: function
+DEBUG: custom.Application[20]: --- Object: function(callback, obj) {   // The array length should be fixed, like in the native implementation.   var l = this.length;   for (var i=0; i&lt;l; i++)   {     if (!callback.call(obj, this[i], i, this)) {       return false;     }   }   return true; } ------ End of object ---
+
+So array has no my items. It seems to be a Array.prototype.forEach function from lang/Core.js
+In Opera9 i have
+
+DEBUG: custom.Application[16]: object
+DEBUG: custom.Application[16]: object
+DEBUG: custom.Application[16]: function
+DEBUG: custom.Application[16]: --- Object: 
+function (searchElement,fromIndex)
+{
+  if (fromIndex == null)
+    {
+      fromIndex = 0;
+    }
+  else
+    if (fromIndex &lt; 0)
+      {
+        fromIndex = Math.max(0, this.length + fromIndex);
+      }
+  for (var i = fromIndex;i &lt; this.length;i++)
+    {
+      if (this[i] === searchElement)
+        {
+          return i;
+        }
+    }
+  return - 1;
+}
+ ---
+--- End of object ---
+
+My array contents my items with additional function which is Array.prototype.indexOf function from lang/Core.js. So that it is.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2662</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2008-01-11 10:19:56 +0100</bug_when>
+            <thetext>The behavior you have detected is &quot;by design&quot;. Functions which are added to the Array class (all Array.prototype.&lt;functionName&gt; = function(){} statements in Core.js) will be added to the array&#39;s &quot;map&quot;.
+
+To avoid this problem you can
+a) use an object instead of an array to store your objects
+b) keep using an array and check each entry&#39;s type (as you did in your sample code)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2703</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2008-01-11 14:34:20 +0100</bug_when>
+            <thetext>&gt; To avoid this problem you can
+&gt; a) use an object instead of an array to store your objects
+&gt; b) keep using an array and check each entry&#39;s type (as you did in your sample
+&gt; code)
+&gt; 
+Thanks for an answer. Array using is more usual for me &#39;cause of php expirince. And i&#39;m do argee with that typechecking fixes a problem. I just was messed up by the order where in Opera i have my objectes and after functions added to prototype. But in IE its in reversed way. And all the prototyping OO model is new thing for me. Whereas i used to deal with class-based OO. But its good expirience anyway.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

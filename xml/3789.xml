@@ -1,0 +1,164 @@
+<bug>
+          <bug_id>3789</bug_id>
+          
+          <creation_ts>2010-06-21 15:35:00 +0200</creation_ts>
+          <short_desc>Single click on table cell triggers cellClick event twice</short_desc>
+          <delta_ts>2010-08-06 10:52:54 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Dietrich Streifert">dietrich.streifert</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          <cc>robin.danzinger</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>18863</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2010-06-21 15:35:16 +0200</bug_when>
+            <thetext>If a cellClick event listener is added to a qx.ui.table.Table the cellClick event is triggered twice.
+
+Reproduceable in playground:
+
+http://tinyurl.com/35ajya4
+
+The simple event listener logs the column and row sent via the CellEvents getColumn and getRow method via this.debug. On one click two debug messges are logged with the same content.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18870</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-06-22 08:16:05 +0200</bug_when>
+            <thetext>Hello Dietrich,
+Thanks for the report and especially the code to reproduce. We will take care of it as soon as possible.
+Regards,
+Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18987</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-06-29 10:05:12 +0200</bug_when>
+            <thetext>Here is some minimal code to reproduce:
+
+var data = [[&quot;a&quot;]];
+
+var tablemodel = new qx.ui.table.model.Simple();
+tablemodel.setColumns([&quot;&quot;]);
+
+tablemodel.setData(data);
+
+var table = new qx.ui.table.Table(tablemodel);
+table.addListener(&quot;cellClick&quot;, function (cellEvent){
+  this.debug(&quot;cellclicked&quot;);
+}, this);
+
+this.getRoot().add(table);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18989</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-06-29 11:16:57 +0200</bug_when>
+            <thetext>Derrell,
+seems like this bug was introduced by your commit (22236). You removed the deletion of this.__lastMouseDownCell on _onMouseupFocusIndicator which causes the if statement in _onClickPane to evaluate to true in most cases. This leads to a twice fired event. Could you take a look how to fix this. I was not sure if 
+
+row == this.__lastMouseDownCell.row &amp;&amp;
+col == this.__lastMouseDownCell.col
+
+is still necessary. I don&#39;t want to break your contexst menu fix so it would be great if you could have a look.
+Regards,
+Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19002</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-06-29 15:23:26 +0200</bug_when>
+            <thetext>Sure. I&#39;ll take a look at it within the next few days.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19007</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-06-29 16:30:05 +0200</bug_when>
+            <thetext>This _should_ be fixed with r22535. This is messy, with events arriving in different orders on different browsers or even with the same browser on different operating systems. I _think_ my fix here is safe, and shouldn&#39;t break the context menu handling, but I haven&#39;t tested other than with Firefox on Linux.
+
+@Martin, I&#39;ll reassign this back to you to either resolve as fixed or figure out if there&#39;s some way to get some automated testing of this stuff in various browsers and on various operating systems.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19016</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-06-30 08:10:44 +0200</bug_when>
+            <thetext>Thanks for the fix Derrell. I&#39;ll talk to Daniel abouot integrating such tests into out nightly tests. Maybe we already have such tests. If not we should include them. You think clicking and context menu opening should be enough?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19021</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-06-30 09:17:08 +0200</bug_when>
+            <thetext>To Daniel for testing.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19065</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-06-30 20:22:00 +0200</bug_when>
+            <thetext>&gt; I&#39;ll talk to Daniel abouot integrating such tests
+&gt; into out nightly tests. Maybe we already have such tests. If not we should
+&gt; include them. You think clicking and context menu opening should be enough?
+
+Click and contextmenu events are the ones relevant to this bug, I think. If someone wants to devote the time to it, a complete set of tests that would catch, for example, not being able to resize a header while editing, could be implemented. That will not be a quick project, however. For the moment, I think just click and context menu event tests that will show that the implementation behaves properly on all supported browsers and operating systems would be adequate.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19224</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2010-07-09 14:19:27 +0200</bug_when>
+            <thetext>Verified that the fix works for me with FireFox 3.6.3, IE 8.0.6001.18928, Chrome 5.0.375.99, Opera 10.60, Safari 5.0 (7533.16) on Vista x64.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19443</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-07-27 17:15:21 +0200</bug_when>
+            <thetext>We don&#39;t currently have any generic way to test events that are triggered by user interaction. I&#39;m working on a testing framework based on Rhino and Selenium that will allow just that (bug #3890), but it won&#39;t be ready for the 1.2 release.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19444</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-07-27 17:16:11 +0200</bug_when>
+            <thetext>Verified. Thanks for testing, Dietrich.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,111 @@
+<bug>
+          <bug_id>4505</bug_id>
+          
+          <creation_ts>2010-12-17 12:07:00 +0100</creation_ts>
+          <short_desc>Revamp demobrowser/tool</short_desc>
+          <delta_ts>2011-02-22 19:15:30 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>app.demobrowser</component>
+          <version>1.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>22028</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-12-17 12:07:46 +0100</bug_when>
+            <thetext>With the current approach of generating config.demo.json, a lot of boiler plate 
+settings are repeated for each demo. The whole thing doesn&#39;t take much 
+advantage of job inheritance. This can be improved by using some common parent 
+jobs that bear most of the settings, and  generating only tiny child jobs for 
+each demo that take advantage of those.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22030</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-12-17 12:50:59 +0100</bug_when>
+            <thetext>Added a new implementation of generating config.demo.json (holding all jobs for 
+individual demos), called &quot;config.demo.new.json&quot;,  using a new job template and 
+a static config file with default jobs. Added a new consumer CreateNewDemoJson 
+in gendata.py. The new generated config file is about .25 the size of the old, 
+and much simpler in structure.
+
+The old generation process is retained for a transitional period of time, for 
+back references (creating config.demo.json). When everything works fine
+- change gendata.py so that CreateNewDemoJson writes to config.demo.json, and 
+disable CreateDemoJson
+- change gendata.py:CreateNewDemoJson to load tmpl.json (instead tmpl.new.json)
+- copy tool/tmpl.new.json to tmpl.json, and svn delete tmpl.new.json
+- change config.demobrowser.json to &quot;include&quot; config.demo.json
+- remove svn:ignore config.demo.new.json
+
+and close this bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22043</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-12-20 14:02:16 +0100</bug_when>
+            <thetext>Had to modify the solution a bit, as running individual demo jobs (like 
+&quot;./generate.py -c config.demo.new.json build-ui.WidgetOverview&quot;) stopped 
+working. The reason for this were the literal &quot;demo::&quot; prefixes used in 
+demo.json when pointing to the theme-jobs in the &quot;run&quot; key of 
+default-source/default-build.
+
+(I investigated why this hard-coded prefix was necessary in the first place, as 
+usually references to jobs in &quot;run&quot; and &quot;extend&quot; keys get adapted on import. 
+The problem was that the members of these keys contained macros, like 
+
+    &quot;run&quot; : [&quot;demos::source-${DNAME}-Classic&quot;, &quot;demos::source-${DNAME}-Modern&quot;]
+
+At include time, these strings are not known job names, so the automatic 
+renaming (prefixing with &quot;demos::&quot;) does not take place in Config.patchFeature.)
+
+As a solution,  I&#39;ve removed default.json#default-source/default-build 
+altogether, and moved their settings into the 
+tmpl.new.json#source-XXX/build-XXX template jobs. I currently don&#39;t see a good 
+way to maintain job refences with macros across imports.
+
+With r24412.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22311</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-01-17 17:06:10 +0100</bug_when>
+            <thetext>Removed support for the old config.demo.json format, and renamed all references from config.demo.new.json to config.demo.json (see other comment).
+
+With r24570.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

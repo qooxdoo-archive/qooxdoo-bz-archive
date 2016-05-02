@@ -1,0 +1,176 @@
+<bug>
+          <bug_id>9200</bug_id>
+          
+          <creation_ts>2015-08-24 16:45:00 +0200</creation_ts>
+          <short_desc>Interface validation occurs before defer(...) is called (qx.Class.define)</short_desc>
+          <delta_ts>2015-10-30 16:41:14 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.oo</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>NEW</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter>xpinguin</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>43514</commentid>
+              <attachid>1383</attachid>
+            <who name="">xpinguin</who>
+            <bug_when>2015-08-24 16:45:18 +0200</bug_when>
+            <thetext>Created attachment 1383
+proposed simple patch
+
+Hi!
+
+Although, one could use &quot;defer&quot; function in order to alter class declaration in a programmatic way, interface(s) handling (e.g. validation) is conducted at an earlier stage - right before the call to the aforementioned &quot;defer&quot;.
+
+Such behaviour prohibits one useful application of the &quot;defer&quot; function - proxy class for an interface (i.e. one could declare Proxy class for any Interface, with an intent to wrap some instance of some non-abstract InterfaceImplementation by an instance of the Proxy class), without copy&amp;paste or codegen.
+
+I&#39;ve attached simple patch. Yet, there is a potential problem: defer() won&#39;t see the list of implemented interfaces (.$$implements). In order to address that problem, qx.Class.__addInterface could be splitted into __addInterface (stores interface reference) and __validateInterface.
+Is that viable approach? Don&#39;t I miss something?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43515</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-08-25 15:25:48 +0200</bug_when>
+            <thetext>Hi, could you provide some example code of what you&#39;d like to achieve with such a proxy class for an interface? A url-shortened playground sample would suffice.
+
+Regarding the split you mentioned, __addInterface and __validateInterface already are decoupled, i.e. just run one after the other, right?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43516</commentid>
+            <who name="">xpinguin</who>
+            <bug_when>2015-08-25 15:41:55 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Hi, could you provide some example code of what you&#39;d like to achieve with such
+&gt; a proxy class for an interface? A url-shortened playground sample would
+&gt; suffice.
+
+For instance, http://pastie.org/private/afh9ugmrcxaylingsnkd7q
+Generally, interface validation after defer allows programmatic implementation of interfaces (without the use of an external code-generation tool). I am refering to the particular interface proxy case only because I had encountered it in a production.
+ 
+&gt; Regarding the split you mentioned, __addInterface and __validateInterface
+&gt; already are decoupled, i.e. just run one after the other, right?
+
+Well, yes. Although, not entirely. I mean not entirely in debug mode:
+https://github.com/qooxdoo/qooxdoo/blob/master/framework/source/class/qx/Class.js#L1383
+
+Nevertheless, there is an additional validation at qx.Class.define itself:
+https://github.com/qooxdoo/qooxdoo/blob/master/framework/source/class/qx/Class.js#L246</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43629</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2015-10-30 16:41:14 +0100</bug_when>
+            <thetext>Included your example permanently from http://pastie.org/private/afh9ugmrcxaylingsnkd7q :
+
+
+qx.Class.define(&quot;webclient.components.TableProxyModel&quot;, {
+    extend : qx.core.Object,
+    implement : qx.ui.table.ITableModel,
+    
+    construct: function(targetModel)
+    {
+        qx.core.Assert.assert(
+            qx.Class.implementsInterface(targetModel, qx.ui.table.ITableModel),
+            &quot;Target model for TableProxyModel must implement ITableModel&quot;
+        );
+        this.targetModel = targetModel;
+    },
+    
+    defer: function(statics, members, properties)
+    {
+    	/* proxify all interface methods*/
+    	
+    	var iface_members = qx.ui.table.ITableModel.$$members;
+    	
+    	for (var iface_member in iface_members) {
+    		if (!iface_members.hasOwnProperty(iface_member)) {
+    			continue;
+    		}
+    		
+    		members[iface_member] = (function(_iface_member) {
+    			return function() {
+    			    return this.targetModel[_iface_member].apply(this.targetModel, arguments);
+    			}
+    		})(iface_member);
+    	}
+    },
+    
+    members:
+    {
+        targetModel: null
+    },
+    
+    events : {
+        &quot;dataChanged&quot; : &quot;qx.event.type.Data&quot;,
+        &quot;metaDataChanged&quot; : &quot;qx.event.type.Event&quot;,
+        &quot;sorted&quot; : &quot;qx.event.type.Data&quot;
+    }
+});</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>1383</attachid>
+            <date>2015-08-24 16:45:00 +0200</date>
+            <delta_ts>2015-08-24 16:45:18 +0200</delta_ts>
+            <desc>proposed simple patch</desc>
+            <filename>qooxdoo5_interface_validation.patch</filename>
+            <type>text/plain</type>
+            <size>1136</size>
+            <attacher>xpinguin</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvQ2xhc3MuanMgYi9mcmFtZXdv
+cmsvc291cmNlL2NsYXNzL3F4L0NsYXNzLmpzCmluZGV4IGM2YTk1ZGYuLjExNmEwOTIgMTAwNjQ0
+Ci0tLSBhL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvQ2xhc3MuanMKKysrIGIvZnJhbWV3b3Jr
+L3NvdXJjZS9jbGFzcy9xeC9DbGFzcy5qcwpAQCAtMjMzLDIwICsyMzMsNiBAQCBxeC5Cb290c3Ry
+YXAuZGVmaW5lKCJxeC5DbGFzcyIsCiAgICAgICAgIH0KICAgICAgIH0KIAotICAgICAgLy8gSW50
+ZXJmYWNlIHN1cHBvcnQgZm9yIG5vbi1zdGF0aWMgY2xhc3NlcwotICAgICAgaWYgKGNvbmZpZy5p
+bXBsZW1lbnQpCi0gICAgICB7Ci0gICAgICAgIGZvciAodmFyIGk9MCwgbD1jb25maWcuaW1wbGVt
+ZW50Lmxlbmd0aDsgaTxsOyBpKyspIHsKLSAgICAgICAgICB0aGlzLl9fYWRkSW50ZXJmYWNlKGNs
+YXp6LCBjb25maWcuaW1wbGVtZW50W2ldKTsKLSAgICAgICAgfQotICAgICAgfQotCi0KLSAgICAg
+IGlmIChxeC5jb3JlLkVudmlyb25tZW50LmdldCgicXguZGVidWciKSkgewotICAgICAgICB0aGlz
+Ll9fdmFsaWRhdGVBYnN0cmFjdEludGVyZmFjZXMoY2xhenopOwotICAgICAgfQotCi0KICAgICAg
+IC8vIFByb2Nlc3MgZGVmZXIKICAgICAgIGlmIChjb25maWcuZGVmZXIpCiAgICAgICB7CkBAIC0y
+NjUsNiArMjUxLDIwIEBAIHF4LkJvb3RzdHJhcC5kZWZpbmUoInF4LkNsYXNzIiwKICAgICAgICAg
+fSk7CiAgICAgICB9CiAKKyAgICAgIC8vIEludGVyZmFjZSBzdXBwb3J0IGZvciBub24tc3RhdGlj
+IGNsYXNzZXMKKyAgICAgIGlmIChjb25maWcuaW1wbGVtZW50KQorICAgICAgeworICAgICAgICBm
+b3IgKHZhciBpPTAsIGw9Y29uZmlnLmltcGxlbWVudC5sZW5ndGg7IGk8bDsgaSsrKSB7CisgICAg
+ICAgICAgdGhpcy5fX2FkZEludGVyZmFjZShjbGF6eiwgY29uZmlnLmltcGxlbWVudFtpXSk7Cisg
+ICAgICAgIH0KKyAgICAgIH0KKworCisgICAgICBpZiAocXguY29yZS5FbnZpcm9ubWVudC5nZXQo
+InF4LmRlYnVnIikpIHsKKyAgICAgICAgdGhpcy5fX3ZhbGlkYXRlQWJzdHJhY3RJbnRlcmZhY2Vz
+KGNsYXp6KTsKKyAgICAgIH0KKworCiAgICAgICByZXR1cm4gY2xheno7CiAgICAgfSwKIAo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

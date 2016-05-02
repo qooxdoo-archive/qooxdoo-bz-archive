@@ -1,0 +1,227 @@
+<bug>
+          <bug_id>3867</bug_id>
+          
+          <creation_ts>2010-07-15 15:41:00 +0200</creation_ts>
+          <short_desc>Missing destruct definition for &#39;$$user_buddy&#39; in qx.ui.basic.Label</short_desc>
+          <delta_ts>2010-08-10 09:02:58 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Peter Schneider">schnepe2</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>19340</commentid>
+              <attachid>769</attachid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2010-07-15 15:41:18 +0200</bug_when>
+            <thetext>Created attachment 769
+Example Application
+
+=== DESCRIPTION ===
+
+Both form renderer (qx.ui.form.renderer.Single and Double) bind the label and
+the field item together in their &quot;addItems()&quot; method via
+&lt;code&gt;label.setBuddy(item);&lt;/code&gt;.
+Whenever the destructor of a form (with a renderer)is called, this warning
+appears:
+&lt;pre&gt;Missing destruct definition for &#39;$$user_buddy&#39; in qx.ui.basic.Label&lt;/pre&gt;
+
+The Buddy property is set by the Renderer, but belongs to the Label
+I think the Renderer should (re)set any possibly set Buddies, but somehow this
+easy solution just shows this kind of result:
+&lt;pre&gt;
+  The array field: __widgetChildren of object: qx.ui.container.Composite[707]
+  has non disposable entries: Error: The array field: __widgetChildren of
+  object: qx.ui.splitpane.Pane[1221] has non disposable entries: Error: The
+  array field: __widgetChildren of object: qx.ui.container.Composite[886] has
+  non disposable entries: Error: The array field: __widgetChildren of object:
+  qx.ui.tabview.Page[923] has non disposable entries: Error: The array field:
+  __widgetChildren of object: qx.ui.form.renderer.Single[1036] has non
+  disposable entries: Error: Binding could not be found!
+&lt;/pre&gt;
+
+Similar results happen when the Buddy is released in the destructor of the
+Label...
+
+
+=== REPRODUCTION / EXAMPLE ===
+
+Just add this code to a &quot;standard quick start application&quot;[1] at the according
+place (&#39;main&#39; method)...
+&lt;code&gt;
+  // [...]
+  /*
+  ------------------------------------------
+    Below is your actual application code...
+  ------------------------------------------
+  */
+  var label     = this.tr(&quot;Name&quot;);
+  var textfield = new qx.ui.form.TextField;
+  var form      = new qx.ui.form.Form;
+
+  // Here we go...
+  var doc = this.getRoot();
+
+  form.add(textfield, label);
+  var renderer = new qx.ui.form.renderer.Single(form);
+  doc.add(renderer, {left: 100, top: 50});
+
+  var button = new qx.ui.form.Button(&quot;shutdown...&quot;);
+  doc.add(button, {left: 100, top: 100});
+
+  // Adding &quot;once&quot; is definitely enough here...
+  button.addListenerOnce(&quot;execute&quot;, function () {
+    qx.core.ObjectRegistry.shutdown();
+  }, this);
+  // [...]
+&lt;/code&gt;
+and compile it with &#39;generate disposerDebug&#39;[2].
+Or use the attached example, which is a little different &#39;cause I wanted to
+explicitly use the destructor there and therefore I made all those used
+objects members.
+But this makes no difference in the result.
+
+-----
+[1] &#39;tool/bin/create-application.py --name buddy_check&#39;
+    http://qooxdoo.org/documentation/1.1#getting_started
+[2] you have to add that job to the config.json, too</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19349</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-07-16 08:59:23 +0200</bug_when>
+            <thetext>I wonder where the warning is coming from. If both, renderer and label are disposed, you don&#39;t need to cut this reference. So there is no reason to be worried about some memory leaks, its more the warning we should take care of.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19446</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-07-27 17:24:54 +0200</bug_when>
+            <thetext>After a quick look at it, I know where the message came from. You used a level of 2 which prints out more than really necessary. But let me explain why. 
+We took some time to change the dispose handling of the whole framework. After some research of how garbage collection works (details here [1]) we decided not to cut every connection between each object, which was the old behavior. We currently only cut connections to the local scope and to the DOM.
+This sped up the whole application and the shutdown which is also critical on huge applications. But using a level of 2 and higher prints out every connection which is not cut. The trick now is to know what has a reference to the DOM and needs to be removed and what is just a JavaScript object which will be collected by the garbage collector.
+So much for the theory... now to your buddy property. The buddy is restricted to a qooxdoo widget which always has a connection to the DOM. In the case of the shutdown or in usage of a form, this is not an issue because in both cases, label and buddy are disposed. But if not, this could be a problem. Thats why I fixed this with r22800 for trunk.
+
+[1] http://bugzilla.qooxdoo.org/show_bug.cgi?id=3411#c2</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>769</attachid>
+            <date>2010-07-15 15:41:00 +0200</date>
+            <delta_ts>2010-07-15 15:41:18 +0200</delta_ts>
+            <desc>Example Application</desc>
+            <filename>buddy_check.zip</filename>
+            <type>application/octet-stream</type>
+            <size>4195</size>
+            <attacher>schnepe2</attacher>
+            
+              <data encoding="base64">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
+</data>
+
+          </attachment>
+      
+
+    </bug>

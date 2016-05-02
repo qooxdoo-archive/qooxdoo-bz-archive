@@ -1,0 +1,600 @@
+<bug>
+          <bug_id>422</bug_id>
+          
+          <creation_ts>2007-05-17 21:37:00 +0200</creation_ts>
+          <short_desc>Patch to qx.core.Target to allow external monitoring of events</short_desc>
+          <delta_ts>2007-05-29 11:23:31 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christian Boulanger">info</reporter>
+          <assigned_to name="Derrell Lipman">derrell.lipman</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>1324</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2007-05-17 21:37:23 +0200</bug_when>
+            <thetext>Developers need access to the events being dispatched without having to attach event listeners. This patch adds three lines of code to qx/core/Target.js which look for a method this.__monitorEvent() and pass the current event to this method if it exists and the event is a data event. Additional overhead should be minimal. Developers are free to implement the method or not.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1325</commentid>
+              <attachid>159</attachid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2007-05-17 21:38:16 +0200</bug_when>
+            <thetext>Created attachment 159
+Patch to add event monitoring to qx.core.Target</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1326</commentid>
+              <attachid>160</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2007-05-17 22:20:29 +0200</bug_when>
+            <thetext>Created attachment 160
+alternate solution
+
+I agree that there should be a method of monitoring (or even broadcasting) events.  I think, though, that your suggested implementation is too limiting.  Your implementation requires a per-object method be provided.  Instead, I would do something like the attached (untested) patch.  Would this also serve your needs?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1327</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2007-05-17 22:46:28 +0200</bug_when>
+            <thetext>This would be fine with me, in fact, I created a similar solution via a mixin (see attachment). I used this minimal solution in order to keep the overhead as small as possible for those who will not need event monitoring. Since I need it for my event transport systen, I&#39;ll be happy to adapt to the solution you suggest!
+
+Christian </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1328</commentid>
+              <attachid>161</attachid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2007-05-17 22:48:10 +0200</bug_when>
+            <thetext>Created attachment 161
+MEventMonitor Mixin
+
+With your proposed solution, this mixin would be unneccessary.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1329</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2007-05-17 22:50:05 +0200</bug_when>
+            <thetext>... hold on, there is one advantage to my Mixin, one can do selective monitoring using &quot;*&quot; as a wildcard. Could you implement this, too?
+
+Christian </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1330</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2007-05-17 23:07:51 +0200</bug_when>
+            <thetext>I&#39;m not sure it&#39;s approporiate to add specifics like that to the generic event dispatcher.  If you&#39;re not concerned with the time it takes to do searches for characters, e.g. &quot;*&quot;, then you&#39;re likely also not too overly concerned with the overhead of calling your monitor function.  It&#39;s still easy for your monitor function to do that filtering, and not do anything with events that you don&#39;t care about.  Does that seem reasonable?  This is a very common code path, and I think it&#39;s important  to avoid doing any superfluous processing in the main dispatch code...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1331</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2007-05-17 23:09:41 +0200</bug_when>
+            <thetext>One change that may be appropriate is to allow the monitor to be an object of some monitoring class, and to call the event monitoring function as a method of the monitor class instead of as a static function.  Thoughts?
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1332</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2007-05-18 09:13:02 +0200</bug_when>
+            <thetext>I think this is a good idea. This is why I created a separate Mixin to qx.core.Target and did only a three-line change to qx.core.Target itself. 
+
+As to overhead: I completely agree - any additional expensive computing such as searching the list of registered event monitors for wildcard-filters should be optional and not be the default. 
+
+I vote for creating a separate monitoring class which should be capable of OPTIONALLY implement filtering and leaving qx.core.Target as untouched as possible. I think this will also be more popular with those who do not need event monitoring.
+
+Christian</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1354</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2007-05-20 00:12:56 +0200</bug_when>
+            <thetext>Taking up Sebastian&#39;s suggestion to implement a separate message bus system, here is a very simple one, consisting of a Message, Bus, and MessageTransport Class. The user can subscribe handler function to message filters. Messages can also be forwarded from the client to the server and, through server polling, messages can be forwarded from the server to the client.
+
+See demo at 
+http://qxtransformer.sourceforge.net/svn/trunk/apps/qxtransformer-skeleton/build/
+(Click on &quot;message bus&quot; tab).
+
+I&#39;d be happy if this could be made part of the trunk. The classes are very basic, but work well. 
+
+The only problem is server polling at the sourceforge demo site - the timer runs amok and won&#39;t respect interval setting. It works well on my localhost...
+
+Christian </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1355</commentid>
+              <attachid>163</attachid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2007-05-20 00:14:10 +0200</bug_when>
+            <thetext>Created attachment 163
+messagebus package to be put into source/class/qx - proof of concept only - code is buggy</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1356</commentid>
+              <attachid>164</attachid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2007-05-20 01:07:51 +0200</bug_when>
+            <thetext>Created attachment 164
+messagebus package to be put into source/class/qx
+
+Previous version was buggy, this works and removes sourceforge demo site problem</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1428</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-05-29 11:23:31 +0200</bug_when>
+            <thetext>Please use qx.event.message instead which is available since 0.7-beta2</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>159</attachid>
+            <date>2007-05-17 21:38:00 +0200</date>
+            <delta_ts>2007-05-17 21:38:16 +0200</delta_ts>
+            <desc>Patch to add event monitoring to qx.core.Target</desc>
+            <filename>eventMonitorPatch.txt</filename>
+            <type>text/plain</type>
+            <size>699</size>
+            <attacher>info</attacher>
+            
+              <data encoding="base64">SW5kZXg6IC9ob21lL2Nib3VsYW5nZXIvd29ya3NwYWNlL3Fvb3hkb28tdHJ1bmsvZnJvbnRlbmQv
+ZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9jb3JlL1RhcmdldC5qcwo9PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Ci0tLSAv
+aG9tZS9jYm91bGFuZ2VyL3dvcmtzcGFjZS9xb294ZG9vLXRydW5rL2Zyb250ZW5kL2ZyYW1ld29y
+ay9zb3VyY2UvY2xhc3MvcXgvY29yZS9UYXJnZXQuanMJKHJldmlzaW9uIDgwMTcpCisrKyAvaG9t
+ZS9jYm91bGFuZ2VyL3dvcmtzcGFjZS9xb294ZG9vLXRydW5rL2Zyb250ZW5kL2ZyYW1ld29yay9z
+b3VyY2UvY2xhc3MvcXgvY29yZS9UYXJnZXQuanMJKHdvcmtpbmcgY29weSkKQEAgLTIzOCw2ICsy
+MzgsMTEgQEAKICAgICAgICAgZXZ0LnNldEN1cnJlbnRUYXJnZXQodGhpcyk7CiAgICAgICB9CiAK
+KyAgICAgIC8vIFBhc3MgZGF0YSBldmVudHMgdG8gZXZlbnQgbW9uaXRvcnMKKyAgICAgIGlmICgg
+dGhpcy5fX21vbml0b3JFdmVudCAmJiBldnQuY2xhc3NuYW1lID09ICJxeC5ldmVudC50eXBlLkRh
+dGFFdmVudCIpIHsgCisgICAgICAgICB0aGlzLl9fbW9uaXRvckV2ZW50KGV2dCk7CisgICAgICB9
+CisKICAgICAgIC8vIERpc3BhdGNoIEV2ZW50CiAgICAgICB0aGlzLl9kaXNwYXRjaEV2ZW50KGV2
+dCwgZGlzcG9zZSk7CiAK
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>160</attachid>
+            <date>2007-05-17 22:20:00 +0200</date>
+            <delta_ts>2007-05-17 22:20:29 +0200</delta_ts>
+            <desc>alternate solution</desc>
+            <filename>eventMonitor.patch</filename>
+            <type>text/plain</type>
+            <size>5469</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">SW5kZXg6IGZyb250ZW5kL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvY29yZS9UYXJnZXQuanMK
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PQotLS0gZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9jb3JlL1Rh
+cmdldC5qcwkocmV2aXNpb24gODAxNykKKysrIGZyb250ZW5kL2ZyYW1ld29yay9zb3VyY2UvY2xh
+c3MvcXgvY29yZS9UYXJnZXQuanMJKHdvcmtpbmcgY29weSkKQEAgLTM4LDcgKzM4LDEwNSBAQAog
+CiAKIAorICBzdGF0aWNzIDoKKyAgeworICAgIC8qKiBGdW5jdGlvbiB0byBjYWxsIGJlZm9yZSBh
+biBldmVudCBpcyBkaXNwYXRjaGVkICovCisgICAgX19ldmVudE1vbml0b3JQcmUgOiBudWxsLAog
+CisgICAgLyoqIEZ1bmN0aW9uIHRvIGNhbGwgYWZ0ZXIgYW4gZXZlbnQgaGFzIGJlZW4gZGlzcGF0
+Y2hlZCAqLworICAgIF9fZXZlbnRNb25pdG9yUG9zdCA6IG51bGwsCisKKyAgICAvKioKKyAgICAg
+KiBFdmVudCB0eXBlcyB3aGljaCBhcmUgZXhjbHVkZWQgZnJvbSBldmVudCBtb25pdG9yaW5nLiAg
+KFRCRDogV2UKKyAgICAgKiBwcm9iYWJseSB3YW50IHRvIGV4Y2x1ZGUgY29tbW9uIGV2ZW50cyBz
+dWNoIGFzIG1vdXNlIG1vdmVtZW50cyBieQorICAgICAqIGRlZmF1bHQsIHRvIGF2b2lkIGZsb29k
+aW5nIHRoZSBtb25pdG9yIGZ1bmN0aW9uLikKKyAgICAgKi8KKyAgICBfX2V2ZW50TW9uaXRvckV4
+Y2x1ZGUgOiB7fSwKKworICAgIC8qKgorICAgICAqIEFkZCBhIGZ1bmN0aW9uIHRvIGJlIGNhbGxl
+ZCBiZWZvcmUgYW4gZXZlbnQgaXMgZGlzcGF0Y2hlZC4gIEV2ZW50CisgICAgICogbGltaXRpbmcg
+KGRvbid0IGNhbGwgdGhlIGZ1bmN0aW9uIHVwb24gYSBwYXJ0aWN1bGFyIGV2ZW50KSBtYXkgYmUK
+KyAgICAgKiBhcHBsaWVkIGJ5IGNhbGxpbmcgYWRkRXZlbnRNb25pdG9yUHJlRXhjbHVzaW9uKCku
+CisgICAgICoKKyAgICAgKiBAcGFyYW0gZnVuYyB7RnVuY3Rpb259CisgICAgICogICBUaGUgZnVu
+Y3Rpb24gdG8gYmUgY2FsbGVkIGFmdGVyIGFuIGV2ZW50IGhhcyBiZWVuIGRpc3BhdGNoZWQuICBU
+aGUKKyAgICAgKiAgIGZ1bmN0aW9uIHdpbGwgYmUgY2FsbGVkIHdpdGggdGhyZWUgcGFyYW1ldGVy
+czogdGhlIG9iamVjdCBvbiB0byB0aGUKKyAgICAgKiAgIGV2ZW50IGFwcGxpZXMsIHRoZSBjb250
+ZXh0IG9iamVjdCBvbiB3aGljaCB0aGUgZXZlbnQgaXMgYmVpbmcKKyAgICAgKiAgIGRpc3BhdGNo
+ZWQsIGFuZCB0aGUgZXZlbnQgb2JqZWN0LiAgVGhlIGZ1bmN0aW9uIHNob3VsZCByZXR1cm4gYQor
+ICAgICAqICAgYm9vbGVhbiBpbmRpY2F0aW5nIHdoZXRoZXIgdGhlIGV2ZW50IHNob3VsZCBhY3R1
+YWxseSBiZSBkaXNwYXRjaGVkLgorICAgICAqCisgICAgICogICBUbyByZW1vdmUgdXNlIG9mIHRo
+ZSBldmVudCBtb25pdG9yIGJlZm9yZSBhbiBldmVudCBpcyBkaXNwYXRjaGVkLAorICAgICAqICAg
+cGFzcyA8Y29kZT5udWxsPC9jb2RlPiBmb3IgdGhpcyBwYXJhbWV0ZXIuCisgICAgICovCisgICAg
+YWRkRXZlbnRNb25pdG9yUHJlIDogZnVuY3Rpb24oZnVuYykKKyAgICB7CisgICAgICBxeC5jb3Jl
+LlRhcmdldC5fX2V2ZW50TW9uaXRvclByZSA9IGZ1bmM7CisgICAgfSwKKworICAgIC8qKgorICAg
+ICAqIEFkZCBhIGZ1bmN0aW9uIHRvIGJlIGNhbGxlZCBhZnRlciBhbiBldmVudCBpcyBkaXNwYXRj
+aGVkLiAgRXZlbnQKKyAgICAgKiBsaW1pdGluZyAoZG9uJ3QgY2FsbCB0aGUgZnVuY3Rpb24gdXBv
+biBhIHBhcnRpY3VsYXIgZXZlbnQpIG1heSBiZQorICAgICAqIGFwcGxpZWQgYnkgY2FsbGluZyBh
+ZGRFdmVudE1vbml0b3JQb3N0RXhjbHVzaW9uKCkuCisgICAgICoKKyAgICAgKiBAcGFyYW0gZnVu
+YyB7RnVuY3Rpb259CisgICAgICogICBUaGUgZnVuY3Rpb24gdG8gYmUgY2FsbGVkIGFmdGVyIGFu
+IGV2ZW50IGhhcyBiZWVuIGRpc3BhdGNoZWQuICBUaGUKKyAgICAgKiAgIGZ1bmN0aW9uIHdpbGwg
+YmUgY2FsbGVkIHdpdGggdGhyZWUgcGFyYW1ldGVyczogdGhlIG9iamVjdCBvbiB0byB0aGUKKyAg
+ICAgKiAgIGV2ZW50IGFwcGxpZXMsIHRoZSBjb250ZXh0IG9iamVjdCBvbiB3aGljaCB0aGUgZXZl
+bnQgaXMgYmVpbmcKKyAgICAgKiAgIGRpc3BhdGNoZWQsIGFuZCB0aGUgZXZlbnQgb2JqZWN0Lgor
+ICAgICAqCisgICAgICogICBUbyByZW1vdmUgdXNlIG9mIHRoZSBldmVudCBtb25pdG9yIGJlZm9y
+ZSBhbiBldmVudCBpcyBkaXNwYXRjaGVkLAorICAgICAqICAgcGFzcyA8Y29kZT5udWxsPC9jb2Rl
+PiBmb3IgdGhpcyBwYXJhbWV0ZXIuCisgICAgICovCisgICAgYWRkRXZlbnRNb25pdG9yUG9zdCA6
+IGZ1bmN0aW9uKGZ1bmMpCisgICAgeworICAgICAgcXguY29yZS5UYXJnZXQuX19ldmVudE1vbml0
+b3JQb3N0ID0gZnVuYzsKKyAgICB9LAorCisgICAgLyoqCisgICAgICogQWRkIG9uZSBvciBtb3Jl
+IGV2ZW50IHR5cGVzIHRvIGJlIGV4Y2x1ZGVkIGZyb20gbW9uaXRvcmluZy4gIEV2ZW50cworICAg
+ICAqIG9mIHR5cGVzIHByb3ZpZGVkIGhlcmUgd2lsbCBub3QgY2F1c2UgY2FsbHMgdG8gdGhlIHBy
+ZS0gb3IgcG9zdC0KKyAgICAgKiBldmVudCBtb25pdG9yIGZ1bmN0aW9ucy4KKyAgICAgKgorICAg
+ICAqIEBwYXJhbSBldmVudFR5cGVzIHtTdHJpbmd8QXJyYXl9CisgICAgICogICBBbiBldmVudCB0
+eXBlIChpZiBhIHN0cmluZykgb3IgYW4gYXJyYXkgb2YgZXZlbnQgdHlwZSBzdHJpbmdzIHdoaWNo
+CisgICAgICogICBhcmUgdG8gYmUgZXhjbHVkZWQgZnJvbSBjYWxscyB0byB0aGUgZXZlbnQgbW9u
+aXRvci4KKyAgICAgKi8KKyAgICBhZGRFdmVudE1vbml0b3JFeGNsdWRlIDogZnVuY3Rpb24oZXZl
+bnRUeXBlcykKKyAgICB7CisgICAgICBpZiAodHlwZW9mKGV2ZW50VHlwZXMpID09ICJzdHJpbmci
+KQorICAgICAgeworICAgICAgICBldmVudFR5cGVzID0gWyBldmVudFR5cGVzIF07CisgICAgICB9
+CisKKyAgICAgIGZvciAodmFyIGkgPSAwOyBpIDwgZXZlbnRUeXBlcy5sZW5ndGg7IGkrKykKKyAg
+ICAgIHsKKyAgICAgICAgcXguY29yZS5UYXJnZXQuX19ldmVudE1vbml0b3JFeGNsdWRlW2V2ZW50
+VHlwZXNbaV1dID0gdHJ1ZTsKKyAgICAgIH0KKyAgICB9LAorCisgICAgLyoqCisgICAgICogUmVt
+b3ZlIG9uZSBvciBtb3JlIGV2ZW50IHR5cGVzIGZyb20gdGhlIGxpc3Qgb2YgdHlwZXMgdG8gYmUg
+ZXhjbHVkZWQKKyAgICAgKiBmcm9tIG1vbml0b3JpbmcuICBFdmVudHMgb2YgdHlwZXMgcHJvdmlk
+ZWQgaGVyZSB3aWxsIGFnYWluIGNhdXNlIGNhbGxzCisgICAgICogdG8gdGhlIHByZS0gb3IgcG9z
+dC0gZXZlbnQgbW9uaXRvciBmdW5jdGlvbnMuCisgICAgICoKKyAgICAgKiBAcGFyYW0gZXZlbnRU
+eXBlcyB7U3RyaW5nfEFycmF5fQorICAgICAqICAgQW4gZXZlbnQgdHlwZSAoaWYgYSBzdHJpbmcp
+IG9yIGFuIGFycmF5IG9mIGV2ZW50IHR5cGUgc3RyaW5ncyB3aGljaAorICAgICAqICAgYXJlIHRv
+IGJlIHJlLWluY2x1ZGVkIGluIGNhbGxzIHRvIHRoZSBldmVudCBtb25pdG9yLgorICAgICAqLwor
+ICAgIHJlbW92ZUV2ZW50TW9uaXRvckV4Y2x1ZGUgOiBmdW5jdGlvbihldmVudFR5cGUpCisgICAg
+eworICAgICAgaWYgKHR5cGVvZihldmVudFR5cGVzKSA9PSAic3RyaW5nIikKKyAgICAgIHsKKyAg
+ICAgICAgZXZlbnRUeXBlcyA9IFsgZXZlbnRUeXBlcyBdOworICAgICAgfQorCisgICAgICBmb3Ig
+KHZhciBpID0gMDsgaSA8IGV2ZW50VHlwZXMubGVuZ3RoOyBpKyspCisgICAgICB7CisgICAgICAg
+IGRlbGV0ZSBxeC5jb3JlLlRhcmdldC5fX2V2ZW50TW9uaXRvckV4Y2x1ZGVbZXZlbnRUeXBlc1tp
+XV07CisgICAgICB9CisgICAgfQorICB9LAorCiAgIC8qCiAgICoqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+CiAgICAgIE1FTUJFUlMKQEAgLTI2Nyw4ICszNjUsMTAgQEAKICAgICAgICAgLy8gU2V0dXAgY3Vy
+cmVudCB0YXJnZXQKICAgICAgICAgZXZ0LnNldEN1cnJlbnRUYXJnZXQodGhpcyk7CiAKKyAgICAg
+ICAgdmFyIGV2ZW50VHlwZSA9IGV2dC5nZXRUeXBlKCk7CisKICAgICAgICAgLy8gU2hvcnRjdXQg
+Zm9yIGxpc3RlbmVyIGRhdGEKLSAgICAgICAgdmFyIHR5cGVMaXN0ZW5lcnMgPSBsaXN0ZW5lcnNb
+ZXZ0LmdldFR5cGUoKV07CisgICAgICAgIHZhciB0eXBlTGlzdGVuZXJzID0gbGlzdGVuZXJzW2V2
+ZW50VHlwZV07CiAKICAgICAgICAgaWYgKHR5cGVMaXN0ZW5lcnMpCiAgICAgICAgIHsKQEAgLTI4
+MSw4ICszODEsMzAgQEAKICAgICAgICAgICAgIGZ1bmMgPSB0eXBlTGlzdGVuZXJzW3ZIYXNoQ29k
+ZV0uaGFuZGxlcjsKICAgICAgICAgICAgIG9iaiA9IHR5cGVMaXN0ZW5lcnNbdkhhc2hDb2RlXS5v
+YmplY3QgfHwgdGhpczsKIAotICAgICAgICAgICAgLy8gQ2FsbCBvYmplY3QgZnVuY3Rpb24KLSAg
+ICAgICAgICAgIGZ1bmMuY2FsbChvYmosIGV2dCk7CisgICAgICAgICAgICAvLyBBc3NtZSB3ZSds
+bCBiZSBkaXNwYXRjaGluZyB0aGUgZXZlbnQKKyAgICAgICAgICAgIHZhciBkaXNwYXRjaCA9IHRy
+dWU7CisKKyAgICAgICAgICAgIC8vIElmIHRoZXJlIGlzIGFuIGV2ZW50IG1vbml0b3IgKHByZSkg
+ZnVuY3Rpb24gc3BlY2lmaWVkLi4uCisgICAgICAgICAgICBpZiAocXguY29yZS5UYXJnZXQuX19l
+dmVudE1vbml0b3JQcmUgJiYKKyAgICAgICAgICAgICAgICAhIHF4LmNvcmUuVGFyZ2V0Ll9fZXZl
+bnRNb25pdG9yRXhjbHVkZVtldmVudFR5cGVdKQorICAgICAgICAgICAgeworICAgICAgICAgICAg
+ICAvLyAuLi4gdGhlbiBjYWxsIGl0LiAgSXQgbWF5IHByZXZlbnQgZGlzcGF0Y2hpbmcgdGhlIGV2
+ZW50LgorICAgICAgICAgICAgICBkaXNwYXRjaCA9IHF4LmNvcmUuVGFyZ2V0Ll9fZXZlbnRNb25p
+dG9yUHJlKHRoaXMsIG9iaiwgZXZ0KTsKKyAgICAgICAgICAgIH0KKworICAgICAgICAgICAgLy8g
+Q2FsbCBvYmplY3QgZnVuY3Rpb24sIGlmIG5vdCBwcmV2ZW50ZWQuCisgICAgICAgICAgICBpZiAo
+ZGlzcGF0Y2gpCisgICAgICAgICAgICB7CisgICAgICAgICAgICAgIGZ1bmMuY2FsbChvYmosIGV2
+dCk7CisKKyAgICAgICAgICAgICAgLy8gSWYgdGhlcmUgaXMgYW4gZXZlbnQgbW9uaXRvciAocG9z
+dCkgZnVuY3Rpb24gc3BlY2lmaWVkLi4uCisgICAgICAgICAgICAgIGlmIChxeC5jb3JlLlRhcmdl
+dC5fX2V2ZW50TW9uaXRvclBvc3QgJiYKKyAgICAgICAgICAgICAgICAgICEgcXguY29yZS5UYXJn
+ZXQuX19ldmVudE1vbml0b3JFeGNsdWRlW2V2ZW50VHlwZV0pCisgICAgICAgICAgICAgIHsKKyAg
+ICAgICAgICAgICAgICAvLyAuLi4gdGhlbiBjYWxsIGl0LgorICAgICAgICAgICAgICAgIHF4LmNv
+cmUuVGFyZ2V0Ll9fZXZlbnRNb25pdG9yUG9zdCh0aGlzLCBvYmosIGV2dCk7CisgICAgICAgICAg
+ICAgIH0KKyAgICAgICAgICAgIH0KICAgICAgICAgICB9CiAgICAgICAgIH0KICAgICAgIH0K
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>161</attachid>
+            <date>2007-05-17 22:48:00 +0200</date>
+            <delta_ts>2007-05-17 22:48:10 +0200</delta_ts>
+            <desc>MEventMonitor Mixin</desc>
+            <filename>MEventMonitor.js</filename>
+            <type>application/x-javascript</type>
+            <size>5587</size>
+            <attacher>info</attacher>
+            
+              <data encoding="base64">LyogKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqCgogICBxb294ZG9vIC0gRXZlbnRNb25pdG9yIE1peGluCiAgIHBh
+cnQgb2YgdGhlIFF4VHJhbnNmb3JtZXIgcHJvamVjdAoKICAgaHR0cDovL3F4dHJhbnNmb3JtZXIu
+c291cmNlZm9yZ2UubmV0CgogICBDb3B5cmlnaHQ6CiAgICAgMjAwNyB0aGUgYXV0aG9ycwoKICAg
+TGljZW5zZToKICAgICBMR1BMOiBodHRwOi8vd3d3LmdudS5vcmcvbGljZW5zZXMvbGdwbC5odG1s
+CiAgICAgRVBMOiBodHRwOi8vd3d3LmVjbGlwc2Uub3JnL29yZy9kb2N1bWVudHMvZXBsLXYxMC5w
+aHAKICAgICBTZWUgdGhlIExJQ0VOU0UgZmlsZSBpbiB0aGUgcHJvamVjdCdzIHRvcC1sZXZlbCBk
+aXJlY3RvcnkgZm9yIGRldGFpbHMuCgogICBBdXRob3JzOgogICAgICogQ2hyaXN0aWFuIEJvdWxh
+bmdlcgoKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqICovCgovKiAqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKCiNtb2R1bGUoaW8u
+ZGF0YWJpbmRpbmcpCgoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKiogKi8KCi8qKgogKiBBZGRzIG1ldGhvZHMgbmVj
+ZXNzYXJ5IGZvciBtb25pdG9yaW5nIGV2ZW50cyB0aGF0IGFyZSBiZWluZyBkaXNwYXRjaGVkCiAq
+IFRoaXMgd2lsbCByZXN1bHQgaW4gYSBzbWFsbCBwZXJmb3JtYWNlIGxvc3MsIGJ1dCB3aWxsIGVu
+YWJsZSB0byBsaXN0ZW4gCiAqIGZvciBldmVudHMgd2l0aG91dCBrbm93aW5nIHdoZXJlIHRoZXkg
+Y29tZSBmcm9tCiAqIAogKi8KcXguTWl4aW4uZGVmaW5lKCJxeC5pby5kYXRhYmluZGluZy5NRXZl
+bnRNb25pdG9yIiwKewogIC8qCiAgKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKICAgICBNRU1CRVJTCiAg
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioKICAqLwoKICBtZW1iZXJzIDoKICB7CiAgICAKICAgIC8qKgog
+ICAgICogZ2V0cyB0aGUgaGFzaCBtYXAgb2YgZXZlbnQgbW9uaXRvcnMKICAgICAqIEByZXR1cm4g
+e09iamVjdH0gCiAgICAgKiBAdHlwZSBtZW1iZXIKICAgICAqLwogICAgX2dldEV2ZW50TW9uaXRv
+cnMgOiBmdW5jdGlvbigpCiAgICB7CiAgICAgICAgLy8gaW5pdGlhbGl6ZSBoYXMgbWFwIHNpbmNl
+IHdlIGNhbm5vdCBhZGQgc3RhdGljcyBieSBtaXhpbgogICAgICAgIGlmICggISBxeC5jb3JlLlRh
+cmdldC5fZXZlbnRNb25pdG9ycyApIAogICAgICAgIHsKICAgICAgICAgIHF4LmNvcmUuVGFyZ2V0
+Ll9ldmVudE1vbml0b3JzID0ge307CiAgICAgICAgfQogICAgICAgIHJldHVybiBxeC5jb3JlLlRh
+cmdldC5fZXZlbnRNb25pdG9yczsgCiAgICB9LAogICAgCiAgICAvKioKICAgICAqIHJlZ2lzdGVy
+cyBhbiBldmVudCBtb25pdG9yCiAgICAgKiBAcGFyYW0gZmlsdGVyIHtTVHJpbmd9IE5hbWUgb2Yg
+ZXZlbnQsIGNhbiBiZSB0cnVuY2F0ZWQgYnkgKgogICAgICogQHBhcmFtIGNhbGxiYWNrRnVuYyB7
+RnVuY3Rpb259IENhbGxiYWNrIEZ1bmN0aW9uCiAgICAgKiBAcGFyYW0gY29udGV4dCB7T2JqZWN0
+fSBUaGUgZXhlY3V0aW9uIGNvbnRleHQgb2YgdGhlIGNhbGxiYWNrIChpLmUuICJ0aGlzIikKICAg
+ICAqIEByZXR1cm4ge0Jvb2xlYW59IFN1Y2Nlc3MKICAgICAqIEB0eXBlIG1lbWJlcgogICAgICov
+CiAgICByZWdpc3RlckV2ZW50TW9uaXRvciA6IGZ1bmN0aW9uKGZpbHRlcixoYW5kbGVyLGNvbnRl
+eHQpCiAgICB7CiAgICAgIGlmICggISBmaWx0ZXIgfHwgdHlwZW9mIGhhbmRsZXIgIT0gImZ1bmN0
+aW9uIiApCiAgICAgIHsKICAgICAgICB0aGlzLmVycm9yICgiSW52YWxpZCBldmVudCBtb25pdG9y
+IHBhcmFtZXRlcnMhIik7CiAgICAgICAgcmV0dXJuIGZhbHNlOwogICAgICB9CiAgICAgIAogICAg
+ICB2YXIgZW0gPSB0aGlzLl9nZXRFdmVudE1vbml0b3JzKCk7CiAgICAgIAogICAgICBpZiAodGhp
+cy5oYXNFdmVudE1vbml0b3IoZmlsdGVyKSkKICAgICAgewogICAgICAgIGlmICggdGhpcy5oYXNF
+dmVudE1vbml0b3IoZmlsdGVyLGhhbmRsZXIpICkKICAgICAgICB7CiAgICAgICAgICB0aGlzLndh
+cm4gKCJFdmVudCBtb25pdG9yIGFscmVhZHkgYXR0YWNoZWQ6ICIgKyBmaWx0ZXIpOwogICAgICAg
+ICAgcmV0dXJuIGZhbHNlOwogICAgICAgIH0KICAgICAgICBlbVtmaWx0ZXJdLnB1c2goe2hhbmRs
+ZXI6aGFuZGxlcixjb250ZXh0OmNvbnRleHR9KTsKICAgICAgICByZXR1cm4gdHJ1ZTsKICAgICAg
+fQogICAgICBlbHNlCiAgICAgIHsKICAgICAgICBlbVtmaWx0ZXJdID0gW3toYW5kbGVyOmhhbmRs
+ZXIsY29udGV4dDpjb250ZXh0fV07CiAgICAgICAgcmV0dXJuIHRydWU7CiAgICAgIH0KICAgIH0s
+ICAgIAogICAgCiAgICAvKioKICAgICAqIGNoZWNrcyBpZiBldmVudCBtb25pdG9yIGlzIGFscmVh
+ZHkgcHJlc2VudAogICAgICogaWYgeW91IHN1cHBseSB0aGUgY2FsbGJhY2sgZnVuY3Rpb24sIG1h
+dGNoIG9ubHkgdGhlIGV4YWN0IGV2ZW50IG1vbml0b3IKICAgICAqIG90aGVyd2lzZSBtYXRjaCBh
+bGwgbW9uaXRvcnMgdGhhdCBoYXZlIHRoZSBnaXZlbiBmaWx0ZXIKICAgICAqIEBwYXJhbSBmaWx0
+ZXIge1N0cmluZ30gTmFtZSBvZiBldmVudCwgY2FuIGJlIHRydW5jYXRlZCBieSAqCiAgICAgKiBA
+cGFyYW0gaGFuZGxlciB7RnVuY3Rpb259IENhbGxiYWNrIEZ1bmN0aW9uCiAgICAgKiBAdHlwZSBt
+ZW1iZXIKICAgICAqIEByZXR1cm4ge0Jvb2xlYW59IFdoZXRoZXIgbW9uaXRvciBpcyBwcmVzZW50
+IG9yIG5vdAogICAgICovCiAgICBoYXNFdmVudE1vbml0b3IgOiBmdW5jdGlvbihmaWx0ZXIsIGhh
+bmRsZXIpCiAgICB7CiAgICAgICB2YXIgZW0gPSB0aGlzLl9nZXRFdmVudE1vbml0b3JzKCk7CiAg
+ICAgICAKICAgICAgIGlmICggISBlbVtmaWx0ZXJdIHx8IGVtW2ZpbHRlcl0ubGVuZ3RoID09IDAg
+KSAKICAgICAgIHsKICAgICAgICAgcmV0dXJuIGZhbHNlOwogICAgICAgfQogICAgICAgCiAgICAg
+ICBpZiAoIGhhbmRsZXIgKQogICAgICAgewogICAgICAgICBmb3IgKCB2YXIgaT0wOyBpIDwgZW1b
+ZmlsdGVyXS5sZW5ndGg7IGkrKykKICAgICAgICAgewogICAgICAgICAgIGlmICggaGFuZGxlciAm
+JiBlbVtmaWx0ZXJdW2ldLmhhbmRsZXIgPT0gaGFuZGxlciApCiAgICAgICAgICAgewogICAgICAg
+ICAgICAgcmV0dXJuIHRydWU7CiAgICAgICAgICAgfQogICAgICAgICB9CiAgICAgICAgIHJldHVy
+biBmYWxzZTsKICAgICAgIH0KICAgICAgIHJldHVybiB0cnVlOwogICAgfSwKCiAgICAvKioKICAg
+ICAqIHJlbW92ZXMgYW4gZXZlbnQgbW9uaXRvcgogICAgICogaWYgeW91IHN1cHBseSB0aGUgY2Fs
+bGJhY2sgZnVuY3Rpb24sIHJlbW92ZSBvbmx5IHRoZSBleGFjdCBldmVudCBtb25pdG9yCiAgICAg
+KiBvdGhlcndpc2UgcmVtb3ZlIGFsbCBtb25pdG9ycyB0aGF0IGhhdmUgdGhlIGdpdmVuIGZpbHRl
+cgogICAgICogQHBhcmFtIGZpbHRlciB7U3RyaW5nfSBOYW1lIG9mIGV2ZW50LCBjYW4gYmUgdHJ1
+bmNhdGVkIGJ5ICoKICAgICAqIEBwYXJhbSBoYW5kbGVyIHtGdW5jdGlvbn0gQ2FsbGJhY2sgRnVu
+Y3Rpb24KICAgICAqIEB0eXBlIG1lbWJlcgogICAgICogQHJldHVybiB7Qm9vbGVhbn0gV2hldGhl
+ciBtb25pdG9yIHdhcyByZW1vdmVkIG9yIG5vdAogICAgICovCiAgICByZW1vdmVFdmVudE1vbml0
+b3IgOiBmdW5jdGlvbihmaWx0ZXIsIGhhbmRsZXIpCiAgICB7CiAgICAgICB2YXIgZW0gPSB0aGlz
+Ll9nZXRFdmVudE1vbml0b3JzKCk7CiAgICAgICAKICAgICAgIGlmICggISBlbVtmaWx0ZXJdICkg
+CiAgICAgICB7CiAgICAgICAgIHJldHVybiBmYWxzZTsKICAgICAgIH0KICAgICAgIAogICAgICAg
+aWYgKCBoYW5kbGVyICkKICAgICAgIHsgICAgICAgCiAgICAgICAgIGZvciAodmFyIGk9MDsgaTxl
+bVtmaWx0ZXJdLmxlbmd0aDsgaSsrKQogICAgICAgICB7CiAgICAgICAgICAgaWYgKCBlbVtmaWx0
+ZXJdW2ldLmhhbmRsZXIgPT0gaGFuZGxlciApCiAgICAgICAgICAgewogICAgICAgICAgICAgZW1b
+ZmlsdGVyXS5zcGxpY2UoaSwxKTsKICAgICAgICAgICAgIHJldHVybiB0cnVlOwogICAgICAgICAg
+IH0KICAgICAgICAgfQogICAgICAgfQogICAgICAgZW1bZmlsdGVyXT1udWxsOwogICAgICAgcmV0
+dXJuIHRydWU7CiAgICB9LAogICAgCiAgICAvKioKICAgICAqIGNoZWNrcyB0aGUgZGlzcGF0Y2hl
+ZCBldmVudCBhbmQgY2FsbHMgcmVnaXN0ZXJlZCBldmVudCBtb25pdG9yCiAgICAgKiBAcGFyYW0g
+ZXZ0IHtxeC5ldmVudC50eXBlLkRhdGFFdmVudH0gZXZlbnQgd2hpY2ggaXMgYmVpbmcgZGlzcGF0
+Y2hlZAogICAgICogQHR5cGUgbWVtYmVyCiAgICAgKiBAcmV0dXJuIHt2b2lkfQogICAgICovICAg
+IAogICAgX19tb25pdG9yRXZlbnQgOiBmdW5jdGlvbihldnQpCiAgICB7CiAgICAgIHZhciBlbSA9
+IHRoaXMuX2dldEV2ZW50TW9uaXRvcnMoKTsKICAgICAgdmFyIHR5cGUgPSBldnQuZ2V0VHlwZSgp
+OwoKICAgICAgLy8gZXhhY3QgbWF0Y2gsIGZhc3Rlc3QKICAgICAgaWYgKCBlbVt0eXBlXSApCiAg
+ICAgIHsKICAgICAgICAgZm9yICggdmFyIGk9MDsgaSA8IGVtW3R5cGVdLmxlbmd0aDsgaSsrKQog
+ICAgICAgICB7CiAgICAgICAgICAgIHZhciBoYW5kbGVyID0gZW1bdHlwZV1baV0uaGFuZGxlcjsK
+ICAgICAgICAgICAgdmFyIGNvbnRleHQgPSBlbVt0eXBlXVtpXS5jb250ZXh0IHx8IHRoaXM7CiAg
+ICAgICAgICAgIC8vIGNhbGwgZXZlbnQgbW9uaXRvciBoYW5kbGVyCiAgICAgICAgICAgIGhhbmRs
+ZXIuY2FsbChjb250ZXh0LCBldnQpOwogICAgICAgICB9IAogICAgICAgICByZXR1cm4gdHJ1ZTsK
+ICAgICAgfQoKICAgICAgLy8gbWF0Y2ggZmlsdGVyLCBzbG93ZXIKICAgICAgZm9yICggdmFyIGtl
+eSBpbiBlbSApCiAgICAgIHsKICAgICAgICB2YXIgcG9zID0ga2V5LmluZGV4T2YoIioiKTsKICAg
+ICAgICBpZiAoIHBvcyA+IC0xICkgCiAgICAgICAgeyAgICAgICAgIAogICAgICAgICAgaWYgKCBw
+b3MgPT0gMSB8fCBrZXkuc3Vic3RyKCAwLCBwb3MgKSA9PSB0eXBlLnN1YnN0ciggMCwgcG9zICkg
+KQogICAgICAgICAgewogICAgICAgICAgICBmb3IgKCB2YXIgaT0wOyBpIDwgZW1ba2V5XS5sZW5n
+dGg7IGkrKykKICAgICAgICAgICAgewogICAgICAgICAgICAgIHZhciBoYW5kbGVyID0gZW1ba2V5
+XVtpXS5oYW5kbGVyOwogICAgICAgICAgICAgIHZhciBjb250ZXh0ID0gZW1ba2V5XVtpXS5jb250
+ZXh0IHx8IHRoaXM7CiAgICAgICAgICAgICAgLy8gY2FsbCBldmVudCBtb25pdG9yIGhhbmRsZXIK
+ICAgICAgICAgICAgICBoYW5kbGVyLmNhbGwoY29udGV4dCwgZXZ0KTsKICAgICAgICAgICAgfQog
+ICAgICAgICAgfSAgICAgICAgICAgICAKICAgICAgICB9CiAgICAgIH0gIAogICAgfQogIH0KfSk7
+Cg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="1" ispatch="0" isprivate="0" isurl="0">
+            <attachid>163</attachid>
+            <date>2007-05-20 00:14:00 +0200</date>
+            <delta_ts>2007-05-20 01:07:51 +0200</delta_ts>
+            <desc>messagebus package to be put into source/class/qx - proof of concept only - code is buggy</desc>
+            <filename>messagebus.zip</filename>
+            <type>application/zip</type>
+            <size>4715</size>
+            <attacher>info</attacher>
+            
+              <data encoding="base64">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
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>164</attachid>
+            <date>2007-05-20 01:07:00 +0200</date>
+            <delta_ts>2007-05-20 01:07:51 +0200</delta_ts>
+            <desc>messagebus package to be put into source/class/qx</desc>
+            <filename>messagebus.zip</filename>
+            <type>application/zip</type>
+            <size>4709</size>
+            <attacher>info</attacher>
+            
+              <data encoding="base64">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
+</data>
+
+          </attachment>
+      
+
+    </bug>

@@ -1,0 +1,91 @@
+<bug>
+          <bug_id>4548</bug_id>
+          
+          <creation_ts>2011-01-12 17:09:00 +0100</creation_ts>
+          <short_desc>Possible negative value assignement to BoxDiv decoration</short_desc>
+          <delta_ts>2011-03-07 08:05:13 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>1.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.3.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mathias Bothe">mathiasbothe</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>22195</commentid>
+            <who name="Mathias Bothe">mathiasbothe</who>
+            <bug_when>2011-01-12 17:09:07 +0100</bug_when>
+            <thetext>Possible negative value assignement to BoxDiv decoration causes &#39;Invalid argument&#39; in Internet Explorer.
+
+Affected code:
+qx.ui.decoration.BoxDiv:195+
+  var innerWidth = width - edges.left - edges.right;
+  element.childNodes[1].style.width = innerWidth + &quot;px&quot;;
+
+qx.ui.decoration.BoxDiv:200+
+  var innerHeight = height - edges.top - edges.bottom;
+  element.childNodes[1].style.height = innerHeight + &quot;px&quot;;
+
+Incoming width equaled 0. After subtracting the edges&#39; values a negative width was assigned to element.childNodes[1].style.height causing &#39;Invalid argument&#39;. This works fine in FF, Safari, Chrome though. It is possible that this might be a follow up error by a previous patch.
+
+Implementation background info: The error occured in IE after trying to render a progess indicator of the qx.ui.Indicator widget. The indicator was given an HBox decorator.
+
+Patching the code as followed fixed the issue for me:
+var innerWidth = width - edges.left - edges.right;
+//PATCH start
+// Ensuring that no negative value is set fixes an issue
+// in IE where a negative innerWidth led to &#39;Invalid argument&#39;.
+innerWidth = innerWidth &gt; 0 ? innerWidth : 0;
+//PATCH end
+element.childNodes[1].style.width = innerWidth + &quot;px&quot;;
+
+** same with innerHeight **</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22208</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-01-13 08:16:24 +0100</bug_when>
+            <thetext>Thanks for the report. Seems like the normalization is missing in that decorator. Have just recently seen it in other decorators so we should add it here too!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22573</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-02-04 16:45:55 +0100</bug_when>
+            <thetext>Thanks for the bug and the patch.
+
+trunk: r24902
+1.3.x: r24903</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

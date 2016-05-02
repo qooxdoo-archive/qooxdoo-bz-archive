@@ -1,0 +1,212 @@
+<bug>
+          <bug_id>4071</bug_id>
+          
+          <creation_ts>2010-09-10 17:36:00 +0200</creation_ts>
+          <short_desc>Add data: URL Support for Images</short_desc>
+          <delta_ts>2014-03-03 15:26:45 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>1.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.4</target_milestone>
+          <dependson>4555</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>carsten.lergenmueller</cc>
+    
+    <cc>daniel.wagner</cc>
+    
+    <cc>info</cc>
+    
+    <cc>martin.wittemann</cc>
+    
+    <cc>qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20135</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-09-10 17:36:27 +0200</bug_when>
+            <thetext>Add support for &quot;data:&quot; URLs.
+
+Many browser are now supporting data: URLs which allow to represent an image as 
+a base64 hex string. For example:
+
+  &lt;img src=&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA...&lt;base64 string&gt;&quot; 
+width=&quot;32&quot; height=&quot;32&quot;&gt;
+
+includes a png image on a web site, giving its base64 encoded contents. It has 
+to be evaluated what other use cases besides &lt;img&gt; tags allow data: encoded 
+images (e.g. background images, ...).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20161</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-09-14 14:43:49 +0200</bug_when>
+            <thetext>Here is an outline for an implementation:
+
+1) Generate base64 versions of existing images
+2) Generate a representation for them usable for the qooxdoo run time
+3) Use them in the qooxdoo run time
+
+conc. 1)
+Converting individual images to base64 with the generator is trivial. But 
+simply having an image like &quot;up.png&quot; with its base64 variant &quot;up.b64&quot; would 
+provide little advantage. The qooxdoo client would still have to load one or 
+the other to get at the image data, and then base64 encoded data is about 
+double the original size, so loading up.b64 rather than up.png has no apparent 
+advantage.
+Which brings us to the next point.
+
+conc. 2)
+data: encoded images only bring advantage when many of them are combined in a 
+single file, so you save on net requests. The format of such a file could be a 
+special Json:
+{
+  &quot;combined.json&quot; :   // the resource id of the containing file
+  {
+    &quot;embedded.png&quot; :  // the resource id of the embedded file
+    {
+      &quot;type&quot;     : &quot;png&quot;,
+      &quot;width&quot;    : 32,
+      &quot;height&quot;   : 32,
+      &quot;encoding&quot; : &quot;base64&quot;,
+      &quot;data&quot;     : &quot;iVBORw0KGgoAAAANS...&lt;base64 string&gt;&quot;
+    },
+    ...
+  }  
+}
+The file extension should be .json, to comply with qooxdoo conventions. The 
+generator could generate that with a variant of the &quot;combine-images&quot; config key.
+
+A Json file like that could be treated pretty much like other combined images, 
+as it serves essentially the same purpose. You could have a corresponding .meta 
+file which lists the contained images (which would duplicate some of the meta 
+information from the .json file, but just for the sake of common processing in 
+the generator). The resource infos (as passed to the generated application) 
+would mirror that of other combined images. The embedded images are listed as 
+being part of the combined image, and the combined image has its own entry:
+{
+  &quot;embedded.png&quot; : [32, 32, &quot;png&quot;, &quot;mylib&quot;, [&quot;combined.json&quot;, -1, -1]], // as 
+offsets are not used here
+  ...
+  &quot;combined.json&quot; : [-1, -1, &quot;json&quot;]  // as image dimensions are not used here
+}
+
+conc. 3)
+The qooxdoo run time would look up individual images as usual (like 
+&quot;embedded.png&quot; in the example). It would find it is part of a combined image. 
+It would look up the combined image, and find that it is a json file with 
+base64 encoded images (maybe the resource entry would need an &quot;encoding&quot; 
+attribute for that). If it finds it can use this combined image, it would load 
+it, extract the image attributes from the Json including the data string, and 
+use it for the DOM, e.g. in the form of an &lt;img&gt; element as indicated in the 
+bug summary.
+
+
+Todo&#39;s:
+* Create Json structures as described in 2), and see what the size penality (w/ 
+and w/o gzip) would be.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20176</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-09-15 10:14:09 +0200</bug_when>
+            <thetext>Thanks for the details explantation of this, thomas. Would be interesting to know what the size differences we are talking about after using gzip.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21299</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-15 14:37:00 +0100</bug_when>
+            <thetext>*** Bug 2363 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23109</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-07 15:04:30 +0100</bug_when>
+            <thetext>There is a first draft implementation in trunk. 
+
+For one thing you can now create (pseudo-) combined images in a base64 
+encoding. Use the standard &quot;combine-image&quot; action key, with 
+&#39;combine-image/&lt;output_file&gt;.b64/type&#39; set to &quot;base64&quot;. Running such a job will 
+create a Json output file. a map with the embedded images as key, and a set of 
+information for each, like width, height, original image format, and a &#39;data&#39; 
+entry that holds the base64-encoded representation of the image. Remember not 
+to combine an input image in both a normal and a base64 combined image (only 
+one can be registered with the app).
+
+As known from literature 
+(http://en.wikipedia.org/wiki/Data:_URL#Disadvantages), combined images created 
+in this way are approx. 35% larger than the corresponding binary combined 
+image, which reduces to +2-3% under gzip.
+
+I&#39;ve also add support for base64 data urls on the framework side, modifying the 
+ResourceManager and the qx.bom.element.Decoration classes. Biggest change is 
+the preloading of the base64 combined images, so the data is there when the 
+Decoration class needs it. Base64 images are now used if they are provided by a 
+base64 combined image, and if the client supports clipped images at all.
+
+With r25333.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23173</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-09 12:51:31 +0100</bug_when>
+            <thetext>The approach with XHR-loading the combined base64 images did not work out. 
+While it worked in the source version, in the build version the timing was not 
+getting right, to have the combined images loaded before the ResourceManager 
+tries to answer the first request. As a consequence, the whole primary 
+Feedreader GUI was rendered using the fall-back, namely the individual images.
+
+So I changed the strategy from pre-loading files to incorporating the combined 
+images directly in the loader/package data (qx.$$resources, qx.$$packageData). 
+This works nicely as far as timing is concerned. As a cost, the script files 
+have to carry the additional payload. This is especially crucial if an 
+application uses parts, as resource information is duplicated with every part 
+that needs it, so now the base64 combined data is duplicated as well.
+
+But I think we can use the current state as a start, and gain some feedback, as 
+to what the experiences with this approach will be. Optimizations can then be 
+addressed later. The Feedreader has completely be migrated to use base64 
+combined images, and all tests look good.
+
+Hence, I&#39;m closing this bug. If major issues arise this bug can be re-opened 
+or, even better, dedicated new bugs can be created.
+
+With r25429.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39219</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:45 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

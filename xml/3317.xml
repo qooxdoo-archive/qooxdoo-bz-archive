@@ -1,0 +1,129 @@
+<bug>
+          <bug_id>3317</bug_id>
+          
+          <creation_ts>2010-01-11 17:05:00 +0100</creation_ts>
+          <short_desc>Improve Cache Usage during Build Runs</short_desc>
+          <delta_ts>2014-03-03 15:24:21 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.system</component>
+          <version>1.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.0.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>16115</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-01-11 17:05:00 +0100</bug_when>
+            <thetext>A normal build run does not optimally utilize the cache, due to variant 
+processing and cache id&#39;s:
+
+(a) the cache id&#39;s in generator.code.TreeLoader are inconsistent; the 
+unoptimized tree might be written twice, under different cache id&#39;s
+
+Classes that are not dependent on variants at all, nevertheless are processed 
+twice:
+
+(b) their tree is generated for the variants, although it is identical to the 
+unoptimized tree, and saved under a different name, thereby doubling identical 
+information on the cache
+
+(c) the same applies to dependency information: the dependency list(s) of a 
+class depend on the variants currently in effect; dependency information of a 
+class can be re-used if it is not affected by a specific variant (because this 
+variant isn&#39;t used in the class); ignoring this results again in the same 
+(dependency) information being addressed under different cache id&#39;s; this way, 
+equivalent information is not being retreived from the cache (on reads), and 
+redundantly written to the cache (on writes).
+
+As an example, consider the variants qx.debug and qx.client, which are 
+frequently used in the framework. There are about 100 classes that use 
+qx.debug, and about 90 classes that use qx.client, making a total of around 170 
+classes using either one (the two sets are overlapping). That means, from the 
+around 600 framework classes, 430 neither use qx.debug nor qx.client. Under 
+either variant, their tree is unchanged, as consequently is their dependency 
+information. E.g. for build runs that commonly specify qx.debug:off, their tree 
+and dependency information from the unoptimized code could be re-used. This 
+would result in less processing time and less cache disk space.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16116</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-01-11 17:06:42 +0100</bug_when>
+            <thetext>up prio, to 1.0.1, to me, working on it</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16117</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-01-11 18:03:07 +0100</bug_when>
+            <thetext>(a) has been fixed by straightening the inconsisten cache id&#39;s.
+
+To address (b) and (c), the basic solution idea is
+- to get the list of supported variants from the class&#39; (full) source tree (ie. 
+the variant keys that are actually used in the class like &quot;qx.debug&quot; or 
+&quot;qx.client&quot;)
+- when variant-optimized builds are requested for this class, remove all those 
+variant keys that are not in the class&#39; list of supported keys from the variant 
+set; the remaining variants are used as usual to get an optimized tree of the 
+class (either by a cache read or built from scratch) and derive corresponding 
+dependency information from that.
+
+This way, both trees as well as dependency information can be re-used over a 
+variety of variants that do not have an impact on a specific class. If a class 
+e.g. uses &quot;qx.debug&quot;, but variants are created of the application with 
+{qx.debug:[&quot;on&quot;], &quot;qx.client&quot;:[&quot;mshtml&quot;, &quot;gecko&quot;]}, a tree has to be created 
+for the variant qx.debug:on, but can then be used unaltered for the 
+combinations with qx.client:mshtml and qx.client:gecko.
+
+
+First measurements indicate a 10-12% speedup over the entire build run of a 
+standard app (Feedreader); the number of cache files for such a build run 
+decreased over 40% (from 1286 down to 748).
+
+With r21310.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16293</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-01-19 19:44:55 +0100</bug_when>
+            <thetext>Results look good. - Closing this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38356</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:21 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

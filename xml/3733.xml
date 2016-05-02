@@ -1,0 +1,288 @@
+<bug>
+          <bug_id>3733</bug_id>
+          
+          <creation_ts>2010-05-26 16:22:00 +0200</creation_ts>
+          <short_desc>Table: hover effect for rows</short_desc>
+          <delta_ts>2014-03-03 08:46:58 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tino Butz">tinobutz</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>Matthias.Hellriegel</cc>
+    
+    <cc>qooxdoo-bugs</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>18490</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2010-05-26 16:22:37 +0200</bug_when>
+            <thetext>Please add a hover effect for table rows. When the user hovers over the table rows, the row beneath the mouse should change it color. The color should be customizable in the theme file.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18491</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-05-26 17:43:08 +0200</bug_when>
+            <thetext>Until someone gets to implementing your requested feature (and I don&#39;t know that it will end up high on the priority list), you can implement it yourself doing something like this (kludge):
+
+
+qx.Class.define(&quot;custom.RowRenderer&quot;,
+                {
+                  extend : qx.ui.table.rowrenderer.Default,
+                  
+                  members :
+                  {
+                    getRowClass : function(rowInfo)
+                    {
+                      var id = this.toHashCode() + &quot;_&quot; + rowInfo.row;
+                      // intentionally close class=&#39;, add an id=&#39;&#39; and an onmouseover=&#39;
+                      // but leave the latter open, as the closing quote for the orignal class=&#39;
+                      // will close it.
+                      return(
+                        &#39;&quot; &#39; +
+                        &#39;id=&quot;&#39; + id + &#39;&quot; &#39; +
+                        &#39;onmouseover=&quot;document.getElementById(\&#39;&#39; + id + &#39;\&#39;).style.textDecoration=\&#39;underline\&#39;;&quot; &#39; +
+                        &#39;onmouseout=&quot;document.getElementById(\&#39;&#39; + id + &#39;\&#39;).style.textDecoration=\&#39;none\&#39;;&#39;);
+                    }
+                  }
+                });
+
+table.setDataRowRenderer(new custom.RowRenderer);
+
+
+Note that it is indeed a kludge because it depends upon knowing that getRowClass() is called from pane/Pane.js while the HTML for a div is being created, such that Pane.js has just appended the string 
+
+  &lt;div class=&quot;
+
+(note ONLY an opening double-quote) so this kludge closes that opening quote and adds id, onmouseover, and onmouseout attributes to the HTML.
+
+If you append the above snippet to the playground Table example, you can see how it works.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18493</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-05-26 18:02:04 +0200</bug_when>
+            <thetext>No, that&#39;s pretty silly. Adding hover effects to table rows is a specific use case, so is probably not appropriate to code into the default row renderer, but it should still be much easier for a developer to add such effects himself. I&#39;ll add an getRowAttribute() method to make this easy for subclasses to override.
+
+To me.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18494</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-05-26 18:08:38 +0200</bug_when>
+            <thetext>New getRowAttributes() method added with r22257. A subclass of qx.ui.table.rowrenderer.Default can now override the getRowAttributes() method, and do something like this:
+
+qx.Class.define(&quot;custom.RowRenderer&quot;,
+                {
+                  extend : qx.ui.table.rowrenderer.Default,
+                  
+                  members :
+                  {
+                    getRowAttributes : function(rowInfo)
+                    {
+                      var id = this.toHashCode() + &quot;_&quot; + rowInfo.row;
+                      return(
+                        &#39;id=&quot;&#39; + id + &#39;&quot; &#39; +
+                        &#39;onmouseover=&quot;document.getElementById(\&#39;&#39; + id + &#39;\&#39;).style.textDecoration=\&#39;underline\&#39;;&quot; &#39; +
+                        &#39;onmouseout=&quot;document.getElementById(\&#39;&#39; + id + &#39;\&#39;).style.textDecoration=\&#39;none\&#39;;&quot;&#39;);
+                    }
+                  }
+                });
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18495</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2010-05-26 18:23:45 +0200</bug_when>
+            <thetext>Thanks a lot Derrell. I think this solution will do the trick. What do you think Jonathan?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18502</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2010-05-27 14:56:18 +0200</bug_when>
+            <thetext>I will add a getRowClass implementation to the framework.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18503</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-05-27 15:02:31 +0200</bug_when>
+            <thetext>There already is a getRowClass() method. What are you trying to do?
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18504</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2010-05-27 15:04:15 +0200</bug_when>
+            <thetext>Sorry, I mean &quot;getRowAttributes()&quot;. We want to have some default in the
+framework itself.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18505</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-05-27 15:13:57 +0200</bug_when>
+            <thetext>Ok. Be careful, though. That&#39;s going to be a behavior change. I recommend _not_ having the behavior change be the default, but rather adding a property that controls it.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18531</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2010-05-31 10:17:59 +0200</bug_when>
+            <thetext>to me.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18532</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2010-05-31 10:23:22 +0200</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18619</commentid>
+            <who name="Matthias Hellriegel">Matthias.Hellriegel</who>
+            <bug_when>2010-06-09 16:45:53 +0200</bug_when>
+            <thetext>Thanks to Jonathan: this works for me: http://tinyurl.com/2wszh3x
+
+The property &quot;focusCellOnMouseMove&quot; has to be true:
+table.setFocusCellOnMouseMove(true);
+
+When this property is set to true, in the map &quot;rowinfo&quot; of the row renderer the
+attribute &quot;focusedRow&quot; is set correctly. Otherwise it is &quot;false&quot; every time.
+
+In my opinion the bug is, that this attribute (&quot;focusedRow&quot;) depends on the
+property &quot;focusCellOnMouseMove&quot;. There is a property in
+&quot;qx.ui.table.rowrenderer.Default&quot; called &quot;highlightFocusRow&quot;, which could be
+used to enable or disable the highlight behaviour. The attribut &quot;focusedRow&quot;
+should always be correct.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18620</commentid>
+              <attachid>748</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-06-09 16:59:26 +0200</bug_when>
+            <thetext>Created attachment 748
+patch to correct the deficiency
+
+I agree. The row and cell renderers needs access to the row/col numbers, regardless of whether the focused cell is being displayed. This (untested) patch should fix that.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18711</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2010-06-16 10:38:49 +0200</bug_when>
+            <thetext>.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18713</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2010-06-16 10:55:28 +0200</bug_when>
+            <thetext>Need to check the patch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18825</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2010-06-21 14:44:18 +0200</bug_when>
+            <thetext>Enhancements back to the pool.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35736</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:58 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>748</attachid>
+            <date>2010-06-09 16:59:00 +0200</date>
+            <delta_ts>2010-06-09 16:59:26 +0200</delta_ts>
+            <desc>patch to correct the deficiency</desc>
+            <filename>x.patch</filename>
+            <type>text/plain</type>
+            <size>2323</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS90YWJsZS9w
+YW5lL1Njcm9sbGVyLmpzIGIvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L3VpL3Rh
+YmxlL3BhbmUvU2Nyb2xsZXIuanMKaW5kZXggYzk0MWUwZS4uOWQyYThkMyAxMDA2NDQKLS0tIGEv
+cW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L3VpL3RhYmxlL3BhbmUvU2Nyb2xsZXIu
+anMKKysrIGIvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L3VpL3RhYmxlL3BhbmUv
+U2Nyb2xsZXIuanMKQEAgLTgyMyw4ICs4MjMsOSBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LnVpLnRh
+YmxlLnBhbmUuU2Nyb2xsZXIiLAogICAgICAgICAgICAgICAgICAgKChlLmdldFdoZWVsRGVsdGEo
+KSAqIGZhY3RvcikgKiB0YWJsZS5nZXRSb3dIZWlnaHQoKSk7CiAgICAgICB0aGlzLl9fdmVyU2Ny
+b2xsQmFyLnNjcm9sbFRvKHZhbHVlKTsKIAotICAgICAgLy8gVXBkYXRlIHRoZSBmb2N1cwotICAg
+ICAgaWYgKHRoaXMuX19sYXN0TW91c2VQYWdlWCAmJiB0aGlzLmdldEZvY3VzQ2VsbE9uTW91c2VN
+b3ZlKCkpIHsKKyAgICAgIC8vIFVwZGF0ZSB0aGUgZm9jdXNlZCBjZWxsIGZvciBhY2Nlc3MgYnkg
+cm93IHJlbmRlcmVyIChhbmQgZm9jdXMKKyAgICAgIC8vIGluZGljYXRvciBpZiBlbmFibGVkKQor
+ICAgICAgaWYgKHRoaXMuX19sYXN0TW91c2VQYWdlWCkgewogICAgICAgICB0aGlzLl9mb2N1c0Nl
+bGxBdFBhZ2VQb3ModGhpcy5fX2xhc3RNb3VzZVBhZ2VYLCB0aGlzLl9fbGFzdE1vdXNlUGFnZVkp
+OwogICAgICAgfQogCkBAIC05ODksMTEgKzk5MCwxMSBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LnVp
+LnRhYmxlLnBhbmUuU2Nyb2xsZXIiLAogICAgICAgdGhpcy5fX2xhc3RNb3VzZVBhZ2VZID0gcGFn
+ZVk7CiAKICAgICAgIHZhciByb3cgPSB0aGlzLl9nZXRSb3dGb3JQYWdlUG9zKHBhZ2VYLCBwYWdl
+WSk7Ci0gICAgICBpZiAocm93ICE9IG51bGwgJiYgdGhpcy5fZ2V0Q29sdW1uRm9yUGFnZVgocGFn
+ZVgpICE9IG51bGwpIHsKLSAgICAgICAgLy8gVGhlIG1vdXNlIGlzIG92ZXIgdGhlIGRhdGEgLT4g
+dXBkYXRlIHRoZSBmb2N1cwotICAgICAgICBpZiAodGhpcy5nZXRGb2N1c0NlbGxPbk1vdXNlTW92
+ZSgpKSB7Ci0gICAgICAgICAgdGhpcy5fZm9jdXNDZWxsQXRQYWdlUG9zKHBhZ2VYLCBwYWdlWSk7
+Ci0gICAgICAgIH0KKyAgICAgIGlmIChyb3cgIT0gbnVsbCAmJiB0aGlzLl9nZXRDb2x1bW5Gb3JQ
+YWdlWChwYWdlWCkgIT0gbnVsbCkgCisgICAgICB7CisgICAgICAgIC8vIFRoZSBtb3VzZSBpcyBv
+dmVyIHRoZSBkYXRhIC0+IHVwZGF0ZSB0aGUgZm9jdXNlZCBjZWxsIGZvciB1c2UgYnkKKyAgICAg
+ICAgLy8gdGhlIHJvdyByZW5kZXJlciAoYW5kIGZvY3VzIGluZGljYXRvciBpZiBlbmFibGVkKQor
+ICAgICAgICB0aGlzLl9mb2N1c0NlbGxBdFBhZ2VQb3MocGFnZVgsIHBhZ2VZKTsKICAgICAgIH0K
+ICAgICAgIHRoaXMuX19oZWFkZXIuc2V0TW91c2VPdmVyQ29sdW1uKG51bGwpOwogICAgIH0sCkBA
+IC0xMTIwLDcgKzExMjEsOCBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LnVpLnRhYmxlLnBhbmUuU2Ny
+b2xsZXIiLAogICAgICAgICAgIHRhYmxlLmdldFNlbGVjdGlvbk1hbmFnZXIoKS5oYW5kbGVNb3Vz
+ZURvd24ocm93LCBlKTsKICAgICAgICAgfQogCi0gICAgICAgIC8vIFRoZSBtb3VzZSBpcyBvdmVy
+IHRoZSBkYXRhIC0+IHVwZGF0ZSB0aGUgZm9jdXMKKyAgICAgICAgLy8gVGhlIG1vdXNlIGlzIG92
+ZXIgdGhlIGRhdGEgLT4gdXBkYXRlIHRoZSBmb2N1c2VkIGNlbGwgZm9yIHVzZSBieQorICAgICAg
+ICAvLyB0aGUgcm93IHJlbmRlcmVyIChhbmQgZm9jdXMgaW5kaWNhdG9yIGlmIGVuYWJsZWQpCiAg
+ICAgICAgIGlmICghIHRoaXMuZ2V0Rm9jdXNDZWxsT25Nb3VzZU1vdmUoKSkgewogICAgICAgICAg
+IHRoaXMuX2ZvY3VzQ2VsbEF0UGFnZVBvcyhwYWdlWCwgcGFnZVkpOwogICAgICAgICB9CkBAIC0y
+MjQ2LDYgKzIyNDgsMTEgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC51aS50YWJsZS5wYW5lLlNjcm9s
+bGVyIiwKICAgICAgKi8KICAgICBfdXBkYXRlRm9jdXNJbmRpY2F0b3IgOiBmdW5jdGlvbigpCiAg
+ICAgeworICAgICAgLy8gRG8gbm90IHVwZGF0ZSB0aGUgZm9jdXMgaW5kaWNhdG9yIGlmIG5vdCBz
+byBlbmFibGVkCisgICAgICBpZiAoISB0aGlzLmdldEZvY3VzQ2VsbE9uTW91c2VNb3ZlKCkpIHsK
+KyAgICAgICAgcmV0dXJuOworICAgICAgfQorCiAgICAgICB2YXIgdGFibGUgPSB0aGlzLmdldFRh
+YmxlKCk7CiAKICAgICAgIGlmICghdGFibGUuZ2V0RW5hYmxlZCgpKSB7Cg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

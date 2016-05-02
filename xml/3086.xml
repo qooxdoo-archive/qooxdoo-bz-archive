@@ -1,0 +1,137 @@
+<bug>
+          <bug_id>3086</bug_id>
+          
+          <creation_ts>2009-11-20 16:25:00 +0100</creation_ts>
+          <short_desc>Event registration issues while running a qooxdoo application in a new popup window</short_desc>
+          <delta_ts>2014-03-03 08:45:50 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christian Boulanger">info</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>14260</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2009-11-20 16:25:45 +0100</bug_when>
+            <thetext>The qooxdoo event system does not yet support multiple windows. See 
+
+http://n2.nabble.com/Native-Window-again-td3723200.html
+
+However, according to Fabian on the ML, the following code should work, which manually transfers the events registered in one window to the other window :
+
+var win = new qx.bom.Window.open(); 
+win.document.write(&quot;&lt;html&gt;&lt;body /&gt;&lt;/html&gt;&quot;); 
+win.document.close(); 
+
+var root = new qx.ui.root.Application(win.document); 
+
+// Create a button 
+var button1 = new qx.ui.form.Button(&quot;First Button&quot;,
+&quot;icon/22/apps/internet-web-browser.png&quot;); 
+
+// Add button to document at fixed coordinates 
+root.add(button1, 
+{ 
+  left : 100, 
+  top  : 50 
+}); 
+
+// Add an event listener 
+button1.addListener(&quot;execute&quot;, function(e) { 
+  alert(&quot;Hello World!&quot;); 
+}); 
+
+qx.ui.core.queue.Manager.flush(); 
+
+[ button1.getContainerElement(), button1.getContentElement()
+].forEach(function(el){ 
+  var domEl = el.getDomElement(); 
+  var listeners =
+qx.event.Registration.getManager(domEl).serializeListeners(domEl); 
+  qx.event.Registration.getManager(domEl).removeAllListeners(domEl); 
+  qx.event.Registration.getManager(win).importListeners(domEl,listeners); 
+},this); 
+qx.ui.core.queue.Manager.flush(); 
+
+but I get two errors &quot;There is no event handler for the event &#39;undefined&#39; on
+target &#39;undefined&#39;!&quot;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14327</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-23 16:09:50 +0100</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16516</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-27 16:30:59 +0100</bug_when>
+            <thetext>moved to target 1.0.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17345</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-17 14:07:21 +0100</bug_when>
+            <thetext>to Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19421</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-07-26 13:57:03 +0200</bug_when>
+            <thetext>I&#39;m sorry but this isn&#39;t as easy as Fabian thought. The code could be working but my Safari is rejecting DOM elements created by another window:
+
+WRONG_DOCUMENT_ERR: DOM Exception 4: A Node was used in a different document than the one that created it (that doesn&#39;t support it).
+
+So using a button in a different window would mean that the buttons needs to be created in the context of that window. Copying the qx over to the new window can not work because you have to create every (!!!) object with win.qx... for example. This can work for created objects from the developer but can&#39;t work if a qooxdoo class creates another qooxdoo object which is always the case for widgets. So fixing this is not only a minor thing, its a huge thing which most likely will affect the whole framework.
+
+Sorry, can&#39;t fix this for 1.1.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19422</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2010-07-26 14:31:31 +0200</bug_when>
+            <thetext>Too bad this is so complicated. Probably this needs to get solved at the level of qx.bom and qx.dom. Maybe one solution could be to switch the global document that is used for creating the DOM elements programmatically with a command, something like qx.bom.Document.setDocument(). 
+
+I hope that you&#39;ll be able to revisit the issue later. Thanks for looking into it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35311</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:45:50 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

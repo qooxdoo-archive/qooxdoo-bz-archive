@@ -1,0 +1,225 @@
+<bug>
+          <bug_id>294</bug_id>
+          
+          <creation_ts>2007-02-14 15:51:00 +0100</creation_ts>
+          <short_desc>Suggestions for tree API improvements</short_desc>
+          <delta_ts>2014-03-03 15:22:39 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.tree</component>
+          <version>0.6.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Hugh Gibson">hgibson</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>896</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2007-02-14 15:51:25 +0100</bug_when>
+            <thetext>Finding children folders, or sibling folders, is difficult in the TreeFullControl (probably tree as well).
+
+There is a sub-set of methods already that have &quot;Folder&quot; at the end. How about filling in the gaps:
+
+getChildrenFolders
+getNextSiblingFolder
+getPreviousSiblingFolder
+hasChildrenFolders (alias for hasContent)
+getDescendantFolders (alias for getItems)
+
+It seems to me that getFirstVisibleChildOfFolder/ getLastVisibleChildOfFolder are mis-named, as they call getFirstChild/ getLastChild on the container which ignores whether a child is visible or not. They could be renamed to: getFirstChildFolder and getLastChildFolder.
+
+These methods should be put into AbstractTreeElement or appropriate overloads created in all tree classes so you can call them from Tree.js, TreeFolder.js or TreeFile.js without any problems.
+
+There is an issue updating additional objects added via the TreeRowStructure system to TreeFullControl.
+
+I have:
+
+      var oTRS = qx.ui.treefullcontrol.TreeRowStructure.getInstance().newRow();
+      //
+      // Add all the items we need
+      //
+      oTRS.addIndent();                         // indentation and tree-lines
+      oTRS.addIcon(sImage, sImage);             // Icon
+      oTRS.addLabel(sTitle);                    // label
+      //
+      // All else should be right justified
+      //
+      var oSpacer = new qx.ui.basic.HorizontalSpacer();
+      oTRS.addObject(oSpacer, true);
+      //
+      // Add the unread counts
+      //
+      var oUnread = new qx.ui.basic.Label(sUnread);
+      -snip-
+      oTRS.addObject(oUnread, true);
+      var oTreeFolder = new qx.ui.treefullcontrol.TreeFolder(oTRS) 
+
+Now, it appears that if I have a tree folder that has child folders, then I have to access the &quot;unread&quot; label using:
+
+   var oUnread = oTreeFolder.getFirstChild().getLastChild();
+   
+However, if there are no child folders, then I have to access the unread label using:
+
+   var oUnread = oTreeFolder.getLastChild();
+   
+This is very poor. AbstractTreeElement has methods getIconObject, getIndentObject and getLabelObject - I suggest that we add getRowObjects which returns an array of all objects in the row, as well as getRowObject(nIndex) which returns the object with index nIndex.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>902</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2007-02-15 08:18:28 +0100</bug_when>
+            <thetext>See also bug 296 which has a suggestion for a new API to ensure that a selected node is visible.
+
+Maybe setSelected should by default open up the parent node(s). A flag could be used to turn the behaviour back to the present &quot;don&#39;t open up&quot;. 
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1868</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-07-06 17:18:32 +0200</bug_when>
+            <thetext>I think these API improvements are target of 0.8.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3297</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-06-12 16:52:23 +0200</bug_when>
+            <thetext>-&gt; me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3731</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-07-10 10:43:05 +0200</bug_when>
+            <thetext>I think we we could implement these methods in 0.8
+
+- getChildrenFolders: Returns an array of all direct child folders
+- getNextSiblingFolder: Returns the next sibling folder or null if none exists
+- getPreviousSiblingFolder: Returns the previous sibling folder or null if none exists
+- hasChildrenFolders: getChildrenFolders().length &gt; 0
+- getDescendantFolders: Recursively all decentent folders. Do we need this method?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3892</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-07-15 10:40:51 +0200</bug_when>
+            <thetext>The question is if these folder specific methods are really needed. I think in 
+the old version it was meant to have access to the children in some better way. 
+To filter the content of a folder into file/folder do not make a lot of sense 
+in my opinion. The methods
+
+* getChildren
+* add/remove
+* indexOf
+* addBefore/addAfter 
+
+etc. are already given by the MRemoteChildrenHandling.
+
+getFirstChild/getLastChild would be eventually nice. Hugh, can you update the 
+needs you have on the API?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3909</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-07-16 09:16:17 +0200</bug_when>
+            <thetext>The main problem is that there are two lots of containers in the tree, and especially tree full control: the list of children folders, and the list of items that are shown in the row including extra controls etc. Hence the need for two sets of API functions - some which refer to folders, and some which refer to row items. Yes, there are base level functions which refer to children but it&#39;s not clear which children are which. How can you justify this:
+
+&gt; Now, it appears that if I have a tree folder that has child folders, then I
+&gt; have to access the &quot;unread&quot; label using:
+&gt; 
+&gt;    var oUnread = oTreeFolder.getFirstChild().getLastChild();
+&gt; 
+&gt; However, if there are no child folders, then I have to access the unread label
+&gt; using:
+&gt; 
+&gt;    var oUnread = oTreeFolder.getLastChild();
+
+Hence my suggestion for a full set of functions which work with the folders to make it absolutely clear which is which.
+
+In our code we have to navigate through a tree in display order, looking for tree nodes with particular properties. With the current API if I want to find the next node from a given  tree node I have to get the parent node, get the list of children nodes from it using getContainerObject().getChildren() and then find the index of the current node in that list and move to the next index.
+
+When I wrote that code I had to really delve deeply into the tree structure which isn&#39;t good for a standard navigation requirement. A set of APIs based on the folders would make that code much easier.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3928</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-07-17 13:34:47 +0200</bug_when>
+            <thetext>Out of 0.8 timeframe.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5247</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-04 16:54:41 +0200</bug_when>
+            <thetext>As these are mainly additions it would be OK to check these for 0.8.1 as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5376</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-07 00:33:16 +0200</bug_when>
+            <thetext>As enhancement</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10639</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-06-29 15:42:42 +0200</bug_when>
+            <thetext>This bug is being carried around for quite some time now. It would be good to have the current status being documented and a strategy in place for extending/deprecating some Tree API.
+
+@Fabian, I&#39;ll assign it to you now, so we could address it for 0.9 (or 1.0 the latest?). What do you think?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10649</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-06-29 16:09:25 +0200</bug_when>
+            <thetext>I agree, we should find a resolution for this bug in the 0.9/1.0 timeframe</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13226</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-16 11:49:45 +0200</bug_when>
+            <thetext>Closing this bug. Many of the suggestions have been superseded by the tree&#39;s data binding support. Other aspects don&#39;t map well to the 0.8 version of the tree.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14430</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:14:29 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37760</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:39 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

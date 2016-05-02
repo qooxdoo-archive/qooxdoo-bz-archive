@@ -1,0 +1,146 @@
+<bug>
+          <bug_id>8871</bug_id>
+          
+          <creation_ts>2015-01-16 10:07:00 +0100</creation_ts>
+          <short_desc>Introduction of attribute &quot;qxanonymous&quot; causes events to get lost</short_desc>
+          <delta_ts>2015-02-06 10:10:54 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>4.0.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>4.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Jeroen">Jeroen.Smit</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          <cc>admin</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>42197</commentid>
+            <who name="Jeroen">Jeroen.Smit</who>
+            <bug_when>2015-01-16 10:07:43 +0100</bug_when>
+            <thetext>After upgrade from 4.0.1 to 4.0.2 I suddenly miss button events. The problem has been traced back to commits 88d4f6548a383fae4c5893a1aaa4bd2755ad1a8f and 8b2d1e3bdeb965314e12276e7ec9321b57fbc506 which I reverted and everything works as before again.
+
+I was able to reproduce the issue in the playground (http://demo.qooxdoo.org/current/playground/#Table-ria) by adding a &quot;pointerdown&quot; listener to the column-button child like this
+
+if (customizingButton != null) {
+  alert(&quot;button found&quot;);
+  customizingButton.addListener(&quot;pointerdown&quot;, function (e) {
+    alert(&quot;pointerdown&quot;);
+    if (e.isLeftPressed()) {
+      alert(&quot;pointerdown&quot;);
+    }
+  }, this, true);
+}
+
+You can see the alert for the button found but the other event alerts are not shown. Debugging showed that mouse events go off on the image on the button and the look to determine the parent without qxanonymous doesn&#39;t find the button</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42247</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2015-01-21 15:39:10 +0100</bug_when>
+            <thetext>I couldn&#39;t reproduce the issue in the 4.0.2 Playground:
+
+http://tinyurl.com/k8mhus9
+
+The column menu button&#39;s image child has the qxanonymous attribute but the button itself doesn&#39;t so the pointerdown event is dispatched as expected. Does the example work for you?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42250</commentid>
+            <who name="Jeroen">Jeroen.Smit</who>
+            <bug_when>2015-01-21 15:54:05 +0100</bug_when>
+            <thetext>No, both in IE 11 and Chrome 39.0.2171.99 m you can see nothing appears in the log in the demo you provided</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42251</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2015-01-21 16:20:37 +0100</bug_when>
+            <thetext>Well, that&#39;s strange. It works for me on the following systems:
+
+Firefox 35 Linux
+Chrome 40 beta Linux
+Chrome 41 dev Windows 8.1 (modern.ie VM)
+IE 11 Windows 8.1 (modern.ie VM)
+Chrome 39 Windows 7 (modern.ie VM)
+IE 11 Windows 8 (Dell XPS convertible PC)
+
+Could you please check if the qxanonymous attribute is applied to the image and not to the button?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42253</commentid>
+            <who name="Patrick Fischer">admin</who>
+            <bug_when>2015-01-21 16:47:34 +0100</bug_when>
+            <thetext>http://tinyurl.com/om32srs
+
+I changed Daniels example a little bit: console.log =&gt; qx.log.Logger.info. Now you can see the pointerdown log entry in the logging area of the application directly, not only in the browser console.
+
+I used W7 with IE11.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42254</commentid>
+            <who name="Jeroen">Jeroen.Smit</who>
+            <bug_when>2015-01-21 17:29:55 +0100</bug_when>
+            <thetext>I see it works with your code (sorry, looked at the wrong log).
+However, with my code it doesn&#39;t work. The difference is a small change in the last argument of the addlistener. If you change your example by this code
+
+table.getChildControl(&quot;column-button&quot;).addListener(&quot;pointerdown&quot;, function() {
+  qx.log.Logger.info(&quot;pointerdown&quot;);
+}, table, true);
+
+you see it doesn&#39;t work (caused by the last &quot;true&quot; meaning &quot;as-first&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42259</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2015-01-22 09:53:10 +0100</bug_when>
+            <thetext>Ah, I oversaw that argument. This is why a Playground link is usually a better idea than pasting a code snippet into the bug report ;-) Anyway, sorry about the confusion.
+Unfortunately, the pointer event handler is attached to the bubbling phase so pointer* events don&#39;t support the capture phase. What is your use case here, Jeroen? Any particular reason why you need to listen during the capturing phase?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42261</commentid>
+            <who name="Jeroen">Jeroen.Smit</who>
+            <bug_when>2015-01-22 10:23:11 +0100</bug_when>
+            <thetext>I see, but is there a reason it worked up till 4.0.1 and not anymore? 
+
+The case is that we implement our own column customizing as the client only knows the visible columns. By catching the click and suppressing the event we bypass the default column chooser, send a message to the server which provides all available columns. That is presented to the user to choose from.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42393</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-02-06 10:10:54 +0100</bug_when>
+            <thetext>We finally found the root of the problem. The interesting thing is, that this issue seems to be in there for a long time and it only worked due to another bug which we fixed with the last release.
+Our capturing implementation handles three event phases: capturing, at target and bubbling. The problem is in the middle event phase, the &#39;at target&#39;. in that phase the event handler only considered the either capture or bubble events. But in fact, it should consider both event types. Taking care of both types fixed the issue.
+And why did it work before? It only worked if clicks go to a child of a button e.g. label or icon. That way, the added capture listener was in the parent chain which is treated in the capture phase. This phase worked as expected.
+
+master: 7b5ecb02906ee76455eb454bdd7ed568b905a574
+4.1.x: 66c25a9bf9588299083920371cb0603df6042ee4</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

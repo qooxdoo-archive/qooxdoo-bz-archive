@@ -1,0 +1,237 @@
+<bug>
+          <bug_id>3032</bug_id>
+          
+          <creation_ts>2009-11-06 10:03:00 +0100</creation_ts>
+          <short_desc>Assertions waste a lot of CPU time</short_desc>
+          <delta_ts>2009-12-04 08:24:05 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>0.8.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Carsten Lergenmüller">carsten.lergenmueller</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>info</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>13960</commentid>
+            <who name="Carsten Lergenmüller">carsten.lergenmueller</who>
+            <bug_when>2009-11-06 10:03:45 +0100</bug_when>
+            <thetext>Whenever an assertion is run, it first generates a string representation of the tested value, then it tests if the assertion triggers. As generating the string is expensive, this wastes a lot of CPU.
+
+Working on a patch to change this, as dicussed with Andreas E.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13961</commentid>
+            <who name="Carsten Lergenmüller">carsten.lergenmueller</who>
+            <bug_when>2009-11-06 11:06:55 +0100</bug_when>
+            <thetext>Refactored Assert.js, much faster now.
+
+Ran testrunner in FF 3.5 with refactored code, 7 tests failed. Assertion message format looks OK:
+
+Assertion error! Dispose simple table: The root Children array must be empty but found: qx.ui.popup.Popup[4rr]: Expected &#39;0&#39; (identical) but found &#39;1&#39;! 
+
+Assertion error! : Expected &#39;{&quot;left&quot;:290,&quot;top&quot;:500}&#39; but found &#39;{&quot;left&quot;:280,&quot;top&quot;:500}&#39;!
+
+
+Ran testrunner without refactored code, 7 tests failed as well. So no functionality was changed by the refactoring.
+
+Committed with Rev. 20577
+-&gt; Fabian for review and closing.
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13964</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-11-06 12:00:44 +0100</bug_when>
+            <thetext>Good one. Congrats!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13965</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-11-06 12:16:24 +0100</bug_when>
+            <thetext>Might be a lot better but still not optimal because strings (as they are immutable) are copied around even if not needed. Also see that __assert basically only checks if the first param is true-ish. That&#39;s a lot of overhead to even call the inner method only for checking the value of the first param:
+
+Improvement suggestion on example:
+
+OLD:
+    assertFalse : function(value, msg) {
+      this.__assert(value === false, msg || &quot;&quot;, &quot;Called assertFalse with &#39;&quot;, value, &quot;&#39;&quot;);
+    },
+
+NEW:
+
+    assertFalse : function(value, msg) {
+      value === false || this.__assert(msg || &quot;&quot;, &quot;Called assertFalse with &#39;&quot;, value, &quot;&#39;&quot;);
+    },
+
+BTW, I am not sure why every caller needs to normalize &quot;msg&quot; at it&#39;s own. Pretty useless as this could more easily be done inside __assert():
+
+    assertFalse : function(value, msg) {
+      value === false || this.__assert(msg, &quot;Called assertFalse with &#39;&quot;, value, &quot;&#39;&quot;);
+    },
+
+One other issue I found by looking through the code is that it creates quite a few dependencies which are not dealt with #optionals. Might be a problem for low-level stuff e.g.:
+
+* qx.util.Json
+* qx.util.ColorUtil
+
+When thinking about more assertion checks here we should find a solution to make it more modular. Not sure how this works though. :)
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13986</commentid>
+            <who name="Carsten Lergenmüller">carsten.lergenmueller</who>
+            <bug_when>2009-11-06 18:59:30 +0100</bug_when>
+            <thetext>@Sebastian: Thanks for the kudos :)
+
+(In reply to comment #1)
+&gt; Might be a lot better but still not optimal because strings (as they are
+&gt; immutable) are copied around even if not needed. Also see that __assert
+
+Is that so? I&#39;d have expected that feeding a string literal into a function only passes the reference and any copying is done once the function tries to modify the string. Sounds like the reasonable way to do it.... so it&#39;s probably different in IE :) 
+
+Is it known how the different JS engines handle this?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13987</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-11-06 19:16:19 +0100</bug_when>
+            <thetext>I am not sure about the implementation details. I remember somehow that I have read once that these non-reference types are always copied. But far more interesting the the omitted function call in false-cases which are the typical ones, right?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13988</commentid>
+            <who name="Carsten Lergenmüller">carsten.lergenmueller</who>
+            <bug_when>2009-11-06 19:51:24 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; I am not sure about the implementation details. I remember somehow that I have
+&gt; read once that these non-reference types are always copied. But far more
+&gt; interesting the the omitted function call in false-cases which are the typical
+&gt; ones, right?
+
+No arguing about that, not calling a function is always faster than calling it. I&#39;m just asking about the strings because many strings are passed around from function to function, so a performance problem there would slow down everything, not just assertions.
+
+Seems not to be the case, luckily. This test program:
+
+var start1 = new Date().getTime();
+var max=30000000;
+
+var func = function(str){
+  return str;
+}
+
+var str=&quot;a&quot;;
+for (var i=0; i&lt;max; i++){
+  func(str);
+}
+
+var start2 = new Date().getTime();
+var str=&quot;aslkfdjfdalajfdoifdasjdfalkadfsjfdjasldkfjfdkaljsdfjfdiowefjoefwjefowefijafiofjlskdajfdajweiowefjoiwfjwafeiofjeklfdjdsaflfwejweoijfweofweafawejdsjsdlkafdsjdfsajfeaoiewajoifwejweafofjsdldsfjoiwfejioweafjsdljfdaiojfewaofjewoiajefwaofewajo&quot;;
+for (var i=0; i&lt;max; i++){
+  func(str);
+}
+
+var end = new Date().getTime();
+
+document.write(&quot;N: &quot; + max + &quot;, small str: &quot; + (start2 - start1) + &quot; msec, big str: &quot; + (end-start2) + &quot; msec&quot;);
+
+Gave the following results:
+
+FF 3.5.5:      N: 30000000, small str: 202 msec, big str: 217 msec 
+IE7:            N:     300000, small str: 953 msec, big str: 953 msec 
+IE6 (Virt.M.):N:     300000, small str: 922 msec, big str: 891 msec 
+Opera 10.01: N:   3000000, small str: 1500 msec, big str: 1469 msec
+Safari 4.0.3   N: 30000000, small str: 350 msec, big str: 343 msec
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14215</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-19 10:15:16 +0100</bug_when>
+            <thetext>moved to Martin, please review the unaddressed remarks of comment #3 (normalization, dependencies). Would be nice to close this bug soon after the most relevant improvements are available for a while now.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14227</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-11-19 14:30:32 +0100</bug_when>
+            <thetext>Accept</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14258</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-11-20 15:39:44 +0100</bug_when>
+            <thetext>The proposed change of moving the condition to each assert in comment #3 sounds like a good idea. I changed the implementation and saved about a second on running all UI unit tests.
+Committed the changed with revision 20712.
+
+@Sebastian
+The dependencies are handled in a different bug #2426.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14270</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-11-20 19:46:03 +0100</bug_when>
+            <thetext>@Martin: What exactly has the dependency issue to do with the dependency bug of the generator. I don&#39;t see the relevance here. My suggestion was mainly about modularity. It&#39;s quite a problem that these combi-classes have so many dependencies. The same goes for qx.bom.Element. Maybe I can suggest modularity improvements in the future as this is a hot topic in our mobile strategy and currently there are a lot of classes in our build which do not seem to have any relevance for us.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14277</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-11-23 10:19:30 +0100</bug_when>
+            <thetext>@Sebastian
+Fabian is currently removing the dependencies in the framework, especially in the core area. So the dependencies in the assert class is sure a topic on the list. If you want further information on the progress, just send him a note. He can sure anser your questions, if there are any.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14979</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-26 16:10:48 +0100</bug_when>
+            <thetext>we have to remove the widget and ColorUtil dependency before 1.0</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15074</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-11-30 12:26:09 +0100</bug_when>
+            <thetext>Accept, we should talk about that topic in the team tomorrow.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15245</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-12-03 14:51:40 +0100</bug_when>
+            <thetext>Removed most of the dependencies (qx.ui.core.Widget, qx.core.Object) and made the qx.util.ColorUtil optional.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15279</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-12-04 08:24:05 +0100</bug_when>
+            <thetext>Nightly tests were ok --&gt; CLOSED</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

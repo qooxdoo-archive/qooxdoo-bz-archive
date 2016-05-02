@@ -1,0 +1,143 @@
+<bug>
+          <bug_id>6636</bug_id>
+          
+          <creation_ts>2012-07-16 13:18:00 +0200</creation_ts>
+          <short_desc>Text nodes and comment nodes need special handling</short_desc>
+          <delta_ts>2014-03-03 15:22:11 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>website</component>
+          <version>2.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://jsbin.com/apofig</bug_file_loc>
+          
+          
+          <priority>P4</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>2.1.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="saaj">id</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30143</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2012-07-16 13:18:25 +0200</bug_when>
+            <thetext>Current implementation expects homogeneous node collection. So attribute and style modification fail when collection contains text or comments nodes.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32930</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2013-06-13 10:22:16 +0200</bug_when>
+            <thetext>We decided to only allow DOM element or document nodes and window objects in qxWeb collections, anything else will be removed by qxWeb.$init.
+
+This necessitated a change in the Template module&#39;s get and renderToNode methods: If the renderer returns a string, it will be wrapped in a span element.
+
+Fixed with d3ae9ff (master only due to the changed behavior).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32947</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2013-06-15 15:01:42 +0200</bug_when>
+            <thetext>The original example doesn&#39;t fail against fresh master build. However it disproves your words, Daniel, where ``window`` object is filtered out and ``document`` object is retained. And still the implementation expects homogeneous collection as ``q.create(document).setAttribute(&quot;foo&quot;, &quot;bar&quot;)`` will fail, see updated example (http://jsbin.com/apofig/4/). 
+
+Actually I don&#39;t know what are the fool-proof requirements (e.g. ``$(document).attr(&#39;foo&#39;, &#39;bar&#39;)`` doesn&#39;t fail) as well as I don&#39;t know in what circumstances ``document`` object could appear in a collection. So I hesitate both to verify or to reopen.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32950</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2013-06-17 11:27:48 +0200</bug_when>
+            <thetext>window objects aren&#39;t filtered out, something like
+
+q(window).getHeight()
+
+works fine. However, q.create doesn&#39;t accept window objects, only strings or DOM elements.
+
+The inconsistent behavior of setAttribute (and probably other methods as well) needs to be looked at, though. jQuery&#39;s attr() prefers the native setAttribute and falls back to DOM properties if it&#39;s not supported. qx.bom.element.Attribute.set has no such check and generally behaves differently (see also bug #5132).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32952</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2013-06-17 11:47:20 +0200</bug_when>
+            <thetext>&gt;&gt; q(window).getHeight()
+
+This looks like an undocumented feature.
+
+  q (selector, context)
+  ...
+  * String, Element, Array selector Valid selector 
+  (CSS3 + extensions) or DOM element or Array of DOM Elements.
+  * Element context Only the children of this element are considered.
+
+Window object is neither String, Element or Element[]. At least ``qx.dom.Node.isElement(window)`` is false. Also ``qx.dom.Node.isElement(document)`` is false, so currently  ``q.create`` accepts a document object but Strings and DOM elements.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32961</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2013-06-17 14:29:09 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; &gt;&gt; q(window).getHeight()
+&gt; 
+&gt; This looks like an undocumented feature.
+&gt; 
+&gt;   q (selector, context)
+&gt;   ...
+&gt;   * String, Element, Array selector Valid selector 
+&gt;   (CSS3 + extensions) or DOM element or Array of DOM Elements.
+&gt;   * Element context Only the children of this element are considered.
+&gt; 
+
+You&#39;re right, the documentation was incomplete. I&#39;ve improved it, thanks for pointing this out.
+
+&gt; Window object is neither String, Element or Element[]. At least
+&gt; ``qx.dom.Node.isElement(window)`` is false. Also
+&gt; ``qx.dom.Node.isElement(document)`` is false, so currently  ``q.create``
+&gt; accepts a document object but Strings and DOM elements.
+
+More incomplete/confusing docs, I&#39;m afraid. q.create() is mainly intended to create elements from an HTML string. To wrap existing elements in a collection, just use q(). I&#39;ll see about cleaning up the docs here, too.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32991</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2013-06-19 09:38:55 +0200</bug_when>
+            <thetext>All qxWeb methods working on DOM elements have been modified to ignore window and document objects.
+
+Fixed with 104cac4 on master.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33088</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2013-06-24 19:04:31 +0200</bug_when>
+            <thetext>Seems fine.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37581</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:11 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

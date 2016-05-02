@@ -1,0 +1,228 @@
+<bug>
+          <bug_id>1394</bug_id>
+          
+          <creation_ts>2008-09-11 16:56:00 +0200</creation_ts>
+          <short_desc>Using an undefined class or namespace gives no error at compile time</short_desc>
+          <delta_ts>2014-03-03 15:26:07 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>0.8</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>0.8.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Claus Augusti">claus</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>christian.hagendorn</cc>
+    
+    <cc>derrell.lipman</cc>
+    
+    <cc>matthew+qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>5498</commentid>
+            <who name="Claus Augusti">claus</who>
+            <bug_when>2008-09-11 16:56:32 +0200</bug_when>
+            <thetext>The generator does not complain about using an undefined class, e.g. 
+
+var foo = new foobar.foo.Foo();
+
+Only when the missing class is discovered at runtime an error is thrown. 
+
+By default qooxdoo&#39;s generator should throw an error or at least give a warning when building an application that contains &quot;new unknown&quot;. I understand that due to JavaScript&#39;s dynamic nature this feature can only be incomplete as there&#39;s no way of knowing what other libraries people use. However, when building a full-blown application I&#39;d guess that qooxdoo will be the only lib in town for most people.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5500</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-09-11 17:17:25 +0200</bug_when>
+            <thetext>This is the same as my bug #1133.  Sebastian indicated that it can&#39;t be done, but given the assumptions that you provide (it&#39;s a full qooxdoo application with no external libraries) it should certainly be possible.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5501</commentid>
+            <who name="Claus Augusti">claus</who>
+            <bug_when>2008-09-11 17:33:39 +0200</bug_when>
+            <thetext>Sorry, I didn&#39;t look carefully enough through the existing bugs. I understand Sebastian&#39;s comment regarding it just being an identifier, but I assume it&#39;s not a technical issue (?). I suggest including all &quot;classes&quot; defined in ECMAScript 3 and all known qx classes into the generator. All instantiations of objects not present in this list trigger a warning. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5649</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-09-26 07:51:00 +0200</bug_when>
+            <thetext>*** Bug 1432 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5652</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-09-26 09:41:33 +0200</bug_when>
+            <thetext>Also think it can be done (and is indeed useful), at least as non-fatal warnings.
+
+The class information is already extracted by code parsing and then used to resolve dependencies. It should be possible to compare it to all the &quot;known&quot; classes included from the libraries configured (ignoring native JS classes).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5655</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-09-26 09:43:10 +0200</bug_when>
+            <thetext>*** Bug 1133 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5683</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-09-30 19:30:22 +0200</bug_when>
+            <thetext>Fixed in r16438.
+
+This fixes the most common use case described in this and duplicate bugs: class 
+names in &quot;new ...&quot; operations (instantiations):
+  var a = new XXX(...);
+These are now detected and checked against the involved qooxdoo libraries and 
+built-ins.
+
+Other situations that can contain class references are not covered by this fix:
+  Some.Class.staticMeth();  // calling static methods
+  Some.Class.property;      // class properties
+  var a = Some.Class;        // aliasing of class names
+
+If these situations should prove significant, please open a new bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5719</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-10-06 19:00:00 +0200</bug_when>
+            <thetext>Update: The implementation has been augmented to also deal with the third case 
+of the previous comment, the aliasing case:
+  var a = Some.Class;
+This allows subsequent statements like
+  var b = new a();
+
+This issue has been resolved by checking if the functor of the &#39;new&#39; operator 
+(&quot;a&quot; in the example) can be traced to a scoped variable. If this is the case, 
+no warning is issued (basically saying &quot;if you are a scoped variable I will 
+assume that you are aliasing a proper class name&quot;). Chasing down the actual 
+value of a scoped variable seems not feasible.
+
+A remaining false positive of the current implementation are caused by files 
+that contain multiple qx.Class.define etc. This is due to the LibraryPath 
+module scan method only recognizing the first defined class in any file, so 
+other class definitions are not showing up in the list of classes returned by 
+the scan, and consequently cannot be looked up when &#39;new&#39; operations with these 
+classes are checked. This could be approached by changing the library scan 
+method to include multiple classes from a singel source file.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6827</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-12-10 16:32:37 +0100</bug_when>
+            <thetext>Update: The solution has been enhanced to check the value of the &#39;extend&#39; 
+member of the class map.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6923</commentid>
+              <attachid>412</attachid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2008-12-15 15:55:35 +0100</bug_when>
+            <thetext>Created attachment 412
+Proposed Patch - Very uncertain about it though
+
+There is a problem with arrays, the following code produces the warning:
+
+new arr[0].type()
+
+I&#39;ve discovered it&#39;s because treeutil.assembleVariable returns an empty string for anything with accessors in. I&#39;ve attached a patch that fixes the problem. This is my first time working with python and I don&#39;t know the architecture of the tools at all so it is likely this patch might break some other functionality.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6924</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2008-12-15 15:56:32 +0100</bug_when>
+            <thetext>Reopened with patch after emailing thomas</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6930</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-12-15 17:40:30 +0100</bug_when>
+            <thetext>review Matt&#39;s proposal and patch for 0.8.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7781</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-02-16 14:06:17 +0100</bug_when>
+            <thetext>Applied Matt&#39;s patch (with r17854), which allows to extract the first 
+identifier in accessor-style variables (the &quot;arr&quot; in &quot;arr[i]&quot;). This now serves 
+to check such variables in &quot;new&quot; expressions, where unknown classes are 
+checked. I.e. the following code now goes without warning:
+
+myFn : function(outerMap)
+{
+  var arr = outerMap.children;
+
+  for (var i = 0, l = arr.length; i &lt; l; i++)
+  {
+    var obj = new arr[i].type();
+  }
+} 
+
+since the &quot;arr&quot; from the instantiation expression can be traced to a local var.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38995</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:07 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>412</attachid>
+            <date>2008-12-15 15:55:00 +0100</date>
+            <delta_ts>2008-12-15 15:55:35 +0100</delta_ts>
+            <desc>Proposed Patch - Very uncertain about it though</desc>
+            <filename>1394.patch</filename>
+            <type>text/plain</type>
+            <size>805</size>
+            <attacher>matthew+qooxdoo</attacher>
+            
+              <data encoding="base64">SW5kZXg6IHRvb2wvcHlsaWIvZWNtYXNjcmlwdC9mcm9udGVuZC90cmVldXRpbC5weQ0KPT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PQ0KLS0tIHRvb2wvcHlsaWIvZWNtYXNjcmlwdC9mcm9udGVuZC90cmVldXRpbC5weQkocmV2
+aXNpb24gMzApDQorKysgdG9vbC9weWxpYi9lY21hc2NyaXB0L2Zyb250ZW5kL3RyZWV1dGlsLnB5
+CSh3b3JraW5nIGNvcHkpDQpAQCAtMzY4LDYgKzM2OCwxMiBAQA0KICAgICBmb3IgY2hpbGQgaW4g
+dmFyaWFibGVJdGVtLmNoaWxkcmVuOgogICAgICAgICBpZiBjaGlsZC50eXBlID09ICJjb21tZW50
+c0JlZm9yZSI6CiAgICAgICAgICAgICBjb250aW51ZQorICAgICAgICBlbGlmIGNoaWxkLnR5cGUg
+PT0gImFjY2Vzc29yIjoKKyAgICAgICAgICAgIGlmIGNoaWxkLmhhc0NoaWxkcmVuKCk6CisgICAg
+ICAgICAgICAgICAgZm9yIHZhbHVlIGluIGNoaWxkLmNoaWxkcmVuOgorICAgICAgICAgICAgICAg
+ICAgICBpZiB2YWx1ZS50eXBlID09ICJpZGVudGlmaWVyIjoKKyAgICAgICAgICAgICAgICAgICAg
+ICAgIHJldHVybiBhc3NlbWJsZWQgKyB2YWx1ZS5nZXQoIm5hbWUiKSwgRmFsc2UKKyAgICAgICAg
+ICAgIHJldHVybiBhc3NlbWJsZWQsIEZhbHNlCiAgICAgICAgIGVsaWYgY2hpbGQudHlwZSAhPSAi
+aWRlbnRpZmllciI6CiAgICAgICAgICAgICAjIHRoaXMgbWVhbnMgdGhlcmUgaXMgc29tZSBhY2Nl
+c3NvciBsaWtlIHBhcnQgaW4gdGhlIHZhcmlhYmxlCiAgICAgICAgICAgICAjIGUuZy4gZm9vWyJo
+ZWxsbyJdCg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

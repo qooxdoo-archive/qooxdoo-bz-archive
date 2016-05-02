@@ -1,0 +1,155 @@
+<bug>
+          <bug_id>3483</bug_id>
+          
+          <creation_ts>2010-02-27 12:12:00 +0100</creation_ts>
+          <short_desc>cursorContext doesn&#39;t get ever fired in Opera</short_desc>
+          <delta_ts>2014-02-28 10:46:53 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>contrib</product>
+          <component>HtmlArea</component>
+          <version>unspecified</version>
+          <rep_platform>Opera 10</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="saaj">id</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Opera</cf_browser>
+          <cf_browser_version>10</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>17022</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2010-02-27 12:12:28 +0100</bug_when>
+            <thetext>e.g. _handleKeyDown has empty handler for default browser, _handleKeyUp hasn&#39;t a if branch for opera. _handleKeyPress, enter case - opera is listed in branch of messagerMode, home key case never gets control... 
+
+Then i&#39;ve found listeners (keypress, keyup, keydown and others) assigned in __addListeners never get control in Opera. 
+
+The only way I could turn opera fire keyboard events is 
+
+__addListeners : function()
+{
+  ....
+  qx.event.Timer.once(function()
+  {
+    qx.bom.Event.addNativeListener(doc.documentElement, &quot;keypress&quot;, operaTest);
+    qx.bom.Event.addNativeListener(doc.documentElement, &quot;keyup&quot;, operaTest);
+    qx.bom.Event.addNativeListener(doc.documentElement, &quot;keydown&quot;, operaTest);
+  }, this, 100);
+  ...
+
+but wrapping native events to qx&#39;s is too much time for me now, so i&#39;ll do wordaround for my case. 
+
+I&#39;ve Opera 10.10.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17047</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-03-01 15:47:04 +0100</bug_when>
+            <thetext>to 1.0.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17049</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-03-01 15:59:51 +0100</bug_when>
+            <thetext>accepting</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17050</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-03-01 15:59:58 +0100</bug_when>
+            <thetext>&gt; e.g. _handleKeyDown has empty handler for default browser
+No problem at all for Opera browsers, because the shortcuts are working properly.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17051</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2010-03-01 16:19:18 +0100</bug_when>
+            <thetext>&gt;No problem at all for Opera browsers, because the shortcuts are working
+properly.
+
+Well... first para was just a starting point of this issue investigation so don&#39;t you notice it. The clue is neither of that event listeners added in __addListeners get control in Opera.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17054</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-03-01 17:20:14 +0100</bug_when>
+            <thetext>Key events are now working againg. Fixed in trunk with Revision #21673 and branch_1_0_x with Revision #21674.
+
+@saaj
+Can you please verify the fix?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17056</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2010-03-01 18:46:42 +0100</bug_when>
+            <thetext>So. In trivial circumstances key events are ok. But mouse events still don&#39;t - they do not cause cursorContext fire, as in other browsers. 
+
+In a little more complicated case it still doesn&#39;t work.
+
+var htmlArea = new qx.ui.embed.HtmlArea(null, null, &quot;javascript:&#39;&#39;&quot;);      
+htmlArea.set({
+  width  : 400,
+  height : 300
+});
+htmlArea.addListener(&quot;ready&quot;, function()
+{
+  htmlArea.setValue(&quot;this &lt;b&gt;is&lt;/b&gt; the &lt;i&gt;test&lt;/i&gt; &lt;br /&gt; &lt;big&gt;purspose&lt;/big&gt;&quot;);
+  htmlArea.setEditable(true);
+}, this);
+
+htmlArea.addListener(&quot;cursorContext&quot;, function()
+{
+  this.debug(&quot;cursorContext&quot;);        
+}, this);
+
+this.getRoot().add(htmlArea);
+
+
+The difference line which causes misbehavior is 
+
+  htmlArea.setEditable(true);
+
+I need it because it some cases in FireFox (3.0 and 3.6) content is not editable until I type some text - cannot delete text with delete and backspace buttons. 
+
+I reopen bug because of mouse event not because setEditable() which I don&#39;t know whether I use in correct way.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17110</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-03-04 11:18:07 +0100</bug_when>
+            <thetext>I&#39;ll take a look at it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35194</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2014-02-25 09:21:10 +0100</bug_when>
+            <thetext>Discontinued support for htmlarea in the framework, set all open issues to WONTFIX. Still available as a contribution acc. to bug #7918 .</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

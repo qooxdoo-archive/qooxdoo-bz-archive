@@ -1,0 +1,152 @@
+<bug>
+          <bug_id>5158</bug_id>
+          
+          <creation_ts>2011-05-24 14:17:00 +0200</creation_ts>
+          <short_desc>Reminder: Android: Wrong scroll height after page change / content update (whole page can be scrolled out of view)</short_desc>
+          <delta_ts>2014-03-03 15:25:23 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>mobile</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Android</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          <keywords>Reminder</keywords>
+          <priority>P5</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>2.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tino Butz">tinobutz</reporter>
+          <assigned_to name="Christopher Zuendorf">christopher.zuendorf</assigned_to>
+          
+          <qa_contact name="Tino Butz">tinobutz</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>24696</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-05-24 14:17:12 +0200</bug_when>
+            <thetext>Android 2.2 (See HTC Desire / HTC Widlfire):
+
+When a DOM change that changes the document height was made during scrolling / when the scroll bar is displayed, the scroll height is not updated. This has the following result:
+
+1.
+* When changing to a smaller page, scrolling down fast, you can scroll as far as the previous page height
+* On HTC Wildfire the page will be updated after a few seconds, the real scroll height is used
+* On HTC Desire the page will remain on its false scroll height
+
+2.
+* When the page content is updated at the end of the page during scrolling, you can not scroll down to the new content.
+* Sometimes you can scroll down, when the previous scrolling is finished and the scrollbars disappear / sometimes not... 
+
+
+Things I have noticed:
+
+* When the page gets changed after scrolling and when the scroll bars are hidden, scrolling seems to be alright.
+* On Android 2.1 (Samsung Galaxy): Scrolling to the bottom of a page, directly pushing the back button (when the scroll bars are still visible), will result into a long delay until the page is changed. When the scroll bars are hidden or when you don&#39;t scroll to the end, there is no delay.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24697</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-05-24 14:19:31 +0200</bug_when>
+            <thetext>Same for position fixed on Android 2.2. The whole page can be scrolled out of view (even the fixed bar!)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24698</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-05-24 14:19:48 +0200</bug_when>
+            <thetext>Some Bugs related to this bug:
+
+http://code.google.com/p/android/issues/detail?id=1135
+
+http://code.google.com/p/android/issues/detail?id=2118
+
+http://code.google.com/p/android/issues/detail?id=15232
+
+position:fixed
+
+http://code.google.com/p/android/issues/detail?id=14530
+
+http://code.google.com/p/android/issues/detail?id=14593</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25040</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-06-10 09:51:40 +0200</bug_when>
+            <thetext>Things i have investigated:
+
+* I had a look into the WebView source code:
+
+http://grepcode.com/file/repository.grepcode.com/java/ext/com.google.android/android/2.2_r1.1/android/webkit/WebView.java
+
+Seems like the rendering process is paused during the doFling method (line 5608). Android calculates the time the fling will need, but does not respect the height of the page. So when the page is small and the user does a fast swipe to scroll, the time the rendering process pauses / the scrollbars are awaken, is too large.
+
+* See bug 5157. When i have removed the following css styles, the page won&#39;t be changed directly on pressing the back button. This has the result that the page jumps up, stays as long as the scroll time is on top and changes after the end of scroll time to the next page. When the user scrolls the old page, it will stay forever on the old page. Tried to poll, if the second page is visible (or the old page is not visible anymore) and to show a blocker, but this is not possible. Seems like the javascript execution is still running, only the view is not updated. This has the result, that the new page seems to be vissible, but it is not.
+
+    -webkit-transform: translate3d(0,0,0) rotate(0) scale(1);
+    -webkit-backface-visibility: hidden;
+    -webkit-perspective: 800;
+    -webkit-transform-style: preserve-3d;
+
+* Possible Solution: Override the awakenScrollBars method in ScrollView. Try to set the time to 0. When this won&#39;t have an effect, try to remember the time -&gt; pass it to javascript -&gt; when page is changed, check if the scrollbars are currently shown -&gt; show a blocker until the scroll bar awaken time is over</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25041</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-06-10 09:54:13 +0200</bug_when>
+            <thetext>I could fix the bug for Android &gt; 2.3 by using the WebView flingTo &amp; scrollTo method and calling them over the javascript bridge, when using PhoneGap.
+
+For all other devices, we will need the possible solution described in the previous post.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25043</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-06-10 09:57:41 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+
+&gt; * See bug 5157. When i have removed the following css styles, the page won&#39;t be
+&gt; changed directly on pressing the back button and will remain on the current page until the scroll bar is hidden.
+
+This behavior is the normal behavior for all tested Android 1.6 + 2.1 devices. Seems like they ignore these css styles. This explains, why we don&#39;t have jumpy forms on those devices.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27682</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-11-29 18:40:31 +0100</bug_when>
+            <thetext>Behavior still persists. Will move this bug to the next release, to investigate behavior with Android 4.0.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29766</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2012-06-13 20:03:41 +0200</bug_when>
+            <thetext>Behaviour does not appear on Android 4.0.
+Maybe it is solved by earlier introduction of MResize.js which calculates page height automatic.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38729</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:23 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

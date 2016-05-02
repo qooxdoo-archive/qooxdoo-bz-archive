@@ -1,0 +1,96 @@
+<bug>
+          <bug_id>5777</bug_id>
+          
+          <creation_ts>2011-11-07 07:38:00 +0100</creation_ts>
+          <short_desc>Databinding (qx.data.controller.List) fires a change event although nothing was changed</short_desc>
+          <delta_ts>2013-07-22 12:47:57 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>2.1.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>27428</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-11-07 07:38:30 +0100</bug_when>
+            <thetext>Our application had a new bug after updating from Qooxdoo 1.3 to Qooxdoo 1.5.
+
+Our problem can be explained by the following playground code:
+
+-- ---------------------------------------------
+var selectBox = new qx.ui.form.SelectBox();
+this.getRoot().add(selectBox);
+
+var model = new qx.data.Array([&quot;1&quot;, &quot;2&quot;, &quot;3&quot;]);
+var controller = new qx.data.controller.List(model, selectBox);
+
+controller.getSelection().addListener(&quot;change&quot;, function() {
+  this.debug(&quot;new selection&quot;, controller.getSelection().toArray());
+}, this);
+
+var button = new qx.ui.form.Button(&quot;Add item&quot;);
+this.getRoot().add(button, {left: 0, top: 40});
+
+button.addListener(&quot;execute&quot;, function()
+{
+    model.push(&quot;new item&quot;);
+}, this);
+-- ---------------------------------------------
+
+The button &quot;Add item&quot; adds a new item to a selectbox. Although the button &quot;Add item&quot; leaves the old selection unchanged, a change selection event gets fired.
+
+This new bug was introduced as bug# 4839 was fixed.
+
+We have already implemented a workaround for this issue: We check at the beginning of the change selection even, if the selection has really been changed.
+
+Since we have an easy workaround, a bugfix is not very urgent.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32977</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-06-18 15:07:31 +0200</bug_when>
+            <thetext>That was a good one! Tracked it down to the data array itself which fired change events on splice even if the content after the splice is exactly the same:
+
+var a = new qx.data.Array([&quot;a&quot;, &quot;b&quot;]);
+a.splice(0, 1, &quot;a&quot;); // triggered a change event
+
+Added a check that the change events only get fired if the content really changed!
+
+master: d12c76336d5dbaa540655be68480156270843c36
+2.1.x: 06df955583922985a2eed9254779b7d58a0aaa0b</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

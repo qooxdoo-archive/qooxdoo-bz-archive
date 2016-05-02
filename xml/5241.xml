@@ -1,0 +1,188 @@
+<bug>
+          <bug_id>5241</bug_id>
+          
+          <creation_ts>2011-06-10 18:48:00 +0200</creation_ts>
+          <short_desc>Tree cache files get very large</short_desc>
+          <delta_ts>2014-03-03 08:47:19 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.4.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Daniel Wagner">daniel.wagner</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          <cc>hummon+qooxdoo</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>25071</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-06-10 18:48:02 +0200</bug_when>
+            <thetext>While building the framework applications, the qooxdoo cache directory reaches over one GB in size. Looks like the tree files in particular are extremely big.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25086</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-06-14 12:47:37 +0200</bug_when>
+            <thetext>Why setting the severity to &quot;major&quot;? We discovered it ourselves, no complaints from users so far, and it doesn&#39;t have an impact on functionality.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25100</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-06-15 09:54:13 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Why setting the severity to &quot;major&quot;? We discovered it ourselves, no complaints
+&gt; from users so far, and it doesn&#39;t have an impact on functionality.
+
+Thats why its not on 1.5. ;) But still, we should take care of it soon, maybe P2, normal is better.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26502</commentid>
+            <who name="Dan Hummon">hummon+qooxdoo</who>
+            <bug_when>2011-08-16 22:23:04 +0200</bug_when>
+            <thetext>I updated from version 1.4 directly to 1.5 recently, and I&#39;m having a lot more problems with the generator on my virtual machine. Anecdotally, I&#39;d guess about 1 in 5 attempts to generate a source build fails due to python running out of memory. Every time I try to generate an API for my project, it fails. My usual development environment is ubuntu 10.04 running on 512MB of RAM on a VM. I&#39;m sorry to just add a &quot;me too&quot; comment, but I wanted to say that this is impacting my workflow at the moment.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26567</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-23 11:39:25 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+
+Dan, thanks for your input. This bug is about space requirements on disk, but you describe RAM problems, so maybe you want to open a dedicated bug for it.
+
+You say that the generator fails for RAM. I&#39;ve just tested two bigger apps with current trunk. Here are their usage characteristics on my Ubuntu box:
+
+- ~750 class files, few translated strings: 65MB RAM
+- ~1,200 class files, lots and long translated strings: 145MB RAM
+
+With the recent releases we traded a little RAM for speed, but the above requirements seem still moderate, even for your 0,5GB RAM virtual machine. Especially under Linux it should never crash, even if your RAM is mostly occupied when the generator starts. It normally just starts swapping a lot (which makes it painfully slow), but should continue nevertheless. - Can you look into this further? How much free RAM do you typically have when you start the generator? What is the error message / stack dump when the generator crashes? How much swap space have you configured (1GB would be a good measure for your RAM)?
+
+Is it the same issue with building the Apiviewer?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26596</commentid>
+            <who name="Dan Hummon">hummon+qooxdoo</who>
+            <bug_when>2011-08-25 21:18:50 +0200</bug_when>
+            <thetext>I&#39;ll take a look at my VM. I think it&#39;s more likely a problem with my system. Here&#39;s some stats:
+
+Top before running the generator (cache manually cleared):
+
+top - 14:56:32 up 51 min,  1 user,  load average: 0.10, 0.69, 0.90
+Tasks:  89 total,   1 running,  88 sleeping,   0 stopped,   0 zombie
+Cpu(s):  0.0%us,  0.7%sy,  0.0%ni, 99.3%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
+Mem:    503424k total,   224924k used,   278500k free,     8700k buffers
+Swap:   397304k total,   220392k used,   176912k free,    16920k cached
+
+Python died around when it looked like this:
+
+top - 15:02:51 up 57 min,  2 users,  load average: 1.10, 0.73, 0.83
+Tasks:  95 total,   2 running,  93 sleeping,   0 stopped,   0 zombie
+Cpu(s):  2.2%us, 10.2%sy,  0.0%ni,  0.0%id, 84.1%wa,  0.3%hi,  3.2%si,  0.0%st
+Mem:    503424k total,   498592k used,     4832k free,       72k buffers
+Swap:   397304k total,   396432k used,      872k free,     4584k cached
+
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND                                                                                                                                   
+ 2167 mootcycl  20   0  481m 389m  632 R 10.0 79.1   0:14.11 python                                                                                                                                     
+
+At this point in the build script:
+----------------------------------------------------------------------------
+    Executing: build::build-resources
+----------------------------------------------------------------------------
+&gt;&gt;&gt; Scanning libraries  
+&gt;&gt;&gt; Collecting classes  /Killed
+
+Obviously, my system is running out of RAM. I can see that the swap space is lower than it should
+be. My guess is that I originally set this machine up with 256MB of RAM and then increased the
+allocation later without modifying the virtual hard drive. Looks like there was about 270MB of
+free RAM before the build process started.
+
+As for the cache, I&#39;m seeing:
+636 class files at 7.6M on disk.
+730 tree files at 572M on disk.
+
+( Using find tree* -type f | wc -l and du -hc tree* )
+
+I&#39;m not really sure how to tell how much was in memory. The only message I get in my terminal is:
+/Killed
+
+I can create a separate bug for this if you like, but I think it&#39;s more likely just a problem with
+my machine. I only commented on this because Martin pointed me to it as a possible source of my
+problems. I do have the same problem generating the default qooxdoo api. Let me know if there&#39;s
+anything else you want me to try on my system. 
+
+-Dan</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26635</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-31 10:58:34 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; I&#39;ll take a look at my VM. I think it&#39;s more likely a problem with my system.
+&gt; Here&#39;s some stats:
+
+Dan, thanks for digging into this.
+
+&gt; Mem:    503424k total,   498592k used,     4832k free,       72k buffers
+&gt; Swap:   397304k total,   396432k used,      872k free,     4584k cached
+&gt; 
+&gt;   PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND            
+&gt;  2167 mootcycl  20   0  481m 389m  632 R 10.0 79.1   0:14.11 python             
+
+There is definitely something fishy about this. The generator process is taking well above 450MB RAM!
+
+&gt; As for the cache, I&#39;m seeing:
+&gt; 636 class files at 7.6M on disk.
+&gt; 730 tree files at 572M on disk.
+
+That should be fine (meaning, in the range of expectations).
+
+&gt; I&#39;m not really sure how to tell how much was in memory. The only message I get
+&gt; in my terminal is:
+&gt; /Killed
+
+Sure. Once swap is consumed there is nothing more the OS can do.
+
+&gt; I can create a separate bug for this if you like, but I think it&#39;s more likely
+&gt; just a problem with
+&gt; my machine.
+
+It&#39;s definitely a different problem than the one this bug is about. And I haven&#39;t heard from anybody else experiencing this. I leave it at your discretion to open a dedicated bug for it. I once experimented with options within the generator to gain speed by sacrificing RAM, but I turned them off for exactly this reason, as they would eat largely into the host&#39;s RAM (&gt;1GB). I would have to look deeply into your installed qooxdoo version. Have you ever tweaked the generator code of your installation? Could you copy the SDK, as it is, to another machine, together with your project, and run the compile there? Do you get the same behaviour?
+
+T.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35866</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:47:19 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

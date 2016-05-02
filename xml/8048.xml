@@ -1,0 +1,213 @@
+<bug>
+          <bug_id>8048</bug_id>
+          
+          <creation_ts>2014-01-24 18:16:00 +0100</creation_ts>
+          <short_desc>Uncaught TypeError: Object [object Object] has no method &#39;isAnonymous&#39;</short_desc>
+          <delta_ts>2014-01-28 08:23:46 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>3.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Cajus Pollmeier">pollmeier</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>derrell.lipman</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>34830</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2014-01-24 18:16:35 +0100</bug_when>
+            <thetext>I&#39;ve a custom widget with a child control which is basically created like this:
+
+    // overridden
+    _createChildControlImpl : function(id, hash)
+    {
+      var control;
+
+      switch(id)
+      {
+        ....
+
+        case &quot;content&quot;:
+          var scroller = new qx.ui.container.Scroll();
+          scroller.setWidth(512);
+          scroller.setHeight(512);
+          this.add(scroller, {row: 0, column: 2});
+          control = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+          scroller.add(control);
+          break;
+      }
+
+      return control || this.base(arguments, id);
+    },
+
+I know that&#39;s a bit rough due to the cascading with Scroll. Well. If I place something inside the container that is clickable, I&#39;m *sometimes* getting this exception:
+
+Uncaught TypeError: Object [object Object] has no method &#39;isAnonymous&#39; EventHandler.js:210
+qx.Class.define.members._dispatchEvent EventHandler.js:210
+qx.Class.define.members.dispatchEvent AbstractBubbling.js:241
+qx.Class.define.members.dispatchEvent Manager.js:869
+qx.Class.define.statics.fireEvent Registration.js:304
+qx.Class.define.members.__fireEvent Mouse.js:187
+(anonymous function) Mouse.js:379
+(anonymous function) GlobalError.js:132
+(anonymous function)
+
+All this is happening inside the framework source. If I add some debugging code, it looks like &quot;widgetRelatedTarget&quot; is the VBox layout that&#39;s assigned to the Composite. And it has no anonymous property.
+
+Any ideas what&#39;s going on here? Note that this doesn&#39;t happen everytime. Most of the time the clicks go well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34831</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2014-01-24 18:33:27 +0100</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; I&#39;ve a custom widget with a child control which is basically created like this:
+&gt; 
+&gt;     // overridden
+&gt;     _createChildControlImpl : function(id, hash)
+&gt;     {
+&gt;       var control;
+&gt; 
+&gt;       switch(id)
+&gt;       {
+&gt;         ....
+&gt; 
+&gt;         case &quot;content&quot;:
+&gt;           var scroller = new qx.ui.container.Scroll();
+&gt;           scroller.setWidth(512);
+&gt;           scroller.setHeight(512);
+&gt;           this.add(scroller, {row: 0, column: 2});
+&gt;           control = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+&gt;           scroller.add(control);
+&gt;           break;
+&gt;       }
+&gt; 
+&gt;       return control || this.base(arguments, id);
+&gt;     },
+
+You&#39;ve create a child control of some widget, but the control that you are returning is not the child control; rather it&#39;s something that&#39;s embedded in a scroller that has gotten lost. I suspect what you want is this:
+
+        case &quot;content&quot;:
+          var control = new qx.ui.container.Scroll();
+          control.setWidth(512);
+          control.setHeight(512);
+          this.add(control, {row: 0, column: 2});
+          var vbox = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+          control.add(vbox);
+          break;
+
+This way, the control you create is the actual child of &#39;this&#39;, and it just happens to have children (the composite container).
+
+Derrell
+
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34834</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-01-27 08:00:48 +0100</bug_when>
+            <thetext>Does Derrells suggestion fix the issue? If not, it would help to know what exactly is the object missing the &#39;isAnonymous&#39; method. I just checked the composite and if should have that function because it extend widget which is the source of the function for all widgets.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34838</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2014-01-27 09:25:15 +0100</bug_when>
+            <thetext>No, the hint of Derrell did not help. I&#39;ve reverted it back because I need to change much styling after that.
+
+Just changed the code of EventHandler.js to write stuff to the console this way:
+
+        var widgetRelatedTarget = qx.ui.core.Widget.getWidgetByElement(domRelatedTarget);
+        console.log(&quot;-------&quot;);
+        if (widgetRelatedTarget) {
+          console.log(widgetRelatedTarget.classname);
+        }
+        while (widgetRelatedTarget &amp;&amp; widgetRelatedTarget.isAnonymous()) {
+          widgetRelatedTarget = widgetRelatedTarget.getLayoutParent();
+          if (widgetRelatedTarget) {
+            console.log(widgetRelatedTarget.classname);
+          }
+        }
+
+The error differs if I press the mouse button multiple times. Sometimes it prints:
+
+-------
+qx.html.Label
+
+and sometimes it prints:
+
+-------
+qx.html.Element
+
+I personally didn&#39;t code the underlying widget, but it seems to happen when I directly click on the qx.ui.basic.Image part of an qx.ui.basic.Atom which got an &quot;click&quot; eventListener. If I click on the part of the Atom that has no image, the error does not pop up.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34864</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2014-01-27 14:44:19 +0100</bug_when>
+            <thetext>Another observation:
+
+The error occurs when the widget is placed inside of a qx Window. It does not happen when it&#39;s placed indirectly on the root (in this case inside of some nested layout containers).
+
+I&#39;ve modified the code to be childControl clean as Derrell suggested and corrected the styles. So there&#39;s no more scroller/control munging.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34865</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2014-01-27 15:43:59 +0100</bug_when>
+            <thetext>Finally found the race condition. It&#39;s provoked by my code:
+
+There was an accidential content.removeAll() and a redraw that was indirectly triggered by working with the widget. So - sometimes - when the event was processed by qooxdoo the hash has been pointing to something new - which wasn&#39;t the original target.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34871</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-01-28 08:23:05 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Finally found the race condition. It&#39;s provoked by my code:
+&gt; 
+&gt; There was an accidential content.removeAll() and a redraw that was indirectly
+&gt; triggered by working with the widget. So - sometimes - when the event was
+&gt; processed by qooxdoo the hash has been pointing to something new - which wasn&#39;t
+&gt; the original target.
+
+So I guess we can close that bug with that?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34872</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-01-28 08:23:46 +0100</bug_when>
+            <thetext>Ahhhh too late... I already saw that you have marked it as resolved. Never mind. :)</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

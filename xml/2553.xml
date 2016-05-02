@@ -1,0 +1,194 @@
+<bug>
+          <bug_id>2553</bug_id>
+          
+          <creation_ts>2009-07-06 15:30:00 +0200</creation_ts>
+          <short_desc>qx.ui.table.model.Simple.setSortMethods()</short_desc>
+          <delta_ts>2014-03-03 15:26:31 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P5</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Ian Horst">ian.horst</reporter>
+          <assigned_to name="Derrell Lipman">derrell.lipman</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10795</commentid>
+            <who name="Ian Horst">ian.horst</who>
+            <bug_when>2009-07-06 15:30:18 +0200</bug_when>
+            <thetext>Let&#39;s take away from developers to define
+descending function. Qooxdoo framework can figure it out itself. Less
+code is better. :)
+
+I don&#39;t have time to look at the backend of qooxdoo right now, but
+instead of setSortMethods we could use
+
+...setSortMethod: function (sortAscMethod)
+{
+ var sortDescMethod = function (row1, row2) {return
+sortAscMethod(row2, row1);};
+ var sortMethods = {ascending: sortAscMethod, descending: sortDescMethod};
+ ...
+}
+
+PROFS:
+- simplified interface to set sorting method;
+- less coding for end developers, also less code in qx too;
+- removed code duplication;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10796</commentid>
+              <attachid>550</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-07-06 15:59:25 +0200</bug_when>
+            <thetext>Created attachment 550
+possible implementation
+
+At this point there is a LOT of code out in the wild based on Table. To avoid changing the API for old code, while still providing a simpler API for new code, I propose this (yet untested) patch to solve the problem.
+
+To be tested: if the table has a fairly large number of rows (e.g. 3000) which is currently sorted sufficiently quickly in either ascending or descending order, how much slower does it become with this patch to sort in descending order than in ascending order. It is a minimum of one additional function call per table item (and likely a much greater number of function calls than that, depending upon the sort algorithm and how out-of-order the items are initially).
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10902</commentid>
+            <who name="Ian Horst">ian.horst</who>
+            <bug_when>2009-07-15 10:25:07 +0200</bug_when>
+            <thetext>I run profiling using firebug profile on:
+var f1 = function (a, b) {return true;};
+var f2 = function (a, b) {return f1(b, a);};
+
+When I run 1000000 calls, I get stable performance penalty of:
+* 350ms on Intel I7 920 using Mozilla/5.0 (X11; U; Linux x86_64;
+en-GB; rv:1.9.1) Gecko/20090701 Gentoo Firefox/3.5
+* 1600ms on Intel 2.8Ghz HT using Firefox 3.0 on ArchLinux
+
+So far it seems that it makes sense to use f2() to sort small tables
+below 1000-1500 rows in worst case scenarios.
+Performance wise it&#39;s better to use predefined descending function.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10921</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-07-15 17:33:37 +0200</bug_when>
+            <thetext>Fixed with r19696.
+
+I applied a modified patch to the one I had attached to this bug. The attached one had a bug, and I also documented that both sort functions should be provided when a large table was expected. This patch provides backward compatibility while also adding the simplified interface for small tables.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12136</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-10 13:34:23 +0200</bug_when>
+            <thetext>reopen to assign</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12137</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-10 13:35:04 +0200</bug_when>
+            <thetext>assign</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12138</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-10 13:35:35 +0200</bug_when>
+            <thetext>resolve fixed</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39141</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:31 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>550</attachid>
+            <date>2009-07-06 15:59:00 +0200</date>
+            <delta_ts>2009-07-06 15:59:25 +0200</delta_ts>
+            <desc>possible implementation</desc>
+            <filename>x.patch</filename>
+            <type>text/plain</type>
+            <size>2549</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS90YWJsZS9t
+b2RlbC9TaW1wbGUuanMgYi9xb294ZG9vL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkvdGFi
+bGUvbW9kZWwvU2ltcGxlLmpzCmluZGV4IDVkYTlhN2IuLjc5ZDRiMjYgMTAwNjQ0Ci0tLSBhL3Fv
+b3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS90YWJsZS9tb2RlbC9TaW1wbGUuanMK
+KysrIGIvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L3VpL3RhYmxlL21vZGVsL1Np
+bXBsZS5qcwpAQCAtMzA3LDE5ICszMDcsNDQgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC51aS50YWJs
+ZS5tb2RlbC5TaW1wbGUiLAogICAgICAqICAgVGhlIGluZGV4IG9mIHRoZSBjb2x1bW4gb3Igd2hp
+Y2ggdGhlIHNvcnQgbWV0aG9kcyBhcmUgYmVpbmcKICAgICAgKiAgIHByb3ZpZGVkLgogICAgICAq
+Ci0gICAgICogQHBhcmFtIG1ldGhvZHMge01hcH0KLSAgICAgKiAgIE1hcCB3aXRoIHR3byBwcm9w
+ZXJ0aWVzOiAiYXNjZW5kaW5nIiBhbmQgImRlc2NlbmRpbmciLiAgVGhlCi0gICAgICogICBwcm9w
+ZXJ0eSB2YWx1ZSBvZiBlYWNoIGlzIGEgY29tcGFyYXRvciBmdW5jdGlvbiB3aGljaCB0YWtlcyB0
+d28KLSAgICAgKiAgIHBhcmFtZXRlcnM6IHRoZSB0d28gYXJyYXlzIG9mIHJvdyBkYXRhLCByb3cx
+IGFuZCByb3cyLCBiZWluZwotICAgICAqICAgY29tcGFyZWQuICBJdCBtYXkgZGV0ZXJtaW5lIHdo
+aWNoIGNvbHVtbiB0byBvZiB0aGUgcm93IGRhdGEgdG8gc29ydAotICAgICAqICAgb24gYnkgYWNj
+ZXNzaW5nIGFyZ3VtZW50cy5jYWxsZWUuY29sdW1uSW5kZXguICBFYWNoIGNvbXBhcmF0b3IKLSAg
+ICAgKiAgIGZ1bmN0aW9uIG11c3QgcmV0dXJuIDEsIDAgb3IgLTEsIHdoZW4gdGhlIGNvbHVtbiBp
+biByb3cxIGlzIGdyZWF0ZXIKLSAgICAgKiAgIHRoYW4sIGVxdWFsIHRvLCBvciBsZXNzIHRoYW4s
+IHJlc3BlY3RpdmVseSwgdGhlIGNvbHVtbiBpbiByb3cyLgorICAgICAqIEBwYXJhbSBjb21wYXJl
+IHtGdW5jdGlvbnxNYXB9CisgICAgICogICBJZiBwcm92aWRlZCBhcyBhIEZ1bmN0aW9uLCB0aGlz
+IGlzIHRoZSBjb21wYXJhdG9yIGZ1bmN0aW9uIHRvIHNvcnQgaW4KKyAgICAgKiAgIGFzY2VuZGlu
+ZyBvcmRlci4gSXQgdGFrZXMgdHdvIHBhcmFtZXRlcnM6IHRoZSB0d28gYXJyYXlzIG9mIHJvdyBk
+YXRhLAorICAgICAqICAgcm93MSBhbmQgcm93MiwgYmVpbmcgY29tcGFyZWQuIEl0IG1heSBkZXRl
+cm1pbmUgd2hpY2ggY29sdW1uIG9mIHRoZQorICAgICAqICAgcm93IGRhdGEgdG8gc29ydCBvbiBi
+eSBhY2Nlc3NpbmcgYXJndW1lbnRzLmNhbGxlZS5jb2x1bW5JbmRleC4gIFRoZQorICAgICAqICAg
+Y29tcGFyYXRvciBmdW5jdGlvbiBtdXN0IHJldHVybiAxLCAwIG9yIC0xLCB3aGVuIHRoZSBjb2x1
+bW4gaW4gcm93MQorICAgICAqICAgaXMgZ3JlYXRlciB0aGFuLCBlcXVhbCB0bywgb3IgbGVzcyB0
+aGFuLCByZXNwZWN0aXZlbHksIHRoZSBjb2x1bW4gaW4KKyAgICAgKiAgIHJvdzIuCisgICAgICoK
+KyAgICAgKiAgIElmIHRoaXMgcGFyYW1ldGVyIGlzIGEgTWFwLCBpdCBzaGFsbCBoYXZlIHR3byBw
+cm9wZXJ0aWVzOiAiYXNjZW5kaW5nIgorICAgICAqICAgYW5kICJkZXNjZW5kaW5nIi4gVGhlIHBy
+b3BlcnR5IHZhbHVlZSBvZiBlYWNoIGlzIGEgY29tcGFyYXRvcgorICAgICAqICAgZnVuY3Rpb24s
+IGFzIGRlc2NyaWJlZCBhYm92ZS4KKyAgICAgKgorICAgICAqICAgSWYgb25seSB0aGUgImFzY2Vu
+ZGluZyIgZnVuY3Rpb24gaXMgcHJvdmlkZWQgKGkuZS4gdGhpcyBwYXJhbWV0ZXIgaXMKKyAgICAg
+KiAgIGEgRnVuY3Rpb24sIG5vdCBhIE1hcCksIHRoZW4gdGhlICJkZXNjZW5kaW5nIiBmdW5jdGlv
+biBpcyBidWlsdAorICAgICAqICAgZHluYW1pY2FsbHkgYnkgcGFzc2luZyB0aGUgdHdvIHBhcmFt
+ZXRlcnMgdG8gdGhlICJhc2NlbmRpbmciIGZ1bmN0aW9uCisgICAgICogICBpbiByZXZlcnNlZCBv
+cmRlci4KICAgICAgKgogICAgICAqIEByZXR1cm4ge3ZvaWR9CiAgICAgICovCi0gICAgc2V0U29y
+dE1ldGhvZHMgOiBmdW5jdGlvbihjb2x1bW5JbmRleCwgbWV0aG9kcykKKyAgICBzZXRTb3J0TWV0
+aG9kcyA6IGZ1bmN0aW9uKGNvbHVtbkluZGV4LCBjb21wYXJlKQogICAgIHsKKyAgICAgIHZhciBt
+ZXRob2RzOworICAgICAgaWYgKHF4LmxhbmcuVHlwZS5pc0Z1bmN0aW9uKGNvbXBhcmUpKQorICAg
+ICAgeworICAgICAgICBtZXRob2RzID0KKyAgICAgICAgICB7CisgICAgICAgICAgICBhc2NlbmRp
+bmcgIDogY29tcGFyZSwKKyAgICAgICAgICAgIGRlc2NlbmRpbmcgOiBmdW5jdGlvbihyb3cxLCBy
+b3cyKQorICAgICAgICAgICAgeworICAgICAgICAgICAgICBjb21wYXJlKHJvdzIsIHJvdzEpOwor
+ICAgICAgICAgICAgfQorICAgICAgICAgIH07CisgICAgICB9CisgICAgICBlbHNlCisgICAgICB7
+CisgICAgICAgIG1ldGhvZHMgPSBjb21wYXJlOworICAgICAgfQogICAgICAgdGhpcy5fX3NvcnRN
+ZXRob2RzW2NvbHVtbkluZGV4XSA9IG1ldGhvZHM7CiAgICAgfSwKIAo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

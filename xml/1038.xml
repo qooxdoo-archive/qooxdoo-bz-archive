@@ -1,0 +1,226 @@
+<bug>
+          <bug_id>1038</bug_id>
+          
+          <creation_ts>2008-07-07 13:53:00 +0200</creation_ts>
+          <short_desc>RPC sync release blocking operation sooner than &quot;completed&quot; event is fired</short_desc>
+          <delta_ts>2014-03-03 15:27:51 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>0.7.3</version>
+          <rep_platform>Firefox 3.0</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Lukas Dziadkowiec">stealth.home</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          <cc>andreas.junghans</cc>
+    
+    <cc>derrell.lipman</cc>
+    
+    <cc>stealth.home</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>3</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>3676</commentid>
+            <who name="Lukas Dziadkowiec">stealth.home</who>
+            <bug_when>2008-07-07 13:53:55 +0200</bug_when>
+            <thetext>Occasionally when sync call is called, I have null result even if server returns valid result. I have been debugging it for a while and it happend when sync call is released sooner than response[&quot;result&quot;] is setted by &quot;completed&quot; event.
+
+rpc.js
+
+_callInternal : function
+...
+...
+...
+
+req.send();
+
+      if (callType == 0)
+      {
+        if (ex != null)
+        {
+          var error = new Error(ex.toString());
+          error.rpcdetails = ex;
+          throw error;
+        }
+        
+        if (!result) {
+          alert(&quot;return result is NULL:&quot;+sEvent);       //Alert when result is null
+          alert(result);                                           //result is correct, because event has been fired in that time period
+        }
+
+
+We have 3 tasks updated periodically on the background
+routine a1 sync, period 10sec, takes about 10ms
+routine a2 sync, period 30sec, takes about 10ms
+routine a3 sync, period 60sec, takes about 10ms
+
+then I call search routine
+routine b1: async, takes about 1 second to finish
+routine b2: sync, takes about 10ms to finish
+
+I have random null responses in a1, or b2 routine.
+
+
+In this configuration, I have null reponse in 1 of 500 repeats.
+
+when I set period for routines a1, a2, a3 to 1 second, I will get null reponse in about 1 of 5 repeats.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3677</commentid>
+            <who name="Lukas Dziadkowiec">stealth.home</who>
+            <bug_when>2008-07-07 13:55:06 +0200</bug_when>
+            <thetext>fyi,
+this bug has been reproduced in FF2, FF3, IE6.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3684</commentid>
+            <who name="Lukas Dziadkowiec">stealth.home</who>
+            <bug_when>2008-07-07 15:56:32 +0200</bug_when>
+            <thetext>I did some debugging and found cause and solution.
+cause is maxConcurrentRequests setted to 3, there was 4. But I wonder why this request just ends with null response but event on complete is fired anyway.
+
+RequestQueue.js
+// Checking active queue fill
+      if (this._active.length &gt;= this.getMaxConcurrentRequests() || this._queue.length == 0) {
+        return;
+      }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3685</commentid>
+            <who name="Andreas Junghans">andreas.junghans</who>
+            <bug_when>2008-07-07 16:10:12 +0200</bug_when>
+            <thetext>I&#39;ve taken a look, and I think the core problem is the (lack of) synchronous request handling in qx.io.remote.RequestQueue.
+
+If a synchronous request comes in and there are already maxConcurrentRequests in the queue, the new request is added at the end but not handled immediately. Control returns to the caller with the request still sitting in the queue, so it&#39;s not really synchronous anymore.
+
+To fix the queue, I&#39;d suggest the following:
+
+- In the add() method, check if the incoming request is synchronous. If it is, add it at the beginning of the queue, not the end.
+
+- In the _check() method, handle synchronous requests immediately (no matter how many other requests may already be running).
+
+Unfortunately, I don&#39;t have the time to implement and test this myself.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3901</commentid>
+            <who name="Lukas Dziadkowiec">stealth.home</who>
+            <bug_when>2008-07-15 14:11:18 +0200</bug_when>
+            <thetext>This is how I fixed my problem.
+diff file provided
+
+
+Index: RequestQueue.js
+===================================================================
+--- RequestQueue.js	(revision 14565)
++++ RequestQueue.js	(working copy)
+@@ -171,7 +171,7 @@
+       }
+ 
+       // Checking active queue fill
+-      if (this._active.length &gt;= this.getMaxConcurrentRequests() || this._queue.length == 0) {
++      if (( this._queue.length &gt; 0 &amp;&amp; this._queue[0].isAsynchronous() &amp;&amp; this._active.length &gt;= this.getMaxConcurrentRequests() ) || this._queue.length == 0) {
+         return;
+       }
+ 
+@@ -443,7 +443,11 @@
+     {
+       vRequest.setState(&quot;queued&quot;);
+ 
+-      this._queue.push(vRequest);
++      if (vRequest.isAsynchronous())
++        this._queue.push(vRequest);
++      else
++        this._queue.unshift(vRequest);
++
+       this._check();
+ 
+       if (this.getEnabled()) {
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5314</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-05 20:04:23 +0200</bug_when>
+            <thetext>Derrell, can you have a look at this issue? Still present in 0.8?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7190</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-12-18 12:26:32 +0100</bug_when>
+            <thetext>to 0.8.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8387</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-03-09 11:34:58 +0100</bug_when>
+            <thetext>to 0.8.3 as discussed with Derrell.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9152</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-04-05 04:23:09 +0200</bug_when>
+            <thetext>I can believe that this problem actually exists but have not successfully reproduced it, so have not confirmed the proposed fix. The proposed fix appears reasonable, but I&#39;m not willing to take a chance on applying this without clear proof that (a) this fixes sync, and much more importantly, (b) it doesn&#39;t break async. I don&#39;t believe that anyone should be using synchronous calls given how they block the entire browser (including other tabs/applications), so I don&#39;t see the bug as major. I&#39;m quite sure others differ in opinion. :-)
+
+Andreas, I&#39;ll send this back over to you. If you&#39;d like to apply the patch, or if you have the resources to put on building tests to confirm it, and then do so, I&#39;ll raise no objection.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10627</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-06-29 14:03:56 +0200</bug_when>
+            <thetext>While synchronous may not be used often (for good reasons), they should nonetheless be handled properly in qooxdoo.
+
+@Chris, could you please review the given patch, and proof that it indeed fixes the sync calls without breaking the others. Is this something you could integrate into testrunner (&quot;needsPhp&quot;), similar to some other existing io.remote unit tests? Or can the RpcExample be &quot;abused&quot; for that as well, Derrell?
+
+BTW, the condition in the patch might slightly be improved by:
+if ( this._queue.length == 0 ||(this._queue[0].isAsynchronous() &amp;&amp; this._active.length &gt;= this.getMaxConcurrentRequests())) </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11708</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-08-31 14:43:34 +0200</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11810</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-02 15:52:54 +0200</bug_when>
+            <thetext>I applied the patch with r19981, but I couldn&#39;t reproduce this issue. I think the patch shouldn&#39;t have any negative effects. To verify this I have done some tests, my tests work without any problems. Derrell and Andreas could you please also test this patch? Thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39610</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:51 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

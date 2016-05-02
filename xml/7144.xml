@@ -1,0 +1,200 @@
+<bug>
+          <bug_id>7144</bug_id>
+          
+          <creation_ts>2013-01-17 17:50:00 +0100</creation_ts>
+          <short_desc>qx.Mobile ScrollComposite should have a scroll lock for vertical and horizontal direction</short_desc>
+          <delta_ts>2014-03-03 15:27:32 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>mobile.layout</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christopher Zuendorf">christopher.zuendorf</reporter>
+          <assigned_to name="Christopher Zuendorf">christopher.zuendorf</assigned_to>
+          <cc>pollmeier</cc>
+          <qa_contact name="Christopher Zuendorf">christopher.zuendorf</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>31928</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-01-17 17:50:20 +0100</bug_when>
+            <thetext>IS:
+
+The scrollComposite can be scrolled to 2 directions: vertical and horizontal.
+Both directions can be scrolled at the same time. 
+
+SHOULD:
+
+The scrollComposite should have a scroll-lock mode. This means that first direction movement locks the scroll mode to vertical or horizontal scrolling mode.
+This massively improves the usability of the ScrollComposite container, as it makes it possibility to scroll the child on only one the two axis.
+
+This features is also needed by an in-house project.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31929</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-01-17 18:22:15 +0100</bug_when>
+            <thetext>Master:
+
+85d6f6ceec4dacc74a6ec9729ed9dcdb3f205900</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32183</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2013-02-08 10:13:06 +0100</bug_when>
+            <thetext>Sorry for re-opening:
+
+The decision if the scrolling happens vertically or horizontally leads to unexpected results when allowScrollX / allowScrollY is used in complement. I&#39;ve a scroll container that just scrolls horizontally (allowScrollY = false, allowScrollX = true).
+
+If you scroll that container, it doesn&#39;t react very frequently - because it internally decides to scroll vertically.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32184</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2013-02-08 10:35:29 +0100</bug_when>
+            <thetext>Eventually just this change:
+
+--- a/ScrollComposite.js
++++ b/ScrollComposite.js
+@@ -137,7 +137,7 @@ qx.Class.define(&quot;bj.mobile.ui.container.ScrollComposite&quot;,
+     * @param evt {qx.event.type.Touch} The touch event
+     */
+     _onTouchStart : function(evt){
+-      this.__isVerticalScroll = null;
++      this.__isVerticalScroll = (this.getScrollableX() &amp;&amp; this.getScrollableY()) ? null : this.getScrollableY();
+       
+       var touchX = evt.getScreenLeft();
+       var touchY = evt.getScreenTop();</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32185</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-02-08 10:39:15 +0100</bug_when>
+            <thetext>Which version of ScrollComposite do you have?
+
+There have been several changes on the ScrollComposite is last few weeks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32186</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-02-08 10:44:09 +0100</bug_when>
+            <thetext>I can not reproduce this behaviour in latest implementation.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32187</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2013-02-08 10:59:00 +0100</bug_when>
+            <thetext>I&#39;m using HEAD from github.
+
+$ git log ./framework/source/class/qx/ui/mobile/container/ScrollComposite.js | head -n4
+commit 55addbd855225f8989d63ba36f984e1558d9d638
+Author: czuendorf &lt;christopher.zuendorf@1und1.de&gt;
+Date:   Thu Jan 24 11:40:05 2013 +0100
+
+So I&#39;m back one commit, but the commit I&#39;m missing seems to update the API docs, only.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32188</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2013-02-08 11:02:35 +0100</bug_when>
+            <thetext>The behaviour is reproducible if you &#39;re trying to swipe the content repeatingly. About 50% of the slide attempts the content just sticks where it is. If I enable the vertical scrolling, I can see that it is trapped in vertical scrolling mode.
+
+Currently I&#39;m using the patch from above to work around this behaviour - the __isVertical decision is just disabled in this case.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32193</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-02-08 14:05:51 +0100</bug_when>
+            <thetext>Which device do you use?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32194</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2013-02-08 14:24:43 +0100</bug_when>
+            <thetext>iPad 2 and iPad 4, bth iOS 6.1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32197</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-02-08 15:34:11 +0100</bug_when>
+            <thetext>I think your bug should be fixed with:
+e96cec4cba618f8ca1e6a07757df18067a95eff5
+
+Can you verify it?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32198</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2013-02-08 16:17:17 +0100</bug_when>
+            <thetext>I&#39;m sorry, it does not.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32199</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2013-02-08 16:18:39 +0100</bug_when>
+            <thetext>I mean - it does not fix the problem ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32325</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-02-21 16:22:53 +0100</bug_when>
+            <thetext>I added another fix: 
+
+11ca3919b1da1488d3470bb100003be824c90695
+
+Could you please evaluate it ?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32327</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2013-02-21 17:21:36 +0100</bug_when>
+            <thetext>No, it does not fix the issue. May I ask what&#39;s wrong with the suggested fix in
+
+http://bugzilla.qooxdoo.org/show_bug.cgi?id=7144#c3
+
+?
+
+There&#39;s no need to bother with vertical movements if they&#39;re disabled.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32404</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-03-01 18:35:55 +0100</bug_when>
+            <thetext>Applied your fix with Master: ef30acc0f6559e37ca461c8ba09e2596f04c369f</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39504</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:32 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

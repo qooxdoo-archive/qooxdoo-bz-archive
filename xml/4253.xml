@@ -1,0 +1,237 @@
+<bug>
+          <bug_id>4253</bug_id>
+          
+          <creation_ts>2010-10-28 10:32:00 +0200</creation_ts>
+          <short_desc>Error Message &quot;JSON-RPC request expected; service, method or params missing&quot;</short_desc>
+          <delta_ts>2011-07-22 20:25:37 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>contrib</product>
+          <component>RpcPhp</component>
+          <version>trunk</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>blocker</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Patrick">patrick</reporter>
+          <assigned_to name="Christian Boulanger">info</assigned_to>
+          <cc>derrell.lipman</cc>
+    
+    <cc>qooxdoo</cc>
+          
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20926</commentid>
+            <who name="Patrick">patrick</who>
+            <bug_when>2010-10-28 10:32:32 +0200</bug_when>
+            <thetext>Dear all,
+Since I have upgraded the qooxdoo framework from 1.1 to 1.2 some qx.remote.io.Rpc calls to RpcPhp result in an error message: 
+
+&quot;JSON-RPC request expected; service, method or params missing&quot;. 
+
+This is the request:
+{&quot;service&quot;:&quot;orders.remoteDataModel&quot;,&quot;method&quot;:&quot;getRowCount&quot;,&quot;id&quot;:3,&quot;params&quot;:[{&quot;text&quot;:&quot;&quot;,&quot;dateFrom&quot;:new Date(Date.UTC(2010,8,28,22,0,0,0)),&quot;dateTo&quot;:new Date(Date.UTC(2010,9,26,22,0,0,0)),&quot;timezoneOffset&quot;:-120,&quot;keyType&quot;:&quot;userkey&quot;}]}
+
+I have also upgraded RpcPhp to 1.2 and &quot;trunk&quot; with the same result.
+
+I figured out that in qooxdoo 1.1 all my qx.remote.io.Rpc send POST requests to RpcPhp. In qooxdoo 1.2, however, some Rpc calls send GET requests to RpcPhp. Appearantly it depends whether the crossDomain property of qx.remote.io.Rpc is set or not. 
+
+I have decided to ignore the change of behaviour concerning qx.remote.io.Rpc and I rather took a long, harder look at RpcPhp.
+
+Further investigation showed that the error is caused in lib/JsonWrapper.php in function decode(). This function will either call $this-&gt;_json-&gt;decode() or json_decode() if $this-&gt;_json is undefined. It turned out, that $this-&gt;_json is undefined and json_decode() fails. 
+
+I was able to fix this problem by calling useJsonClass() to make $this-&gt;_json be defined, and thus omitting json_decode(). I do not understand the underlying mechanism though, but I hope this could help anyone who is facing similar problems.
+
+I have also noticed that the date decoder in RpcPhp is definitely wrong: (see lib/JSON.phps line 776)
+JavaScript encodes January as month number &quot;0&quot;, thus you must increase the date part by 1 in PHP:
+
+$obj-&gt;setUtcDateTimeFields($m[1], $m[2]+1, $m[3], $m[4], $m[5], $m[6], $m[8]);
+
+Cheers,
+Patrick</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20936</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-10-28 13:14:07 +0200</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; Dear all,
+&gt; Since I have upgraded the qooxdoo framework from 1.1 to 1.2 some
+&gt; qx.remote.io.Rpc calls to RpcPhp result in an error message: 
+&gt; 
+&gt; &quot;JSON-RPC request expected; service, method or params missing&quot;. 
+&gt; 
+&gt; This is the request:
+&gt; {&quot;service&quot;:&quot;orders.remoteDataModel&quot;,&quot;method&quot;:&quot;getRowCount&quot;,&quot;id&quot;:3,&quot;params&quot;:[{&quot;text&quot;:&quot;&quot;,&quot;dateFrom&quot;:new
+&gt; Date(Date.UTC(2010,8,28,22,0,0,0)),&quot;dateTo&quot;:new
+&gt; Date(Date.UTC(2010,9,26,22,0,0,0)),&quot;timezoneOffset&quot;:-120,&quot;keyType&quot;:&quot;userkey&quot;}]}
+&gt; 
+&gt; I have also upgraded RpcPhp to 1.2 and &quot;trunk&quot; with the same result.
+
+I think that the qooxdoo Date extensions have been disabled by default in recent versions of RpcPhp as we slowly move towards standards compliance (Christian can tell you more). It&#39;s also possible that the qx.io.remote.Rpc has been modified recently to disable use of qooxdoo JSON dates, but I don&#39;t recall that change being applied. Martin can tell you more about that.
+
+&gt; I figured out that in qooxdoo 1.1 all my qx.remote.io.Rpc send POST requests to
+&gt; RpcPhp. In qooxdoo 1.2, however, some Rpc calls send GET requests to RpcPhp.
+&gt; Appearantly it depends whether the crossDomain property of qx.remote.io.Rpc is
+&gt; set or not. 
+
+This has not changed recently. If you set the crossDomain property, the request can not be sent using the normal mechanism. A &quot;kludge&quot; using script requests will be used (there&#39;s no standard way to make requests cross-domain) and that uses GET instead of POST.
+
+&gt; 
+&gt; I have decided to ignore the change of behaviour concerning qx.remote.io.Rpc
+&gt; and I rather took a long, harder look at RpcPhp.
+&gt; 
+&gt; Further investigation showed that the error is caused in lib/JsonWrapper.php in
+&gt; function decode(). This function will either call $this-&gt;_json-&gt;decode() or
+&gt; json_decode() if $this-&gt;_json is undefined. It turned out, that $this-&gt;_json is
+&gt; undefined and json_decode() fails. 
+
+That makes sense. If the qooxdoo Date extension is disabled then json_decode() will not be able to parse that Date object.
+
+Hopefully Christian will comment since he&#39;s worked on the recent versions of RpcPhp.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20955</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-29 08:53:18 +0200</bug_when>
+            <thetext>Christian, could you comment please as Derrell suggests?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21001</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2010-10-29 15:32:40 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+
+&gt; I think that the qooxdoo Date extensions have been disabled by default in
+&gt; recent versions of RpcPhp as we slowly move towards standards compliance
+&gt; (Christian can tell you more). It&#39;s also possible that the qx.io.remote.Rpc has
+&gt; been modified recently to disable use of qooxdoo JSON dates, but I don&#39;t recall
+&gt; that change being applied. Martin can tell you more about that.
+
+I am not sure, but I think that 1.1. still supported the date extension, however, as Derrell said, in 1.2 and trunk of RpcPhp the dates are no longer encoded/decoded. You have to set a constant like so:
+
+define( &quot;handleQooxdooDates&quot;, true );
+
+see the sample config file:
+
+http://qooxdoo-contrib.svn.sourceforge.net/viewvc/qooxdoo-contrib/trunk/qooxdoo-contrib/RpcPhp/1.2.0/services/global_settings.php?revision=20150&amp;view=markup
+
+&gt; &gt; Further investigation showed that the error is caused in lib/JsonWrapper.php in
+&gt; &gt; function decode(). This function will either call $this-&gt;_json-&gt;decode() or
+&gt; &gt; json_decode() if $this-&gt;_json is undefined. It turned out, that $this-&gt;_json is
+&gt; &gt; undefined and json_decode() fails. 
+&gt; 
+&gt; That makes sense. If the qooxdoo Date extension is disabled then json_decode()
+&gt; will not be able to parse that Date object.
+
+Yes, you need to make sure not to have a native Date object in your javascript JSON data, or turn date encoding/decoding on on the server side, using the above mentioned constant.  However, this feature is deprecated and will no longer be supported in future versions - It is not standard-compliant and slows down JSON encoding/decoding by factor 10 or more. 
+
+It would be good to find a standard to encode dates as strings which could be very efficiently be converted, but so far, I know of no such standard. Having had to deal with dates more intensively recently, I would think that the most efficient conversion is an integer UNIX timestamp which can be very efficiently converted in JavaScript ( new Date(t*1000) ) and in PHP (new  DateTime(t) / date() ). 
+
+But in any case, the JSON-RPC standard doesn&#39;t allow any tinkering with the JSON data itself, we will only be able to post-process the data which is expensive. So it might make more sense to convert the data in-place, i.e. when it is actually needed, and not on the level of the data structure itself.
+
+Cheers, 
+Christian</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21008</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-11-02 09:59:50 +0100</bug_when>
+            <thetext>Christian, would you want to resolve this issue as invalid?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21009</commentid>
+            <who name="Patrick">patrick</who>
+            <bug_when>2010-11-02 10:51:06 +0100</bug_when>
+            <thetext>Thank you all for your help!
+
+I have already tried to set &quot;handleQooxdooDates&quot; in my very first approach, but it had no effect. 
+
+I agree that it would be better to encode dates as strings or numerical (unix timestamps), but in my case &quot;qx.ui.table.cellrenderer.Date&quot; requires an object of type Date.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21011</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-11-02 13:13:51 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Thank you all for your help!
+&gt; 
+&gt; I have already tried to set &quot;handleQooxdooDates&quot; in my very first approach, but
+&gt; it had no effect. 
+&gt; 
+&gt; I agree that it would be better to encode dates as strings or numerical (unix
+&gt; timestamps), but in my case &quot;qx.ui.table.cellrenderer.Date&quot; requires an object
+&gt; of type Date.
+
+So don&#39;t use qx.ui.table.cellrenderer.Date. :-)
+
+Instead, create your own cell renderer that expects, for example, a Unix time stamp. Here&#39;s some entirely untested code to whet your appetite:
+
+qx.Class.define(&quot;my.DateCellRenderer&quot;,
+{
+  extend : &quot;qx.ui.table.cellrenderer.Date&quot;,
+
+  _getContentHtml : function(cellInfo)
+  {
+    // Convert the value to be entered into the table from Unix timestamp
+    // to Date so that the superclass can deal with it.
+    cellInfo.value = new Date(cellInfo.value);
+
+    // Now let the superclass do its thing.
+    this.base(arguments, cellInfo);
+  }
+}</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21014</commentid>
+            <who name="Patrick">patrick</who>
+            <bug_when>2010-11-02 14:35:21 +0100</bug_when>
+            <thetext>&gt; qx.Class.define(&quot;my.DateCellRenderer&quot;,
+&gt; {
+&gt;   extend : &quot;qx.ui.table.cellrenderer.Date&quot;,
+&gt; 
+&gt;   _getContentHtml : function(cellInfo)
+&gt;   {
+&gt;     // Convert the value to be entered into the table from Unix timestamp
+&gt;     // to Date so that the superclass can deal with it.
+&gt;     cellInfo.value = new Date(cellInfo.value);
+&gt; 
+&gt;     // Now let the superclass do its thing.
+&gt;     this.base(arguments, cellInfo);
+&gt;   }
+&gt; }
+
+That&#39;s a good idea. Many thanks for this very useful snippet!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26211</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2011-07-22 20:25:37 +0200</bug_when>
+            <thetext>closing this bug - seems that issue is solved.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

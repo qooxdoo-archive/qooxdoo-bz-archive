@@ -1,0 +1,186 @@
+<bug>
+          <bug_id>7064</bug_id>
+          
+          <creation_ts>2012-11-30 15:18:00 +0100</creation_ts>
+          <short_desc>pyScss compiles CSS3 keyframes wrong</short_desc>
+          <delta_ts>2014-03-03 15:21:10 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Mac OS</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          <keywords>CSS-Compiler</keywords>
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christopher Zuendorf">christopher.zuendorf</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          <cc>richard.sternagel</cc>
+    
+    <cc>thron7</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>31566</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2012-11-30 15:18:34 +0100</bug_when>
+            <thetext>The pyScss Compiler, compiles the source SCSS files &quot;_spinner.scss&quot; and &quot;_animations.scss&quot; in a wrong way.
+
+This causes the effect that PageTransition and BusyIndicator Animations do not work anymore, when they are parsed through pyScss.
+
+There are several issues which describe this bug:
+https://github.com/Kronuz/pyScss/issues/75
+https://github.com/nex3/sass/issues/46
+
+The original ruby SCSS Compiler compiles it in that way:
+
+@-webkit-keyframes spinnerRotate {
+ from {
+   -webkit-transform: rotate(0deg);
+   -moz-transform: rotate(0deg);
+   transform: rotate(0deg); }
+
+ to {
+   -webkit-transform: rotate(360deg);
+   -moz-transform: rotate(360deg);
+   transform: rotate(360deg); } 
+}
+
+pyScss Compiles it this way:
+
+@-webkit-keyframes spinnerRotate from {
+ -webkit-transform: rotate(0deg);
+ -moz-transform: rotate(0deg);
+ transform: rotate(0deg);
+}
+@-webkit-keyframes spinnerRotate to {
+ -webkit-transform: rotate(0deg);
+ -moz-transform: rotate(0deg);
+ transform: rotate(0deg);
+}
+
+
+Despite the fact that 360deg is interpreted as 0deg, you can see that &quot;to{}&quot; and &quot;from{}&quot; Blocks are separated from each other in pyScss. This has a complete different meaning for CSS animations, which causes the defect animation.
+
+One solution would be, to preserve compilation of that block through saving it in a CSS file.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31572</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2012-11-30 15:55:01 +0100</bug_when>
+            <thetext>Source SCSS:
+
+@-webkit-keyframes spinnerRotate {
+  from {
+    @include transform(rotate(0deg));
+  }
+  to {
+    @include transform(rotate(359deg)); 
+  }
+}
+
+@-moz-keyframes spinnerRotate {
+  from {
+    @include transform(rotate(0deg));
+  }
+  to {
+    @include transform(rotate(359deg));
+  }
+}
+
+@keyframes spinnerRotate {
+  from {
+    @include transform(rotate(0deg));
+  }
+  to {
+    @include transform(rotate(359deg));
+  }
+}</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31741</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-12-14 16:15:13 +0100</bug_when>
+            <thetext>Christopher resolved usage of @-*-keyframes statements in framework .scss 
+files, so we don&#39;t hit the problem anymore.
+
+This is good enough for the moment, so I&#39;m closing this. I&#39;ve looked at the 
+code, wouldn&#39;t be so easy to patch this ourselves. If we need it again, we&#39; ll 
+have to see whether the pyScss bug has been fixed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32141</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-02-06 10:28:27 +0100</bug_when>
+            <thetext>The Bug #7140 (http://bugzilla.qooxdoo.org/show_bug.cgi?id=7140) appeared after removal of the following block in file resource/qx/mobile/scss/_layout.scss:
+
+
+// Firefox only
+@-moz-document url-prefix() {
+ .hbox {
+   width: 100%;
+ }
+}
+
+So if we want to use pyScss we have to make sure that it is able to handle the &quot;@-moz-document &quot; prefix in the right way.
+Maybe there is a fix of it in the latest pyScss version?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32264</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2013-02-15 16:54:37 +0100</bug_when>
+            <thetext>I&#39;ve fixed the following issues within our patched version of pyScss:
+
+- https://github.com/Kronuz/pyScss/issues/75 (@keyframes and @-moz-document)
+- https://github.com/Kronuz/pyScss/issues/69 (@media / very similar bug)
+
+Now we run into:
+
+- https://github.com/Kronuz/pyScss/issues/31 (content: &#39;&#39; =&gt; content:)
+
+... but this can be fixed by just using content: &quot;&quot; (=&gt; content: &quot;&quot;).
+
+I&#39;ve also added the original doctests (&#39;tests.rst.org&#39;), copied them (&#39;tests.rst&#39;) and added new tests for the fixed issues.
+
+master: af1b3ccd373c8d64e3d684169fb8f5dff88cb1fe
+
+I&#39;m going to make pull requests to get those fixes also upstream in order to avoid a diverging fork on our side, which would get cumbersome to upgrade in the future.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34699</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-01-02 14:08:15 +0100</bug_when>
+            <thetext>Note: The pull requests for the mentioned issues were either accepted or fixed otherwise. The pyScss version we are currently using (1.2.0 alpha) includes those fixes.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37183</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:10 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

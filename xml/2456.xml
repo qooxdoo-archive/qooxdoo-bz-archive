@@ -1,0 +1,212 @@
+<bug>
+          <bug_id>2456</bug_id>
+          
+          <creation_ts>2009-06-04 12:38:00 +0200</creation_ts>
+          <short_desc>Databinding should support target properties that are not actual Qooxdoo properties</short_desc>
+          <delta_ts>2014-03-03 15:22:48 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="vvandens@gmail.com">vvandens</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10273</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2009-06-04 12:38:13 +0200</bug_when>
+            <thetext>Databinding should support target properties that are not actual Qooxdoo properties, i.e. only have accessors (and even only a setter if it&#39;s a one-way binding). This would imply testing for the presence of all the derived property methods like &quot;resetXXX&quot; before execution.
+See the complete usecase here :
+http://sourceforge.net/mailarchive/forum.php?thread_name=4A279FBF.7000207%401und1.de&amp;forum_name=qooxdoo-devel</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10393</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-06-16 11:09:55 +0200</bug_when>
+            <thetext>Hello Vincent,
+that features is already available. There is no check for a target property in the data binding. The only things necessary are the set and reset methods. The reset is used for the case of null in the source property as you mentioned right.
+The problem was the missing reset method of the textfield. But this has been added some time ago so it should not be a problem anymore.
+
+Just give the following code snippet a try in the current devel playground to see it working. (http://demo.qooxdoo.org:8181/devel/playground/index.html)
+
+
+// create the textfield
+var textfield = new qx.ui.form.TextField();
+this.getRoot().add(textfield, {left: 10, top: 10});
+
+// create a dummy class
+qx.Class.define(&quot;qx.Test&quot;, {
+  extend : qx.core.Object,
+  events : {
+    &quot;changeValue&quot; : &quot;qx.event.type.Data&quot;
+  },
+  members : {
+    __v : null,
+    setValue : function(value) {
+      this.fireDataEvent(&quot;changeValue&quot;, value, this.__v);
+      this.__v = value;
+    },
+    getValue : function() {
+      return this.__v;
+    },
+    resetValue : function() {
+      this.fireDataEvent(&quot;changeValue&quot;, this.__v, null);
+      this.__v = null;
+    }
+  }
+});
+// create a test instance
+var t = new qx.Test();
+
+// create and connect the controller
+var c = new qx.data.controller.Object();
+c.setModel(t);
+c.addTarget(textfield, &quot;value&quot;, &quot;value&quot;, true);
+
+
+// test the scenario
+textfield.setValue(&quot;123&quot;);
+alert(t.getValue());
+
+t.setValue(&quot;456&quot;);
+alert(textfield.getValue());</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10394</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2009-06-16 11:47:20 +0200</bug_when>
+            <thetext>Hi Martin,
+Thanks for the reply.
+
+I understand from the source that databinding does not use properties as such but it uses its derived accessor patterns (getXX, setXX and resetXX). This is fine now for textfields but IMHO, we should be able to bind a target without being forced to implement the complete scheme, especially for user-written objects.
+
+In the minimal use case (a one-way binding), the only method that should be required on the target is the setter. On the opposite side, the only method that should be required on the model is the getter (+ the notification event). Of course, if a resetXX method is declared, databinding should continue to use it.
+
+The patch might be as &quot;simple&quot; (didn&#39;t try it) as testing the presence of the resetXX method before trigerring it (in SingleValueBinding.js) :
+
+    __resetTargetValue: function(targetObject, targetPropertyChain) {
+      // get the last target object of the chain
+      var target = this.__getTargetFromChain(targetObject, targetPropertyChain);
+      if (target != null) {
+        // get the name of the last property
+        var lastProperty = targetPropertyChain.substring(
+          targetPropertyChain.lastIndexOf(&quot;.&quot;) + 1, targetPropertyChain.length
+        );
+        // reset the property if a reset method is provided
+        var resetMethod = target[&quot;reset&quot; + qx.lang.String.firstUp(lastProperty)];
+        if(resetMethod) {
+          resetMethod();
+        }
+      }
+    },
+
+Of course, the final decision is yours ;-)
+
+Best regards,
+Vincent</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10398</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-06-16 12:07:00 +0200</bug_when>
+            <thetext>Hello Vincent,
+
+i dont know if thats really the desired behavior what we get by ignoring the reseter? Imagine the old textfield not having the reset method. If the model property will be set to null, the old value still will be visible in the textfield because the reset has never been called. So the UI is out of sync with the model which is a state I really dont want to happen.
+
+To your second point, the force to use the getXX, setXX and resetXX names. We need some kind of constancy in the accessors. How should I otherwise know how to access a property? As these names are widely used in all programming languages and especially in qooxdoo, I dont think its a bad idea to force the usage of such a common used pattern. But perhaps i just dont see arguments why it should be different. Why do you think that could be a problem?
+
+Best,
+Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10404</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2009-06-16 12:47:22 +0200</bug_when>
+            <thetext>Martin,
+My last comment might be confusing, sorry about that.
+
+I didn&#39;t mean not using the accessor name patterns. It&#39;s of course mandatory to rely on this convention (I come from the Java world and they are widely used for java beans, at least getters and setters; never saw &quot;reset&quot;, but that&#39;s smart).
+
+My only concern is that you might want to use a target object (maybe coming from an external library, the old textfield for instance) that only has a setter and that you cannot (or don&#39;t want to) modify to provide it with a resetter method. The current databinding implementation will not allow you to do so.
+
+Regarding the view/model synchronisation, I do agree. You should then make sure that if the target object doesn&#39;t have a resetter method, the normal setter method is then called with &quot;null&quot; as parameter. So maybe the patch should be complemented with :
+
+        var resetMethod = target[&quot;reset&quot; + qx.lang.String.firstUp(lastProperty)];
+        if(resetMethod) {
+          resetMethod();
+        } else {
+          // no reset method is available, go on with normal setter
+          qx.data.SingleValueBinding.__setTargetValue(targetObject, targetPropertyChain, null);
+        }
+
+
+Just my 2C ;-)
+
+Best,
+Vincent
+
+BTW, how is your arm ?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10411</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-06-16 14:19:37 +0200</bug_when>
+            <thetext>Hi Vincent,
+
+i have thought about your suggestion already. It came to my mind I wrote my last comment but I didn&#39;t know if it was a good idea. But that you had the same shows me, that its not the worst idea. ;) I still dont think we need that feature as a framework developer. But as you said, someone who has some old or external classes could use. So I added it and commited it in revision 19340.
+
+But just one comment to your suggested code. If you store the function in a variable and call it, the context of the function is lost as far as i know. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10414</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2009-06-16 14:40:22 +0200</bug_when>
+            <thetext>That makes sense.
+
+Thanks!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14512</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:15:09 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37815</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:48 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

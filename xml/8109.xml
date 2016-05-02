@@ -1,0 +1,122 @@
+<bug>
+          <bug_id>8109</bug_id>
+          
+          <creation_ts>2014-02-12 11:26:00 +0100</creation_ts>
+          <short_desc>qx.ui.form.TextField doesn&#39;t show context menu on ipad</short_desc>
+          <delta_ts>2015-04-07 07:58:23 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>iOS</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Oleg Filippov">Oleg.Filippov</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>35036</commentid>
+            <who name="Oleg Filippov">Oleg.Filippov</who>
+            <bug_when>2014-02-12 11:26:16 +0100</bug_when>
+            <thetext>1. Open any page with qx.ui.form.TextField (e.g. http://demo.qooxdoo.org/devel/widgetbrowser/)
+2. Tap twice on TextField
+
+Expected: Context menu with copy/paste/select options appears
+Actual result: TextField gets focus (keyboard appears) and looses focus right after that (keyboard disappears), no context menu
+
+Second tap on focused text field always moves focus from that text field.
+
+Video: http://screencast.com/t/ZeXRXHziA</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35062</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-02-14 08:10:31 +0100</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; Expected: Context menu with copy/paste/select options appears
+&gt; Actual result: TextField gets focus (keyboard appears) and looses focus right
+&gt; after that (keyboard disappears), no context menu
+
+Why do you expect that the context menu will pop up on a double tap?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35144</commentid>
+            <who name="Oleg Filippov">Oleg.Filippov</who>
+            <bug_when>2014-02-19 08:48:51 +0100</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Why do you expect that the context menu will pop up on a double tap?
+
+Cause this is what happens when I put focus on simple html input text field and do double-tap: http://screencast.com/t/nkP1KFSUp
+
+However I cannot get context menu on qx.ui.form.TextField - I cannot copy/paste/etc.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39875</commentid>
+            <who name="Oleg Filippov">Oleg.Filippov</who>
+            <bug_when>2014-04-03 13:02:02 +0200</bug_when>
+            <thetext>I think I&#39;ve found what cause this problem:
+
+qx.event.handler.Focus.__onNativeMouseDown
+
+&quot;webkit|gecko&quot; : function(domEvent) {
+        var target = qx.bom.Event.getTarget(domEvent);
+        var focusTarget = this.__findFocusableElement(target);
+
+        if (focusTarget) {
+          this.setFocus(focusTarget);
+          if (qx.core.Environment.get(&quot;event.touch&quot;) &amp;&amp; qx.event.handler.MouseEmulation.ON) {
+            // use a timeout to make sure the kex inputs are working [#7867]
+            qx.event.GlobalError.observeMethod(window.setTimeout(function() {
+              try {
+                // if the element is already focused, blur and refocus
+                // it to make sure the keyboard is shown on tap
+                if (document.activeElement == focusTarget) {
+                  focusTarget.blur();
+                }
+                focusTarget.focus();
+              } catch(ex) {};
+            }, 200));
+          }
+        } else {
+          qx.bom.Event.preventDefault(domEvent);
+        }
+      }
+
+Why do we need this code? When I remove it everything works fine.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43014</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-04-07 07:58:23 +0200</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,166 @@
+<bug>
+          <bug_id>3472</bug_id>
+          
+          <creation_ts>2010-02-24 15:29:00 +0100</creation_ts>
+          <short_desc>Error on Drag and Drop: qx.event.Registration.getManager(null) was called!</short_desc>
+          <delta_ts>2014-03-03 15:21:53 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>1.0.1</version>
+          <rep_platform>Firefox 3.5</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          <cc>lp1051</cc>
+    
+    <cc>qooxdoo-bugs</cc>
+    
+    <cc>thron7</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>3.5</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>16951</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2010-02-24 15:29:30 +0100</bug_when>
+            <thetext>We sometimes get the following javascript error:
+--------------------------------------------------------------------------------
+009918 qx.event.Registration.getManager(null) was called!
+qx.event.Registration: qx.log.Logger:223 
+qx.event.Registration:67 
+qx.event.Registration:263 
+qx.event.handler.DragDrop:340 
+qx.event.handler.DragDrop:315 
+qx.event.Timer:111 
+qx.event.dispatch.Direct:123 
+qx.Interface:458 
+qx.event.Manager:832 
+qx.event.Registration:294 
+qx.core.Object:474 
+qx.event.Timer:298 
+qx.event.GlobalError:92 
+qx.event.Timer:61
+--------------------------------------------------------------------------------
+
+This javascript error only occurs when the drag is finished and shortly afterwards a new drag is begun.
+This problem seems to be a timing problem because this problem does not happen
+if the mouse is not moved very fast and this problem does not occur
+if there is at least one second between the finish of a drag and the start of a new drag.
+
+This exceptions occurs because the property qx.event.handler.DragDrop.__dragTarget is null.
+Therefore I have added some debug code which logs every modifying access to this property.
+
+The normal sequence of debug output looks like this:
+
+(Drag is started by the user)
+function DragDrop.__onMouseDown(): Sets the property this.__dragTarget
+function DragDrop.__detectAction(): Accesses the property this.__dragTarget
+function DragDrop.__detectAction(): Accesses the property this.__dragTarget
+function DragDrop.__detectAction(): Accesses the property this.__dragTarget
+(Drag is finished by the user)
+function DragDrop.__clearSession() -&gt; __clearInit(): Sets the property this.__dragTarget to null
+
+If the error occurs, we find the following sequence of debug output:
+
+(Drag is started by the user)
+function DragDrop.__onMouseDown(): Sets the property this.__dragTarget
+function DragDrop.__detectAction(): Accesses the property this.__dragTarget
+function DragDrop.__detectAction(): Accesses the property this.__dragTarget
+(Drag is finished by the user)
+(A new Drag is started by the user)
+function DragDrop.__onMouseDown(): Sets the property this.__dragTarget
+function DragDrop.__clearSession() -&gt; __clearInit(): Sets the property this.__dragTarget to null
+function DragDrop.__detectAction(): Accesses the property this.__dragTarget
+                         -&gt; Error due to the access of a null property
+
+The problem is probably that one of the methods __onMouseDown, __detectAction__ and __clearSession is called out of sequence.
+The method &quot;__detectAction&quot; is called by the following code:
+    _onMouseOut : function(e)
+    {
+        ...
+        qx.event.Timer.once(this.__detectAction, this, 0);
+
+I guess that the timer-Logic causes a too long delay of the method __detectAction.
+
+I assume there is a reason for this timer-logic, therefore we cannot simple replace this timer-logic by a direct call of this method.
+
+Therefore I would recommend the following fix of the issue:
+The method __detectAction checks at the beginning whether the property this.__dragTarget is null or not.
+If the property __dragTarget is null, then this method should assume that the timer-logic has delayd
+the call of this method for a too long time and therefore return without taking any action.
+
+I have added this change in the method __detectAction for test purposes and this change has removed this error without any negative side-effect.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16966</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-02-25 09:18:27 +0100</bug_when>
+            <thetext>to alex</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16967</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-02-25 09:29:33 +0100</bug_when>
+            <thetext>Setting ML to 1.0.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17004</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-02-25 17:28:09 +0100</bug_when>
+            <thetext>accepting</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17005</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-02-25 18:17:54 +0100</bug_when>
+            <thetext>Thanks for the detailed bug report.
+
+This issue is fixed in revision #21648 (trunk) and #21647 (1_0_x branch).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17901</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2010-04-21 15:35:48 +0200</bug_when>
+            <thetext>*** Bug 3298 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17906</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2010-04-21 16:02:20 +0200</bug_when>
+            <thetext>*** Bug 3393 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37463</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:53 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

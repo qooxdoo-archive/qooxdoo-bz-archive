@@ -1,0 +1,300 @@
+<bug>
+          <bug_id>8004</bug_id>
+          
+          <creation_ts>2013-12-14 19:21:00 +0100</creation_ts>
+          <short_desc>Setting an external image resource does not work for mobile widgets</short_desc>
+          <delta_ts>2014-02-25 15:16:03 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>mobile.widget</component>
+          <version>3.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>3.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="vvandens@gmail.com">vvandens</reporter>
+          <assigned_to name="Christopher Zuendorf">christopher.zuendorf</assigned_to>
+          <cc>alexander.sutyagin</cc>
+    
+    <cc>christian.hagendorn</cc>
+          <qa_contact name="Christopher Zuendorf">christopher.zuendorf</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>34643</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2013-12-14 19:21:38 +0100</bug_when>
+            <thetext>When setting a URL as image source, used for image icon for instance, the icon does not appear. Tracing the execution, we reach the following code in qx.ui.mobile.basic.Image.__applySource :
+
+if (source &amp;&amp; source.indexOf(&#39;data:&#39;) != 0) {
+  // Perform all work using resoure manager
+} else {
+  this._setSource(source);
+}
+
+In my simple case, where source is an HTTP URL, source.indexOf(&#39;data:&#39;)==-1, so the work is delegated to resource manager which obviously does not know about my image and thus, sets its CSS width and height to zero.
+
+IMHO, the condition should be inverted, i.e. :
+
+  if (source &amp;&amp; source.indexOf(&#39;data:&#39;) == 0)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34644</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2013-12-14 19:38:42 +0100</bug_when>
+            <thetext>Trying to patch the class. Does not solve the problem...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34645</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2013-12-14 20:11:18 +0100</bug_when>
+            <thetext>So maybe the following part should be modified to insert the CSS width / height of the image if and only if the resource manager knows abut it :
+
+if(resourceManager.has(source)) {
+  this._setStyle(&quot;width&quot;, resourceManager.getImageWidth(source) / 16 + &quot;rem&quot;);
+  this._setStyle(&quot;height&quot;, resourceManager.getImageHeight(source) / 16 + &quot;rem&quot;);
+}
+
+
+Now, there is no dimension set to zero, but still no icon appearing, at least on my button.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34646</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-12-14 23:11:01 +0100</bug_when>
+            <thetext>Does your source string include the &quot;resource/&quot; folder? Please try to use the source without this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34647</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-12-14 23:13:31 +0100</bug_when>
+            <thetext>Have a look at this example for loading images:
+
+https://github.com/qooxdoo/qooxdoo/blob/master/application/mobileshowcase/source/class/mobileshowcase/page/Basic.js</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34648</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2013-12-15 02:35:40 +0100</bug_when>
+            <thetext>Thanks for the comment Christopher.
+Sure, it works as soon as the image is in the source tree and known at compile time, no problem with that.
+In my situation, the UI is entirely built at runtime and the image url is not known in advance, e.g. the icon source is something like http://server:port/arbitrarypath/anything.png. This works seamlessly with the desktop widgets but not with the mobile one as described above.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34649</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2013-12-15 02:50:07 +0100</bug_when>
+            <thetext>Here is a non-working test case :
+
+http://tinyurl.com/osc2qss</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34650</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2013-12-16 07:02:58 +0100</bug_when>
+            <thetext>And with an Atom :
+http://tinyurl.com/o6hxg2j</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34658</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-12-16 10:36:46 +0100</bug_when>
+            <thetext>Ok, i understand your problem. 
+
+This seems to be an important bug.
+
+As a workaround you could use this:
+
+var html = new qx.ui.mobile.embed.Html();
+html.setHtml(&quot;&lt;img src=&#39;http://qooxdoo.org/_media/mobile.png&#39;/&gt;&quot;);
+
+
+It does not work for Atoms, of course.
+
+I will have a look for a fix today.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34663</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-12-16 12:55:55 +0100</bug_when>
+            <thetext>Master:
+
+09618a163afc33d97a1d4c11bd4d257d6afa0bf2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34664</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-12-16 13:10:52 +0100</bug_when>
+            <thetext>Branch_3_5_x:
+7a980bc21cbef1605df83ab04bb3a9761a054ed3</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34666</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-12-16 13:16:50 +0100</bug_when>
+            <thetext>You could now switch to Branch_3_5_x or keep your patched qooxdoo Version.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34671</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2013-12-16 16:15:45 +0100</bug_when>
+            <thetext>(In reply to comment #11)
+&gt; You could now switch to Branch_3_5_x or keep your patched qooxdoo Version.
+
+Thanks fo the fix Christopher,
+I&#39;ll live with it until the next release.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34798</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2014-01-17 05:27:21 +0100</bug_when>
+            <thetext>(In reply to comment #11)
+&gt; You could now switch to Branch_3_5_x or keep your patched qooxdoo Version.
+
+Christopher,
+
+I&#39;ve tried with master as well as with 3.5.x branch, and unfortunately both playground example still don&#39;t display any image. see :
+http://tinyurl.com/n3w85zj
+
+Am I missing something ?
+
+TIA,
+Vincent</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34803</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2014-01-17 10:29:51 +0100</bug_when>
+            <thetext>Hi Vincent,
+
+you try to pass the icon after the constructor.
+
+That is why, the atom is in &quot;label&quot; mode.
+
+Solution 1: 
+
+Pass the icon in the constructor
+
+http://tinyurl.com/plaxazo
+
+Solution 2:
+
+Call
+
+atom.setShow(&quot;both&quot;); 
+
+after setIcon()</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34804</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2014-01-17 10:39:43 +0100</bug_when>
+            <thetext>(In reply to comment #14)
+&gt; That is why, the atom is in &quot;label&quot; mode.
+
+Oh, thanks for the clarification Christopher.
+
+I wouldn&#39;t have expected this behavior (changing the visibility mode based on the constructor args count), but at least, I know it now. Maybe worth documenting in the constructor though.
+
+As a side note: my expectations would have been that the visibility mode never change automatically, and when one of the child is null and the visibility mode includes it, simply ignore the child.
+
+Anyway, thank you for the quick and detailed answer.
+
+Vincent</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34808</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2014-01-17 15:06:07 +0100</bug_when>
+            <thetext>Well, the behavior is not that expectable. This is right.
+
+Maybe, we should improve this logic. 
+
+Could you please open a bug report for this?
+
+I would propose, to change the &quot;label&quot; &quot;icon&quot; &quot;both&quot; mode, when setIcon or setLabel was called.
+
+For example:
+
+&quot;label&quot; mode
+
+setIcon(x)
+
+switch automatically to &quot;both&quot; mode
+
+
+
+&quot;icon&quot; mode
+
+setLabel(x)
+
+switch automatically to &quot;both&quot; mode</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34810</commentid>
+            <who name="vvandens@gmail.com">vvandens</who>
+            <bug_when>2014-01-17 15:25:09 +0100</bug_when>
+            <thetext>(In reply to comment #16)
+
+Followed on http://bugzilla.qooxdoo.org/show_bug.cgi?id=8041</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34843</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2014-01-27 10:27:58 +0100</bug_when>
+            <thetext>*** Bug 8050 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35167</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2014-02-25 09:18:20 +0100</bug_when>
+            <thetext>The fix for this bug on master (09618a163afc33d97a1d4c11bd4d257d6afa0bf2) now reproduces 404 errors like:
+GET http://localhost/client/source/null 404 (Not Found)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35222</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2014-02-25 09:56:59 +0100</bug_when>
+            <thetext>You can reproduce the issue with the Hello World mobile playground demo. But you have to build it locally. The hosted version from qooxdoo.org does a redirect on 404 errors.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35226</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2014-02-25 15:15:42 +0100</bug_when>
+            <thetext>Branch_3_5_x:
+42d16beac4ecd5bd330ea38a0e93d3993e5e9dd6</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35227</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2014-02-25 15:16:03 +0100</bug_when>
+            <thetext>Master:
+
+0fbbb4a7bc700014639ca7475ae8f0aa57e7faa4</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

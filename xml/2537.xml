@@ -1,0 +1,202 @@
+<bug>
+          <bug_id>2537</bug_id>
+          
+          <creation_ts>2009-07-01 14:02:00 +0200</creation_ts>
+          <short_desc>Cache Access triggers infinite Recursion in codecs Module</short_desc>
+          <delta_ts>2014-03-03 15:25:23 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>fabian.jakobs</cc>
+    
+    <cc>matthias.braun</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10704</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-01 14:02:51 +0200</bug_when>
+            <thetext>Sometimes, trying to read a cache object results in an infinite recursion in 
+the codecs module.
+
+The triggering generator source line is Cache.py:106:
+
+  content = cPickle.load(fobj)
+
+in Cache.read().
+
+The exception stack trace goes like this:
+
+....
+   [exec]     content = cPickle.load(fobj)
+   [exec]   File &quot;/sw/lib/python2.5/codecs.py&quot;, line 330, in __getattr__
+   [exec]     return getattr(self.stream, name)
+   [exec]   File &quot;/sw/lib/python2.5/codecs.py&quot;, line 330, in __getattr__
+   [exec]     return getattr(self.stream, name)
+...
+   [exec]  File &quot;/sw/lib/python2.5/codecs.py&quot;, line 330, in __getattr__    
+   [exec]    return getattr(self.stream, name)
+   [exec]  File &quot;/sw/lib/python2.5/codecs.py&quot;, line 330, in __getattr__  
+   [exec]    return getattr(self.stream, name) 
+   [exec]  File &quot;/sw/lib/python2.5/codecs.py&quot;, line 330, in __getattr__ 
+   [exec]    return getattr(self.stream, name) 
+   [exec] RuntimeError: maximum recursion depth exceeded 
+
+The problem can be reproduced with the &quot;pickle&quot; module (in exchange for the 
+cPickle module).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10705</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-01 14:13:33 +0200</bug_when>
+            <thetext>This stack trace produced with IPython is more interesting, especially the 
+third frame (in load_build):
+
+/usr/local/lib/python2.5/pickle.py in load(file)
+   1403 
+   1404 def load(file):
+-&gt; 1405     return Unpickler(file).load()
+   1406 
+   1407 def loads(str):
+
+/usr/local/lib/python2.5/pickle.py in load(self)
+    891             while 1:
+    892                 key = read(1)
+--&gt; 893                 dispatch[key](self)
+    894         except _Stop, stopinst:
+    895             return stopinst.value
+
+/usr/local/lib/python2.5/pickle.py in load_build(self)
+   1248         state = stack.pop()
+   1249         inst = stack[-1]
+-&gt; 1250         setstate = getattr(inst, &quot;__setstate__&quot;, None)
+   1251         if setstate:
+   1252             setstate(state)
+
+/usr/local/lib/python2.5/codecs.py in __getattr__(self, name, getattr)
+    328         &quot;&quot;&quot; Inherit all other methods from the underlying stream.
+    329         &quot;&quot;&quot;
+--&gt; 330         return getattr(self.stream, name)
+    331 
+    332     def __enter__(self):
+
+This (pickle.py:1250) shows the call to getattr(inst, &quot;__setstate__&quot;, None) 
+that triggers the recursion. &#39;inst&#39; is a StreamWriter object, __setstate__ 
+seems not to be an attribute of this class.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10706</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-01 14:16:32 +0200</bug_when>
+            <thetext>The issue might be related to this Python issue: 
+http://bugs.python.org/issue5508
+
+The title, &quot;maximum recursion depth exceeded in __subclasscheck__&quot;, is 
+seemingly what you get reproducing the issue with Python2.6. It has to do with 
+using getattr in __getattr__ in a class.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10712</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-01 16:52:19 +0200</bug_when>
+            <thetext>I&#39;ve commited a tentative fix (r19514). The work-around is to add a 
+LibraryPath.__getstate__ method, which is used by the Pickle protocol when 
+pickling objects. It avoids pickling the _console object, which seems to cause 
+the problem when a log file has been specified in the generator invocation. 
+I&#39;ll post a separate comment with more background.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10715</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-01 18:05:43 +0200</bug_when>
+            <thetext>Background Info:
+
+This is how I understand the issue currently:
+
+- Part of the standard unpickle procedure when re-creating a class instance is 
+to invoke the &#39;__setstate__&#39; if it is available.
+- In codecs.StreamWriter (the offending class), this method is not implemented. 
+But it provides a __getattr__ method for unknown attributes. All that does is 
+delegating the issue to the underlying stream object.
+- Point is, the just unpickled codecs.StreamWriter instance doesn&#39;t have a 
+stream object associated. The corresponding member &quot;self.stream&quot; is undefined 
+(It is created in the __init__ method). So the reference to self.stream itself 
+triggers an invocation of __getattr__ - hence the infinite recursion.
+- This is an omission on the side of the codecs module, IMHO, and I&#39;ve filed a 
+Python issue for that (http://bugs.python.org/issue6395).
+
+To work around the issue, I&#39;ve tried to get rid of the StreamWriter object 
+altogether:
+
+- It is used in the Log class, if a log file is specified.
+- So I added LibraryPath.__getstate__, to omit the _console member when 
+pickling.
+- On unpickling, the _console member is restored by client code 
+(Generator.scanLibraries).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10718</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-01 18:26:10 +0200</bug_when>
+            <thetext>I&#39;m closing this bug as the immediate problem seems to be solved.
+
+Apart from that, it remains arguable whether the implemented work-around is the 
+best way to solve it. Particularly, rather than the LibraryPath class the Log 
+class could implement the __setstate__ method, to omit the StreamWriter object 
+if it is present. But with the current solution it seemed easier to oversee and 
+control the scope of the introduced changes, so I went this way. I&#39;m now aware 
+of the problem, and maybe over time and with more knowledge of the Pickle 
+protocol, a better solution might evolve.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10785</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-07-04 00:24:40 +0200</bug_when>
+            <thetext>reopen to fix assignment</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10786</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-07-04 00:24:57 +0200</bug_when>
+            <thetext>.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38728</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:23 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

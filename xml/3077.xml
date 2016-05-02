@@ -1,0 +1,173 @@
+<bug>
+          <bug_id>3077</bug_id>
+          
+          <creation_ts>2009-11-18 19:23:00 +0100</creation_ts>
+          <short_desc>Calling &quot;setColumnVisible&quot; with a string in the &quot;visible&quot; (second) parameter breaks the table behavior.</short_desc>
+          <delta_ts>2014-03-03 15:19:25 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://demo.qooxdoo.org/current/playground/#%7B%22code%22%3A%20%22%252F%252F%2520create%2520dummy%2520data%250Avar%2520createRandomRows%2520%253D%2520function%28rowCount%29%257B%250A%2520%2520var%2520toReturn%2520%253D%2520%255B%255D%253B%250A%2520%2520for%28var%2520i%2520%253D%25200%253B%2520i%2520%253C%2520rowCount%253B%2520i%252B%252B%29%257B%250A%2520%2520%2520%2520toReturn.push%28%255Bi%252C%2520Math.random%28%29%2520*%2520100%252C%2520new%2520Date%28%29%252C%2520%28Math.random%28%29%2520%253E%25200.5%253F%2522true%2522%253A%2522false%2522%29%255D%29%253B%250A%2520%2520%257D%250A%2520%2520return%2520toReturn%253B%250A%257D%250Avar%2520rowData%2520%253D%2520createRandomRows%2850%29%253B%250A%250A%252F%252F%2520table%2520model%250Avar%2520tableModel%2520%253D%2520new%2520qx.ui.table.model.Simple%28%29%253B%250AtableModel.setColumns%28%255B%2520%2522ID%2522%252C%2520%2522A%2520number%2522%252C%2520%2522A%2520date%2522%252C%2520%2522Boolean%2522%2520%255D%29%253B%250AtableModel.setData%28rowData%29%253B%250A%252F%252F%2520table%250Avar%2520table%2520%253D%2520new%2520qx.ui.table.Table%28tableModel%29%253B%250Avar%2520tcm%2520%253D%2520table.getTableColumnModel%28%29%253B%250A%2520%2520%2520%2520%250A%252F%252F%2520OK%253A%2520this%2520makes%2520the%2520column%2520visible%2520%28which%2520is%2520the%2520default%252C%2520so%2520does%2520nothing%29%250A%252F%252F%2520tcm.setColumnVisible%281%252C%2520true%29%253B%250A%252F%252F%2520KO%253A%2520a%2520string%2520breaks%2520the%2520table%252C%2520causing%2520the%2520column%2520to%2520be%2520duplicated%2520%28%253F%253F%253F%29%250Atcm.setColumnVisible%281%252C%2520%2522true%2522%29%253B%250A%250A%252F%252F%2520get%2520the%2520application%2520root%250Avar%2520doc%2520%253D%2520this.getRoot%28%29%253B%250A%252F%252F%2520add%2520the%2520widget%2520to%2520document%250Adoc.add%28table%29%253B%250A%22%7D</bug_file_loc>
+          
+          
+          <priority>P2</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Helder Magalhães">helder.magalhaes</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>14207</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-11-18 19:23:48 +0100</bug_when>
+            <thetext>Calling &quot;setColumnVisible&quot; doesn&#39;t check input and freaks out when a string is used in the &quot;visible&quot; (second) parameter.
+
+This was originally found by coincidence, when a string containing the Boolean value (&quot;true&quot;/&quot;false&quot;) was being used by mistake. The symptom is that the column appears duplicated and the column header logic (column resize/drag and drop) is broken from that moment on.
+
+The relevant code seems to be in &quot;qx.ui.table.columnmodel.Basic&quot;:
+
+  setColumnVisible : function(col, visible)
+  {
+    if (visible != this.isColumnVisible(col))
+    {
+      if (visible)
+      {
+        ... do stuff ...
+
+The issue seems to be type coercion: the first string vs. Boolean comparison always fails and the second always succeeds.
+
+I&#39;m not sure if this should be fixed or simply marked invalid, given the documentation already stating a Boolean value should be used in the second parameter. Nevertheless, as this sort of code might also be in other locations (haven&#39;t checked for that, though), this may worth some reflection... :-)
+
+I&#39;ve checked that the issue affects both the legacy (0.7.x) and the trunk (0.8.x).
+
+A playground test case is in the issue&#39;s URL.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14235</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-11-19 15:49:18 +0100</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; The issue seems to be type coercion: the first string vs. Boolean comparison
+&gt; always fails and the second always succeeds.
+&gt; 
+&gt; I&#39;m not sure if this should be fixed [...]
+
+If it should, then two approaches occur to me: the elegant and the quick+dirty.
+
+Elegant: Locate the methods which may be suffering from this issue (or this one, at least) and create proper qooxdoo properties with type validation (and refactor the method to be an &quot;apply value&quot; method).
+
+Quick+dirty: create a local Boolean variable to handle Boolean operations properly. Something like:
+
+  setColumnVisible : function(col, visible)
+  {
+    var isVisible = visible === true;
+    if (isVisible != this.isColumnVisible(col))
+    {
+      if (isVisible)
+      {
+        ... other occurrences of &quot;visible&quot; below ...
+
+
+&gt; Nevertheless, as this sort of code might also be in other locations
+&gt; (haven&#39;t checked for that, though), this may worth some reflection... :-)
+
+Note that the code snipped initially pasted doesn&#39;t highlight an important thing: the &quot;visible&quot; variable is later passed verbatim in the data event dispatched. This makes the issue potentially propagate to other code (event listeners)... :-|  That&#39;s why I&#39;ve initially stated if this should be seen as a potential issue globally: the might be several places where user code can be broken in a way which makes it pretty hard to debug! (Raising priority with this in mind.)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14319</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-23 15:20:37 +0100</bug_when>
+            <thetext>The API doc states that only booleans are allowed. I can add debug time type checks to enforce the parameter types.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14320</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-23 15:34:41 +0100</bug_when>
+            <thetext>I&#39;ve added runtime type checks to all public methods of the basic column model. In the future we should add these to all public methods but for now it will at least fix your issues.
+
+fixed in r20737</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14330</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-11-23 16:30:24 +0100</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; I&#39;ve added runtime type checks to all public methods of the basic column model.
+&gt; In the future we should add these to all public methods but for now it will at
+&gt; least fix your issues.
+
+Great, thanks. :-)  I still wonder if this should be checked in other classes too... (Of course I know it would be a tremendous amount of work!)
+
+
+&gt; fixed in r20737
+
+There was a small lapse in that commit:
+
+&gt; @@ -501,6 +580,12 @@
+&gt;       */
+&gt;      moveColumn : function(fromOverXPos, toOverXPos)
+&gt;      {
+&gt; +      if (qx.core.Variant.isSet(&quot;qx.debug&quot;, &quot;on&quot;)) 
+&gt; +      {
+&gt; +        this.assertInteger(fromOverXPos, &quot;Invalid argument &#39;fromOverXPos&#39;.&quot;);
+&gt; +        this.assertInteger(fromOverXPos, &quot;Invalid argument &#39;fromOverXPos&#39;.&quot;);
+&gt; +      }
+&gt; +      
+
+The second line should be:
+
+&gt; +        this.assertInteger(toOverXPos, &quot;Invalid argument &#39;toOverXPos&#39;.&quot;);
+
+
+Could this be applied to the legacy branch as well? Would you like me creating a patch? The class is basically the same...
+
+I&#39;ve reopened due to the small error in the commit and to make the legacy branch request more visible. ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14342</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-23 18:23:30 +0100</bug_when>
+            <thetext>Thanks for pointing me to this. It&#39;s fixed in r20753.
+
+We are no longer actively working on the 0.7 legacy branch. However if you provide a patch I&#39;ll apply it. Please open a new bug with the patch attached.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14695</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:16:40 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36476</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:25 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

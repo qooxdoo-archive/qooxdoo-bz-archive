@@ -1,0 +1,127 @@
+<bug>
+          <bug_id>4744</bug_id>
+          
+          <creation_ts>2011-03-07 15:08:00 +0100</creation_ts>
+          <short_desc>Synchronous &quot;asynchronous&quot; validator fires &quot;complete&quot; event twice</short_desc>
+          <delta_ts>2014-03-03 15:23:42 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Johannes Kissel">johannes.kissel</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>23110</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2011-03-07 15:08:53 +0100</bug_when>
+            <thetext>Lets assume an asynchronous validator (qx.ui.form.validation.AsynchronousValidator) with synchronous code in the validation function. This fires the &quot;complete&quot; event of the validation manager twice, because the result is synchronously written to __asyncResults so that the event is fired in __checkValidationComplete.
+
+This is a valid use case, because you may want to do some simple synchronous checks on the client before making an asynchronous validation request to the server.
+
+An Example:
+http://tinyurl.com/688xxux
+
+form1 shows the bad behavior, form2 has a workaround: The synchronous code is wrapped in a timeout.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23129</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-08 08:34:55 +0100</bug_when>
+            <thetext>As the API and the name of the class clearly specifies, that its a asynchronous validator and we have a way of adding synchronous validation, I really don&#39;t see a reason the allow synchronous validation in asynchronous validators.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23149</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2011-03-08 11:37:10 +0100</bug_when>
+            <thetext>Wait, you missed our use case: We do not have two validators, one synchronous, one asynchronous. We have one validator with mixed validation logic.
+
+I concretize: In our asynchronous validator for a new user name, we synchronously check the syntax of that name before we make an expensive asynchronous request to check if the name is already used.
+
+This is a common use case, because often you can easily say NO synchronously but than it&#39;s hard to say YES. This latter part is asynchronous and expensive. I hope, you agree.
+
+In our opinion the timeout is just a workaround, because it has nothing to do with our business logic.
+
+An easy fix would be to just check if it&#39;s an asynchronous validator in line 240 of qx.ui.form.validation.Manager:
+
+var validatorResult = !this.__isAsyncValidator(validator) &amp;&amp; this.__validateItem(
+  this.__formItems[i], formItem.getValue()
+);
+
+Thanks for your work.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23150</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-08 13:48:36 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; Wait, you missed our use case: We do not have two validators, one synchronous,
+&gt; one asynchronous. We have one validator with mixed validation logic.
+I do get it right that you have combined a synchronous and a asynchronous validator in one, which is totally ok. 
+
+&gt; I concretize: In our asynchronous validator for a new user name, we
+&gt; synchronously check the syntax of that name before we make an expensive
+&gt; asynchronous request to check if the name is already used.
+&gt; 
+&gt; This is a common use case, because often you can easily say NO synchronously
+&gt; but than it&#39;s hard to say YES. This latter part is asynchronous and expensive.
+&gt; I hope, you agree.
+I do agree that its a total valid use case but its not a common case. But still, the system need to make that possible, which it does. You already came up with the usage of the timeout to ensure asynchronous behavior. 
+
+&gt; In our opinion the timeout is just a workaround, because it has nothing to do
+&gt; with our business logic.
+It has nothing to do with business logic or not, you are using the component not the way it was designed. 
+
+&gt; An easy fix would be to just check if it&#39;s an asynchronous validator in line
+&gt; 240 of qx.ui.form.validation.Manager:
+&gt; 
+&gt; var validatorResult = !this.__isAsyncValidator(validator) &amp;&amp;
+&gt; this.__validateItem(
+&gt;   this.__formItems[i], formItem.getValue()
+&gt; );
+&gt; 
+&gt; Thanks for your work.
+
+Its not about how much the fix would be, its about consistency of the API. As the wording clearly says, its for asynchronous validation purposes. If you want to combine sync and async, you have to agree on one API for setting the valid state, which is, in this case, the async case because your using the async validator. So in my opinion, adding that to the framework would change the API in a way, which may be obvious in that special case but hard to explain for every other cases.
+
+So sorry but a consistant API is the highest priority here. Nevertheless, I added another hint to the API docs of the async validator to make it clear how to handle that use case. (r25414) Maybe that would have helped you during debugging as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38111</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:42 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

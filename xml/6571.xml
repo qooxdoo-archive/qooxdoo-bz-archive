@@ -1,0 +1,109 @@
+<bug>
+          <bug_id>6571</bug_id>
+          
+          <creation_ts>2012-06-27 16:20:00 +0200</creation_ts>
+          <short_desc>Reminder: MMock::useFakeServer in combination with qx.io.remote.Request causes a &quot;Referer&quot; error in Firefox</short_desc>
+          <delta_ts>2014-03-03 08:48:04 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.dev.testing</component>
+          <version>1.6</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          <keywords>Reminder</keywords>
+          <priority>P5</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martijn">mevers47</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>13.0.1</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>29959</commentid>
+            <who name="Martijn">mevers47</who>
+            <bug_when>2012-06-27 16:20:00 +0200</bug_when>
+            <thetext>Execute this unit test in Firefox to reproduce the error:
+
+Error message: &#39;Refused to set unsafe header &quot;Referer&quot;&#39;
+--------------------------------------------------------------
+qx.Class.define(&quot;qx.test.Sinon&quot;,
+{
+  extend : qx.dev.unit.TestCase,
+  include : qx.dev.unit.MMock,
+
+  members :
+  {
+    tearDown: function() {
+      this.getSandbox().restore();
+    },
+
+    &quot;test fakeServer&quot; : function()
+    {
+      var server = this.useFakeServer();
+      server.respondWith([200, {}, &#39;abc&#39;]);
+
+      var req = new qx.io.remote.Request(&#39;ajax_info.txt&#39;);
+      req.addListener(&quot;changeState&quot;, function (e) {
+        alert(e.getData());
+      });
+
+      req.send();
+      server.respond();
+    }
+  }
+});
+--------------------------------------------------------------
+
+When this code is executed in Firefox the following happens:
+1. The fake server, implemented by Sinon, replaces the XMLHttpRequest object with a mock.
+
+2. In qx.io.remote.transport.XmlHttp::send() - line 325 (qx version 1.6) a referrer is added to the http headers. As explained on the linked page (see source code) Firefox does not implicitly set the referrer. So it is added to keep browser behavior consistent.
+
+3. The request is send and Sinon checks for unsafe headers (qx.dev.unit.Sinon line 2011, same qx version: 1.6). Because the referrer is set by the native XMLHttpRequest object in webkit based browsers it is normally not explicitly set by javascript code. Sinon mocks the XMLHttpRequest object and therefore does not expect the &quot;Referer&quot; header to be set.
+
+I open an issue upstream so it can be discussed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29960</commentid>
+            <who name="Martijn">mevers47</who>
+            <bug_when>2012-06-27 17:11:11 +0200</bug_when>
+            <thetext>Issue at Sinon: https://github.com/cjohansen/Sinon.JS/issues/149</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29962</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-06-28 08:07:52 +0200</bug_when>
+            <thetext>Thanks or the good report. Do you expect that the fix will land in Sinon.JS?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36127</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:48:04 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,178 @@
+<bug>
+          <bug_id>4320</bug_id>
+          
+          <creation_ts>2010-11-15 14:34:00 +0100</creation_ts>
+          <short_desc>Add demo specific config.json files</short_desc>
+          <delta_ts>2011-11-29 19:42:02 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>app.demobrowser</component>
+          <version>1.2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tino Butz">tinobutz</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>thron7</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21297</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2010-11-15 14:34:41 +0100</bug_when>
+            <thetext>For the mobile demos we need demo specific variants set. Right now the variant is set by the demo namespace. This worked so far, as the variant to emulate touch support in desktop browsers was named &quot;qx.mobile&quot;. We have changed the name of the variant to:
+
+     &quot;variants&quot; :
+      {
+        &quot;qx.mobile.emulatetouch&quot; : [&quot;on&quot;]
+      }
+
+Please add a support for demo specific conifg.json files. The job configs should merge with the default config.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21322</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-16 09:08:00 +0100</bug_when>
+            <thetext>Do we have a quick fix for that for the upcoming release?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21387</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-18 11:35:44 +0100</bug_when>
+            <thetext>I don&#39;t see a quick fix for this, given the work load with other bugs that have 
+long been scheduled for the next release.
+
+I see there are two new variants for mobile:
+
+   qx.mobile.emultatetouch
+   qx.mobile.nativescroll
+
+Need both be supported for the demos?
+
+Could the qx.mobile.emulatetouch be initialized by the existing qx.mobile, like
+
+   statics.define(&quot;qx.mobile.emulatetouch&quot;, [ &quot;on&quot;, &quot;off&quot; ],  
+statics.get(&quot;qx.mobile&quot;));
+
+in qx.core.Variant?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21388</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-18 12:19:08 +0100</bug_when>
+            <thetext>Tino said he can disable this feature for the release which would be ok, so we 
+can address this after 1.3.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21405</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-18 16:13:41 +0100</bug_when>
+            <thetext>Here is a rough outline of a possible new config setup for the demos:
+
+The default behaviour for a demo could be like this:
+config.demo.json:
+{
+  ...
+   &quot;source-ui.Widget&quot; : {
+       &quot;extend&quot; : [&quot;default-source&quot;],
+       &quot;let&quot;: {
+           ...
+       }
+   }
+}
+
+It appears to me that all variations between demos can be collected in a list 
+of specific macros, which will be used in the general job &quot;default-source&quot;. 
+E.g. the &quot;let&quot; would contain a macro &quot;DEMO&quot;: &quot;ui.Widget&quot;, and default-source 
+would use this as &quot;include&quot; : [&quot;demobrowser.demo.${DEMO}&quot;,...], &quot;settings&quot;: 
+{&quot;qx.application&quot;: &quot;demobrowser.demo.${DEMO}&quot;, ..} and so forth. The 
+&quot;default-source&quot; job would be included in the config, and would take the role 
+of the current template.
+
+Still, for each demo 6 jobs have to be created (source, source-Classic, 
+source-Modern, build, build-Classic, build-Modern), as these jobs need to be 
+invoked by the generator (as it currently stands). So gendata.py will still 
+have to generate job entries for each demo.
+
+One approach then would be, if a demo with an own config file is encountered, 
+to skip generating jobs for this demo. Rather, an &quot;include&quot; entry would be 
+generated for the demo&#39;s config file, and the config file needs to provide the 
+6 obligatory jobs.
+
+Both auto-generated and demo-specific jobs would take advantage of the 
+pre-defined default jobs, which they extend. I&#39;ve commited a very preliminary 
+./tool/default.json, which illustrates this. It contains all of the default 
+definitions, and the demo-specific jobs only have to provide two macros (see 
+the comment section at the beginning of default.json).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23187</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-09 20:13:17 +0100</bug_when>
+            <thetext>Support for demo-specific config files is now added. 
+
+If you want to add config information for a specific demo, add it next to the 
+demo&#39;s .html file, under
+  source/demo/&lt;category&gt;/&lt;demoname&gt;.json
+
+E.g. I&#39;ve added source/demo/animation/Login.json as an example. The contents 
+should be a normal generator config file that defines two jobs, one for source, 
+the other for the build version of the demo, e.g.
+{
+  &quot;jobs&quot;: 
+  {
+    &quot;source-animation.Login&quot; : {
+      ...
+    },
+    &quot;build-animation.Login&quot; : {
+      ...
+    }
+  }
+}
+
+So it&#39;s &quot;source-&lt;category&gt;.&lt;demoname&gt;&quot; and &quot;build-&lt;category&gt;.&lt;demoname&gt;&quot; you 
+have to define (the naming is crucial).
+
+These job definitions will then be picked up when the corresponding demo is 
+being built. The caveat here is that those job definitions server as 
+*ancestors* for the default jobs that are generated from the job template for 
+each demo. That means, you can *add* keys, and add values to maps and lists, 
+but you cannot remove settings from the default definition. Let&#39;s see how this 
+works.
+
+With r25493.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27688</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-11-29 19:42:02 +0100</bug_when>
+            <thetext>Verified + Closed</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

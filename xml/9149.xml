@@ -1,0 +1,110 @@
+<bug>
+          <bug_id>9149</bug_id>
+          
+          <creation_ts>2015-05-22 16:40:00 +0200</creation_ts>
+          <short_desc>Loading SVGs is partly broken on IE</short_desc>
+          <delta_ts>2015-07-16 08:57:45 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>4.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>5.0.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Aleksandar Josipovic">nanexxo+qooxdoo</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>43326</commentid>
+            <who name="Aleksandar Josipovic">nanexxo+qooxdoo</who>
+            <bug_when>2015-05-22 16:40:28 +0200</bug_when>
+            <thetext>The way qooxdoo handles loading images doesn&#39;t work reliably for SVGs on IE.
+
+Currently, the only way to make a SVG show up in IE11 is to set the scale property together with the dimensions of the image. 
+
+non-scale playground link: http://tinyurl.com/pf5q2do
+scale playground link: http://tinyurl.com/omgocln
+
+And this will only work while the ImageLoader hasn&#39;t cached the result.
+demo: http://tinyurl.com/ov8eyt3
+This behavior has been reported here: http://bugzilla.qooxdoo.org/show_bug.cgi?id=8623.
+
+When testing these on IE10, only the one case where the image isn&#39;t set to scale didn&#39;t work.
+
+There are two reasons why this is the case for both versions.
+First, there is a difference between IE10 and IE11 which is mentioned in the bugreport linked above. When the ImageLoader loads an image via an img element, the element on IE11 won&#39;t have the attributes width and height set, even if the image is loaded, whereas on IE10 it will have them set.
+
+This means for IE11 the check on line 295 in the ImageLoader 
+
+      var isImageAvailable = function(imgElem) {
+        return (imgElem &amp;&amp; imgElem.height !== 0);
+      };
+
+      // [BUG #7497]: IE11 doesn&#39;t properly emit an error event
+      // when loading fails so augment success check
+      if (event.type === &quot;load&quot; &amp;&amp; isImageAvailable(element))
+
+will fail for every SVG request.
+Would appending the element to the DOM be to drastic? If the element gets appended the height/width of the element can be determined and then qooxdoo could proceed as usual. Maybe restrict the appending to IE11.. I&#39;m not entirely sure how to fix this.
+
+Second is naturalHeight/Width. IE10 and IE11 don&#39;t have these attributes set when the source is a SVG, which explains why it doesn&#39;t show when using IE10 as the ImageLoader assumes a image width and height of 0.
+I&#39;m not sure why exactly the naturalHeight/Width attributes are used in this case. For every requested image a new img element is created without any dimensions set on the element. Shouldn&#39;t the naturalHeight and height always be identical given these circumstances?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43329</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-05-26 07:56:46 +0200</bug_when>
+            <thetext>Thanks for the report. Sounds like you have invested a lot of time to get to that result. Have you thought of putting all that knowledge into code and supply a pull request?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43376</commentid>
+            <who name="Aleksandar Josipovic">nanexxo+qooxdoo</who>
+            <bug_when>2015-06-11 15:38:59 +0200</bug_when>
+            <thetext>Done.
+https://github.com/qooxdoo/qooxdoo/pull/137</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43377</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-06-11 15:49:41 +0200</bug_when>
+            <thetext>Thanks. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43462</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-07-16 08:57:45 +0200</bug_when>
+            <thetext>Thanks for the great pull request. Merged it to master and cherry-picked the commits to branch as well.
+
+master: bd2834834c32089f0eee9bff4ba1968d784bcd4a
+5.0.x: 59a21e2965b46c227c110a57b6bb8b87fadca01f</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

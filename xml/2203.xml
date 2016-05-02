@@ -1,0 +1,255 @@
+<bug>
+          <bug_id>2203</bug_id>
+          
+          <creation_ts>2009-04-03 15:09:00 +0200</creation_ts>
+          <short_desc>Avoid &quot;build&quot; containing unnecessary code</short_desc>
+          <delta_ts>2014-03-03 09:18:40 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>gradinf</cc>
+    
+    <cc>info</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9134</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-04-03 15:09:45 +0200</bug_when>
+            <thetext>The design philosophy of qooxdoo&#39;s generator system is to allow a &quot;build&quot; version to contain only those classes specifically needed, as well as provide various optimizations. This helps make the script downloaded to the browser as small as possible. There are some cases, though, where code that many applications don&#39;t need is pulled in to the build unnecessarily.  Case in point: qx.core.Object is always including the mixin qx.data.MBinding which pulls in the fairly large class qx.data.SingleValueBinding even though many applications do not need or want this data binding.
+
+I suggest that one of the two solutions be implemented:
+
+1. Do not include qx.data.MBinding from qx.core.Object. Any application that desires to use the data binding features can call qx.Class.include(qx.core.Object, qx.data.MBinding);
+
+2. Protect automatic inclusion of qx.data.MBinding in qx.core.Object so that it only includes it if requested by setting a variant. Instead of  
+
+  include : [qx.data.MBinding],
+
+add code to the defer function:
+
+    // Include the data binding mixin if so requested
+    if (qx.core.Variant.isSet(&quot;qx.enableDataBinding&quot;, &quot;on&quot;)) {
+      qx.Class.include(statics, qx.core.MBinding);
+    }
+
+Derrell
+
+ps. Are there other mixins that are included by default that maybe need not be?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9147</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-04-03 18:57:02 +0200</bug_when>
+            <thetext>In fact, a third and probably most intuitive way to implement this change would be via a call to a static function specifically to initialize data binding:
+
+qx.Class.define(&quot;qx.data.Binding&quot;,
+{
+  statics :
+  {
+    init : function()
+    {
+      qx.Class.include(statics, qx.core.MBinding);
+    }
+  }
+});
+
+This makes it easy to document how to enable data binding, and provides a nice intuitive interface to do it.
+
+Derrell
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9160</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-06 13:25:27 +0200</bug_when>
+            <thetext>In my opinion Data Binding should be supported by default (so the mixin should be included) but the whole layer should be as compact as possible as long as not using it or maybe only using parts of it. This should be verified. The mixin overhead should not be to large - but I would suggest to move the methods directly into qx.core.Object as happened with other Mixins before as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9161</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-04-06 14:33:36 +0200</bug_when>
+            <thetext>Why do you believe that code that many people don&#39;t need should be included by default? Seems like a complete waste of space, and is contrary to the philosophy of a qooxdoo &quot;build&quot;...???
+
+Confused,
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9162</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-06 15:09:12 +0200</bug_when>
+            <thetext>When it&#39;s just the binding it should be not that large. Hopefully just the additional methods.
+
+We also include things like events, user data, localization in qx.core.Object. I don&#39;t see why data binding - it it&#39;s most simplest form is anything other.
+
+I just talk about these methods. If these methods lead to 10+ more additional classes which are loaded, then this isn&#39;t the effect I want to see. Ideally it just contains these interface methods and load the addional features as needed. Not sure how to solve this with the dependencies yet, though.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9515</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-23 11:12:06 +0200</bug_when>
+            <thetext>to martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9535</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-04-23 13:34:22 +0200</bug_when>
+            <thetext>I have to admit that the data binding is not used very often yet. But if our plans come true, the data binding will be used widely in the future application development. That was and is the reason we did include the data binding to all objects.
+The mixin only supplies a mapping of static methods from qx.data.SingleValueBinding. So there should only be one additional class. I just checked that class for its size in the build version. Its about 8kb. I guess that should not be the problem by the common size of qooxdoo applications.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9642</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-04-24 18:26:42 +0200</bug_when>
+            <thetext>The new data binding layer is not regarded an optional feature of qooxdoo, but rather a core feature. Think of localization and similar features. 
+
+As already mentioned the impact in size isn&#39;t really critical. At least not for a typical qooxdoo RIA. I might be a bit concerned for real low-level use cases, though. If not needed there, it certainly might be reasonable to exclude this part. This could maybe be handled by explicit excludes in the generator config (something that some low-level projects used to do for the rather heavy-weight cross-browser key event handling)?
+
+Regarding the mixin: I like it for breaking up the large Object class by externalizing some generic content. Right now I&#39;m not sure if there&#39;s some performance impact involved when instantiating an object due to a check for possible mixin constructors. Martin, could you please double-check that, so that we could decide whether to dissolve the mixin (as we apparently did for all the former mixins in core object)?
+
+ </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9668</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-04-27 10:15:42 +0200</bug_when>
+            <thetext>I have set up an test environment creating 10000 instances of a class. One time its with a mixin containing 4 methods. The other time the methods were in the created class itself. The tests has been done with a firefox 3.0.9 on a Mac.
+Here is the code of the test:
+
+        console.profile();
+        for(var i = 0; i &lt; 10000; i++) {
+          var tmp = new mixintest.o();
+        }        
+        console.profileEnd();
+
+The profiler did not show any significant performance issue using a mixin. 
+With the mixin: Profile (485.886ms, 90001 calls)
+Without the mixin: Profile (484.667ms, 90001 calls)
+
+I have also compared the load time of the applications creating the classes on load time.
+With the mixin: 
+997ms qx.core.Init: Load runtime: 997ms
+1527ms qx.core.Init: Main runtime: 526ms
+1539ms qx.core.Init: Finalize runtime: 9ms
+
+Without the mixin:
+1015ms qx.core.Init: Load runtime: 1015ms
+1561ms qx.core.Init: Main runtime: 542ms
+1572ms qx.core.Init: Finalize runtime: 8ms
+
+Also these results did not show any critical issue using the mixin.
+So i guess we just keep it the way it is?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9926</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-05-12 18:39:35 +0200</bug_when>
+            <thetext>I would love to see this in IE. IE should a lot more critical. At least for IE6 and IE7 which are important regarding these core changes because they are the main bottleneck of qooxdoo applications in todays world. 
+
+It might also be interesting if this is the build version or the source.
+
+IMHO your test is also not exactly the thing we would need to test here. What needs to be done is to have a class without any mixins (so no inheritance from qx.core.Object - at least not with a mixin in this class). The difference should only be there when the class itself or any super class do not have any mixin. 
+
+Not sure though what exactly you have tested, but just want to remind you that this is what needs to be tested. Does this make sense for you?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9927</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-05-12 18:40:30 +0200</bug_when>
+            <thetext>Sorry for being a bit late here... have missed the you comment from two weeks ago.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9939</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-05-13 10:58:57 +0200</bug_when>
+            <thetext>If you think thats an issue, please open a new bug for that. This was not the initial topic of the bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9947</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-05-13 19:47:55 +0200</bug_when>
+            <thetext>Martin, my comment was related to comment #8 and as this comment is part of this bug - even if not related to the original topic, it should be processed to the end and not stopped somewhere between. If we really think about this the last paragraph of comment #7 is already off-topic. Maybe it&#39;s the best to move the discussion to a separate bug, but this had not happened with comment #7 or comment #8 so I thought it should be OK to add another comment to the statistics presented in these comments.
+
+Regarding comment #6: I think it&#39;s still an issue with qooxdoo&#39;s size. When building mobile applications for example, where every bit counts, the data binding adds a lot of new classes to the core of qooxdoo. Just an example: When building a &quot;bom&quot; skeleton application there are 6 additional classes added (78 =&gt; 84). But more important the size added is: 163KB =&gt; 174KB. Both values mean about seven percent more being loaded. It may be argued that this isn&#39;t important for rich internet applications, but it is way more important for low-level applications such for embedded devices, mobiles or even web sites. This addition adds such a weight to an essential core class of qooxdoo and this should definitely be improved (without knowing what&#39;s the best way though).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10818</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-07-09 10:16:52 +0200</bug_when>
+            <thetext>to Andreas</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14759</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:26:13 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0 (for issues with status &quot;NEW&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15736</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-12-11 13:18:34 +0100</bug_when>
+            <thetext>There have been some more ideas and also a prototypical implementation by Fabian that might help to further resolve (i.e. reduce) some dependencies within the &quot;base&quot; package of qooxdoo. This is to be reevaluated and thoroughly tested after 1.0, so I corrected severity to enhancement, with high prio, unassign and moved to 1.1.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15740</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2009-12-11 13:49:23 +0100</bug_when>
+            <thetext>I thought about it a little bit and as I have suggested in the mailing list the generator should be responsible to reduce the code.
+
+Removing methods that aren&#39;t called nowhere in the code shouldn&#39;t be in the build version. But as Thomas has pointed out the main problem here is how to know which class the called method belongs to. 
+
+I want to suggest a list of all methods names used in the app independently of its class. And remove all methods that aren&#39;t in that list.
+
+For example: 
+class1.foo();
+class2.bar();
+
+even if class1 has a &quot;bar&quot; method and is not being used, it should be kept because there is a call for &quot;bar&quot; method in another class.
+
+It&#39;s not a optimal solution and will make unused code to be present in the build version yet. But it would reduce the code significantly, at least until we can find a way to know for sure from which class every method called belongs to.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33558</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-08-06 12:05:33 +0200</bug_when>
+            <thetext>This is a conceptual question how data binding is enabled at qx.core.Object. Hence first
+
+-&gt; Martin</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

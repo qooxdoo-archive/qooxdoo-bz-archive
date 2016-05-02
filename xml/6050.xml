@@ -1,0 +1,228 @@
+<bug>
+          <bug_id>6050</bug_id>
+          
+          <creation_ts>2012-01-17 16:07:00 +0100</creation_ts>
+          <short_desc>Error at generation</short_desc>
+          <delta_ts>2012-01-23 15:04:43 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>contrib</product>
+          <component>qooxdoo-rtl</component>
+          <version>trunk</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Stefan Andersson">dev</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="Stefan Andersson">dev</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>28295</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2012-01-17 16:07:38 +0100</bug_when>
+            <thetext>A new  generation error from the last 2-3 git updates:
+
+./generate.py gives:
+
+    - Processing translation: de_DE
+      - Reading file: /home/dev/javascript/qooxdoo/application/demobrowser/source/translation/de_DE.po
+      - Formatting 0 entries
+    - Generating localization data...
+      - Processing locale: ar
+&#39;lines&#39;
+Shell command returned error code: 1
+
+
+first doing:
+
+./generate.py translation
+
+works fine
+
+The error didn&#39;t exist before and is a total blocker!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28306</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-01-18 22:23:02 +0100</bug_when>
+            <thetext>Can you 
+a) provide what your config.json&#39;s default job is, and which options you are running it with,
+b) the definition of the &quot;shell&quot; key that is obviously running,
+b) and run the same job with the &#39;-s&#39; option, and provide the entire stack trace here.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28312</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2012-01-19 09:28:28 +0100</bug_when>
+            <thetext>We have seen the following stack, where we added searching for a key &#39;lines&#39; in qooxdoo-multilingual contrib. This error never happened before.:
+
+Traceback (most recent call last):
+  File &quot;../../tool/bin/generator.py&quot;, line 230, in &lt;module&gt;
+    main()
+  File &quot;../../tool/bin/generator.py&quot;, line 213, in main
+    generatorObj.run()
+  File &quot;/home/Sales/dev/javascript/qooxdoo/tool/pylib/generator/Generator.py&quot;, line 569, in run
+    self._codeGenerator.runCompiled(script)
+  File &quot;/home/Sales/dev/javascript/qooxdoo/tool/pylib/generator/code/CodeGenerator.py&quot;, line 898, in runCompiled
+    self.packagesI18NInfo(script)     # attach I18N info to packages
+  File &quot;/home/Sales/dev/javascript/qooxdoo/tool/pylib/generator/code/CodeGenerator.py&quot;, line 1229, in packagesI18NInfo
+    loc_dat = self._locale.getLocalizationData(package.classes, locales)  # cldr data
+  File &quot;/home/Sales/dev/javascript/qooxdoo/tool/pylib/generator/action/Locale.py&quot;, line 105, in getLocalizationData
+    locDat = cldr.parseCldrFile(locFile)
+  File &quot;/home/Sales/dev/javascript/qooxdoo/tool/pylib/misc/cldr.py&quot;, line 185, in parseCldrFile
+    data.update(extractOrientation(tree))
+  File &quot;/home/Sales/dev/javascript/qooxdoo/tool/pylib/misc/cldr.py&quot;, line 160, in extractOrientation
+    data[&#39;cldr_layout_orientation_lines&#39;]      = layoutOrientationCharactersNode.attrib[&quot;lines&quot;]
+KeyError: &#39;lines&#39;
+Traceback (most recent call last):
+  File &quot;/home/Sales/dev/javascript/qooxdoo/tool/bin/generator.py&quot;, line 230, in &lt;module&gt;
+    main()
+  File &quot;/home/Sales/dev/javascript/qooxdoo/tool/bin/generator.py&quot;, line 213, in main
+    generatorObj.run()
+  File &quot;/home/Sales/dev/javascript/qooxdoo/tool/pylib/generator/Generator.py&quot;, line 474, in run
+    self.runShellCommands()
+  File &quot;/home/Sales/dev/javascript/qooxdoo/tool/pylib/generator/Generator.py&quot;, line 1419, in runShellCommands
+    self.runShellCommand(shellcmd)
+  File &quot;/home/Sales/dev/javascript/qooxdoo/tool/pylib/generator/Generator.py&quot;, line 1442, in runShellCommand
+    raise RuntimeError, &quot;Shell command returned error code: %s&quot; % repr(rc)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28313</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2012-01-19 09:31:32 +0100</bug_when>
+            <thetext>The function looks like this intool/pylib/misc/cldr.py and has not changed:
+
+# Function getLocalizationData calling parseCldrFile adds all toplevel locales to the file
+# even those not defined e.g. if locale ar_AE is only defined, the ar locale is also loaded.
+def extractOrientation(tree):
+    data = {}
+
+    layoutOrientationCharactersNode = tree.find(&quot;layout/orientation&quot;)
+    if layoutOrientationCharactersNode != None:
+        data[&#39;cldr_layout_orientation_lines&#39;]      = layoutOrientationCharactersNode.attrib[&quot;lines&quot;]
+        data[&#39;cldr_layout_orientation_characters&#39;] = layoutOrientationCharactersNode.attrib[&quot;characters&quot;]</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28315</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2012-01-19 09:40:26 +0100</bug_when>
+            <thetext>the key &#39;lines&#39; occur in one locale .xml file and shows the block flow of the text.
+
+It is not strange that it can not find the key &#39;lines&#39; in the other locales, but why reporting an error now and not before.
+
+The key &#39;characters&#39; does not appear in all locales either, only in the rtl languages but it does not report an error for those languages as de_DE in this case. In all other locales a node called &quot;characters&quot; can be found. Is that the reason why an error is not reported. When regarding the attrib &#39;lines&#39;, it does only exist in one file. does the parser mix these findings? In that case it must be a bug... (unlikely)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28318</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-01-19 14:35:43 +0100</bug_when>
+            <thetext>  File &quot;/home/Sales/dev/javascript/qooxdoo/tool/pylib/misc/cldr.py&quot;, line 185,
+in parseCldrFile
+    data.update(extractOrientation(tree))
+  File &quot;/home/Sales/dev/javascript/qooxdoo/tool/pylib/misc/cldr.py&quot;, line 160,
+in extractOrientation
+    data[&#39;cldr_layout_orientation_lines&#39;]      =
+layoutOrientationCharactersNode.attrib[&quot;lines&quot;]
+
+This is not qooxdoo code. I can&#39;t debug your code.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28319</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-01-19 14:41:20 +0100</bug_when>
+            <thetext>.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28320</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2012-01-19 16:20:55 +0100</bug_when>
+            <thetext>It is qooxdoo plus contribution = qooxdoo-multilingual contribution
+
+git checkout to run</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28321</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-01-19 17:17:53 +0100</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; It is qooxdoo plus contribution = qooxdoo-multilingual contribution
+&gt; 
+&gt; git checkout to run
+
+What do you expect us to do? Checkout *your* repository, to debug *your* code?!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28322</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2012-01-19 18:58:45 +0100</bug_when>
+            <thetext>Never mind Thomas!
+First of all it is a community contribution!
+Second your attitude is not of an educated person.
+Just drop it Thomas!
+
+If any other of the core team is interested to look at it then we would be happy as it might be of benefit for the community.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28323</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2012-01-20 08:27:35 +0100</bug_when>
+            <thetext>* moved bug to the appropriate contrib component
+* project policies should be respected, e.g. report framework bugs without adjusting severity and priority, http://qooxdoo.org/community/bugs
+* maintainers of a contrib should be able to understand and debug their own code, before pretending it is a genuine framework issue
+* asking for help is different than trying to enforce assistance
+* the framework maintainers do not tolerate insulting them or others</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28325</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2012-01-20 11:07:59 +0100</bug_when>
+            <thetext>Andreas, save your time and words! Anyone reading the thread on this bug understands what and how it has been written and it can not become unwritten.
+
+Additionally, as I wrote before, the bug appeared after a git pull of the qooxdoo framework and therefore it is highly likely also the source of the bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28326</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2012-01-20 13:26:10 +0100</bug_when>
+            <thetext>We were trying to find the issue, which we have now by ourselves.
+
+The reason had to do with the framework and updates of it. It happens when massive updates take place with the framework in this case the generator. Possible reasons:
+
+1) The compiled python files can become asynchron and the compiled file needs to be removed to invoke compilation again. Also it is necessary in most cases to erase the qooxdoo cache after updates.
+
+2) The generator does not do the cache cleaning automatically in all cases after changes to the framework. (weakness)
+
+after cleaning the cache then it worked again!
+
+This is NOT a bug of the contribution!
+
+Now resolved here, but you can reopen it for the framework if you wish.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,307 @@
+<bug>
+          <bug_id>5194</bug_id>
+          
+          <creation_ts>2011-06-04 17:17:00 +0200</creation_ts>
+          <short_desc>qx.io.remote.Rpc convert Date to JSON</short_desc>
+          <delta_ts>2014-03-03 15:20:47 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>DUPLICATE</resolution>
+          <dup_id>5193</dup_id>
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.5</target_milestone>
+          <dependson>5193</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Henner Kollmann">Henner.Kollmann</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>24856</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2011-06-04 17:17:54 +0200</bug_when>
+            <thetext>if (this._isConvertDates()) {
+        var params = rpcData.params;
+        if (params) {
+          for (var key in params) {
+            if (params.hasOwnProperty(key)) {
+              if (qx.lang.Type.isDate(params[key])) {
+                params[key].toJSON = function() {
+                  var dateParams =
+                    this.getUTCFullYear() + &quot;,&quot; +
+                    this.getUTCMonth() + &quot;,&quot; +
+                    this.getUTCDate() + &quot;,&quot; +
+                    this.getUTCHours() + &quot;,&quot; +
+                    this.getUTCMinutes() + &quot;,&quot; +
+                    this.getUTCSeconds() + &quot;,&quot; +
+                    this.getUTCMilliseconds();
+                  return &quot;new Date(Date.UTC(&quot; + dateParams + &quot;))&quot;;
+                };
+              }
+            }
+          }
+        }
+
+This works not recursivly. If you have an complex object in the params list the inner date fields will not be converted.
+
+Here is an example:
+
+&quot;params&quot;: [
+{&quot;options&quot;:
+   {&quot;fields&quot;:&quot;webKnotenLKWAnteile.VonKnotenNr,webKnotenLKWAnteile.STRNAME, Sum(webKnotenLKWAnteile.AnzahlKFZ) as AnzahlKFZ, Sum(webKnotenLKWAnteile.AnzahlLKW) as AnzahlLKW&quot;,&quot;groupBy&quot;:&quot;webKnotenLKWAnteile.VonKnotenNr, webKnotenLKWAnteile.STRNAME&quot;},
+   &quot;filters&quot;:[
+           {
+           &quot;name&quot;:&quot;AMKNOTENNR&quot;,
+           &quot;operator&quot;:&quot;=&quot;,
+           &quot;type&quot;:4,
+           &quot;value&quot;:588
+           },
+           {
+           &quot;name&quot;:&quot;ZAEHLDATUM&quot;,
+           &quot;operator&quot;:&quot;=&quot;,
+           &quot;type&quot;:91,
+           &quot;value&quot;:&quot;2007-06-04T22:00:00.000Z&quot;
+           }],
+   &quot;database&quot;:&quot;default&quot;,
+   &quot;tableName&quot;:&quot;webKnotenLKWAnteile&quot;
+}
+]
+
+Any ideas?
+
+Best regards
+Henner Kollmann</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24858</commentid>
+              <attachid>997</attachid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2011-06-05 16:20:52 +0200</bug_when>
+            <thetext>Created attachment 997
+Solution
+
+Here is the solution for the problem!
+
+Henner</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24861</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2011-06-05 19:37:38 +0200</bug_when>
+            <thetext>Please use the last patch file in bug #5193!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24862</commentid>
+              <attachid>997</attachid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2011-06-05 20:32:54 +0200</bug_when>
+            <thetext>Comment on attachment 997
+Solution
+
+Please use patch in 5193!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24875</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-06-06 09:48:24 +0200</bug_when>
+            <thetext>Thanks for the report and the patch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24894</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-06 11:27:28 +0200</bug_when>
+            <thetext>Thanks for the report and patch. I can confirm that the conversion does not work recursively.
+
+Inspired by your patch, I changed the call to qx.lang.Json.stringify to include a replacer. The replacer makes sure stringify returns a pseudo date string for each date, even when nested.  The replacer is only set when convert (legacy) dates is enabled.
+
+With r27535 on trunk.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24900</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-06 11:34:43 +0200</bug_when>
+            <thetext>In your patch, I saw you provided a reviver function to qx.lang.Json.parse. My understanding was that backends using the legacy date format are expected to return a date literal in plain JavaScript, that is without the quotes. This means it cannot be parsed as JSON, CONVERT_DATES must be set to true and qx.lang.Json.parse is not used anyway.
+
+Of course, there is a use case – and perhaps this is already in use? – to send back and forth valid JSON with the date literal quoted as string. In that case, it is not necessary to set CONVERT_DATES and the reviver you added is required. We&#39;ve already covered the step to send valid JSON, as the date literal is quoted as string.
+
+I&#39;m asking this because adding a reviver may come with a performance penalty. It affects every JSON parsed, even when it does not contain pseudo date literals. Maybe another option is the way to go, but before I want to make sure there is a real demand for it.
+
+Do RPC backends out there send pseudo date literals wrapped in valid JSON?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24915</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2011-06-06 13:47:09 +0200</bug_when>
+            <thetext>Yes, i changed the source of the json parser so that it can return valid json.
+
+I think you are working to remove the CONVERT_DATE switch because it is deprecated.
+
+So i do some work in this direction.
+
+If you are interested in the json changes (the java version) please give me a note!
+
+/Henner</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24919</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-06 14:35:50 +0200</bug_when>
+            <thetext>Actually, the CONVERT_DATES switch in Rpc is not deprecated. Only CONVERT_DATES in util.Json, because util.Json is deprecated altogether.
+
+Still, it&#39;s a good idea to go for valid JSON and IMHO we should a provide a way to allow date handling without resorting to eval. Right now, CONVERT_DATES controls both preparation of the request data and parsing, meaning you have to choose between:
+
+- conversion of request data and eval of response, or
+- no conversion of request data and valid JSON handling of response.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24923</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2011-06-06 15:17:52 +0200</bug_when>
+            <thetext>I think you should have valid JSON in both directions. This needs some changes in the rpc tools too.
+
+There is another problem with valid JSON. If you use crossDomain == true the script transport is used.
+
+With script transport and valid JSON the date is only a string and never transformed into an Date object.
+
+So with this it&#39;s necessary  CONVERT_DATES.
+
+By the way, if  util.Json is deprecated, what&#39;s about another place for CONVERT_DATES?
+
+/Henner</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24924</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-06 15:19:09 +0200</bug_when>
+            <thetext>The other place is qx.io.remote.Rpc.CONVERT_DATES.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24925</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2011-06-06 15:24:07 +0200</bug_when>
+            <thetext>Good idea.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24927</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-06 15:38:32 +0200</bug_when>
+            <thetext>Opened a new bug, please see bug 5203.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24962</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-07 12:53:17 +0200</bug_when>
+            <thetext>
+
+*** This bug has been marked as a duplicate of bug 5193 ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37027</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:47 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="1" ispatch="0" isprivate="0" isurl="0">
+            <attachid>997</attachid>
+            <date>2011-06-05 16:20:00 +0200</date>
+            <delta_ts>2011-06-05 20:32:54 +0200</delta_ts>
+            <desc>Solution</desc>
+            <filename>Rpc.patch</filename>
+            <type>application/octet-stream</type>
+            <size>3573</size>
+            <attacher>Henner.Kollmann</attacher>
+            
+              <data encoding="base64">SW5kZXg6IFJwYy5qcw0KPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PQ0KLS0tIFJwYy5qcwkocmV2aXNpb24gMjc1MjIpDQor
+KysgUnBjLmpzCSh3b3JraW5nIGNvcHkpDQpAQCAtNDYxLDcgKzQ2MSw2IEBADQogICAgICAgewog
+ICAgICAgICBhcmdzQXJyYXkucHVzaChhcmdzW2ldKTsKICAgICAgIH0KLQogICAgICAgdmFyIHJl
+cSA9IHRoaXMuY3JlYXRlUmVxdWVzdCgpOwogCiAgICAgICAvLyBHZXQgYW55IGFkZGl0aW9uYWwg
+b3V0LW9mLWJhbmQgZGF0YSB0byBiZSBzZW50IHRvIHRoZSBzZXJ2ZXIKQEAgLTU5NCw4ICs1OTMs
+MjcgQEANCiAgICAgICByZXEuYWRkTGlzdGVuZXIoImNvbXBsZXRlZCIsIGZ1bmN0aW9uKGV2dCkK
+ICAgICAgIHsKICAgICAgICAgcmVzcG9uc2UgPSBldnQuZ2V0Q29udGVudCgpOworICAgICAgICAg
+aWYgKCEodHlwZW9mKHJlc3BvbnNlKSA9PSAib2JqZWN0IikpIHsKKyAgICAgICAgICAgICAgLy8g
+UGFyc2UKKyAgICAgICAgICAgICAgaWYgKHNlbGYuX2lzQ29udmVydERhdGVzKCkpIHsKKyAgICAg
+ICAgICAgICAgICByZXNwb25zZSA9IHJlc3BvbnNlICYmIHJlc3BvbnNlLmxlbmd0aCA+IDAgPyBl
+dmFsKCcoJyArIHJlc3BvbnNlICsgJyknKSA6IG51bGw7CisgICAgICAgICAgICAgIH0gZWxzZSB7
+CisgICAgICAgICAgICAgICAgcmVzcG9uc2UgPSBxeC5sYW5nLkpzb24ucGFyc2UocmVzcG9uc2Us
+IGZ1bmN0aW9uIChrZXksIHZhbHVlKSB7CisgICAgICAgICAgICAgICAgICAgIGlmICh2YWx1ZSBp
+bnN0YW5jZW9mIFN0cmluZykKKyAgICAgICAgICAgICAgICAgICAgeworICAgICAgICAgICAgICAg
+ICAgICAgIHZhciBhID0gL14oXGR7NH0pLShcZHsyfSktKFxkezJ9KVQoXGR7Mn0pOihcZHsyfSk6
+KFxkezJ9KD86XC5cZCopPylaJC8uZXhlYyh2YWx1ZSk7CisgICAgICAgICAgICAgICAgICAgICAg
+aWYgKGEpIHsKKyAgICAgICAgICAgICAgICAgICAgICAgIHJldHVybiBuZXcgRGF0ZShEYXRlLlVU
+QygrYVsxXSwgK2FbMl0gLSAxLCArYVszXSwgK2FbNF0sICthWzVdLCArYVs2XSkpOworICAgICAg
+ICAgICAgICAgICAgICAgIH0KKyAgICAgICAgICAgICAgICAgICAgfQorICAgICAgICAgICAgICAg
+ICAgICByZXR1cm4gdmFsdWU7CisgICAgICAgICAgICAgICAgIH0pOyAgICAgICAgICAgICAgICAK
+KyAgICAgICAgICAgICAgfQorICAgICAgICB9CisKKwogICAgICAgICBpZCA9IHJlc3BvbnNlWyJp
+ZCJdOwotCisgCiAgICAgICAgIGlmIChpZCAhPSB0aGlzLmdldFNlcXVlbmNlTnVtYmVyKCkpCiAg
+ICAgICAgIHsKICAgICAgICAgICB0aGlzLndhcm4oIlJlY2VpdmVkIGlkICgiICsgaWQgKyAiKSBk
+b2VzIG5vdCBtYXRjaCByZXF1ZXN0ZWQgaWQgIiArCkBAIC02MjIsMTMgKzY0MCw2IEBADQogICAg
+ICAgICAgIC8vIFJlc3BvbnNlIGFzIEpTT04gc3RyaW5nCiAgICAgICAgICAgcmVzdWx0ID0gcmVz
+cG9uc2VbInJlc3VsdCJdOwogCi0gICAgICAgICAgLy8gUGFyc2UKLSAgICAgICAgICBpZiAoc2Vs
+Zi5faXNDb252ZXJ0RGF0ZXMoKSkgewotICAgICAgICAgICAgcmVzdWx0ID0gcmVzdWx0ICYmIHJl
+c3VsdC5sZW5ndGggPiAwID8gZXZhbCgnKCcgKyByZXN1bHQgKyAnKScpIDogbnVsbDsKLSAgICAg
+ICAgICB9IGVsc2UgewotICAgICAgICAgICAgcmVzdWx0ID0gcXgubGFuZy5Kc29uLnBhcnNlKHJl
+c3VsdCk7Ci0gICAgICAgICAgfQotCiAgICAgICAgICAgaWYgKHJlZnJlc2hTZXNzaW9uKQogICAg
+ICAgICAgIHsKICAgICAgICAgICAgIHJlc3VsdCA9IGV2YWwoIigiICsgcmVzdWx0ICsgIikiKTsK
+QEAgLTY0NywzMCArNjU4LDI2IEBADQogICAgICAgICBoYW5kbGVSZXF1ZXN0RmluaXNoZWQoZXZl
+bnRUeXBlLCBldmVudFRhcmdldCk7CiAgICAgICB9KTsKIAotICAgICAgaWYgKHRoaXMuX2lzQ29u
+dmVydERhdGVzKCkpIHsKLSAgICAgICAgdmFyIHBhcmFtcyA9IHJwY0RhdGEucGFyYW1zOwotICAg
+ICAgICBpZiAocGFyYW1zKSB7Ci0gICAgICAgICAgZm9yICh2YXIga2V5IGluIHBhcmFtcykgewot
+ICAgICAgICAgICAgaWYgKHBhcmFtcy5oYXNPd25Qcm9wZXJ0eShrZXkpKSB7Ci0gICAgICAgICAg
+ICAgIGlmIChxeC5sYW5nLlR5cGUuaXNEYXRlKHBhcmFtc1trZXldKSkgewotICAgICAgICAgICAg
+ICAgIHBhcmFtc1trZXldLnRvSlNPTiA9IGZ1bmN0aW9uKCkgeworICAgICAgdmFyIGRhdGEgPSBx
+eC5sYW5nLkpzb24uc3RyaW5naWZ5KHJwY0RhdGEsIGZ1bmN0aW9uIChrZXksIHZhbHVlKSB7Cisg
+ICAgICAgICAgICB2YXIgdiA9IHRoaXNba2V5XTsKKyAgICAgICAgICAgIGlmICh2IGluc3RhbmNl
+b2YgRGF0ZSkKKyAgICAgICAgICAgIHsKKyAgICAgICAgICAgICAgIGlmIChzZWxmLl9pc0NvbnZl
+cnREYXRlcygpKSB7CiAgICAgICAgICAgICAgICAgICB2YXIgZGF0ZVBhcmFtcyA9Ci0gICAgICAg
+ICAgICAgICAgICAgIHRoaXMuZ2V0VVRDRnVsbFllYXIoKSArICIsIiArCi0gICAgICAgICAgICAg
+ICAgICAgIHRoaXMuZ2V0VVRDTW9udGgoKSArICIsIiArCi0gICAgICAgICAgICAgICAgICAgIHRo
+aXMuZ2V0VVRDRGF0ZSgpICsgIiwiICsKLSAgICAgICAgICAgICAgICAgICAgdGhpcy5nZXRVVENI
+b3VycygpICsgIiwiICsKLSAgICAgICAgICAgICAgICAgICAgdGhpcy5nZXRVVENNaW51dGVzKCkg
+KyAiLCIgKwotICAgICAgICAgICAgICAgICAgICB0aGlzLmdldFVUQ1NlY29uZHMoKSArICIsIiAr
+Ci0gICAgICAgICAgICAgICAgICAgIHRoaXMuZ2V0VVRDTWlsbGlzZWNvbmRzKCk7Ci0gICAgICAg
+ICAgICAgICAgICByZXR1cm4gIm5ldyBEYXRlKERhdGUuVVRDKCIgKyBkYXRlUGFyYW1zICsgIikp
+IjsKLSAgICAgICAgICAgICAgICB9OwotICAgICAgICAgICAgICB9CisgICAgICAgICAgICAgICAg
+ICAgIHYuZ2V0VVRDRnVsbFllYXIoKSArICIsIiArCisgICAgICAgICAgICAgICAgICAgIHYuZ2V0
+VVRDTW9udGgoKSArICIsIiArCisgICAgICAgICAgICAgICAgICAgIHYuZ2V0VVRDRGF0ZSgpICsg
+IiwiICsKKyAgICAgICAgICAgICAgICAgICAgdi5nZXRVVENIb3VycygpICsgIiwiICsKKyAgICAg
+ICAgICAgICAgICAgICAgdi5nZXRVVENNaW51dGVzKCkgKyAiLCIgKworICAgICAgICAgICAgICAg
+ICAgICB2LmdldFVUQ1NlY29uZHMoKSArICIsIiArCisgICAgICAgICAgICAgICAgICAgIHYuZ2V0
+VVRDTWlsbGlzZWNvbmRzKCk7CisgICAgICAgICAgICAgICAgICB2YWx1ZSA9ICJuZXcgRGF0ZShE
+YXRlLlVUQygiICsgZGF0ZVBhcmFtcyArICIpKSI7CisgICAgICAgICAgICAgICB9ICAgIAogICAg
+ICAgICAgICAgfQotICAgICAgICAgIH0KLSAgICAgICAgfQotICAgICAgfQotCi0gICAgICByZXEu
+c2V0RGF0YShxeC5sYW5nLkpzb24uc3RyaW5naWZ5KHJwY0RhdGEpKTsKKyAgICAgICAgICAgIHJl
+dHVybiB2YWx1ZTsKKyAgICAgICAgIH0pOyAgICAgICAgICAgICAgICAKKyAgICAgIAorICAgICAg
+cmVxLnNldERhdGEoZGF0YSk7CiAgICAgICByZXEuc2V0QXN5bmNocm9ub3VzKGNhbGxUeXBlID4g
+MCk7CiAKICAgICAgIGlmIChyZXEuZ2V0Q3Jvc3NEb21haW4oKSkK
+</data>
+
+          </attachment>
+      
+
+    </bug>

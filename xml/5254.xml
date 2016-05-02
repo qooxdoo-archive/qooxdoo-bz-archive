@@ -1,0 +1,223 @@
+<bug>
+          <bug_id>5254</bug_id>
+          
+          <creation_ts>2011-06-16 15:38:00 +0200</creation_ts>
+          <short_desc>DOM node is not available when widget is seeable</short_desc>
+          <delta_ts>2011-10-24 08:52:02 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>1.4</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Johannes Kissel">johannes.kissel</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>alexander.steitz</cc>
+    
+    <cc>teodor.moisa</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>25126</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2011-06-16 15:38:20 +0200</bug_when>
+            <thetext>Playground example:
+http://tinyurl.com/657eogm
+
+This causes the effect to break. A 0-timeout is a workaround but not a fix.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25127</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-06-16 16:04:20 +0200</bug_when>
+            <thetext>Also affects Chrome and Opera, so I guess this is a generic problem.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25131</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-06-17 09:17:51 +0200</bug_when>
+            <thetext>Thanks for the report.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25132</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-06-17 10:42:17 +0200</bug_when>
+            <thetext>This
+
+   http://tinyurl.com/3bonvu4
+
+is a solution based on &quot;qx.dom.Hierarchy.isRendered&quot; and can be seen a clean solution / best practice. Although we have to look at the &quot;isSeeable&quot; method.
+
+The thing here is that you use UI layer API to check for the existence of the corresponding DOM element. It is much safer to use DOM layer API in this case to get to know whether the DOM element is already rendered.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25133</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2011-06-17 11:07:43 +0200</bug_when>
+            <thetext>Actually the elem !== null check is enough. The DOM-check also crashes without it. It forces the appear event thing which is in fact the same as the 0-timeout: Append the effect to the event queue.
+
+So I suggest this as new best practice!?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25134</commentid>
+            <who name="Doru Moisa">teodor.moisa</who>
+            <bug_when>2011-06-17 11:12:14 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; Actually the elem !== null check is enough. The DOM-check also crashes without
+&gt; it. It forces the appear event thing which is in fact the same as the
+&gt; 0-timeout: Append the effect to the event queue.
+&gt; 
+&gt; So I suggest this as new best practice!?
+
+Yes, I agree. The null check is the safest way of checking DOM elements.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25135</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-06-17 11:36:56 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; Actually the elem !== null check is enough. The DOM-check also crashes without
+&gt; it. It forces the appear event thing which is in fact the same as the
+&gt; 0-timeout: Append the effect to the event queue.
+Not quite the same. The &quot;appear&quot; event is fired when the DOM element is ready and you can rely on that the DOM element is present. 
+
+The 0 timeout however is defering the execution and the method is called when the browser has again execution time after rendering, but this doesn&#39;t not mean that the DOM element is then yet rendered. It may work in this little example, but also may introduce another race condition if it&#39;s embedded in a bigger application.
+
+So using the &quot;appear&quot; event is the safe way to go.
+
+&gt; So I suggest this as new best practice!?
+We take a look at the &quot;isSeeable&quot; issue and as a best practice you should use the DOM layer methods if you want to check for DOM elements. That&#39;s why I introduced  the &quot;isRendered&quot; method. To show an alternative at the DOM layer for the &quot;isSeeable&quot; method.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25143</commentid>
+            <who name="Doru Moisa">teodor.moisa</who>
+            <bug_when>2011-06-17 13:16:52 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; That&#39;s why I
+&gt; introduced  the &quot;isRendered&quot; method. To show an alternative at the DOM layer
+&gt; for the &quot;isSeeable&quot; method.
+
+qx.dom.Hierarchy.isRendered() does not check for nulls automatically.Try this:
+
+  var elem = null; 
+  // or elem = this.getContainerElement().getDomElement(); 
+  // as in the examples above
+  try{
+     console.log(qx.dom.Hierarchy.isRendered(elem));
+  }catch(e){
+     console.error(&quot;O-o ...&quot;);
+     console.debug(e);
+  }
+
+It should return false, not throw an exception.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25144</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-06-17 13:29:34 +0200</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; qx.dom.Hierarchy.isRendered() does not check for nulls automatically.Try this:
+&gt; 
+&gt;   var elem = null; 
+&gt;   // or elem = this.getContainerElement().getDomElement(); 
+&gt;   // as in the examples above
+&gt;   try{
+&gt;      console.log(qx.dom.Hierarchy.isRendered(elem));
+&gt;   }catch(e){
+&gt;      console.error(&quot;O-o ...&quot;);
+&gt;      console.debug(e);
+&gt;   }
+&gt; 
+&gt; It should return false, not throw an exception.
+Maybe this is another topic. 
+
+Just one short note: the whole low-level layer is designed to hand in an element and no additional check is done. So the API is consistent regarding this.
+One could argue that every method should check the incoming values and there are certainly other developers you tend to say it should not check and throw an exception. 
+
+I want to stick with the current implementation to keep it consistent. The &quot;isRendered&quot; method should not return false if the element which is handed in is not existing, in my opinion.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25147</commentid>
+            <who name="Doru Moisa">teodor.moisa</who>
+            <bug_when>2011-06-17 13:58:46 +0200</bug_when>
+            <thetext>(In reply to comment #8)
+
+&gt; Just one short note: the whole low-level layer is designed to hand in an
+&gt; element and no additional check is done. 
+
+Since it expects a DOM element object, it should check if it receives one.
+
+Even in Java, which is a strong typed language, one has to check for nulls, to avoid null pointer exceptions, stuff that is extremely hard to debug and reproduce at runtime.
+
+I see things this way: if it does not check that it received a DOM node, then it should not be publicly available, or, at least specify this fact in the docs. 
+In this case the docs are misleading the user, as they say that the qx.dom.Hierarchy.isRendered() returns a boolean. There is no error/exception throwing mentioned.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25149</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-06-17 14:37:47 +0200</bug_when>
+            <thetext>(In reply to comment #9)
+&gt; &gt; Just one short note: the whole low-level layer is designed to hand in an
+&gt; &gt; element and no additional check is done. 
+&gt; 
+&gt; Since it expects a DOM element object, it should check if it receives one.
+As I already mentioned: there are different opinions on this topic. I know developers who want exactly this behaviour, so it is hard to get everybody pleased here, I guess.
+
+ 
+&gt; Even in Java, which is a strong typed language, one has to check for nulls, to
+&gt; avoid null pointer exceptions, stuff that is extremely hard to debug and
+&gt; reproduce at runtime.
+jQuery does silently ignore null values as elements and prototypeJS does throw an exception - so there is no golden rule how to implement it.
+ 
+&gt; I see things this way: if it does not check that it received a DOM node, then
+&gt; it should not be publicly available, or, at least specify this fact in the
+&gt; docs. 
+Yes, the docs should be updated regarding this.
+
+&gt; In this case the docs are misleading the user, as they say that the
+&gt; qx.dom.Hierarchy.isRendered() returns a boolean. There is no 
+&gt; error/exception throwing mentioned.
+I&#39;ll update the docs and mention at class level how to use the methods. This should be sufficient from my point of view.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26846</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-09-20 10:08:26 +0200</bug_when>
+            <thetext>Ok, here are my results on that issue (the original issue and the stuff came up during the discussion).
+
+The isSeeable method did not take the queues into account. In the end, it was simply not doing what it should so we fixed it. But taking the queues into account means flushing them before checking the seeable state. It works now but could be an expensive operation.
+
+About that other topics which came up (which shouldn&#39;t because that would be another bug report!). I updated the documentation of getDomElement to signal that null could be returned.
+
+trunk: r28693
+1.5.x: r28694</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

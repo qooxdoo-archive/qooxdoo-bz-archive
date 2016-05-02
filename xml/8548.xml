@@ -1,0 +1,83 @@
+<bug>
+          <bug_id>8548</bug_id>
+          
+          <creation_ts>2014-08-20 13:16:00 +0200</creation_ts>
+          <short_desc>Focus is not restored correctly after window close in case when qx.ui.window.Desktop contains more than one modal window (qx.ui.window.Window)</short_desc>
+          <delta_ts>2014-08-21 07:55:11 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>4.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>NEW</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Dmitry Golubkov">master</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>41008</commentid>
+            <who name="Dmitry Golubkov">master</who>
+            <bug_when>2014-08-20 13:16:47 +0200</bug_when>
+            <thetext>qx.ui.window.Manager sets up blocker when modal window is created and added to desktop.
+Blocker is invoked via qx.ui.core.Blocker.blockContent() and it stores last focused widget. (qx.ui.window.Manager.syncWidget())
+qx.ui.core.Blocker.blockContent() -&gt; _block() -&gt; _backupActiveWidget()
+qx.ui.core.Blocker.forceUnblock() -&gt; __unblock() -&gt; _restoreActiveWidget()
+
+Problem is following: this mechanism is incorrect when there&#39;re more than one modal window present on desktop.
+
+For example: I have modal Window1, that opens Window2, after closing of Window2, focus remains on Desktop and not restored back to Window1.
+This is because in the begining of qx.ui.window.Manager.syncWidget() there&#39;s this.__desktop.forceUnblock() that always resets focus to the desktop.
+
+In the end of qx.ui.window.Manager.syncWidget()  there&#39;s  this.__desktop.setActiveWindow(active), that restores &#39;ACTIVE&#39; window state, but it does nothing about &#39;FOCUS&#39;
+
+Solutions:
+
+1. Trivial: add if (focus) {active.focus()} line to qx.ui.window.Manager.syncWidget() right after this.__desktop.setActiveWindow(active) line.
+But it will restore focus on window itself, but not it&#39;s child widget that been last selected.
+So its not a complete solution.
+
+2. Complete:
+Fix qx.ui.window.Manager.syncWidget() so it will store stack of focus-widgets, each corresponding to modal window.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41009</commentid>
+            <who name="Dmitry Golubkov">master</who>
+            <bug_when>2014-08-20 13:19:00 +0200</bug_when>
+            <thetext>You can see the reason on the following diagram: http://www.gliffy.com/go/publish/5981436</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41025</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-08-21 07:55:11 +0200</bug_when>
+            <thetext>Thanks for the report.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

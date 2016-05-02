@@ -1,0 +1,281 @@
+<bug>
+          <bug_id>4257</bug_id>
+          
+          <creation_ts>2010-10-29 10:11:00 +0200</creation_ts>
+          <short_desc>Dependencies between unit tests causing false positives</short_desc>
+          <delta_ts>2014-03-03 08:46:25 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>app.testrunner</component>
+          <version>1.2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          <dependson>3954</dependson>
+    
+    <dependson>4258</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Daniel Wagner">daniel.wagner</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          <cc>dev</cc>
+    
+    <cc>marcomarchi89</cc>
+    
+    <cc>oliverst</cc>
+    
+    <cc>tristan.koch</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20975</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-10-29 10:11:48 +0200</bug_when>
+            <thetext>The Test Runner creates a common application (AUT) that is shared by all tests in the currently loaded suite. This means that tests can affect the qx application or the DOM in ways that can cause errors in following tests.
+
+For example, we had a test that passed if it was run on its own but failed whenever the full suite was run. It took us several hours to find the problem:
+A previous test registered a listener on the LocaleManager&#39;s changeLocale event but did not remove it. The other test changed the locale, the previous test&#39;s listener callback was executed but its context was already disposed, causing an error. So the following test was incorrectly marked as failed.
+
+We need to find a way to prevent these issues or at least allow us to track them down quicker. As a workaround, our nightly automated test setup loads and runs each test package separately but obviously we want to be able to run the full qx.test namespace at once without any false alarms.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20977</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-10-29 10:27:38 +0200</bug_when>
+            <thetext>*** Bug 4249 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20983</commentid>
+            <who name="">oliverst</who>
+            <bug_when>2010-10-29 12:36:01 +0200</bug_when>
+            <thetext>I don&#39;t know how the tests work, but in the Inspector there is an object view available. Maybe it would be helpful to track the number and types of objects in the test and compare them against expected values from the separate runs, so you know, that you actually have additional objects. That might also help to detect object leaks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20992</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-10-29 13:39:13 +0200</bug_when>
+            <thetext>Martin tried something like that a while ago by comparing the test application&#39;s object registry before and after each test. It didn&#39;t work out, though I&#39;m not sure why.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21000</commentid>
+            <who name="">oliverst</who>
+            <bug_when>2010-10-29 14:50:35 +0200</bug_when>
+            <thetext>I looked a bit closer at the testrunner of 1.2.1 with Opera 10.63 on Windows 7 x64.
+
+The test is fine until you hit qx.test.ui.core.Widget and then the first batch of issues appears:
+
+qx.test.ui.core.Widget:testLazyScrollChildIntoViewY
+Error message is: 
+Child was not scrolled!: Called assert with &#39;false&#39;
+qx.test.ui.core.Widget:testIsSeeableDepth2AfterFlush
+Error message is: 
+: Called assertTrue with &#39;false&#39;
+qx.test.ui.core.Widget:testIsSeeableDepth1AfterFlush
+Error message is: 
+: Called assertTrue with &#39;false&#39;
+qx.test.ui.core.Widget:testIsSeeableDepth0AfterFlushExclude
+Error message is: 
+: Called assertTrue with &#39;false&#39;
+qx.test.ui.core.Widget:testIsSeeableDepth0AfterFlush
+Error message is: 
+: Called assertTrue with &#39;false&#39;
+
+Further errors just appear in these:
+
+qx.test.ui.embed.HtmlArea:testStartup
+Error message is: 
+Asynchronous Test Error: Timeout reached before resume() was called.
+qx.test.ui.embed.Flash:testProperties
+Error message is: 
+Error expected by calling &#39;setSource&#39;!: The function did not raise an exception!
+qx.test.ui.embed.Flash:testCreateFlash
+Error message is: 
+DOM element for Flash movie is not created!: Expected value not to be null but found null!
+qx.test.ui.virtual.Pane:testUpdateEvent
+Error message is: 
+Expect one update after appear: Expected &#39;1&#39; but found &#39;0&#39;!
+qx.test.ui.virtual.Pane:testPrefetchYLimitedAtTop
+Error message is: 
+: Expected &#39;500&#39; but found &#39;400&#39;!
+qx.test.ui.virtual.Pane:testPrefetchYLimitedAtBottom
+Error message is: 
+: Expected &#39;500&#39; but found &#39;400&#39;!
+qx.test.ui.virtual.Pane:testPrefetchYInMiddle
+Error message is: 
+: Expected &#39;800&#39; but found &#39;400&#39;!
+qx.test.ui.virtual.Pane:testPrefetchYAtTop
+Error message is: 
+: Expected &#39;400&#39; but found &#39;0&#39;!
+qx.test.ui.virtual.Pane:testPrefetchXLimitedAtLeft
+Error message is: 
+: Expected &#39;400&#39; but found &#39;300&#39;!
+qx.test.ui.virtual.Pane:testPrefetchXLimitedAtBottom
+Error message is: 
+: Expected &#39;400&#39; but found &#39;300&#39;!
+qx.test.ui.virtual.Pane:testPrefetchXInMiddle
+Error message is: 
+: Expected &#39;700&#39; but found &#39;300&#39;!
+qx.test.ui.virtual.Pane:testPrefetchXAtLeft
+Error message is: 
+: Expected &#39;300&#39; but found &#39;0&#39;!
+qx.test.ui.virtual.Pane:testNoRows
+Error message is: 
+TypeError: Cannot convert &#39;p.calls[0]&#39; to object
+qx.test.ui.virtual.Pane:testNoColumns
+Error message is: 
+TypeError: Cannot convert &#39;d.calls[0]&#39; to object
+qx.test.ui.virtual.Pane:testMouseCellEvents
+Error message is: 
+cellClick: Expected &#39;1&#39; but found &#39;0&#39;!
+qx.test.ui.virtual.Pane:testGetItemAtPositionEmptySpace
+Error message is: 
+: Expected &#39;{&quot;row&quot;:0,&quot;column&quot;:0}&#39; but found &#39;null&#39;!
+qx.test.ui.virtual.Pane:testGetCellAtPosition
+Error message is: 
+: Expected &#39;{&quot;row&quot;:0,&quot;column&quot;:0}&#39; but found &#39;null&#39;!
+qx.test.ui.virtual.PaneUpdate:testNoUpdateBeforeAppear
+Error message is: 
+: Expected &#39;2&#39; but found &#39;0&#39;!
+qx.test.ui.virtual.PaneUpdate:testInitialWindowData
+Error message is: 
+: Expected &#39;3&#39; but found &#39;1&#39;!
+qx.test.ui.virtual.PaneUpdate:testInitialWindow
+Error message is: 
+: Expected &#39;2&#39; but found &#39;0&#39;!
+qx.test.ui.virtual.PaneUpdate:testInitialData
+Error message is: 
+: Expected &#39;3&#39; but found &#39;1&#39;!
+qx.test.ui.virtual.PaneUpdate:testInitialAxisWindowData
+Error message is: 
+: Expected &#39;3&#39; but found &#39;1&#39;!
+qx.test.ui.virtual.PaneUpdate:testInitialAxisWindow
+Error message is: 
+: Expected &#39;2&#39; but found &#39;0&#39;!
+qx.test.ui.virtual.PaneUpdate:testInitialAxisData
+Error message is: 
+: Expected &#39;3&#39; but found &#39;1&#39;!
+qx.test.ui.virtual.PaneUpdate:testInitialAxis
+Error message is: 
+: Expected &#39;2&#39; but found &#39;0&#39;!
+qx.test.ui.virtual.PaneUpdate:testInitial
+Error message is: 
+: Expected &#39;2&#39; but found &#39;0&#39;!
+qx.test.ui.virtual.PaneUpdate:testData
+Error message is: 
+: Expected &#39;1&#39; but found &#39;0&#39;!
+
+The issues can also be reproduced when just running the test for qx.test.ui, but all the components are fine when run separately (e.g. qx.test.ui.virtual). I am seeing a total 36 failures, but 5 of them are not related to this issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21037</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-03 13:27:11 +0100</bug_when>
+            <thetext>It didn&#39;t work out mostly because of singletons where it is ok to create an instance. But its hard to reduce the dependencies at all, we need to tink about that a bit more and maybe write down the problems causing the dependencies.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21930</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2010-12-13 14:40:51 +0100</bug_when>
+            <thetext>Yet another mysterious dependency:
+
+setUp : function()
+{
+  var textArea = this.__textArea = new qx.ui.form.TextArea();
+  this.getRoot().add(textArea);
+  this.flush();
+},
+
+tearDown : function()
+{
+  this.__textArea.destroy();
+}
+
+&quot;test: dispose&lt;br/&gt; removes original and cloned textarea&quot;: function() {
+  var textArea = this.__textArea;
+  textArea._getScrolledAreaHeight();
+  this.flush();
+  textArea.dispose();
+  this.flush();
+  
+  var textAreaCount = qx.bom.Collection.query(&quot;textarea&quot;).length;
+  this.assertEquals(0, textAreaCount);
+},
+
+
+&lt;following test&gt;
+Error message is:
+Error setting up test: TypeError: container is null
+
+Curiously, there is no error with destroy() instead of dispose() in the preceding test.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23763</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-04-01 16:24:18 +0200</bug_when>
+            <thetext>I&#39;ve found another issue which is caused by dependencies between unit tests.
+
+Firefox 4 / Windows 7
+
+Run the &quot;bom.Location&quot; tests before the &quot;ui&quot; tests 
+-&gt; This will cause that the unit test 
+&quot;qx.test.ui.core.Placement:testVisibleWithMenu&quot; fails (this is only the first 
+which fails)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25031</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-09 17:26:41 +0200</bug_when>
+            <thetext>There are some test cases inheriting from qx.test.ui.LayoutTestCase that override LayoutTestCase#tearDown, but do not call this.base(). As a consequence, this.getRoot().removeAll() is not called.
+
+Examples:
+
+qx.test.ui.form.RadioGroup
+qx.test.ui.form.Renderer
+qx.test.ui.basic.Label
+qx.test.ui.form.Field
+
+Moreover, some test case specific tearDown() methods call dispose() on widgets created, while destroy() may be what is actually desired.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25936</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-07-12 13:12:32 +0200</bug_when>
+            <thetext>Several tests in qx.test.ui.form.Placeholder fail in Safari 5 if the ui namespace is run in one go.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30010</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2012-07-04 10:39:06 +0200</bug_when>
+            <thetext>*** Bug 6078 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35524</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:25 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

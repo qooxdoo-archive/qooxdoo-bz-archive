@@ -1,0 +1,154 @@
+<bug>
+          <bug_id>4205</bug_id>
+          
+          <creation_ts>2010-10-19 15:02:00 +0200</creation_ts>
+          <short_desc>Bug in statics declaration - no localization</short_desc>
+          <delta_ts>2010-10-20 13:17:35 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.locale</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>derrell.lipman</cc>
+    
+    <cc>qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20771</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-10-19 15:02:19 +0200</bug_when>
+            <thetext>Is there a reason for this code not to work?
+
+qx.Class.define(&quot;text.Wid&quot;,
+{
+  extend : qx.ui.core.Widget, //(or nothing or qx.core.Object -&gt; no difference of course! when Widget is the one supporting translation, though we use direct access of the locale Manager.)
+
+    statics :
+    {
+        BUTT : {
+            ttt : {
+                label : qx.locale.Manager.tr(&quot;Great&quot;),
+                toolTipIcon : null,
+                toolTipText : qx.locale.Manager.tr(&quot;Life is great!&quot;)
+            }
+         }
+      }
+   }
+
+When we access the ttt by doing a set of ttt to a widget, then the localization info is not translated, instead falls back to the English version (probably the C version).
+
+Instead if the ttt object is moved in to a widget class, it is translated as it should be.
+
+Conclusion: It seems that translation only works inside member functions. qx.locale.Manager.getLocale() gives the same value wherever it is executed. It seems that the function is not saved (..tr()), instead it executes it once and get the returned value and save that in the structure or only get the C language version.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20772</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-10-19 15:16:46 +0200</bug_when>
+            <thetext>Static members are evaluated at class evaluation time. If the additional locales have not been loaded at the time that this class is evaluated, the one and only available locale will be used.
+
+You may be able to fix this with #require hints that force the other locales to be loaded first, but I don&#39;t know what requirements there are for initialization of the locales, as well as simply loading them.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20775</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-10-19 16:54:56 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Static members are evaluated at class evaluation time. If the additional
+&gt; locales have not been loaded at the time that this class is evaluated, the one
+&gt; and only available locale will be used.
+&gt; 
+&gt; You may be able to fix this with #require hints that force the other locales to
+&gt; be loaded first, but I don&#39;t know what requirements there are for
+&gt; initialization of the locales, as well as simply loading them.
+
+Thank you! I will test this fix.
+
+But the main question here is if static classes shall be evaluated/resolved at load time?! I consider it as a bug if we consider object orientation and qooxdoo&#39;s strive to go in that direction.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20776</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-10-19 17:05:40 +0200</bug_when>
+            <thetext> 
+&gt; But the main question here is if static classes shall be evaluated/resolved at
+&gt; load time?! I consider it as a bug if we consider object orientation and
+&gt; qooxdoo&#39;s strive to go in that direction.
+
+It&#39;s been working this way for many, many years, with nary a complaint. It works this way in other languages too.
+
+If you want to initialize static members based on requirements that haven&#39;t been met at the time of loading, then initialize them in our application&#39;s main() function. At that point, you know that everything is loaded. In your case, just change the static initializer as follows:
+
+  statics:
+  {
+    BUTT : null
+  }
+
+and then in your application&#39;s main() function do:
+
+  text.Wid.BUTT = 
+    {
+      label : qx.locale.Manager.tr(&quot;Great&quot;),
+      toolTipIcon : null,
+      toolTipText : qx.locale.Manager.tr(&quot;Life is great!&quot;)
+    };
+
+QED</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20786</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-10-20 10:39:40 +0200</bug_when>
+            <thetext>I know very well from language limitations, but if it is meant to be OO.... but it is probably better to let it be a trade off as the generics is defined like that.
+
+Now three solutions:
+1. a returning function in the object structure (execute at runtime)
+2. move the content out of the object structure inside runtime code
+3. moving the function calls (here qx.locale.Manager.tr()) outside of the object structure into the runtime code
+
+We have chosen alt. 3 but we need to make a trick for the generator to understand that there is a string to be translated inside the object structure; by using qx.locale.Manager.marktr() so the key appears in the translation dictionary.
+
+
+mark the &quot;bug&quot; resolved!
+
+Thank you Derrell and T for sorting it out as a trade off, i.e. tolerating the generics!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20791</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-20 13:17:35 +0200</bug_when>
+            <thetext>Don&#39;t see any &quot;trade offs&quot; or &quot;tricks&quot;, but that all just works as expected. Anyway, you found a solution to your code, good, so closing this report.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

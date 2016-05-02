@@ -1,0 +1,89 @@
+<bug>
+          <bug_id>8228</bug_id>
+          
+          <creation_ts>2014-04-01 17:18:00 +0200</creation_ts>
+          <short_desc>qx.util.ColorUtil.__rgbaStringToRgb strange behavior</short_desc>
+          <delta_ts>2015-01-19 08:49:29 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>4.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter>vincent</reporter>
+          <assigned_to name="Sabrina Metzger">sabrina.metzger</assigned_to>
+          <cc>sabrina.metzger</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>39857</commentid>
+            <who name="">vincent</who>
+            <bug_when>2014-04-01 17:18:32 +0200</bug_when>
+            <thetext>It seems that qx.util.ColorUtil.__rgbaStringToRgb makes a special case when the color is both black and even slightly  transparent. This is due to the alpha channel being parsed with parseInt() and not parseFloat().
+
+rgba(0,0,0,0.5) -&gt; [-1, -1, -1]
+rgba(0,0,0,0.99999) -&gt; [-1, -1, -1]
+rgba(0,0,0,1) -&gt; [0, 0, 0]
+
+Red, green and Blue channels are supposed to be integers, so rounding them down is logical, but rounding down the alpha channel to the inferior integer is very illogical, especially with the special [-1, -1, -1] case.
+
+------
+l 390 of ColorUtil:
+
+      var red = parseInt(RegExp.$1, 10);
+      var green = parseInt(RegExp.$2, 10);
+      var blue = parseInt(RegExp.$3, 10);
+      var alpha = parseInt(RegExp.$4, 10); &lt;--------- should be parseFloat ?
+
+      if (red === 0 &amp;&amp; green === 0 &amp; blue === 0 &amp;&amp; alpha === 0) {
+        return [-1, -1, -1];
+      }
+
+      return [red, green, blue];
+
+------</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39860</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-04-02 08:06:54 +0200</bug_when>
+            <thetext>Thanks for the report. Sounds like you have done the hard work of searching for things to test in a unit test and find the spot to fix so why not put that into a pull request?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42203</commentid>
+            <who name="Sabrina Metzger">sabrina.metzger</who>
+            <bug_when>2015-01-16 13:32:01 +0100</bug_when>
+            <thetext>fixed in 14b731b987adaf5b2ee41ed06b0c4d72f0c99043 (master)
+         07f78e3979ec5b3f96bd79bbc41f433896116877 (branch_4_1_x)
+
+changed alpha value to float</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

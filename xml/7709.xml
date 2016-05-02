@@ -1,0 +1,121 @@
+<bug>
+          <bug_id>7709</bug_id>
+          
+          <creation_ts>2013-09-03 19:07:00 +0200</creation_ts>
+          <short_desc>Filters excluding many rows takes too much CPU</short_desc>
+          <delta_ts>2014-12-16 11:44:29 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>3.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Aaron Opfer">me</reporter>
+          <assigned_to name="Tobias Oberrauch">tobias.oberrauch</assigned_to>
+          <cc>eric.koch</cc>
+    
+    <cc>tobias.oberrauch</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>33822</commentid>
+            <who name="Aaron Opfer">me</who>
+            <bug_when>2013-09-03 19:07:29 +0200</bug_when>
+            <thetext>Take this playground as an example:
+
+http://tinyurl.com/ksrttb8
+
+Notice that the button that filters out only a single row is an instantaneous action, and that the button that filters out all but one row takes a very long time. Depending on how many rows are excluded, this could virtually freeze machines with low CPU power on large tables.
+
+It looks like the issue is with a huge number of events being triggered. I traced execution as follows:
+
+https://github.com/qooxdoo/qooxdoo/blob/release_3_0/framework/source/class/qx/ui/table/model/Filtered.js#L313-L317
+
+Here, hideRows removes a single row at a time from the table. This loop should instead be batching consecutive rows that need to be hidden together and hiding them all at once.
+
+https://github.com/qooxdoo/qooxdoo/blob/master/framework/source/class/qx/ui/table/model/Filtered.js#L365
+
+The call to hideRows is not supposed to raise an event when its third parameter is false. However, this is bugged: hideRows calls the function removeRows which does this:
+
+https://github.com/qooxdoo/qooxdoo/blob/release_3_0/framework/source/class/qx/ui/table/model/Simple.js#L711-L714
+
+The combined result of all of these behaviors is that for every row that is excluded, a changedData event is fired, which then also goes on to fire changedSelection events, etc.. This is what causes the massive slowdown.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33824</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-09-04 08:27:47 +0200</bug_when>
+            <thetext>Thanks for the good bug report.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33951</commentid>
+            <who name="Aaron Opfer">me</who>
+            <bug_when>2013-09-18 17:00:47 +0200</bug_when>
+            <thetext>I&#39;m not sure if you noticed, but this code is a contrib from the same company as the domain in my e-mail address. Yes: I am pawning off my maintenance work onto you qooxdoo guys. ;)
+
+More seriously: The gift of hindsight has led to some observations about the Filtered model. A very big drawback of the current implementation is the lack of extensibility. For example: if someone wanted to subclass the Filtered model in order to add an additional type of filtering, it unavoidably requires copy &amp; pasting a large portion of the applyFilters method and then adding the additional logic into its switch statement. In fact, this is what we currently do in our code-base. A better method of extension of functionality is likely needed that more closely matches OOP principles.
+
+These are things I would like to fix myself when time permits. What I am not certain about is how this is handled upstream, specifically in regards to maintaining backwards-compatibility. Certainly other projects must sub-class the Filtered model in a similar fashion as well. Fixing these issues would require breaking compatibility thanks to the copy&amp;pasting of the applyFilters method.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33953</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-09-19 09:51:45 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; These are things I would like to fix myself when time permits. What I am not
+&gt; certain about is how this is handled upstream, specifically in regards to
+&gt; maintaining backwards-compatibility. Certainly other projects must sub-class
+&gt; the Filtered model in a similar fashion as well. Fixing these issues would
+&gt; require breaking compatibility thanks to the copy&amp;pasting of the applyFilters
+&gt; method.
+
+Feel free to send us a pull request at any time. We will check and if necessary change the code to the needs of the framework. About the API breaks, this should be avoided. If not possible at all, we always try to find a way to deprecated the old API and introduce a new, hopefully better API. Just check out the docs we have in the tech manual about deprecation:
+https://github.com/qooxdoo/qooxdoo/blob/master/documentation/tech_manual/source/pages/framework/deprecation.rst</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40470</commentid>
+            <who name="Eric">eric.koch</who>
+            <bug_when>2014-06-10 11:51:02 +0200</bug_when>
+            <thetext>I made a little improvement and thought it is worth to be shared.
+
+- Rows are no longer removed one by one if they can be removed in bigger chunks.
+
+https://github.com/qooxdoo/qooxdoo/pull/88</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41328</commentid>
+            <who name="Tobias Oberrauch">tobias.oberrauch</who>
+            <bug_when>2014-10-07 15:15:40 +0200</bug_when>
+            <thetext>Pull request adapted and commited in 
+master e45c5e500644c0fe50634d2a1abd6aa11a5c4cf7 and
+branch_4_0_x 76821450314b42e8d4d9b2ce7474507de5ff74ac</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

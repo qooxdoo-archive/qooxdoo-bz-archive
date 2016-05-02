@@ -1,0 +1,140 @@
+<bug>
+          <bug_id>6556</bug_id>
+          
+          <creation_ts>2012-06-22 19:44:00 +0200</creation_ts>
+          <short_desc>Significant quantity and size increase for app built in parts</short_desc>
+          <delta_ts>2013-12-16 12:45:38 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>2.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="saaj">id</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>29894</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2012-06-22 19:44:02 +0200</bug_when>
+            <thetext>After switching existing app, which utilizes part loading, to 2.0 I found that number of parts and its overall size have increased.
+
+The following parts built against 1.6.1:
+
+app.js - 633943
+app.2b92c0dc7ffc.js - 98137
+app.8d8959f1bed1.js - 163939
+app.26eec1f479ca.js - 83425
+app.042cd178fbeb.js - 24820
+app.77caec6c5362.js - 208621
+app.763de8b66f6d.js - 39082
+app.316152967596.js - 23361
+app.aae23b54b4c8.js - 152098
+app.c3029e8bd521.js - 43518
+app.efb31a2f66e6.js - 58360
+
+and what I have for 2.0:
+
+app.js - 993407
+app.0a821b8c6fbc.js - 77930
+app.3db58a512a49.js - 235073
+app.4c4c5547b4b8.js - 58555
+app.6d99bb1fbe30.js - 37044
+app.6d948941f031.js - 17545
+app.7e287dc06b41.js - 184088
+app.33e4c12633ae.js - 32890
+app.81e688681b72.js - 80497
+app.605db273d253.js - 53565
+app.396269612415.js - 4862
+app.a9c54e8c04f3.js - 87579
+app.cb22fd998c8b.js - 165763
+app.d5e94f22f9ea.js - 67516
+app.dea66e5e293b.js - 146812
+app.f842275adbdd.js - 66984
+
+
+So 1.6.1 has 11 parts of 1.46 MiB. 2.0 has 16 parts of 2.2MiB for the same app. Main part size increased on 50%. I have following settings in config
+
+      &quot;packages&quot; :
+      {
+        &quot;sizes&quot; : 
+        {
+          &quot;min-package&quot;          : 64,
+          &quot;min-package-unshared&quot; : 16
+        },
+        &quot;additional-merge-constraints&quot; : true,
+        &quot;parts&quot; : ...
+
+so it&#39;s strange I have a part smaller than 16KiB. Considering all of this I stick to maintenance release for now.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29895</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-06-22 22:33:27 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; After switching existing app, which utilizes part loading, to 2.0 I found that
+&gt; number of parts and its overall size have increased.
+
+I cannot confirm this on a general level. I just re-built the Feedreader in 1.6.1 and 2.0, and they&#39;re roughly the same, both in terms of number of files as well as individual file sizes (with the 2.0 files tending to be a bit smaller for the &#39;format&#39; option that is false by default in 2.0).
+
+&gt; So 1.6.1 has 11 parts of 1.46 MiB. 2.0 has 16 parts of 2.2MiB for the same app.
+
+As for the overall size, could it be you have OPTIMIZE or compile-options/code/optimize defined in your config? Then you might want to review the release notes, there are two optimization keys that now need to be turned on explicitly (&quot;whitespace&quot; and &quot;comments&quot;). If you leave them out your missing out on essential compression.
+
+&gt;           &quot;min-package&quot;          : 64,
+&gt;           &quot;min-package-unshared&quot; : 16
+&gt;         },
+&gt;         &quot;additional-merge-constraints&quot; : true,
+&gt;         &quot;parts&quot; : ...
+&gt; 
+&gt; so it&#39;s strange I have a part smaller than 16KiB. 
+
+Not sure about this one, but if a small package remains it is probably due to some merge constraints that would be violated otherwise.
+
+Generally speaking the distribution of classes across packages can change between releases, simply due to changed dependencies among framework classes.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29903</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2012-06-23 16:54:53 +0200</bug_when>
+            <thetext>&gt; Then you might want to
+review the release notes, there are two optimization keys that now need to be
+turned on explicitly (&quot;whitespace&quot; and &quot;comments&quot;).
+
+Yes, this was the cause. Actually &quot;whitespace&quot; option, I&#39;ve already had &quot;comments&quot; specified along with others. Built with it, app turned back to 11 parts and 1.45MiB. Even slightly smaller as you have mentioned.
+
+Even though I&#39;m subscribed to news RSS and I read all recent posts, including new parse&#39;s algorithm and new compilation option, I must have missed news about optimization defaults&#39; changes. Maybe it was told briefly but surely I would remember it if was about 50% impact on size ;-)
+
+Thanks for the explanation! I&#39;m turning to 2.0 :-)</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

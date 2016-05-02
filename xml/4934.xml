@@ -1,0 +1,404 @@
+<bug>
+          <bug_id>4934</bug_id>
+          
+          <creation_ts>2011-04-04 13:42:00 +0200</creation_ts>
+          <short_desc>TreeVirtual causes an endless loop in the layout queue</short_desc>
+          <delta_ts>2014-03-03 08:46:39 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.layout</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          <cc>alexander.steitz</cc>
+    
+    <cc>derrell.lipman</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>23812</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-04-04 13:42:24 +0200</bug_when>
+            <thetext>If the browser is resized while our application is running, it often happens that the browser does not respond anymore. The browser then shows up a message that says that there is a long running script.
+
+This issue is critical, because our application freezes often when the browser is resized.
+
+The problem can be reproduced by six lines of code that can be executed in the playground of qooxdoo.
+After this code has been started in the playground, the browser height has to be reduced till the scrollbar on the right side of the table is displayd. Then the browser size has to be increased again slowly.
+
+-- Start of Playground code -------------------------------------------------
+var tree = new qx.ui.treevirtual.TreeVirtual([&quot;Filename&quot;,&quot;Size&quot;,&quot;Date&quot;]);
+    
+var leftColumn = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+leftColumn.add(tree);
+      
+var overviewScroller = new qx.ui.container.Scroll();
+overviewScroller.add(leftColumn);
+      
+this.getRoot().add(overviewScroller, { edge : 0 });
+-- End of Playground code -------------------------------------------------
+Or alternative URL to the Playground: http://tinyurl.com/3qchyof</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23813</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-04-04 14:05:53 +0200</bug_when>
+            <thetext>It&#39;s even easier, because one does not need to add a VBox container additionally:
+
+--snip--
+var tree = new qx.ui.treevirtual.TreeVirtual([&quot;Filename&quot;,&quot;Size&quot;,&quot;Date&quot;]);
+tree.setAllowStretchY(false);
+      
+var overviewScroller = new qx.ui.container.Scroll(tree);
+this.getRoot().add(overviewScroller, { edge : 0 });
+--snip--</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23836</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-04-05 08:52:40 +0200</bug_when>
+            <thetext>Thanks for the report. We will take care of that after the release.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23972</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-04-12 09:55:15 +0200</bug_when>
+            <thetext>Fixed with revision #26704 (1.4.x) and #26705 (trunk). Added a timer to 
+decouple the resize operation and to prevent that the resize operation is 
+triggered over and over again (this ended up in an endless loop).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23991</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-04-12 14:21:53 +0200</bug_when>
+            <thetext>I have verified that the problem does not show up again after we have updated to the newest qooxdoo version.
+
+This bugfix has introduced a flickering horizontal scrollbar, but this will be put in a separate Bug with a lower priority.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24005</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-04-13 09:51:59 +0200</bug_when>
+            <thetext>The problem now occurs again, even after we have update to the qooxdoo revision 26705.
+
+This problem can be reproduced by copying the appended code to the playground.
+(You have to checkout the trunk of qooxdoo and run the local playground, because there is no playground in the internet that uses the revision 26705).
+
+-- Playground code --------------------------------------
+
+
+
+var tree = new qx.ui.treevirtual.TreeVirtual([&quot;Filename&quot;,&quot;Size&quot;,&quot;Date&quot;]);
+var columnModel = tree.getTableColumnModel();
+var resizeBehavior = columnModel.getBehavior();
+resizeBehavior.set(0, { width : &quot;1*&quot; });
+resizeBehavior.set(1, { width :  80  });
+resizeBehavior.set(2, { width : 120  });
+
+    tree.setNewTablePaneScroller(function(tree) {
+      var scroller = new qx.ui.table.pane.Scroller(tree);
+      return scroller;
+    });
+
+
+var dataModel = tree.getDataModel();
+for(var i=0;i&lt;50; i++) {
+  var  nodeId = dataModel.addLeaf(0, &quot;aaa&quot; );
+  dataModel.setColumnData(nodeId, 1, &quot;ddd&quot;);
+  dataModel.setColumnData(nodeId, 2, &quot;fff&quot;);
+}
+
+dataModel.setData();
+
+var treeScroller = tree.getPaneScroller(1);
+treeScroller.setHorizontalScrollBarVisible(true);
+     
+
+
+var leftColumn = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+leftColumn.add(tree);
+
+var overviewScroller = new qx.ui.container.Scroll();
+overviewScroller.add(leftColumn);
+
+this.getRoot().add(overviewScroller, { edge : 0 });</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24073</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-04-15 16:12:09 +0200</bug_when>
+            <thetext>This issue is an edge case which should be fixed in the application code rather 
+than in the framework code. 
+
+I&#39;ll append two patch files how to fix this issue in the application code.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24074</commentid>
+              <attachid>971</attachid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-04-15 16:18:08 +0200</bug_when>
+            <thetext>Created attachment 971
+Patches for &#39;qx.ui.table.Table&#39;  class and &#39;qx.ui.table.pane.Scroller&#39; class</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24075</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-04-15 16:23:55 +0200</bug_when>
+            <thetext>(In reply to comment #10)
+&gt; This issue is an edge case which should be fixed in the application code rather 
+&gt; than in the framework code. 
+
+Yuck! There&#39;s a bug in the framework that crashes the application when the user does something entirely reasonable, and you want to leave it to the user to deal with? I don&#39;t think that&#39;s acceptable. This really needs to get fixed properly in the framework. It&#39;s true that dealing with resizes is a pain, particularly in the Table, but that&#39;s a critical, highly-used widget.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24076</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-04-15 17:02:54 +0200</bug_when>
+            <thetext>From our side: we will not investigating more time into this issue. 
+A workaround is available and this issue is (from my point of view) not fixable in a proper way within the framework. Without e.g. introducing regression bugs.
+
+Feel free to take this one and let us know if you can fix this. I would be happy if a fix is possible and I can review it.
+
+Resolution down to major.
+
+@Derrell: If want to take a look at it just assign it to you.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24079</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-04-15 17:22:29 +0200</bug_when>
+            <thetext>(In reply to comment #13)
+&gt; From our side: we will not investigating more time into this issue. 
+&gt; A workaround is available and this issue is (from my point of view) not fixable
+&gt; in a proper way within the framework. Without e.g. introducing regression bugs.
+&gt; 
+&gt; Feel free to take this one and let us know if you can fix this. I would be
+&gt; happy if a fix is possible and I can review it.
+&gt; 
+&gt; Resolution down to major.
+&gt; 
+&gt; @Derrell: If want to take a look at it just assign it to you.
+
+Sure, you can assign it to me if no one else will work on it. I will likely not have time to work on it until summer, though.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24084</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-04-16 15:19:33 +0200</bug_when>
+            <thetext>(In reply to comment #14)
+&gt; &gt; @Derrell: If want to take a look at it just assign it to you.
+&gt; 
+&gt; Sure, you can assign it to me...
+
+Alex, would you please do a brain dump while it&#39;s fresh in your head, of what you found during your investigation of this bug.
+
+Thanks.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24096</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-04-18 09:47:00 +0200</bug_when>
+            <thetext>(In reply to comment #15)
+&gt; Alex, would you please do a brain dump while it&#39;s fresh in your head, of what
+&gt; you found during your investigation of this bug.
+Sure.
+
+The thing is that if the table / tree virtual is resized using two different implementations 
+
+  * &#39;_onResize&#39; method in the &#39;qx.ui.table.Table&#39; class
+  * &#39;_onResizePane&#39; method in the &#39;qx.ui.table.pane.Scroller&#39; class
+
+which rely on each other. So the layout changes which are triggered with the first resize implementation have to be completed to be sure that the second is not using old values. 
+
+In the edge case which this bug report is about occurs whenever the scrollbar of the outer scroll area is visible and get hidden. At this moment the table and the table scroller are resized and the one implementation leads to (temporarily) show the horizontal scrollbar of the table scroller and the other implementation leads to hiding this particular scrollbar. Hiding the scrollbar of the table scroller is triggering a layout change which itself leads then to a endless loop, because this layout change is triggering a resizing.
+
+If you need more detailed input, just let me know.
+
+Re-Assign to Derrell.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24116</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-04-19 08:30:32 +0200</bug_when>
+            <thetext>The workaround (attachment 971) has solved this problem for us.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26804</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-09-15 13:09:10 +0200</bug_when>
+            <thetext>We have now run into the same problem again, although we have implemented the attached path (for qx.ui.table.Table and qx.ui.table.pane.Scroller) which is attached to this case.
+
+I have tried to analyze the stack trace.
+The stack trace never leaves the layout queue of qooxdoo.
+Qooxdoo is constantly layouting the same table.
+The same table is constantly relayoutet.
+Whenever the table is layoutet again, the visibility of the horizontal or vertical scrollbar of this table changes. This triggers a relayout of the table.
+
+Now we have implemented a workaround to implement this issue:
+We count how many times the visibility of a scrollbar has been changed. If this count exceeds a large number, then the scrollbar will become permanently visible.
+
+Our workaround is to add the following piece of code to our class that inherits from qx.ui.table.pane.Scroller:
+
+    __prevNeededScrollbars: false,
+    
+    __numScrollbarChanges: 0,
+    
+    __MAX_ALLOWED_SCROLLBAR_CHANGES: 50,
+    
+    __scrollbarFixLogged: false,
+    
+    
+    getNeededScrollBars: function() {
+      if( this.__numScrollbarChanges &gt; this.__MAX_ALLOWED_SCROLLBAR_CHANGES ) {
+        if( ! this.__scrollbarFixLogged ) {
+          if (qx.core.Environment.get(&quot;qx.debug&quot;)) {
+            this.debug(&quot;Permanentely activating the scrollbar to avoid infinite loop in layout process&quot;);
+          }
+          this.__scrollbarFixLogged = true;
+        }
+        return qx.ui.table.pane.Scroller.VERTICAL_SCROLLBAR;
+      }
+      
+      var result = this.base(arguments);
+      
+      if( this.__prevNeededScrollbars != result ) {
+        this.__numScrollbarChanges++;
+      }
+      this.__prevNeededScrollbars = result;
+      
+      return result;
+    }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26813</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-09-16 08:21:14 +0200</bug_when>
+            <thetext>Seems like the table layouting needs to be revisited especially in the edge case of showing the scrollbars. Uwe, could you provide a playground sample which shows the misbehavior?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26815</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-09-16 08:45:28 +0200</bug_when>
+            <thetext>Unfortunately, I am not able to provide a playground demo for our last long running script problem.
+This would be too complicated, because we were not anymore using the plain qooxdoo classes, but the plain qooxdoo classes plus the patch (see attachment &quot;Patches for &#39;qx.ui.table.Table&#39; class and &#39;qx.ui.table.pane.Scrollre&#39; class).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31263</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2012-11-07 13:26:51 +0100</bug_when>
+            <thetext>Moving on.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31694</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2012-12-10 17:06:01 +0100</bug_when>
+            <thetext>@Uwe
+Is this component still in use in your project? If not, I&#39;ll would remove the 
+target milestone and would prioritize other bugs.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31695</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2012-12-10 17:10:08 +0100</bug_when>
+            <thetext>Our project now does not use the class qx.ui.treevirtual.TreeVirtual anymore.
+Instead of this old class, the new class qx.ui.tree.VirtualTree?
+
+(I wonder whats the difference between the two classes by looking at the nearly similar names.)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31696</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2012-12-10 17:20:44 +0100</bug_when>
+            <thetext>(In reply to comment #23)
+&gt; Our project now does not use the class qx.ui.treevirtual.TreeVirtual anymore.
+&gt; Instead of this old class, the new class qx.ui.tree.VirtualTree?
+&gt; 
+&gt; (I wonder whats the difference between the two classes by looking at the nearly
+&gt; similar names.)
+
+Thanks for the fast reponse.
+
+qx.ui.treevirtual.TreeVirtual = based on the Table widget
+
+qx.ui.tree.VirtualTree = based on the (new) virtual infrastructure
+
+
+If unsure, pick the new &quot;qx.ui.tree.VirtualTree&quot; implementation.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35615</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:39 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>971</attachid>
+            <date>2011-04-15 16:18:00 +0200</date>
+            <delta_ts>2011-04-15 16:18:08 +0200</delta_ts>
+            <desc>Patches for &#39;qx.ui.table.Table&#39;  class and &#39;qx.ui.table.pane.Scroller&#39; class</desc>
+            <filename>patches.zip</filename>
+            <type>application/zip</type>
+            <size>1167</size>
+            <attacher>alexander.steitz</attacher>
+            
+              <data encoding="base64">UEsDBBQAAAAIANh+jz7z/yCq0QAAAEYBAAAOABwATVRhYmxlUGF0Y2guanNVVAkAAyhOqE0oTqhN
+dXgLAAEE9AEAAAT0AQAATY/BasMwDIbveQqRkwNBjK6XrezUawNl7FZKcR01EaTKajtpWOm7z06W
+dkdJ3/dLugxY8MCCJZ1YSKXHrlq+vS6x+NLHhrbamzrNk1sCYFpx3nbGv8OpE+O5FZWFfpwB9NqC
++9aGLHyAr9nhoSK/rrkpLQVwt9ivHiD1JL7QoqsRvww4dvCTKg47dMzGoP8h6spSttfsGdAEjISs
+C/b/sCht5pma7skhteT4h9IQ8EiwdG57CvoE4VTPrpqV/Llq97LHWkvZxMj44XjPPblnq19QSwME
+FAAAAAgAGYCPPjSOnRVgAgAAdQYAABYAHABNVGFibGVTY3JvbGxlclBhdGNoLmpzVVQJAAOST6hN
+kk+oTXV4CwABBPQBAAAE9AEAAJ1Uy27bMBC8+ys2OqSS4ciH5lIbLpC6BVogRoI2dY4GJa4sojTl
+kJQfLfzvJUU96EfQIkAQyNrZ4ezOUC+7eMZ2TMQUMyYwDJJyefvh/W08eyIJxx+pLDhH+Uh0mgeD
+3p8eQFoIpWWZahhBVopUs0KEEdgSgM6Zigml90xpFCgfRGpIJSr2G4OBKy8oakz1t+yZmd/CnXEn
+kbh6NDZMh4H5Z/5WuEpQqpF5dAcsFtuTLiuDcIWDuu7YkU4LoYmZSTpoQuQ0J2KJHd41vKbmaLwK
+6hQAbIiENZEoNEzcSEvU92RflPqxeh2aGWrsNmccIazhVxMQJedRXWwIAVjWYphZLzFrKzJ42cUl
+i9NCYqwqXfFdYnZPUt3JjDyWev8XdmR0yhLHHjIxr391Lw699rEdzT1cGu6kx6p/5WRfXsc3NVup
+DDKwMFCNQTf7IPLTEwZpZdmcKZYwzvTeZKg1BaOW2V+BdUfgdk54iWYItOd9Jpp0uhtUwekR6oHT
+Bugh7XAt3/W1xz2BAHcpLynSwFY6PlPZWM0cg8ij8mW2Xv0zr+feHQBNgN9MV8X/iK+LgXcHu4q5
+jW4jw37fFfrwZWNDwmunICuk6UTjsUBIOVuvUb5T4G4+oAXXnUN37Qrxvao92obRmavNbNVU5ZoS
+jV+LepZPRM7Ijq3KVeeph5vjRVwNHA7hyejMkS1zDTlR4DJG4eYj/KwI7CdOt4LrxTruqaucnLtY
+5EgoyguoY5i2H9UG1Yrs4n3Ge6EB5TOjOlceu43o1X/671/I40MaR7wLfpqzN2asTpH9rvcO0fgv
+UEsBAh4DFAAAAAgA2H6PPvP/IKrRAAAARgEAAA4AGAAAAAAAAQAAALSBAAAAAE1UYWJsZVBhdGNo
+LmpzVVQFAAMoTqhNdXgLAAEE9AEAAAT0AQAAUEsBAh4DFAAAAAgAGYCPPjSOnRVgAgAAdQYAABYA
+GAAAAAAAAQAAALSBGQEAAE1UYWJsZVNjcm9sbGVyUGF0Y2guanNVVAUAA5JPqE11eAsAAQT0AQAA
+BPQBAABQSwUGAAAAAAIAAgCwAAAAyQMAAAAA
+</data>
+
+          </attachment>
+      
+
+    </bug>

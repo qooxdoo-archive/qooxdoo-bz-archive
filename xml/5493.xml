@@ -1,0 +1,140 @@
+<bug>
+          <bug_id>5493</bug_id>
+          
+          <creation_ts>2011-08-05 16:11:00 +0200</creation_ts>
+          <short_desc>generator gzip bug</short_desc>
+          <delta_ts>2013-12-16 12:46:13 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mustafa Sak">mustafa.sak</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26416</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2011-08-05 16:11:38 +0200</bug_when>
+            <thetext>If I’m setting gzip to true at config.json, source generation fails with this error:
+
+ 
+
+&lt;!--[if !supportLists]--&gt;-          &lt;!--[endif]--&gt;Generate packages  [Errno 2] No such file or directory: &#39;/xxxxxxxxx/asawizzard/source/script/asawizzard.8f246f580968.js.gz&#39;
+
+ 
+
+Here is the relevant part of my config:
+
+ 
+
+&quot;source&quot; :
+
+                        {
+
+                                   &quot;compile-options&quot;:
+
+                                   {
+
+                                               &quot;paths&quot; :
+
+                                               {
+
+                                                           &quot;gzip&quot;            : true
+
+                                               },
+
+ 
+
+Looks like, gzip is true, the generator is not creating source/script folder. After setting “gzip” to false it is working fine. Now you can again set it to true and no error accours but not .gz file is created. To reproduce this error just distclean before generation source with gzip:true option.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27718</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-30 16:45:35 +0100</bug_when>
+            <thetext>Mustafa,
+
+why do you want to compress a &quot;source&quot; version?! What should that mean? Class 
+files are taken from their original location, so there is no way to compress 
+them. The only thing left is the generated loader, which is not compressed 
+currently in either version (source or build). Did you mean to have the loader 
+script compressed?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27719</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2011-11-30 17:00:54 +0100</bug_when>
+            <thetext>I dont remember that bug anymore. If its not iportant, so just close it. ;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27721</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-30 17:33:30 +0100</bug_when>
+            <thetext>The immediate issue was that filetool.gzip does not create intervening 
+directories (which filetool.save does). So opening ./source/script/blah....gz 
+after a distclean failed, because the ./source/script directory was removed. 
+This is fixed.
+
+Now the generation runs through, but still has issues:
+- The generated loader is compresses, so the filename (e.g. &quot;gui.js.gz&quot;) 
+doesn&#39;t match the &lt;script&gt; tag in index.html anymore.
+- A resource script is being generated (e.g. &quot;gui.adf1234.js.gz&quot;), but in the 
+loader is referenced without &quot;.gz&quot; (e.g. &quot;gui.adf1234.js&quot;).
+
+Hence, I leave this bug open. It might affect the build version too.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29306</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-05-02 12:26:43 +0200</bug_when>
+            <thetext>The consistency issues have been solved, but the whole approach is a bit 
+questionable. The loader script is now exempted from gzip&#39;ing, so the reference 
+from indx.html doesn&#39;t break. All other scripts are gzip&#39;ped when the option is 
+on, and the references to them are respectively to the .gz nams in the loader.
+
+But I doubt this makes sense. I&#39;ve talked to Tino, and he said they used to 
+have the .gz script files along with the normal files, and all references to 
+them where to the .js (without trailing .gz) file names. The decision to use 
+the .gz files was done in the web server, in exchange for the normal .js files. 
+I believe this should save the web server from compressing the files on the fly 
+(with mod_deflate etc.).
+
+To support this properly the generator should reference the normal .js names in 
+the loader, and generate the compressed .gz files *alongside* the normal .js 
+files. But as this is just my take I&#39;ll leave it as it currently is until 
+someone has a real problem with it.
+
+master: 5140d69</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

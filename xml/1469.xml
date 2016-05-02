@@ -1,0 +1,264 @@
+<bug>
+          <bug_id>1469</bug_id>
+          
+          <creation_ts>2008-10-14 15:21:00 +0200</creation_ts>
+          <short_desc>Cannot mix QXTHEME with different QXICONTHEME</short_desc>
+          <delta_ts>2014-03-03 15:22:35 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>0.8</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.8.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>alexander.steitz</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>5835</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-10-14 15:21:36 +0200</bug_when>
+            <thetext>Siarhei reproted on the mailing list:
+
+&quot;Ok, If I try to use following pair in my config:
+
+---- snip ----
+&quot;QXTHEME&quot;      : &quot;qx.theme.Modern&quot;,
+&quot;QXICONTHEME&quot;  : [&quot;Tango&quot;],
+--- snap ----
+
+everything work fine. As well as with this one:
+
+---- snip ----
+&quot;QXTHEME&quot;      : &quot;qx.theme.Classic&quot;,
+&quot;QXICONTHEME&quot;  : [&quot;Oxygen&quot;],
+---- snap ----
+
+But does not work with following
+
+---- snip ----
+&quot;QXTHEME&quot;      : &quot;qx.theme.Modern&quot;,
+&quot;QXICONTHEME&quot;  : [&quot;Oxygen&quot;],
+--- snap ----
+
+or
+
+---- snip ----
+&quot;QXTHEME&quot;      : &quot;qx.theme.Classic&quot;,
+&quot;QXICONTHEME&quot;  : [&quot;Tango&quot;],
+---- snip ----
+&quot;
+
+It appears that you cannot use an icon from an icon theme that is not corresponding to the current theme.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5836</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-10-14 15:34:50 +0200</bug_when>
+            <thetext>For one thing, the issue is not directly with config or asset macros, so the subject is a bit of a misnomer. But since it catches the entry to the problem, I retained it.
+
+The problem can be reproduced as follows:
+- set QXTHEME in the config (say &quot;Modern&quot;)
+- use an icon in the app like
+ var button2 = new qx.ui.form.Button(&quot;First2 Button&quot;, &quot;icon/16/apps/utilities-dictionary.png&quot;);
+- declare the icon with #asset using a different icon theme (&quot;Oxygen&quot;)
+#asset(qx/icon/Oxygen/16/apps/utilities-dictionary.png)
+
+This is what happens (as I understand it):
+- the qxresource entry in the bootstrap code is correct, like
+&quot;qx/icon/Oxygen/16/apps/utilities-dictionary.png&quot;: [16, 16, &quot;png&quot;, &quot;qx&quot;] (verified)
+- but when &quot;icon/16/apps/utilities-dictionary.png&quot; from the application code is being resolved by the AliasManager, the current theme is taken into account, so &quot;qx/icon/Tango/16/apps/utilities-dictionary.png&quot; is returned (hypothetical)
+- this cannot be found in qxresource by the ResourceManager, so the generated icon entry is not used
+- alternatively, some default URI is being returned, using some default, which is outright wrong: custom/source/qx/icon/Tango/16/apps/utilities-dictionary.png
+
+So two things go wrong here:
+- the generated icon id does not match the one returned by the AliasManager, and is therefore not used
+- the resulting &quot;default&quot; URI uses the application path, and uses it wrongly (&quot;resource&quot; directory is missing)
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5943</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-10-22 14:03:54 +0200</bug_when>
+            <thetext>The following was discovered while working at Bug #1495.
+
+The framework tests are using the Classic theme for some tests and are run within the testrunner application which itself uses the Modern theme. This setup leads to a problem that specific decoration files for the Classic theme are requested with wrong URLs.
+
+To explain it at one example: the &quot;table-combined.png&quot; image. This image is located at &quot;framework/source/qx/decoration/Classic/table-combined.png&quot; and is referenced with this path at the build JS file of the testrunner.
+But when the application loads the test this URL is passed to the AliasManager which transforms the URL under the use of the current theme of the application (=Modern) and transforms this URL. The lookup of this transformed URL fails and the AliasManager falls back to a default.
+This ends up with the URL &quot;resource/qx/decoration/Classic/table-combined.png&quot; which is located inside the application folder. However, this image is *not* available at this location, because the build process did not copy the resources of the Classic theme to this location (only the resources of the Modern theme).
+
+So it boils down to the same problem as described above. Just another scenario.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5945</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-10-22 14:04:19 +0200</bug_when>
+            <thetext>*** Bug 1495 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6561</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-12-01 15:49:14 +0100</bug_when>
+            <thetext>Some update to what goes on here:
+
+[1] - the qxresource entry in the bootstrap code is correct, like
+        &quot;qx/icon/Oxygen/16/apps/utilities-dictionary.png&quot;: [16, 16, &quot;png&quot;, 
+&quot;qx&quot;] (verified)
+[2] - but when &quot;icon/16/apps/utilities-dictionary.png&quot; from the application 
+code is being 
+        resolved by the AliasManager, the current theme is taken into account, 
+so 
+        &quot;qx/icon/Tango/16/apps/utilities-dictionary.png&quot; is returned (verified) 
+[3] - this cannot be found in qxresource by the ResourceManager, so the input 
+value is returned;
+        the generated icon entry in qxresources is not used (verified)
+[4] - the browser constructs the complete URL eventually, which is just the 
+obtained relative URI
+        joined to the HTML base URL:
+        custom/source/qx/icon/Tango/16/apps/utilities-dictionary.png
+&gt; 
+&gt; So two things go wrong here:
+&gt; - ...
+&gt; - the resulting &quot;default&quot; URI uses the application path, and uses it wrongly 
+(&quot;resource&quot; directory is missing)
+
+So this is just the browser applying the Base URL.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6573</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-12-01 18:48:11 +0100</bug_when>
+            <thetext>Now a summary on how the issue might (or might not) be resolved:
+
+First, a preliminary note. There are two separate strands involved in the issue:
+- having proper #asset() specs in the code, which are necessary to create 
+references to all needed resources in the compile output (this applies to both 
+the source version and the build version; both have a registry for all used 
+resources. Moreover, in the build version, resource copying depends on these 
+specs). *QXICONTHEME only influences the #asset specs, and only if they use the 
+qx.icontheme macro.*
+- having a qx.theme setting in place that determines the theme to use, and 
+consequently the icon theme. *QXTHEME only influences the choice of the overall 
+theme that is being used for the app; it has no relevance for #asset specs.*
+
+ = A bit about the history of QXICONTHEME first =
+
+Originally, the &quot;themes&quot; key was only introduced to ease the maintenance of 
+#asset specs in the code. It is merely a simple macro replacement facility for 
+#asset, and has no further meaning (Maybe the key name, &quot;themes&quot;, was a 
+misnomer here; it should be renamed to something like &quot;asset-macros&quot;).
+
+At one point in time, the base.json config file received a &quot;themes&quot; key, which 
+defined a &quot;qx.icontheme&quot; macro. This had two reasons. For one, code was 
+appearing that used this macro in its #asset specs, and we wanted to provide a 
+default for it, so you wouldn&#39;t run into &quot;Empty macro replacement in asset 
+spec&quot; situations during build. (This has changed for at least the framework 
+classes which have not asset macros anymore).
+The other reason was to allow the application developer to abstract away from 
+the icon theme that would eventually be used.
+But this all created the impression theme and icon theme could be chosen 
+independently. But this is not true! As of now, QXTHEME and QXICONTHEME have to 
+be in sync. You cannot choose an icon theme that does not comply with the 
+overall theme.
+
+ = The current state =
+
+As of now, the following works:
+#asset(qx/icon/Oxygen/16/actions/go-up.png)   and
+new qx.ui.form.Button(&quot;button&quot;, &quot;qx/icon/Oxygen/16/actions/go-up.png&quot;);
+
+This means, the app developer can explicitly specify a concrete icon from an 
+arbitrary theme at a certain code location, as long as the code spec and the 
+#asset spec are in sync.
+
+What is not working, is to switch the general icon theme, independently from 
+the overall theme.
+
+Also, what is not working today, but would be desireable, is when the #asset 
+spec and the code references were identical in the *underspecified* case (with 
+the theme unspecified):
+#asset(icon/16/actions/go-up.png)  and
+new qx.ui.form.Button(&quot;button&quot;, &quot;icon/16/actions/go-up.png&quot;);
+
+But this would require that the build process had access to the same alias 
+resolution (that embeds the knowledge of applicable theme and icon theme) as 
+the framework&#39;s browser-based run time. But this is a separate issue: Having 
+always identical #asset and source code references for resources.
+
+ = Solutions =
+
+One solution would be of course to just declare QXTHEME and QXICONTHEME as 
+necessarily linked to each other. But as things are, this would put the burden 
+on the app developer of keeping QXTHEME and QXICONTHEME manually in sync.
+
+As for specifying theme and icon theme independently, there are several ways to 
+look at the problem. One is to say, you should do so in a self-defined theme 
+for your application, where the theme classes make these definitions (e.g. 
+which icon theme to use). This should not be dealt with in the config (which 
+would only set the self-defined theme as the overall application theme). This 
+would be a consistent view that supports own theme definitions.
+
+Another way to achieve that would be to stick with a configuration-based 
+approach and pass the choice made by setting QXICONTHEME into the framework&#39;s 
+run time, e.g. by defining a new setting &quot;qx.icontheme&quot; that could be used to 
+overwrite the default icon theme for the chosen theme.
+One issue with that is that QXICONTHEME, since it is a #asset macro, is a *list 
+value*, which makes no sense for it as a qooxdoo setting. Also, it is not clear 
+where in the framework this setting could be evaluated, and which class/theme 
+would provide the default values, and how to how provide different defaults for 
+the different themes (remember that any particular setting can only be defined 
+once in the framework).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6637</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-12-04 00:10:07 +0100</bug_when>
+            <thetext>I would really like to close this bug as WONTFIX, or at least postpone it until a more general solution is in place, on how to handle resources nicely throughout the framework, both build- and run-time.
+This is also due to the fact that there currently seems to be no clean way to support an independent QXICONTHEME in an interims solution. The transformation into a setting is unclear (since it is a list value), and the implementation of this setting on the framework side (theme classes etc.) is also unclear.
+So for the time being, it would just be a policy to demand that QXTHEME and QXICONTHEME must match (Modern - Tango, Classic - Oxygen).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6800</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-12-09 14:08:13 +0100</bug_when>
+            <thetext>QXTHEME and QXICONTHEME can currently not be set independently. QXICONTHEME 
+must at least contain the icon theme that corresponds to the selected QXTHEME. 
+Everything else needs a more general solution w.r.t. resource handling.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37732</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:35 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

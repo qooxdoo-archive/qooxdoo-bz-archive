@@ -1,0 +1,198 @@
+<bug>
+          <bug_id>3172</bug_id>
+          
+          <creation_ts>2009-12-03 17:42:00 +0100</creation_ts>
+          <short_desc>Auto dispose properties do not dispose old value when overwritten by new value</short_desc>
+          <delta_ts>2010-04-26 14:59:45 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>1.0-beta1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Carsten Lergenmüller">carsten.lergenmueller</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>info</cc>
+    
+    <cc>qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>15273</commentid>
+            <who name="Carsten Lergenmüller">carsten.lergenmueller</who>
+            <bug_when>2009-12-03 17:42:57 +0100</bug_when>
+            <thetext>Object properties with dispose:true only dispose their value when the object itself is disposed. They should also dispose their (old) value when a new one is set. 
+
+-&gt; Fabian, as talked about on the phone</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15321</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-12-05 01:57:23 +0100</bug_when>
+            <thetext>Can you give some details here? Do you that they should call dispose() on the old value when changing the value? Does not sound right in my initial impression. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15344</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-12-07 10:53:06 +0100</bug_when>
+            <thetext>If a property is explicitly marked a &quot;disposable&quot; then the value should be considered as owned by the target object. The target object is responsible of disposing its own references. Example:
+
+df = new qx.ui.form.DateField();
+df.setDateFormat(new qx.util.format.DateFormat(&quot;ddd&quot;)); // this already leaks the old date format even if though it is marked with &quot;dispose: true&quot;
+
+For the framework this is not very relevant because we only have a hand full of those properties but in general I would regard this as a bug in the property system.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15349</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-12-07 11:46:57 +0100</bug_when>
+            <thetext>Just realized that &quot;dispose:true&quot; doesn&#39;t really dispose. It just removes the references to the value from the target object. Why should that be useful? I&#39;m tempted to just dispose the property value.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15359</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-12-07 14:26:10 +0100</bug_when>
+            <thetext>OK after some digging I found out that the semantics of the &quot;dispose&quot; key in properties is completely different to what I thought it is.
+
+It simply disconnects the value from the object, which is useful to break references to the DOM. If has nothing to do with the way the value itself is disposed. Taking this into account we simply cannot dispose the value because it would break existing behavior.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15360</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-12-07 14:29:25 +0100</bug_when>
+            <thetext>I think the naming is very irritating. The key is called &#39;dispose&#39; but the value isn&#39;t actually disposed. This is even stated in the documentation but it sounds wired:
+
+&lt;http://qooxdoo.org/documentation/1.0/property_features#memory_managment&gt;
+&quot;Memory managment
+
+Automatic memory management. This means all so-configured properties which contain complex data objects get automatically disposed with the object disposal. The affected built-in types are already auto-configured this way. Also all properties which need an instance of a class, defined by using a classname as check are automatically handled.
+
+Note that this does not actually call dispose() on the object but just removes the property value etc i.e. dereferences the object. You still need to call dispose() if necessary.
+
+For all other properties which contain complex data the developer must add a dispose key with a value of true to the property declaration. For example if there is no check defined or the check definition points to a function.
+
+This is not needed for primitive types like strings and numbers.&quot;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15361</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-12-07 14:29:58 +0100</bug_when>
+            <thetext>Andreas can you take a look on this issue?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15363</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-12-07 14:36:27 +0100</bug_when>
+            <thetext>*** Bug 3173 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15368</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-12-07 14:52:06 +0100</bug_when>
+            <thetext>This is indeed counter-intuitive, even if it is somewhat along the lines of the previous disposeFields(), right?
+
+Could one argue for deprecating/renaming &quot;dispose&quot; to something like &quot;disconnect&quot;, if the existing functionality is (still) ok? Also, would someone expect a true auto-disposal from a corresponding property attribute (like &quot;autodispose&quot;) be useful? I&#39;d like to involve the (potential) users of such property disposal features.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15369</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-12-07 14:58:29 +0100</bug_when>
+            <thetext>Renaming could remove the ambiguity and I think we should to it. The impact on the framework is very limited because we don&#39;t set &quot;dispose:true&quot; explicitly in any qooxdoo class. Deprecating would be possible. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15393</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-12-07 18:21:45 +0100</bug_when>
+            <thetext>Just to clear up things a bit:
+
+Disconnecting is basically the right name as this is exactly what it does. From the naming perspective it&#39;s comparable to the method names of _disposeFields, _disposeObjects, etc. If you regard dispose for something which always calls dispose() on the field this is not what was meant. The dispose key in the properties is basically like a _disposeFields in the destructor.
+
+This behavior is what I would say most people would expect. A class never knows which instance in a property is exclusively to it. This data comes from the outside. So the outside needs to manage it. To delegate this decision to the property system is not possible and not useful. The dereference these value types is useful as it destroys pointers to other objects in the same way we used disposeFields. 
+
+You are right that the documentation needs an update, but I would also leave the key alone. I would also think that a rename of the property config key from dispose to derefreference would be OK, but it makes the name a lot more complicated. For me it&#39;s mostly a documentation issue. It&#39;s quite easy to understand that a instance could not memory manage objects attached from the outside. It could only kill it&#39;s own connections to these objects. This is only true for the old value. The application developer is responsible to dispose old objects.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16466</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-27 16:30:29 +0100</bug_when>
+            <thetext>moved to target 1.0.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17289</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-17 13:15:12 +0100</bug_when>
+            <thetext>to Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17621</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-31 16:00:49 +0200</bug_when>
+            <thetext>After reading the whole discussion here, I am irritated what I would consider the best solution. 
+I agree with Sebastian that the property system should not dispose the objects because the creator is responsible for the disposal. It could get too dangerous to do such things. Just imagine the bugs you can have if you don&#39;t expect the property system to dispose your object.
+On the other hand, calling the key dispose is highly irritating. Maybe we should deprecate and rename the key to get a better intuition in first place.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17623</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2010-03-31 19:29:34 +0200</bug_when>
+            <thetext>&quot;dereference&quot; might be the better name. But even better is to just not allow such a property. This is basically some internal thing about memory management. In an ideal world the property system would just dereference every value at dispose.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17626</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-01 10:21:41 +0200</bug_when>
+            <thetext>I just checked the framework to see where the code is. The only thing it does is disconnecting all properties of an object at dispose.
+
+I agree with sebastian that &quot;dereference&quot; is a much better name and that in the ideally world, every property should be disconnected. But unfortunately, we do have to take care of performance so we can&#39;t do that. :-|
+
+Thats why I suppose to rename the key to &quot;dereference&quot; and deprecate the usage of the old.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17736</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-13 16:08:03 +0200</bug_when>
+            <thetext>Accept</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17848</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-19 16:09:49 +0200</bug_when>
+            <thetext>Renamed the key to &#39;dereference&#39; with commit r21932. Also added a documentation part to the API doc of qx.core.Property (which was missing at all). </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17999</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-26 14:59:45 +0200</bug_when>
+            <thetext>CLOSED</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

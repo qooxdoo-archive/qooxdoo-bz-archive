@@ -1,0 +1,249 @@
+<bug>
+          <bug_id>4977</bug_id>
+          
+          <creation_ts>2011-04-08 10:09:00 +0200</creation_ts>
+          <short_desc>Check .php Files For Possible Vulnerabilities</short_desc>
+          <delta_ts>2011-07-04 08:58:32 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>other</component>
+          <version>1.4</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.4.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>greg</cc>
+    
+    <cc>tristan.koch</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>23924</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-04-08 10:09:36 +0200</bug_when>
+            <thetext>Following is a list of PHP files that are currently in trunk. They should be 
+checked for possible vulnerabilities if they are put online and executed:
+
+application/demobrowser/source/resource/demobrowser/backend/remote_table.php
+framework/source/resource/qx/test/part/delay.php
+framework/source/resource/qx/test/xmlhttp/loading.php
+framework/source/resource/qx/test/xmlhttp/not_modified.php
+framework/source/resource/qx/test/xmlhttp/echo_get_request.php
+framework/source/resource/qx/test/xmlhttp/send_known_header.php
+framework/source/resource/qx/test/xmlhttp/echo_form_request.php
+framework/source/resource/qx/test/xmlhttp/echo_post_request.php
+framework/source/resource/qx/test/xmlhttp/404.php
+framework/source/resource/qx/test/xmlhttp/echo_header.php
+framework/source/resource/qx/test/xmlhttp/xml.php
+framework/source/resource/qx/test/xmlhttp/php_version.php
+framework/source/resource/qx/test/cached-script.php
+framework/source/resource/qx/test/jsonp_primitive.php
+
+Through generation, some of those files are included within build trees (e.g. 
+test, provider), so this is a also a way how they can potentially leak onto the 
+Internet.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24010</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-04-13 11:48:56 +0200</bug_when>
+            <thetext>Checked all files.
+
+As far as i have seen, the files are now ok. I&#39;m really not the PHP security expert so this is just what i have seen.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24655</commentid>
+            <who name="Greg Beaver">greg</who>
+            <bug_when>2011-05-23 06:02:14 +0200</bug_when>
+            <thetext>framework/source/resource/qx/test/xmlhttp/echo_header.php can be used by a malicious XRSF to grab a user&#39;s cookie and session ID.  To fix this, change to:
+
+&lt;?php
+$a = getallheaders();
+if (isset($a[&#39;COOKIE&#39;])) unset($a[&#39;COOKIE&#39;]);
+echo json_encode($a);
+?&gt;
+
+echo_form_request.php can be used to determine the exact path of qooxdoo on the server by simply calling it with no parameters.  If error_level includes E_NOTICE, something like this is displayed:
+
+Notice: Undefined index: _data_ in /home/user/testapache2.2/chiara/Chiara_Website/trunk/htdocs/js/sdk/framework/source/resource/qx/test/xmlhttp/echo_form_request.php on line 3
+[]
+
+To fix, add these line to the start of the script:
+
+if (!isset($_GET[&#39;_data_&#39;])) {
+$_GET[&#39;_data_&#39;] = &#39;&#39;;
+}
+
+In remote_table.php, a similar problem exists: it assumes the &quot;method&quot; parameter is set in _GET.  Add these lines:
+
+if (!isset($_GET[&#39;method&#39;])) {
+echo &#39;Method not set&#39;;exit;
+}
+
+in the code for getRowData, a similar assumption is made about start and end. Add:
+
+if (!isset($_GET[&#39;start&#39;]) || !isset($_GET[&#39;end&#39;]) {
+echo &#39;WTF&#39;;exit;
+}}
+
+Also, no upper bounds check is made, which can result in a kind of denial-of-service attack by exhausting memory.  You should add a bounds check:
+
+if ($_GET[&#39;end&#39;] - $_GET[&#39;start&#39;] &gt; 9999999) {
+echo &#39;Nice try attacker&#39;;exit;
+}
+
+For example, this request:
+
+http://chiara.localhost:8080/js/sdk/application/demobrowser/source/resource/demobrowser/backend/remote_table.php?method=getRowData&amp;start=0&amp;end=99999999999999999999999999999
+
+resulted in:
+
+Fatal error: Allowed memory size of 134217728 bytes exhausted at /home/user/workspace/php5ap/Zend/zend_operators.c:1258 (tried to allocate 133693372 bytes) in /home/user/testapache2.2/chiara/Chiara_Website/trunk/htdocs/js/sdk/application/demobrowser/source/resource/demobrowser/backend/remote_table.php on line 16
+
+jsonp_primitive.php is very insecure.  Literally anything could be passed in as callback, including HTML code that displays a webpage, loads external javascript and executes as the authenticated user on the server hosting qooxdoo - very dangerous for XSS/CSRF attacks.  Instead, the input must be validated.  Add these lines:
+
+if (!isset($_GET[&#39;callback&#39;])) {
+echo &#39;Nice try attacker&#39;;exit;
+}
+$callback = $_GET[&#39;callback&#39;];
+if (!preg_match(&#39;/^[a-zA-Z_]+\\z/&#39;, $callback)) {
+echo &#39;Nice try attacker&#39;;exit;
+}
+
+Hope this is useful.  The last vulnerability is very serious.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24656</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-05-23 09:50:07 +0200</bug_when>
+            <thetext>Great, Greg, thanks!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24666</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-05-23 13:17:53 +0200</bug_when>
+            <thetext>Thanks Greg vor the valuable input. Will take care of that very soon!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24759</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-05-27 10:57:25 +0200</bug_when>
+            <thetext>Applied all suggested changes from Greg. THANKS!
+
+trunk: r27433
+1.4.x: r27434</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24806</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-05-31 14:31:39 +0200</bug_when>
+            <thetext>Greg, turned out we need jsonp_primitive.php to accept no callback (at least, its convenient).
+
+I modified the suggested code like this:
+
+&lt;?php
+  $callback = $_GET[&#39;callback&#39;];
+
+  if (isset($_GET[&#39;callback&#39;])) {
+    if (!preg_match(&#39;/^[a-zA-Z_\.\[\]0-9]+\\z/&#39;, $callback)) {
+      echo &#39;Nice try attacker&#39;;exit;
+    }
+    $callback = strip_tags($callback);
+    $callback = str_replace(array(&quot;(&quot;, &quot;)&quot;), &quot;&quot;, $callback);
+  }
+
+  if (isset($_GET[&#39;sleep&#39;])) {
+    usleep($_GET[&#39;sleep&#39;] * 1000);
+  }
+
+  echo $callback . &#39;({&quot;string&quot;: &quot;String&quot;, &quot;number&quot;: 12, &quot;boolean&quot;: true, &quot;null&quot;: null});&#39;
+?&gt;
+
+Basically, it returns a fixed string when no callback is given. Hope it&#39;s still as secure as the code you&#39;ve provided?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24812</commentid>
+            <who name="Greg Beaver">greg</who>
+            <bug_when>2011-05-31 20:16:25 +0200</bug_when>
+            <thetext>Not so good, but it&#39;s improving :)
+
+&lt;?php
+$callback = &#39;&#39;;
+
+if isset($_GET[&#39;callback&#39;]) {
+    $callback = $_GET[&#39;callback&#39;];
+    if (!preg_match(&#39;/^[a-zA-Z_\.\[\]0-9]+\\z/&#39;, $callback)) {
+      echo &#39;Nice try attacker&#39;;exit;
+    }
+    // at this point, $callback is clean, strip_tags is unnecessary
+}
+
+  if (isset($_GET[&#39;sleep&#39;])) {
+    $sleep = (int) $_GET[&#39;sleep&#39;];
+    if ($sleep &gt; 0 &amp;&amp; $sleep &lt;= 10) {
+        usleep($sleep * 1000);
+    }
+  }
+
+  echo $callback . &#39;({&quot;string&quot;: &quot;String&quot;, &quot;number&quot;: 12, &quot;boolean&quot;: true,
+&quot;null&quot;: null});&#39;
+?&gt;
+
+The code you suggested still assumed $_GET[&#39;callback&#39;] was set, had unnecessary strip_tags (the preg catches all of these nasty ideas) and did not validate $_GET[&#39;sleep&#39;], which means users could pass in values like 9999999999999999999999 and freeze the process (another DoS vector).
+
+Hope this clarifies things better.
+
+Rule #1: never use any value from user input without first validating or filtering it.  This includes all superglobals $_GET, $_POST, $_COOKIE, even some $_SERVER values.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24813</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-01 07:36:50 +0200</bug_when>
+            <thetext>Thanks once again.
+
+Fixed with r27484 on trunk and r27482 on branch_1_4_x.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24916</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-06 14:00:21 +0200</bug_when>
+            <thetext>@Greg
+We noticed a double escape (\\z) in the expression preg_match(&#39;/^[a-zA-Z_\.\[\]0-9]+\\z/&#39;, $callback). Shouldn&#39;t this be \z?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24931</commentid>
+            <who name="Greg Beaver">greg</who>
+            <bug_when>2011-06-06 17:06:50 +0200</bug_when>
+            <thetext>Hi.
+
+The \\z is precautionary, because we want the string &quot;\z&quot; to be passed to the regex parser, not &quot;z&quot;</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

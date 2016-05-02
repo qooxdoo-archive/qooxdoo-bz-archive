@@ -1,0 +1,148 @@
+<bug>
+          <bug_id>6289</bug_id>
+          
+          <creation_ts>2012-04-04 16:19:00 +0200</creation_ts>
+          <short_desc>Allow comments in build files</short_desc>
+          <delta_ts>2014-03-03 15:26:35 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>2.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martin Wittemann">martin.wittemann</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>29062</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-04-04 16:19:34 +0200</bug_when>
+            <thetext>We plan tu build libs in a minified and unminified version. Still, the unminified version should not contain any debug code which means we have to build the file with the variant compression on usually, also the static compression is enabled. The comments optimization is disabled and therefore, I expect the comments to stay in the code but it doesn&#39;t.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29469</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-05-15 12:15:25 +0200</bug_when>
+            <thetext>Comments in a compiled scripts now work in roughly 80% of the cases.
+
+The current AST uses a &quot;piggyback&quot; approach to comments: Comments get attached 
+to the token immediately *following* them. They are not attached as normal AST 
+nodes (in the &quot;children&quot; array), but in the special member .comments. This way 
+the are out of the way of grammatical AST processing which makes parsing and 
+AST manipulation a lot easier.
+
+The alternative would be to have the comments as normal nodes in the AST. But 
+that would imply that each grammar rule has to be prepared to handle comments 
+*in any position&quot; which would be an enormous effort. 
+
+(My first attempt to attach them to the correct parent &quot;silently&quot;, by passing 
+the parent as a parameter to next(), failed as comments were heavily moved in 
+the tree due to recursive processing (ie. children are attached to the tree 
+earlier than their parents).
+
+Open issues are:
+
+* Comments are misplaces. A complex operation, broken across many lines, with 
+various comments is a typical case. This (from 
+qx.ui.tooltip.Manager#showToolTip)
+
+       //do nothing if
+      if (!target //don&#39;t have a target
+          // tooltip is disabled
+          || !target.getEnabled()
+          //tooltip is blocked
+          || target.isBlockToolTip()
+          //an invalid message isn&#39;t set and tooltips are disabled
+          || (!invalidMessage &amp;&amp; !this.getShowToolTips())
+          //an invalid message is set and invalid tooltips are disabled
+          || (invalidMessage &amp;&amp; !this.getShowInvalidToolTips()))
+      {
+
+  ends up like this
+
+      //do nothing if
+      if(//an invalid message is set and invalid tooltips are disabled
+      //an invalid message isn&#39;t set and tooltips are disabled
+      //tooltip is blocked
+      //don&#39;t have a target
+      // tooltip is disabled
+      !target || !target.getEnabled() || target.isBlockToolTip() || 
+(!invalidMessage &amp;&amp; !this.getShowToolTips()) || (invalidMessage &amp;&amp; 
+!this.getShowInvalidToolTips())){
+
+
+* Comments can get lost, part. comments in &quot;fringe&quot; places like right before 
+any kind of closing bracket  (&quot;}&quot;, &quot;)&quot;, &quot;]&quot;): (from 
+qx.event.util.Keyboard#specialCharCodeMap)
+
+    specialCharCodeMap :
+    {
+      8  : &quot;Backspace&quot;,   // The Backspace (Back) key.
+      9  : &quot;Tab&quot;,         // The Horizontal Tabulation (Tab) key.
+
+      //   Note: This key identifier is also used for the
+      //   Return (Macintosh numpad) key.
+      13 : &quot;Enter&quot;,       // The Enter key.
+      27 : &quot;Escape&quot;,      // The Escape (Esc) key.
+      32 : &quot;Space&quot;        // The Space (Spacebar) key.
+    },
+ 
+becomes
+
+    specialCharCodeMap : {
+      &#39;8&#39; : &quot;Backspace&quot;,
+      // The Backspace (Back) key.
+      &#39;9&#39; : &quot;Tab&quot;,
+      // The Horizontal Tabulation (Tab) key.
+      //   Note: This key identifier is also used for the
+      //   Return (Macintosh numpad) key.
+      &#39;13&#39; : &quot;Enter&quot;,
+      // The Enter key.
+      &#39;27&#39; : &quot;Escape&quot;,
+      // The Escape (Esc) key.
+      &#39;32&#39; : &quot;Space&quot;
+    }
+
+Some of it could be amended, like losing comments before brackets, but only by 
+changing the AST, which always has far-reaching consequences (but doable). For 
+the time being, we consider the current state &quot;good enough&quot;.
+
+master: 6c8e76e</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39164</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:35 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

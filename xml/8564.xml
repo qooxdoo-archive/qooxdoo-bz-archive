@@ -1,0 +1,172 @@
+<bug>
+          <bug_id>8564</bug_id>
+          
+          <creation_ts>2014-08-29 16:27:00 +0200</creation_ts>
+          <short_desc>qx.ui.core.Command doesn&#39;t accept &quot;,&quot; as shortcut for the numpad DEL key</short_desc>
+          <delta_ts>2015-02-23 13:11:46 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>4.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mathieu Veurman">mveurman</reporter>
+          <assigned_to name="Tobias Oberrauch">tobias.oberrauch</assigned_to>
+          <cc>rvanvalen</cc>
+    
+    <cc>tobias.oberrauch</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>41089</commentid>
+            <who name="Mathieu Veurman">mveurman</who>
+            <bug_when>2014-08-29 16:27:09 +0200</bug_when>
+            <thetext>qx.ui.core.Command can be passed a shortcut, like &quot;F2&quot;, but also &quot;/&quot;, &quot;*&quot;, &quot;-&quot; and &quot;+&quot; which represent the various keys on the numeric key pad.
+
+When I look in the source of qx.event.util.Keyboard (...\framework\source\class\qx\event\util\Keyboard.js) I see code to map the keycode of the numpad keys to the right char codes:
+
+    /**
+     * @type {Map} maps the keycodes of the numpad keys to the right charcodes
+     *
+     * @lint ignoreReferenceField(numpadToCharCode)
+     */
+    numpadToCharCode :
+    {
+       96 : &quot;0&quot;.charCodeAt(0),
+       97 : &quot;1&quot;.charCodeAt(0),
+       98 : &quot;2&quot;.charCodeAt(0),
+       99 : &quot;3&quot;.charCodeAt(0),
+      100 : &quot;4&quot;.charCodeAt(0),
+      101 : &quot;5&quot;.charCodeAt(0),
+      102 : &quot;6&quot;.charCodeAt(0),
+      103 : &quot;7&quot;.charCodeAt(0),
+      104 : &quot;8&quot;.charCodeAt(0),
+      105 : &quot;9&quot;.charCodeAt(0),
+      106 : &quot;*&quot;.charCodeAt(0),
+      107 : &quot;+&quot;.charCodeAt(0),
+      109 : &quot;-&quot;.charCodeAt(0),
+      110 : &quot;,&quot;.charCodeAt(0),
+      111 : &quot;/&quot;.charCodeAt(0)
+    },
+
+In there I also see &quot;,&quot; which maps the numpad DEL key to &quot;,&quot;.
+
+But in isValidKeyIdentifier in the same Keyboard.js file the check for &quot;,&quot; is missing:
+
+    ...
+    switch(keyIdentifier)
+      {
+        case &quot;+&quot;:
+        case &quot;-&quot;:
+        case &quot;*&quot;:
+        case &quot;/&quot;:
+          return true;
+
+        default:
+          return false;
+      }
+
+So it is possible to set shortcut &quot;+&quot; to react on the numpad + key being pressed, but it&#39;s not possible to set shortcut &quot;,&quot; to react on the numpad DEL being pressed.
+
+This can be seen by running the following source in the playground:
+    var command = new qx.ui.core.Command(&quot;+&quot;);
+    command.addListener(&quot;execute&quot;, function(e) {
+      alert(&quot;Shortcut pressed!&quot;);
+    }, this);
+
+When running this you can press the numpad + key and the alert will be shown. If you now run this source in the playground:
+    var command = new qx.ui.core.Command(&quot;,&quot;);
+    command.addListener(&quot;execute&quot;, function(e) {
+      alert(&quot;Shortcut pressed!&quot;);
+    }, this);
+
+then the following error will be logged in the console:
+   Not a valid key name for a shortcut: , 
+
+If I change &#39;isValidKeyIdentifier&#39; in my local environment to include a case statement for &quot;,&quot;:
+
+    ...
+    switch(keyIdentifier)
+      {
+        case &quot;+&quot;:
+        case &quot;-&quot;:
+        case &quot;*&quot;:
+        case &quot;/&quot;:
+        case &quot;,&quot;:
+          return true;
+
+        default:
+          return false;
+      }
+
+then I&#39;m able to trigger the command by pressing the numpad DEL key.
+
+So can the &#39;case &quot;,&quot;:&#39; statement be added to &#39;isValidKeyIdentifier&#39; in Keyboard.js please?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41093</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-09-01 08:08:00 +0200</bug_when>
+            <thetext>Thanks for the report and the good analysis. Sounds all reasonable to me. If you could file a pull request, that would speed up the inclusion. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41097</commentid>
+            <who name="Mathieu Veurman">mveurman</who>
+            <bug_when>2014-09-01 11:55:51 +0200</bug_when>
+            <thetext>Pull request: done</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41099</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-09-02 07:34:09 +0200</bug_when>
+            <thetext>Great, thanks. We will get that in soon.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41180</commentid>
+            <who name="Tobias Oberrauch">tobias.oberrauch</who>
+            <bug_when>2014-09-17 13:36:41 +0200</bug_when>
+            <thetext>I merged your PR into master a6bb8434eb073b8a1b31c90de7f352abc8c84437</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41237</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-09-24 08:17:49 +0200</bug_when>
+            <thetext>Please add a unit test and merge the fix over to the branch as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41241</commentid>
+            <who name="Tobias Oberrauch">tobias.oberrauch</who>
+            <bug_when>2014-09-24 11:06:27 +0200</bug_when>
+            <thetext>Unit tests added in master with 11ec013ffa03beff734f0fc0df17b55a56c78146
+
+Fix and unit test pushed into branch_4_0_x with 43d84dc1fff5fe1fd6d6c34c6760a0f9d99c2264</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

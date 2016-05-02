@@ -1,0 +1,274 @@
+<bug>
+          <bug_id>4314</bug_id>
+          
+          <creation_ts>2010-11-15 10:50:00 +0100</creation_ts>
+          <short_desc>Apply method of property incomplete when same apply method for multiple properties</short_desc>
+          <delta_ts>2014-03-03 15:20:35 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>app.apiviewer.desktop</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.3.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tristan Koch">tristan.koch</reporter>
+          <assigned_to name="Gabriel Munteanu">jajalinux</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21284</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2010-11-15 10:50:06 +0100</bug_when>
+            <thetext>Provided an apply method is used by multiple properties, e.g.
+
+width :
+{
+ (...)
+ apply : &quot;_applyDimension&quot;,
+ (...)
+},
+ 
+minWidth :
+{
+ (...)
+ apply : &quot;_applyDimension&quot;,
+ (...)
+}
+
+Result:
+In the API doc for the apply method, only one property is listed below the heading „Apply method of property“, e.g.
+
+Apply method of property:
+qx.ui.core.LayoutItem#width
+
+Expected:
+All properties that use the apply method should be listed, e.g.
+
+Apply method of property:
+qx.ui.core.LayoutItem#width
+qx.ui.core.LayoutItem#minWidth
+
+For a complete example, see qx.ui.core.LayoutItem.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21285</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-15 10:57:09 +0100</bug_when>
+            <thetext>We are not sure if thats a problem of the generation of the api data or a problem of the viewer itself. Gabriel, could you please check that. If the problem is in the generation, just assign the bug to daniel who will take care of that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21423</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2010-11-19 10:50:12 +0100</bug_when>
+            <thetext>i have generated the api-data, and in the file qx.ui.core.LayoutItem.json there is only 1 property defined regarding _applyDimension.
+also, the property is defined in 2 places, and they differ.
+------------
+&quot;attributes&quot;: {
+        &quot;access&quot;: &quot;protected&quot;, 
+        &quot;apply&quot;: &quot;qx.ui.core.LayoutItem#width&quot;, 
+        &quot;name&quot;: &quot;_applyDimension&quot;
+      },
+-----------
+and more below we have:
+--------------
+&quot;attributes&quot;: {
+          &quot;text&quot;: &quot;&lt;p&gt;Applies changes of the property value of the property &lt;code&gt;maxWidth&lt;/code&gt;.&lt;/p&gt;\n\n&lt;p&gt;For further details take a look at the property definition: {@link #maxWidth}.&lt;/p&gt;&quot;
+        }, 
+-----------
+so , the problem relies in generation, and i will assign it to Daniel.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22174</commentid>
+              <attachid>864</attachid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-01-11 17:56:08 +0100</bug_when>
+            <thetext>Created attachment 864
+API data generation: Store a list of all properties affected by an apply method</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22175</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-01-11 17:56:44 +0100</bug_when>
+            <thetext>In the JSON structure, the node for an apply method has an attribute &quot;apply&quot; (e.g. qx.ui.core.LayoutItem.json line 13. Currently, the value is the name of exactly one property. I believe this should be changed so that the value is a children list of all the 1-n properties this apply method, well, applies to.
+
+Since making that change would break the APIViewer, I created a patch. Gabriel, if you&#39;ve got the time could you please apply that patch and modify the APIViewer to display the list of properties under &quot;Apply method of&quot;?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22994</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-02-28 12:49:20 +0100</bug_when>
+            <thetext>I applied the patch, and yes, applied properties are there, but the parameters value,old are gone, so is description - though description i think i have to generate in the viewer now instead of you doing it in the generator as it describes only 1 property and now there are more of them.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23172</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-03-09 12:09:27 +0100</bug_when>
+            <thetext>Hi Daniel,
+the json generated with your patch fixed the current bug, but removed the description.
+this is what i get now for _applyDimension method:
+
+{&quot;attributes&quot;: {&quot;access&quot;: &quot;protected&quot;, &quot;apply&quot;: &quot;qx.ui.core.LayoutItem#width&quot;, &quot;name&quot;: &quot;_applyDimension&quot;}, &quot;type&quot;: &quot;method&quot;, &quot;children&quot;: [{&quot;type&quot;: &quot;apply&quot;, &quot;children&quot;: [{&quot;attributes&quot;: {&quot;name&quot;: &quot;qx.ui.core.LayoutItem#maxWidth&quot;}, &quot;type&quot;: &quot;entry&quot;}, {&quot;attributes&quot;: {&quot;name&quot;: &quot;qx.ui.core.LayoutItem#minHeight&quot;}, &quot;type&quot;: &quot;entry&quot;}, {&quot;attributes&quot;: {&quot;name&quot;: &quot;qx.ui.core.LayoutItem#maxHeight&quot;}, &quot;type&quot;: &quot;entry&quot;}, {&quot;attributes&quot;: {&quot;name&quot;: &quot;qx.ui.core.LayoutItem#height&quot;}, &quot;type&quot;: &quot;entry&quot;}, {&quot;attributes&quot;: {&quot;name&quot;: &quot;qx.ui.core.LayoutItem#minWidth&quot;}, &quot;type&quot;: &quot;entry&quot;}, {&quot;attributes&quot;: {&quot;name&quot;: &quot;qx.ui.core.LayoutItem#width&quot;}, &quot;type&quot;: &quot;entry&quot;}]}]}
+
+There used to be a type &#39;desc&#39; in the json object.
+please bring it back :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23213</commentid>
+              <attachid>912</attachid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-03-10 18:09:54 +0100</bug_when>
+            <thetext>Created attachment 912
+documentApplyMethod can now handle multiple properties
+
+OK, &quot;desc&quot; nodes are now added again and will reflect if an apply method is responsible for multiple properties.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23231</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-03-11 13:55:25 +0100</bug_when>
+            <thetext>fixed on trunk with rev. 25585.
+on branch 1_3_x i tried to apply the patch, and i did a diff between the 2 api.py files.
+it seems there are quite a few changes between the 2 files, included syntax:
+in instead of hasKey ... .
+I let Daniel take a look and do the merge on branch 1_3_x if he is ok with it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36948</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:35 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="1" ispatch="1" isprivate="0" isurl="0">
+            <attachid>864</attachid>
+            <date>2011-01-11 17:56:00 +0100</date>
+            <delta_ts>2011-03-10 18:09:54 +0100</delta_ts>
+            <desc>API data generation: Store a list of all properties affected by an apply method</desc>
+            <filename>api.py.patch</filename>
+            <type>text/plain</type>
+            <size>1028</size>
+            <attacher>daniel.wagner</attacher>
+            
+              <data encoding="base64">SW5kZXg6IHRvb2wvcHlsaWIvZWNtYXNjcmlwdC9iYWNrZW5kL2FwaS5weQo9PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Ci0t
+LSB0b29sL3B5bGliL2VjbWFzY3JpcHQvYmFja2VuZC9hcGkucHkJKHJldmlzaW9uIDI0NTEzKQor
+KysgdG9vbC9weWxpYi9lY21hc2NyaXB0L2JhY2tlbmQvYXBpLnB5CSh3b3JraW5nIGNvcHkpCkBA
+IC0zNSw2ICszNSw3IEBACiBmcm9tIGVjbWFzY3JpcHQuZnJvbnRlbmQgaW1wb3J0IHRyZWUsIGNv
+bW1lbnQKIGZyb20gZWNtYXNjcmlwdC5mcm9udGVuZC50cmVldXRpbCBpbXBvcnQgKgogZnJvbSBn
+ZW5lcmF0b3IgaW1wb3J0IENvbnRleHQKK2Zyb20gZWNtYXNjcmlwdC5mcm9udGVuZC50cmVlIGlt
+cG9ydCBOb2RlCiAKIAogCkBAIC0xMzQ1LDggKzEzNDYsMTAgQEAKICAgICAgICAgICAgIGlmIG5v
+dCBwcm9wczoKICAgICAgICAgICAgICAgICBjb250aW51ZQogICAgICAgICAgICAgZm9yIHByb3Ag
+aW4gcHJvcHMuY2hpbGRyZW46Ci0gICAgICAgICAgICAgICAgaWYgcHJvcC5nZXQoImFwcGx5Iiwg
+Tm9uZSkgPT0gbmFtZToKLSAgICAgICAgICAgICAgICAgICAgaXRlbU5vZGUuc2V0KCJhcHBseSIs
+IGRlcC5nZXQoImZ1bGxOYW1lIikgKyAiIyIgKyBwcm9wLmdldCgibmFtZSIpKQorICAgICAgICAg
+ICAgICAgIGlmIHByb3AuZ2V0KCJhcHBseSIsIEZhbHNlKSA9PSBuYW1lOgorICAgICAgICAgICAg
+ICAgICAgICBwcm9wTm9kZSA9IE5vZGUoImVudHJ5IikKKyAgICAgICAgICAgICAgICAgICAgcHJv
+cE5vZGUuc2V0KCJuYW1lIiwgZGVwLmdldCgiZnVsbE5hbWUiKSArICIjIiArIHByb3AuZ2V0KCJu
+YW1lIikpCisgICAgICAgICAgICAgICAgICAgIGl0ZW1Ob2RlLmFkZExpc3RDaGlsZCgiYXBwbHki
+LCBwcm9wTm9kZSkgCiAgICAgICAgICAgICAgICAgICAgIHJlbW92ZUVycm9ycyhpdGVtTm9kZSkK
+ICAgICAgICAgICAgICAgICAgICAgZG9jdW1lbnRBcHBseU1ldGhvZChpdGVtTm9kZSwgcHJvcCkK
+IAo=
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>912</attachid>
+            <date>2011-03-10 18:09:00 +0100</date>
+            <delta_ts>2011-03-10 18:09:54 +0100</delta_ts>
+            <desc>documentApplyMethod can now handle multiple properties</desc>
+            <filename>api.py.patch</filename>
+            <type>text/plain</type>
+            <size>3403</size>
+            <attacher>daniel.wagner</attacher>
+            
+              <data encoding="base64">SW5kZXg6IHRvb2wvcHlsaWIvZWNtYXNjcmlwdC9iYWNrZW5kL2FwaS5weQo9PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Ci0t
+LSB0b29sL3B5bGliL2VjbWFzY3JpcHQvYmFja2VuZC9hcGkucHkJKHJldmlzaW9uIDI1NTMxKQor
+KysgdG9vbC9weWxpYi9lY21hc2NyaXB0L2JhY2tlbmQvYXBpLnB5CSh3b3JraW5nIGNvcHkpCkBA
+IC0xMjgxLDggKzEyODEsOCBAQAogICAgIHJldHVybiBGYWxzZQogCiAKLWRlZiBkb2N1bWVudEFw
+cGx5TWV0aG9kKG1ldGhvZE5vZGUsIHByb3ApOgotICAgIGlmIGl0ZW1IYXNBbnlEb2NzKG1ldGhv
+ZE5vZGUpOgorZGVmIGRvY3VtZW50QXBwbHlNZXRob2QobWV0aG9kTm9kZSwgcHJvcHMpOgorICAg
+IGlmIG1ldGhvZE5vZGUuZ2V0Q2hpbGQoImRlc2MiLCBGYWxzZSkgIT0gTm9uZToKICAgICAgICAg
+cmV0dXJuCiAKICAgICBmaXJzdFBhcmFtID0gc2VsZWN0Tm9kZShtZXRob2ROb2RlLCAicGFyYW1z
+L3BhcmFtWzFdL0BuYW1lIikKQEAgLTEyOTMsMTQgKzEyOTMsMzUgQEAKICAgICBpZiBzZWNvbmRQ
+YXJhbSBpcyBOb25lOgogICAgICAgICBzZWNvbmRQYXJhbSA9ICJvbGQiCiAKLSAgICBwYXJhbVR5
+cGUgPSBwcm9wLmdldCgiY2hlY2siLCBGYWxzZSkKLSAgICBpZiBwYXJhbVR5cGUgaXMgTm9uZSBv
+ciBwYXJhbVR5cGUgPT0gIkN1c3RvbSBjaGVjayBmdW5jdGlvbi4iOgotICAgICAgICBwYXJhbVR5
+cGUgPSAidmFyIgorICAgIHBhcmFtVHlwZSA9ICJ2YXIiCisgICAgcGFyYW1UeXBlcyA9IFtdCisg
+ICAgcHJvcE5hbWVzID0gW10KKyAgICBmb3IgcHJvcCBpbiBwcm9wczoKKyAgICAgICAgcHJvcE5h
+bWVzLmFwcGVuZChwcm9wLmdldCgibmFtZSIpKQorICAgICAgICBwVHlwZSA9IHByb3AuZ2V0KCJj
+aGVjayIsIEZhbHNlKQorICAgICAgICBpZiBwVHlwZSBpcyBOb25lIG9yIHBUeXBlID09ICJDdXN0
+b20gY2hlY2sgZnVuY3Rpb24uIjoKKyAgICAgICAgICAgIHBUeXBlID0gInZhciIKKyAgICAgICAg
+cGFyYW1UeXBlcy5hcHBlbmQocFR5cGUpCisgICAgCisgICAgIyBpZiBhbGwgcHJvcGVydGllcyBo
+YXZlIHRoZSBzYW1lIHZhbHVlIGZvciAiY2hlY2siLCB1c2UgdGhhdAorICAgIGlmIHBhcmFtVHlw
+ZXNbMTpdID09IHBhcmFtVHlwZXNbOi0xXToKKyAgICAgICAgICBwYXJhbVR5cGUgPSBwYXJhbVR5
+cGVzWzBdCisgICAgCisgICAgaWYgbGVuKHByb3BOYW1lcykgPiAxOgorICAgICAgICBwcm9wTmFt
+ZXMuc29ydCgpCisgICAgICAgIHByb3BMaXN0ID0gIjwvY29kZT4sIDxjb2RlPiIuam9pbihwcm9w
+TmFtZXNbOi0xXSkgKyAiPC9jb2RlPiBhbmQgPGNvZGU+IiArIHByb3BOYW1lc1stMV0KKyAgICAg
+ICAgcHJvcE5hbWVzU3RyaW5nID0gInByb3BlcnRpZXMgPGNvZGU+JXM8L2NvZGU+IiAlcHJvcExp
+c3QKKyAgICAgICAgCisgICAgICAgIGxpbmtMaXN0ID0gIn0sIHtAbGluayAjIi5qb2luKHByb3BO
+YW1lc1s6LTFdKSArICJ9IGFuZCB7QGxpbmsgIyIgKyBwcm9wTmFtZXNbLTFdCisgICAgICAgIHBy
+b3BMaW5rc1N0cmluZyA9ICJzOiB7QGxpbmsgIyVzfSIgJWxpbmtMaXN0CisgICAgZWxzZToKKyAg
+ICAgICAgcHJvcE5hbWVzU3RyaW5nID0gInByb3BlcnR5IDxjb2RlPiVzPC9jb2RlPiIgJXByb3BO
+YW1lc1swXQorICAgICAgICBwcm9wTGlua3NTdHJpbmcgPSAiOiB7QGxpbmsgIyVzfSIgJXByb3BO
+YW1lc1swXQogCiAgICAgZnVuY3Rpb25Db2RlID0gIiIiLyoqCi0gKiBBcHBsaWVzIGNoYW5nZXMg
+b2YgdGhlIHByb3BlcnR5IHZhbHVlIG9mIHRoZSBwcm9wZXJ0eSA8Y29kZT4lKHNob3J0UHJvcE5h
+bWUpczwvY29kZT4uCisgKiBBcHBsaWVzIGNoYW5nZXMgb2YgdGhlIHByb3BlcnR5IHZhbHVlIG9m
+IHRoZSAlKHByb3BOYW1lcylzLgogICoKLSAqIEZvciBmdXJ0aGVyIGRldGFpbHMgdGFrZSBhIGxv
+b2sgYXQgdGhlIHByb3BlcnR5IGRlZmluaXRpb246IHtAbGluayAjJShzaG9ydFByb3BOYW1lKXN9
+LgorICogRm9yIGZ1cnRoZXIgZGV0YWlscyB0YWtlIGEgbG9vayBhdCB0aGUgcHJvcGVydHkgZGVm
+aW5pdGlvbiUocHJvcExpbmtzKXMuCiAgKgogICogQHBhcmFtICUoZmlyc3RQYXJhbU5hbWUpcyB7
+JShwYXJhbVR5cGUpc30gbmV3IHZhbHVlIG9mIHRoZSBwcm9wZXJ0eQogICogQHBhcmFtICUoc2Vj
+b25kUGFyYW1OYW1lKXMgeyUocGFyYW1UeXBlKXN9IHByZXZpb3VzIHZhbHVlIG9mIHRoZSBwcm9w
+ZXJ0eSAobnVsbCBpZiBpdCB3YXMgbm90IHlldCBzZXQpLgpAQCAtMTMwOSw3ICsxMzMwLDggQEAK
+ICAgICAgICAgImZpcnN0UGFyYW1OYW1lIjogZmlyc3RQYXJhbSwKICAgICAgICAgInNlY29uZFBh
+cmFtTmFtZSI6IHNlY29uZFBhcmFtLAogICAgICAgICAicGFyYW1UeXBlIjogcGFyYW1UeXBlLAot
+ICAgICAgICAic2hvcnRQcm9wTmFtZSI6IHByb3AuZ2V0KCJuYW1lIiksCisgICAgICAgICJwcm9w
+TmFtZXMiOiBwcm9wTmFtZXNTdHJpbmcsCisgICAgICAgICJwcm9wTGlua3MiIDogcHJvcExpbmtz
+U3RyaW5nLAogICAgICAgICAicHJvcE5hbWUiOiBtZXRob2ROb2RlLmdldCgibmFtZSIpCiAgICAg
+fSkKIApAQCAtMTM0OCwxMSArMTM3MCwxNiBAQAogICAgICAgICAgICAgcHJvcHMgPSBkZXAuZ2V0
+Q2hpbGQoInByb3BlcnRpZXMiLCBGYWxzZSkKICAgICAgICAgICAgIGlmIG5vdCBwcm9wczoKICAg
+ICAgICAgICAgICAgICBjb250aW51ZQorICAgICAgICAgICAgYXBwbHlGb3IgPSBbXQogICAgICAg
+ICAgICAgZm9yIHByb3AgaW4gcHJvcHMuY2hpbGRyZW46CiAgICAgICAgICAgICAgICAgaWYgcHJv
+cC5nZXQoImFwcGx5IiwgTm9uZSkgPT0gbmFtZToKLSAgICAgICAgICAgICAgICAgICAgaXRlbU5v
+ZGUuc2V0KCJhcHBseSIsIGRlcC5nZXQoImZ1bGxOYW1lIikgKyAiIyIgKyBwcm9wLmdldCgibmFt
+ZSIpKQorICAgICAgICAgICAgICAgICAgICBwcm9wTm9kZSA9IHRyZWUuTm9kZSgiZW50cnkiKQor
+ICAgICAgICAgICAgICAgICAgICBwcm9wTm9kZS5zZXQoIm5hbWUiLCBkZXAuZ2V0KCJmdWxsTmFt
+ZSIpICsgIiMiICsgcHJvcC5nZXQoIm5hbWUiKSkKKyAgICAgICAgICAgICAgICAgICAgaXRlbU5v
+ZGUuYWRkTGlzdENoaWxkKCJhcHBseSIsIHByb3BOb2RlKSAKICAgICAgICAgICAgICAgICAgICAg
+cmVtb3ZlRXJyb3JzKGl0ZW1Ob2RlKQotICAgICAgICAgICAgICAgICAgICBkb2N1bWVudEFwcGx5
+TWV0aG9kKGl0ZW1Ob2RlLCBwcm9wKQorICAgICAgICAgICAgICAgICAgICBhcHBseUZvci5hcHBl
+bmQocHJvcCkKKyAgICAgICAgICAgIGlmIGxlbihhcHBseUZvcikgPiAwOgorICAgICAgICAgICAg
+ICAgIGRvY3VtZW50QXBwbHlNZXRob2QoaXRlbU5vZGUsIGFwcGx5Rm9yKQogCiAKIGRlZiBkZXBl
+bmRlbmRDbGFzc0l0ZXJhdG9yKGRvY1RyZWUsIGNsYXNzTm9kZSk6Cg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

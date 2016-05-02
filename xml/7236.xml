@@ -1,0 +1,229 @@
+<bug>
+          <bug_id>7236</bug_id>
+          
+          <creation_ts>2013-02-17 23:00:00 +0100</creation_ts>
+          <short_desc>Fix issue with data-initialized Config instances</short_desc>
+          <delta_ts>2014-03-03 08:47:45 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.config</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Michael Elsdoerfer">michael</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>32267</commentid>
+            <who name="Michael Elsdoerfer">michael</who>
+            <bug_when>2013-02-17 23:00:07 +0100</bug_when>
+            <thetext>The Config object can be initialized with a dict instead of a filename, but then stumbles over not having a proper filename later on.
+
+The following pull request fixes these issues: https://github.com/qooxdoo/qooxdoo/pull/50/files
+
+With it, if the config object has no filename, it expects absolute filepaths to be used.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32273</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-18 10:10:31 +0100</bug_when>
+            <thetext>Please explicate what you mean by &quot;stumbles over later on&quot;. Is there a 
+misbehavior, or an error message? Can you provide a stack trace? How can we 
+reproduce the issue?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32274</commentid>
+            <who name="Michael Elsdoerfer">michael</who>
+            <bug_when>2013-02-18 10:53:19 +0100</bug_when>
+            <thetext>I can if you absolutely want me to, but that&#39;s a good bit of work, and I think the problem is quite obvious:
+
+If you initialize the Config instance with a data dictionary, then &quot;self._fname&quot; does not get set and remains None:
+
+https://github.com/aspectit/qooxdoo/blob/120c21ab0f7ee6e37f675d9a7d4ab1562e86f9b6/tool/pylib/generator/config/Config.py#L53
+
+Therefore, every piece of code that uses Config._fname without checking for None breaks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32277</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-18 12:34:44 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; I can if you absolutely want me to, but that&#39;s a good bit of work, and I 
+think the problem is quite obvious:
+&gt; 
+&gt; If you initialize the Config instance with a data dictionary, then 
+&quot;self._fname&quot; does not get set and remains None:
+&gt; 
+&gt; 
+https://github.com/aspectit/qooxdoo/blob/120c21ab0f7ee6e37f675d9a7d4ab1562e86f9b6/tool/pylib/generator/config/Config.py#L53
+&gt; 
+&gt; Therefore, every piece of code that uses Config._fname without checking for 
+None breaks.
+
+For several reasons it is desireable to have precise and reproducable error 
+descriptions. The &quot;obvious&quot; is often not good enough. It shouldn&#39;t be too hard 
+to come up with 2 lines of code saying &quot;if you instantiate a config object like 
+this ..., and then call this method on it ..., then it bombs in Config.py in 
+line xxx&quot;. All of this would take about 2 minutes in the Python repl.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32278</commentid>
+            <who name="Michael Elsdoerfer">michael</who>
+            <bug_when>2013-02-18 13:07:08 +0100</bug_when>
+            <thetext>I can see it maybe taking two minutes in the repl if #7238 is merged and the generator.py script can be re-used, but as it is, reproducing the error might well require the full setup that generator.py does, plus constructing an adequate JSON config, and then doing the whole thing multiple times.
+
+I&#39;m sorry - I just don&#39;t understand how there is any complexity at all to this, or why you have me jumping through all these hoops; contributing should be easy, right? But since I&#39;m at your mercy here, I&#39;ll do what you ask.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32280</commentid>
+            <who name="Michael Elsdoerfer">michael</who>
+            <bug_when>2013-02-18 13:22:49 +0100</bug_when>
+            <thetext>Actually, I had a clever idea that I hope you&#39;ll be happy with. These are the stack traces I get if I revert my patches, with the way our project is currently setup. generator/cli.py is simply the bin/generator.py script. I removed the part of the trace that is from our wrapper project, so that it&#39;s less confusing:
+
+Hunk 2:
+
+Traceback (most recent call last):
+  ....
+  File &quot;/home/michael/Development/projects/mine/aspect-it/cms/cms/aitd/cms/script.py&quot;, line 566, in generate
+    generator.cli.execGenerator([&#39;./manage.py qooxdoo&#39;]+args, config)
+  File &quot;/home/michael/Development/projects/mine/aspect-it/cms/cms/aitd/cms/admin/../../../qooxdoo/tool/pylib/generator/cli.py&quot;, line 240, in execGenerator
+    config.resolveIncludes()
+  File &quot;/home/michael/Development/projects/mine/aspect-it/cms/cms/aitd/cms/admin/../../../qooxdoo/tool/pylib/generator/config/Config.py&quot;, line 359, in resolveIncludes
+    console.debug(&quot;including %s&quot; % (self._fname.decode(&#39;utf-8&#39;) or &quot;&lt;unknown&gt;&quot;,))
+AttributeError: &#39;NoneType&#39; object has no attribute &#39;decode&#39;
+
+Hunk 3:
+
+Traceback (most recent call last):
+  ...
+  File &quot;/home/michael/Development/projects/mine/aspect-it/cms/cms/aitd/cms/script.py&quot;, line 566, in generate
+    generator.cli.execGenerator([&#39;./manage.py qooxdoo&#39;]+args, config)
+  File &quot;/home/michael/Development/projects/mine/aspect-it/cms/cms/aitd/cms/admin/../../../qooxdoo/tool/pylib/generator/cli.py&quot;, line 240, in execGenerator
+    config.resolveIncludes()
+  File &quot;/home/michael/Development/projects/mine/aspect-it/cms/cms/aitd/cms/admin/../../../qooxdoo/tool/pylib/generator/config/Config.py&quot;, line 384, in resolveIncludes
+    includeTree.add_edge(self._fname, fapath) # add edge to child
+  File &quot;/home/michael/Development/projects/mine/aspect-it/cms/cms/aitd/cms/admin/../../../qooxdoo/tool/pylib/graph/classes/Digraph.py&quot;, line 272, in add_edge
+    if (v not in self.node_neighbors[u]):
+KeyError: None
+
+Hunk 4 is not an error per se, but helps in this setup because it tells you which path fails. It simply makes the exception message more informative.
+
+I notice that Hunk 1 made it in their by accident. It allows &quot;paths/app-root&quot; setting to be unset, which is already totally supported, except for the forced call to absPath(). It&#39;s not strictly speaking related to this, so I&#39;ll remove it and submit it separately.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32282</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-18 14:30:08 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; I can see it maybe taking two minutes in the repl if #7238 is merged
+&gt; and the generator.py script can be re-used, but as it is,
+&gt; reproducing the error might well require the full setup that
+&gt; generator.py does, plus constructing an adequate JSON config, and
+&gt; then doing the whole thing multiple times.
+
+Here is a snippet from an IPython session:
+
+  In [76]: from generator.config.Config import Config
+
+  In [77]: from generator.runtime.Log import Log
+
+  In [78]: from misc import json
+
+  In [79]: from generator import Context
+
+  In [80]: Context.console = Log()
+
+  In [82]: config = Config(Context.console, json.loads(&#39;{&quot;jobs&quot;:{&quot;foo&quot;:{}}}&#39;))
+
+  In [83]: config.resolveIncludes()
+  ---------------------------------------------------------------------------
+  AttributeError                            Traceback (most recent call last)
+  /home/thron7/tmp/&lt;ipython-input-83-4b0674a38ab6&gt; in &lt;module&gt;()
+  ----&gt; 1 config.resolveIncludes()
+
+  /home/thron7/workspace/qooxdoo.git/tool/pylib/generator/config/Config.pyc in 
+resolveIncludes(self, includeTree)
+      363     def resolveIncludes(self, includeTree=graph.digraph()):
+      364 
+  --&gt; 365         console.debug(&quot;including %s&quot; % (self._fname.decode(&#39;utf-8&#39;) 
+or &quot;&lt;unknown&gt;&quot;,))
+      366         config  = self._data
+      367         jobsmap = self.getJobsMap({})
+
+  AttributeError: &#39;NoneType&#39; object has no attribute &#39;decode&#39;
+
+
+This was as much as it took to come to a relevant error, 7 commands.
+
+&gt; I&#39;m sorry - I just don&#39;t understand how there is any complexity at
+&gt; all to this, or why you have me jumping through all these hoops;
+&gt; contributing should be easy, right?
+
+No, contributing should be *effective*. And that means it has to work
+as much for the recipient of the contribution as it has for the
+contributor. 
+
+We have garnered, from sometimes painful experience, a workflow that
+allows us to maintain a certain consistency and traceability to our
+commits. We usually have a bug for every single commit we make. Bugs
+must provide sufficient rational and background for the change, like
+failing runs, error messages, steps to reproduce, or - in the case of
+enhancements - use cases. 
+
+This may become important if we want to trace changes introduced in
+the repository back to their original intent, and if we want to
+re-think a particular solution in favor of another.
+
+The decision about a bug (severity, priority, pot. target) is then
+done based on its rational, not on the number and mergeability of pull
+requests. Or, to put it in other words, just throwing pull request on
+us is not the way :-).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32333</commentid>
+            <who name="Michael Elsdoerfer">michael</who>
+            <bug_when>2013-02-22 00:27:02 +0100</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; This was as much as it took to come to a relevant error, 7 commands.
+
+Fair enough, but that is you. In fact I don&#39;t know what all of the Config methods do, how they interact internally, or which of the setup steps are important, nor am I familiar enough with even the config format to shorten it down to that snippet.
+
+In any case, I have no updated the pull request to remove the first, unrelated hunk. Let me know if if you need anything else.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36012</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:47:45 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

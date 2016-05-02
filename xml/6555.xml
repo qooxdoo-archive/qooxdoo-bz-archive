@@ -1,0 +1,91 @@
+<bug>
+          <bug_id>6555</bug_id>
+          
+          <creation_ts>2012-06-22 19:16:00 +0200</creation_ts>
+          <short_desc>First time build warning of non-literal environment key</short_desc>
+          <delta_ts>2014-03-03 15:25:27 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>2.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>2.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="saaj">id</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>29893</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2012-06-22 19:16:39 +0200</bug_when>
+            <thetext>I switched an existing app from 1.6 to 2.0 to try it. At first build I have the following warning.
+
+    - Warning: qx.core.Environment call with non-literal key (qx.bom.request.Script:676)
+
+There&#39;s no warning no subsequent builds, which I guess is because of cache. There&#39;s actually a non-literal key call in qx.bom.request.Script:676, which is a change from 1.6 where keys were literal. I didn&#39;t notice an issue with environment settings yet, and I don&#39;t know what is bad in indirect key calls, but just reporting this small inconsistency.
+
+To reproduce it it&#39;s enough to put, `qx.bom.request.Script;` in skeleton app.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31076</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-10-27 13:48:53 +0200</bug_when>
+            <thetext>Hi, thanks. Meanwhile, the issue is resolved.
+
+You are right about the cache, as these warnings are only issued when the class code is actually parsed. Later, when e.g. the syntax tree is taken from the cache, these warnings are not repeated.
+
+Non-literal key arguments in calls to qx.core.Environment.get() are not a bad thing in itself, and are working perfectly. They just will not be optimized by the generator, that&#39;s all, and this is why this warning comes about. 
+
+For an example, if you are using a variant, say &quot;foo.product_type&quot;, and you have a branch in your program that queries it
+
+  var key = &quot;foo.product_type&quot;;
+  if (qx.core.Environment.get(key) == &#39;pro&#39;){
+       /* code that draws in a lot of dependencies */
+  }
+
+you will never get rid of this costly code section, even if you build your application with an &quot;environment&quot; : { &quot;foo.product_type&quot; : &quot;light&quot;} configuration. The generator will not reduce the if-branch (which it would with &quot;qx.core.Environment.get(&#39;foo.product_type&#39;)&quot;), and hence all code dependencies of the if-branch are drawn in. You see?!
+
+The particular code in qx.bom.request.Script has gotten a &quot;@lint environmentNonLiteralKey(key)&quot; in front of it, so the warning is silenced.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31088</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2012-10-28 11:54:14 +0100</bug_when>
+            <thetext>Hi, Thomas. Thanks for the explanation.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38756</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:27 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

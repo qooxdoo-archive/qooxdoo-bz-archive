@@ -1,0 +1,472 @@
+<bug>
+          <bug_id>1017</bug_id>
+          
+          <creation_ts>2008-06-30 16:54:00 +0200</creation_ts>
+          <short_desc>&quot;nocache&quot; URL parameter is added to POST requests</short_desc>
+          <delta_ts>2014-03-03 15:26:39 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://qooxdoo.org/documentation/0.7/remote_io#request_data</bug_file_loc>
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>0.7.5</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Helder Magalhães">helder.magalhaes</reporter>
+          <assigned_to name="Helder Magalhães">helder.magalhaes</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>3569</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-06-30 16:54:25 +0200</bug_when>
+            <thetext>&quot;nocache&quot; parameter shouldn&#39;t be added when using HTTP POST requests. This causes invalid content to be inserted into the request.
+
+Apparently this is a known issue: http://qooxdoo.org/documentation/0.7/remote_io#request_data
+
+Seen in both 0.7 (legacy branch) and 0.8 (trunk).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3570</commentid>
+              <attachid>314</attachid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-06-30 16:56:50 +0200</bug_when>
+            <thetext>Created attachment 314
+Proposed patch for legacy_0_7_x
+
+Idea is not to insert the HTTP header into POST requests. This maintains compatibility with GET/HEAD requests (by keeping the unique URL trick).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3595</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-07-01 10:50:54 +0200</bug_when>
+            <thetext>-&gt; sw</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3598</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-07-01 11:01:52 +0200</bug_when>
+            <thetext>This is needed for cache handling. It should be added to the URL the same way as in GET requests. What do you exactly mean with &quot;invalid content to be inserted&quot;?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3600</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-07-01 11:59:22 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; This is needed for cache handling. It should be added to the URL the same way
+&gt; as in GET requests. What do you exactly mean with &quot;invalid content to be
+&gt; inserted&quot;?
+
+I mean that &#39;&amp;nocache=something&#39; is inserted into the body of the POST message sent, causing the server to fail request interpretation. In GET/HEAD requests, it would correspond to a URL change, reason why I believe this was never noticed.
+
+I may try to create and attach a reduced test case but it will probably take some time... :-|</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3608</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-07-01 14:11:33 +0200</bug_when>
+            <thetext>-&gt; Alex</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3640</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-07-03 14:45:22 +0200</bug_when>
+            <thetext>To clear this one up : the parameters set by using 
+
+	requestObject.setParameter( KEY, VALUE );
+
+are just like the &quot;nocache&quot; parameter added to the URL for both GET and POST. 
+
+The data which resides in the body of the POST request is set by using the &quot;setData&quot; method. So the request body is not affected in any way by the &quot;nocache&quot; parameter.
+
+Thanks for the report anyway. I&#39;ve updated the documentation you mentioned according this point.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3709</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-07-08 15:52:52 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; The data which resides in the body of the POST request is set by using the
+&gt; &quot;setData&quot; method. So the request body is not affected in any way by the
+&gt; &quot;nocache&quot; parameter.
+
+You are right. I&#39;ve performed some more investigation in order to track how did I get this then. I&#39;ve reached to the conclusion where the issue was, in fact, originated by the Web server&#39;s configuration.
+
+What&#39;s happening is that the Web server is using a concept called mixed mode [1]: it was mixing both URL query portion and POST contents, therefore causing the described behavior. I&#39;ve looked for further information but I wasn&#39;t able to find much more - I still wasn&#39;t able to understand whether this is a standard HTTP [2] extension or a proprietary feature.
+
+I&#39;d propose this could be supported through a configuration setting (maybe a boolean &quot;UseMixedMode&quot; property) which would allow disabling any URL modification. Should this possibility be brought to the mailing list [3] for further discussion? Understanding whether there are more cases like the one I&#39;ve experienced can be valuable (this &quot;feature&quot; may not be as rare as one would expect after all)... Or creating a feature request instead, even before querying the community on the subject...?
+
+[1] http://www.stanford.edu/dept/itss/docs/oracle/10g/server.101/b12303/concept.htm#1005692
+[2] http://www.w3.org/Protocols/rfc2616/rfc2616.html
+[3] http://lists.sourceforge.net/lists/listinfo/qooxdoo-devel</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3726</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-07-10 09:23:19 +0200</bug_when>
+            <thetext>Let&#39;s take this to the mailing list. It would be interesting to know how different backends handle this issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3915</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-07-16 15:13:58 +0200</bug_when>
+            <thetext>Done [1]! :-)
+
+[1] http://www.nabble.com/Remote-I-O-fixes-and-version-0.7.4-td18198664.html</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3980</commentid>
+              <attachid>319</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-07-18 18:19:38 +0200</bug_when>
+            <thetext>Created attachment 319
+patch to add &quot;no-url-params-on-post&quot; option to prohibitCaching property
+
+This is an untested patch that should resolve this bug.  Once Helder is able to test that it both fixes the problem and doesn&#39;t break other functionality, I&#39;ll check it in.  Saved here so it doesn&#39;t get lost, but also exists in my avoidUrlParamsOnPost git branch.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3981</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-07-18 18:20:18 +0200</bug_when>
+            <thetext>Reopen</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3982</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-07-18 18:20:32 +0200</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3983</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-07-18 18:21:09 +0200</bug_when>
+            <thetext>to me (again)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3984</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-07-18 18:21:33 +0200</bug_when>
+            <thetext>accept</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6361</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-11-19 17:00:37 +0100</bug_when>
+            <thetext>Just noticed this was marked fixed although the patch didn&#39;t (apparently) make it into the legacy branch. Was this intended?
+
+Yes, I didn&#39;t yet have the opportunity to test the patch but IMO it didn&#39;t make much sense to simply mark this as fixed... :-(</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6364</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-11-19 17:05:29 +0100</bug_when>
+            <thetext>No, I applied it to trunk, not to legacy.  It&#39;s a feature enhancement, so I&#39;m not really inclined to add it there especially since there&#39;s been no other call for this recently.  (How have you dealt with this since the topic was discussed way back when?  Had you applied my patch?)
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6369</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-11-19 18:06:29 +0100</bug_when>
+            <thetext>(In reply to comment #16)
+&gt; No, I applied it to trunk, not to legacy.  It&#39;s a feature enhancement, so I&#39;m
+&gt; not really inclined to add it there especially since there&#39;s been no other call
+&gt; for this recently.
+
+Oops, you are right, didn&#39;t check for the trunk version. Sorry! ;-)
+
+
+&gt;  (How have you dealt with this since the topic was discussed
+&gt; way back when?  Had you applied my patch?)
+
+I have my original proposal applied locally.
+
+As said, I&#39;m not finding much time lately to contribute to qooxdoo and so I didn&#39;t entered 0.8 seriously yet. :-| Nevertheless, whenever I&#39;m able to (I have this in my TODO list) I&#39;ll definitely update this issue. :-)
+
+Also, I&#39;d still say it would be interesting to have this available in the legacy branch. (If I&#39;m able to backport it myself, of course I&#39;ll attach a patch here.) ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6624</commentid>
+              <attachid>400</attachid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-12-03 15:11:43 +0100</bug_when>
+            <thetext>Created attachment 400
+backport to legacy (0.7.x) branch
+
+Backported the changes present in the trunk version to the legacy branch. The API is compatible so these are mostly &quot;safe&quot; changes.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10513</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-06-23 14:01:15 +0200</bug_when>
+            <thetext>Reopened.
+
+While this enhancement was made to trunk (i.e. included with release 0.8.1), it has not been applied to legacy_0_7_x, yet. There is a backport to 0.7.x available as a patch, so one might consider to apply it to the legacy branch as well (as it only extends not alters existing API).
+
+@Derrell, would you please have a look at this? Unfortunately, the bug was kept in its FIXED state, so it was unnoticed till Helder&#39;s post:
+http://www.nabble.com/Has-Anyone-Worked-on-an-Oracle-PL-SQL-RPC-Server-td24112370.html#a24144112
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10529</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-06-23 21:26:53 +0200</bug_when>
+            <thetext>I have applied Helder&#39;s patch to 0.7. The patch looks good and applied cleanly, but I have not tested it. Helder, please test and confirm this works properly.
+
+Thanks.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12314</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-09-15 13:27:39 +0200</bug_when>
+            <thetext>(In reply to comment #20)
+&gt; I have applied Helder&#39;s patch to 0.7. The patch looks good and applied cleanly,
+&gt; but I have not tested it. Helder, please test and confirm this works properly.
+
+Sorry for the delay: it wasn&#39;t straightforward to test this in my client+server setup...
+
+I&#39;ve tested the legacy branch and it works as expected. :-)
+
+I&#39;m marking the issue fixed, as both trunk and legacy branch have the fix included.
+
+Thanks! ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39188</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:39 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="1" ispatch="1" isprivate="0" isurl="0">
+            <attachid>314</attachid>
+            <date>2008-06-30 16:56:00 +0200</date>
+            <delta_ts>2008-12-03 15:11:43 +0100</delta_ts>
+            <desc>Proposed patch for legacy_0_7_x</desc>
+            <filename>Request-NoCache-Post.patch</filename>
+            <type>text/plain</type>
+            <size>719</size>
+            <attacher>helder.magalhaes</attacher>
+            
+              <data encoding="base64">SW5kZXg6IFJlcXVlc3QuanMNCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0NCi0tLSBSZXF1ZXN0LmpzCShyZXZpc2lvbiAx
+NDIxMSkNCisrKyBSZXF1ZXN0LmpzCSh3b3JraW5nIGNvcHkpDQpAQCAtNjg2LDcgKzY4Niw5IEBA
+DQogICAgICAgICAvLyBUaGlzIHdvcmtzIGJ5IG1ha2luZyB0aGUgVVJMIHVuaXF1ZSBvbiBlYWNo
+IHJlcXVlc3QuICBUaGUgYWN0dWFsIGlkLAogICAgICAgICAvLyAibm9jYWNoZSIgaXMgaXJyZWxl
+dmFudDsgaXQncyB0aGUgZmFjdCB0aGF0IGEgKHVzdWFsbHkpIGRpZmZlcmVudCBkYXRlCiAgICAg
+ICAgIC8vIGlzIGFkZGVkIHRvIHRoZSBVUkwgb24gZWFjaCByZXF1ZXN0IHRoYXQgcHJldmVudHMg
+Y2FjaGluZy4KLSAgICAgICAgdGhpcy5zZXRQYXJhbWV0ZXIoIm5vY2FjaGUiLCBuZXcgRGF0ZSgp
+LnZhbHVlT2YoKSk7CisgICAgICAgIGlmKHRoaXMuZ2V0TWV0aG9kKCkgIT09IHF4Lm5ldC5IdHRw
+Lk1FVEhPRF9QT1NUKXsKKyAgICAgICAgICB0aGlzLnNldFBhcmFtZXRlcigibm9jYWNoZSIsIG5l
+dyBEYXRlKCkudmFsdWVPZigpKTsKKyAgICAgICAgfQogCiAgICAgICAgIC8vIEFkZCB0aGUgSFRU
+UCAxLjAgcmVxdWVzdCB0byBhdm9pZCB1c2Ugb2YgYSBjYWNoZQogICAgICAgICB0aGlzLnNldFJl
+cXVlc3RIZWFkZXIoIlByYWdtYSIsICJuby1jYWNoZSIpOwo=
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>319</attachid>
+            <date>2008-07-18 18:19:00 +0200</date>
+            <delta_ts>2008-07-18 18:19:38 +0200</delta_ts>
+            <desc>patch to add &quot;no-url-params-on-post&quot; option to prohibitCaching property</desc>
+            <filename>nocache.patch</filename>
+            <type>text/plain</type>
+            <size>4240</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3Fvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9p
+by9yZW1vdGUvUmVxdWVzdC5qcyBiL3Fvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJjZS9j
+bGFzcy9xeC9pby9yZW1vdGUvUmVxdWVzdC5qcwppbmRleCBkYWIwYjE4Li44ZTJmYThkIDEwMDY0
+NAotLS0gYS9xb294ZG9vL2Zyb250ZW5kL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvaW8vcmVt
+b3RlL1JlcXVlc3QuanMKKysrIGIvcW9veGRvby9mcm9udGVuZC9mcmFtZXdvcmsvc291cmNlL2Ns
+YXNzL3F4L2lvL3JlbW90ZS9SZXF1ZXN0LmpzCkBAIC0yNjMsMTMgKzI2MywyOCBAQCBxeC5DbGFz
+cy5kZWZpbmUoInF4LmlvLnJlbW90ZS5SZXF1ZXN0IiwKICAgICAvKioKICAgICAgKiBQcm9oaWJp
+dCByZXF1ZXN0IGZyb20gYmVpbmcgY2FjaGVkLgogICAgICAqCi0gICAgICogU2V0dGluZyB0aGUg
+dmFsdWUgdG8gPGk+dHJ1ZTwvaT4gYWRkcyBhIHBhcmFtZXRlciAibm9jYWNoZSIgdG8gdGhlIHJl
+cXVlc3QKLSAgICAgKiB3aXRoIGEgdmFsdWUgb2YgdGhlIGN1cnJlbnQgdGltZS4gU2V0dGluZyB0
+aGUgdmFsdWUgdG8gPGk+ZmFsc2U8L2k+IHJlbW92ZXMKLSAgICAgKiB0aGUgcGFyYW1ldGVyLgor
+ICAgICAqIFNldHRpbmcgdGhlIHZhbHVlIHRvIDxpPnRydWU8L2k+IGFkZHMgYSBwYXJhbWV0ZXIg
+Im5vY2FjaGUiIHRvIHRoZQorICAgICAqIHJlcXVlc3Qgd2l0aCBhIHZhbHVlIG9mIHRoZSBjdXJy
+ZW50IHRpbWUsIGFzIHdlbGwgYXMgYWRkaW5nIHJlcXVlc3QKKyAgICAgKiBoZWFkZXJzIFByYWdt
+YTpuby1jYWNoZSBhbmQgQ2FjaGUtQ29udHJvbDpuby1jYWNoZS4KKyAgICAgKgorICAgICAqIFNl
+dHRpbmcgdGhlIHZhbHVlIHRvIDxpPmZhbHNlPC9pPiByZW1vdmVzIHRoZSBwYXJhbWV0ZXIgYW5k
+IHJlcXVlc3QKKyAgICAgKiBoZWFkZXJzLgorICAgICAqCisgICAgICogQXMgYSBzcGVjaWFsIGNh
+c2UsIHRoaXMgcHJvcGVydHkgbWF5IGJlIHNldCB0byB0aGUgc3RyaW5nIHZhbHVlCisgICAgICog
+Im5vLXVybC1wYXJhbXMtb24tcG9zdCIgd2hpY2ggd2lsbCBwcmV2ZW50IHRoZSBub2NhY2hlIHBh
+cmFtZXRlciBmcm9tCisgICAgICogYmVpbmcgYWRkZWQgdG8gdGhlIFVSTCBpZiB0aGUgUE9TVCBt
+ZXRob2QgaXMgdXNlZCBidXQgd2lsbCBzdGlsbCBhZGQKKyAgICAgKiB0aGUgUHJhZ21hIGFuZCBD
+YWNoZS1Db250cm9sIGhlYWRlcnMuICBUaGlzIGlzIHVzZWZ1bCBpZiB5b3VyIGJhY2tlbmQKKyAg
+ICAgKiBkb2VzIG5hc3R5IHRoaW5ncyBsaWtlIG1peGluZyBwYXJhbWV0ZXJzIHNwZWNpZmllZCBp
+biB0aGUgVVJMIGludG8KKyAgICAgKiBmb3JtIGZpZWxkcyBpbiB0aGUgUE9TVCByZXF1ZXN0LiAg
+KE9uZSBleGFtcGxlIG9mIHRoaXMgbmFzdHkgYmVoYXZpb3IKKyAgICAgKiBpcyBrbm93biBhcyAi
+bWl4ZWQgbW9kZSIgaW4gT3JhY2xlLCBhcyBkZXNjcmliZWQgaGVyZToKKyAgICAgKiBodHRwOi8v
+ZG93bmxvYWQub3JhY2xlLmNvbS9kb2NzL2NkL0IzMjExMF8wMS93ZWIuMTAxMy9iMjg5NjMvY29u
+Y2VwdC5odG0jaTEwMDU2ODQpCiAgICAgICovCiAgICAgcHJvaGliaXRDYWNoaW5nIDoKICAgICB7
+Ci0gICAgICBjaGVjayA6ICJCb29sZWFuIiwKKyAgICAgIGNoZWNrIDogZnVuY3Rpb24odikKKyAg
+ICAgIHsKKyAgICAgICAgcmV0dXJuIHR5cGVvZiB2ID09ICJib29sZWFuIiB8fCB2ID09PSAibm8t
+dXJsLXBhcmFtcy1vbi1wb3N0IjsKKyAgICAgIH0sCiAgICAgICBpbml0IDogdHJ1ZSwKICAgICAg
+IGFwcGx5IDogIl9hcHBseVByb2hpYml0Q2FjaGluZyIKICAgICB9LApAQCAtNjgxLDI1ICs2OTYs
+MzUgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC5pby5yZW1vdGUuUmVxdWVzdCIsCiAgICAgICovCiAg
+ICAgX2FwcGx5UHJvaGliaXRDYWNoaW5nIDogZnVuY3Rpb24odmFsdWUsIG9sZCkKICAgICB7Ci0g
+ICAgICBpZiAodmFsdWUpCisgICAgICBpZiAoISB2YWx1ZSkKICAgICAgIHsKLSAgICAgICAgLy8g
+VGhpcyB3b3JrcyBieSBtYWtpbmcgdGhlIFVSTCB1bmlxdWUgb24gZWFjaCByZXF1ZXN0LiAgVGhl
+IGFjdHVhbCBpZCwKLSAgICAgICAgLy8gIm5vY2FjaGUiIGlzIGlycmVsZXZhbnQ7IGl0J3MgdGhl
+IGZhY3QgdGhhdCBhICh1c3VhbGx5KSBkaWZmZXJlbnQgZGF0ZQotICAgICAgICAvLyBpcyBhZGRl
+ZCB0byB0aGUgVVJMIG9uIGVhY2ggcmVxdWVzdCB0aGF0IHByZXZlbnRzIGNhY2hpbmcuCi0gICAg
+ICAgIHRoaXMuc2V0UGFyYW1ldGVyKCJub2NhY2hlIiwgbmV3IERhdGUoKS52YWx1ZU9mKCkpOwot
+Ci0gICAgICAgIC8vIEFkZCB0aGUgSFRUUCAxLjAgcmVxdWVzdCB0byBhdm9pZCB1c2Ugb2YgYSBj
+YWNoZQotICAgICAgICB0aGlzLnNldFJlcXVlc3RIZWFkZXIoIlByYWdtYSIsICJuby1jYWNoZSIp
+OworICAgICAgICB0aGlzLnJlbW92ZVBhcmFtZXRlcigibm9jYWNoZSIpOworICAgICAgICB0aGlz
+LnJlbW92ZVJlcXVlc3RIZWFkZXIoIlByYWdtYSIpOworICAgICAgICB0aGlzLnJlbW92ZVJlcXVl
+c3RIZWFkZXIoIkNhY2hlLUNvbnRyb2wiKTsKKyAgICAgICAgcmV0dXJuOworICAgICAgfQogCi0g
+ICAgICAgIC8vIEFkZCB0aGUgSFRUUCAxLjEgcmVxdWVzdCB0byBhdm9pZCB1c2Ugb2YgYSBjYWNo
+ZQotICAgICAgICB0aGlzLnNldFJlcXVlc3RIZWFkZXIoIkNhY2hlLUNvbnRyb2wiLCAibm8tY2Fj
+aGUiKTsKKyAgICAgIC8vIElmIHZhbHVlIGlzbid0ICJuby11cmwtcGFyYW1zLW9uLXBvc3QiIG9y
+IHRoaXMgaXNuJ3QgYSBQT1NUIHJlcXVlc3QKKyAgICAgIGlmICh2YWx1ZSAhPT0gIm5vLXVybC1w
+YXJhbXMtb24tcG9zdCIgfHwKKyAgICAgICAgICB0aGlzLmdldE1ldGhvZCgpICE9IHF4Lm5ldC5I
+dHRwLk1FVEhPRF9QT1NUKQorICAgICAgeworICAgICAgICAvLyAuLi4gdGhlbiBhZGQgYSBwYXJh
+bWV0ZXIgdG8gdGhlIFVSTCB0byBtYWtlIGl0IHVuaXF1ZSBvbiBlYWNoCisgICAgICAgIC8vIHJl
+cXVlc3QuICBUaGUgYWN0dWFsIGlkLCAibm9jYWNoZSIgaXMgaXJyZWxldmFudDsgaXQncyB0aGUg
+ZmFjdAorICAgICAgICAvLyB0aGF0IGEgKHVzdWFsbHkpIGRpZmZlcmVudCBkYXRlIGlzIGFkZGVk
+IHRvIHRoZSBVUkwgb24gZWFjaCByZXF1ZXN0CisgICAgICAgIC8vIHRoYXQgcHJldmVudHMgY2Fj
+aGluZy4KKyAgICAgICAgdGhpcy5zZXRQYXJhbWV0ZXIoIm5vY2FjaGUiLCBuZXcgRGF0ZSgpLnZh
+bHVlT2YoKSk7CiAgICAgICB9CiAgICAgICBlbHNlCiAgICAgICB7CisgICAgICAgIC8vIE90aGVy
+d2lzZSwgd2UgZG9uJ3Qgd2FudCB0aGUgbm9jYWNoZSBwYXJhbWVlciBpbiB0aGUgVVJMLgogICAg
+ICAgICB0aGlzLnJlbW92ZVBhcmFtZXRlcigibm9jYWNoZSIpOwotICAgICAgICB0aGlzLnJlbW92
+ZVJlcXVlc3RIZWFkZXIoIlByYWdtYSIpOwotICAgICAgICB0aGlzLnJlbW92ZVJlcXVlc3RIZWFk
+ZXIoIkNhY2hlLUNvbnRyb2wiKTsKICAgICAgIH0KKworICAgICAgLy8gQWRkIHRoZSBIVFRQIDEu
+MCByZXF1ZXN0IHRvIGF2b2lkIHVzZSBvZiBhIGNhY2hlCisgICAgICB0aGlzLnNldFJlcXVlc3RI
+ZWFkZXIoIlByYWdtYSIsICJuby1jYWNoZSIpOworICAgICAgCisgICAgICAvLyBBZGQgdGhlIEhU
+VFAgMS4xIHJlcXVlc3QgdG8gYXZvaWQgdXNlIG9mIGEgY2FjaGUKKyAgICAgIHRoaXMuc2V0UmVx
+dWVzdEhlYWRlcigiQ2FjaGUtQ29udHJvbCIsICJuby1jYWNoZSIpOwogICAgIH0sCiAKIApAQCAt
+NzE3LDYgKzc0MiwxMyBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LmlvLnJlbW90ZS5SZXF1ZXN0IiwK
+ICAgICAgIH0gZWxzZSB7CiAgICAgICAgIHRoaXMucmVtb3ZlUmVxdWVzdEhlYWRlcigiQ29udGVu
+dC1UeXBlIik7CiAgICAgICB9CisKKyAgICAgIC8vIFJlLXRlc3QgdGhlIHByb2hpYml0IGNhY2hp
+bmcgcHJvcGVydHkuICBXZSBtYXkgbmVlZCB0byBhZGQgb3IgcmVtb3ZlCisgICAgICAvLyB0aGUg
+Im5vY2FjaGUiIHBhcmFtZXRlci4gIFdlIGV4cGxpY2l0bHkgY2FsbCB0aGUgX2FwcGx5IG1ldGhv
+ZCBzaW5jZQorICAgICAgLy8gaXQgd291bGRuJ3QgYmUgY2FsbGVkIG5vcm1hbGx5IHdoZW4gc2V0
+dGluZyB0aGUgdmFsdWUgdG8gaXRzIGFscmVhZHkKKyAgICAgIC8vIGV4aXN0YW50IHZhbHVlLgor
+ICAgICAgdmFyIHByb2hpYml0Q2FjaGluZyA9IHRoaXMuZ2V0UHJvaGliaXRDYWNoaW5nKCk7Cisg
+ICAgICB0aGlzLl9hcHBseVByb2hpYml0Q2FjaGluZyhwcm9oaWJpdENhY2hpbmcsIHByb2hpYml0
+Q2FjaGluZyk7CiAgICAgfSwKIAogCg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>400</attachid>
+            <date>2008-12-03 15:11:00 +0100</date>
+            <delta_ts>2008-12-03 15:11:43 +0100</delta_ts>
+            <desc>backport to legacy (0.7.x) branch</desc>
+            <filename>Request-NoUrlParamsOnPost-LegacyBranch.patch</filename>
+            <type>text/plain</type>
+            <size>4060</size>
+            <attacher>helder.magalhaes</attacher>
+            
+              <data encoding="base64">SW5kZXg6IHFvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9pby9yZW1v
+dGUvUmVxdWVzdC5qcw0KPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PQ0KLS0tIHFvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3Jr
+L3NvdXJjZS9jbGFzcy9xeC9pby9yZW1vdGUvUmVxdWVzdC5qcwkocmV2aXNpb24gMTY4MDMpDQor
+KysgcW9veGRvby9mcm9udGVuZC9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2lvL3JlbW90ZS9S
+ZXF1ZXN0LmpzCSh3b3JraW5nIGNvcHkpDQpAQCAtMjYzLDEzICsyNjMsMjggQEANCiAgICAgLyoq
+CiAgICAgICogUHJvaGliaXQgcmVxdWVzdCBmcm9tIGJlaW5nIGNhY2hlZC4KICAgICAgKgotICAg
+ICAqIFNldHRpbmcgdGhlIHZhbHVlIHRvIDxpPnRydWU8L2k+IGFkZHMgYSBwYXJhbWV0ZXIgIm5v
+Y2FjaGUiIHRvIHRoZSByZXF1ZXN0Ci0gICAgICogd2l0aCBhIHZhbHVlIG9mIHRoZSBjdXJyZW50
+IHRpbWUuIFNldHRpbmcgdGhlIHZhbHVlIHRvIDxpPmZhbHNlPC9pPiByZW1vdmVzCi0gICAgICog
+dGhlIHBhcmFtZXRlci4KKyAgICAgKiBTZXR0aW5nIHRoZSB2YWx1ZSB0byA8aT50cnVlPC9pPiBh
+ZGRzIGEgcGFyYW1ldGVyICJub2NhY2hlIiB0byB0aGUKKyAgICAgKiByZXF1ZXN0IFVSTCB3aXRo
+IGEgdmFsdWUgb2YgdGhlIGN1cnJlbnQgdGltZSwgYXMgd2VsbCBhcyBhZGRpbmcgcmVxdWVzdAor
+ICAgICAqIGhlYWRlcnMgUHJhZ21hOm5vLWNhY2hlIGFuZCBDYWNoZS1Db250cm9sOm5vLWNhY2hl
+LgorICAgICAqCisgICAgICogU2V0dGluZyB0aGUgdmFsdWUgdG8gPGk+ZmFsc2U8L2k+IHJlbW92
+ZXMgdGhlIHBhcmFtZXRlciBhbmQgcmVxdWVzdAorICAgICAqIGhlYWRlcnMuCisgICAgICoKKyAg
+ICAgKiBBcyBhIHNwZWNpYWwgY2FzZSwgdGhpcyBwcm9wZXJ0eSBtYXkgYmUgc2V0IHRvIHRoZSBz
+dHJpbmcgdmFsdWUKKyAgICAgKiAibm8tdXJsLXBhcmFtcy1vbi1wb3N0IiB3aGljaCB3aWxsIHBy
+ZXZlbnQgdGhlIG5vY2FjaGUgcGFyYW1ldGVyIGZyb20KKyAgICAgKiBiZWluZyBhZGRlZCB0byB0
+aGUgVVJMIGlmIHRoZSBQT1NUIG1ldGhvZCBpcyB1c2VkIGJ1dCB3aWxsIHN0aWxsIGFkZAorICAg
+ICAqIHRoZSBQcmFnbWEgYW5kIENhY2hlLUNvbnRyb2wgaGVhZGVycy4gIFRoaXMgaXMgdXNlZnVs
+IGlmIHlvdXIgYmFja2VuZAorICAgICAqIGRvZXMgbmFzdHkgdGhpbmdzIGxpa2UgbWl4aW5nIHBh
+cmFtZXRlcnMgc3BlY2lmaWVkIGluIHRoZSBVUkwgaW50bworICAgICAqIGZvcm0gZmllbGRzIGlu
+IHRoZSBQT1NUIHJlcXVlc3QuICAoT25lIGV4YW1wbGUgb2YgdGhpcyBuYXN0eSBiZWhhdmlvcgor
+ICAgICAqIGlzIGtub3duIGFzICJtaXhlZCBtb2RlIiBpbiBPcmFjbGUsIGFzIGRlc2NyaWJlZCBo
+ZXJlOgorICAgICAqIGh0dHA6Ly9kb3dubG9hZC5vcmFjbGUuY29tL2RvY3MvY2QvQjMyMTEwXzAx
+L3dlYi4xMDEzL2IyODk2My9jb25jZXB0Lmh0bSNpMTAwNTY4NCkKICAgICAgKi8KICAgICBwcm9o
+aWJpdENhY2hpbmcgOgogICAgIHsKLSAgICAgIGNoZWNrIDogIkJvb2xlYW4iLAorICAgICAgY2hl
+Y2sgOiBmdW5jdGlvbih2KQorICAgICAgeworICAgICAgICByZXR1cm4gdHlwZW9mIHYgPT0gImJv
+b2xlYW4iIHx8IHYgPT09ICJuby11cmwtcGFyYW1zLW9uLXBvc3QiOworICAgICAgfSwKICAgICAg
+IGluaXQgOiB0cnVlLAogICAgICAgYXBwbHkgOiAiX2FwcGx5UHJvaGliaXRDYWNoaW5nIgogICAg
+IH0sCkBAIC02ODEsMjUgKzY5NiwzNSBAQA0KICAgICAgKi8KICAgICBfYXBwbHlQcm9oaWJpdENh
+Y2hpbmcgOiBmdW5jdGlvbih2YWx1ZSwgb2xkKQogICAgIHsKLSAgICAgIGlmICh2YWx1ZSkKKyAg
+ICAgIGlmICghIHZhbHVlKQogICAgICAgewotICAgICAgICAvLyBUaGlzIHdvcmtzIGJ5IG1ha2lu
+ZyB0aGUgVVJMIHVuaXF1ZSBvbiBlYWNoIHJlcXVlc3QuICBUaGUgYWN0dWFsIGlkLAotICAgICAg
+ICAvLyAibm9jYWNoZSIgaXMgaXJyZWxldmFudDsgaXQncyB0aGUgZmFjdCB0aGF0IGEgKHVzdWFs
+bHkpIGRpZmZlcmVudCBkYXRlCi0gICAgICAgIC8vIGlzIGFkZGVkIHRvIHRoZSBVUkwgb24gZWFj
+aCByZXF1ZXN0IHRoYXQgcHJldmVudHMgY2FjaGluZy4KKyAgICAgICAgdGhpcy5yZW1vdmVQYXJh
+bWV0ZXIoIm5vY2FjaGUiKTsKKyAgICAgICAgdGhpcy5yZW1vdmVSZXF1ZXN0SGVhZGVyKCJQcmFn
+bWEiKTsKKyAgICAgICAgdGhpcy5yZW1vdmVSZXF1ZXN0SGVhZGVyKCJDYWNoZS1Db250cm9sIik7
+CisgICAgICAgIHJldHVybjsKKyAgICAgIH0KKworICAgICAgLy8gSWYgdmFsdWUgaXNuJ3QgIm5v
+LXVybC1wYXJhbXMtb24tcG9zdCIgb3IgdGhpcyBpc24ndCBhIFBPU1QgcmVxdWVzdAorICAgICAg
+aWYgKHZhbHVlICE9PSAibm8tdXJsLXBhcmFtcy1vbi1wb3N0IiB8fAorICAgICAgICAgIHRoaXMu
+Z2V0TWV0aG9kKCkgIT0gcXgubmV0Lkh0dHAuTUVUSE9EX1BPU1QpCisgICAgICB7CisgICAgICAg
+IC8vIC4uLiB0aGVuIGFkZCBhIHBhcmFtZXRlciB0byB0aGUgVVJMIHRvIG1ha2UgaXQgdW5pcXVl
+IG9uIGVhY2gKKyAgICAgICAgLy8gcmVxdWVzdC4gIFRoZSBhY3R1YWwgaWQsICJub2NhY2hlIiBp
+cyBpcnJlbGV2YW50OyBpdCdzIHRoZSBmYWN0CisgICAgICAgIC8vIHRoYXQgYSAodXN1YWxseSkg
+ZGlmZmVyZW50IGRhdGUgaXMgYWRkZWQgdG8gdGhlIFVSTCBvbiBlYWNoIHJlcXVlc3QKKyAgICAg
+ICAgLy8gdGhhdCBwcmV2ZW50cyBjYWNoaW5nLgogICAgICAgICB0aGlzLnNldFBhcmFtZXRlcigi
+bm9jYWNoZSIsIG5ldyBEYXRlKCkudmFsdWVPZigpKTsKLQotICAgICAgICAvLyBBZGQgdGhlIEhU
+VFAgMS4wIHJlcXVlc3QgdG8gYXZvaWQgdXNlIG9mIGEgY2FjaGUKLSAgICAgICAgdGhpcy5zZXRS
+ZXF1ZXN0SGVhZGVyKCJQcmFnbWEiLCAibm8tY2FjaGUiKTsKLQotICAgICAgICAvLyBBZGQgdGhl
+IEhUVFAgMS4xIHJlcXVlc3QgdG8gYXZvaWQgdXNlIG9mIGEgY2FjaGUKLSAgICAgICAgdGhpcy5z
+ZXRSZXF1ZXN0SGVhZGVyKCJDYWNoZS1Db250cm9sIiwgIm5vLWNhY2hlIik7CiAgICAgICB9CiAg
+ICAgICBlbHNlCiAgICAgICB7CisgICAgICAgIC8vIE90aGVyd2lzZSwgd2UgZG9uJ3Qgd2FudCB0
+aGUgbm9jYWNoZSBwYXJhbWVlciBpbiB0aGUgVVJMLgogICAgICAgICB0aGlzLnJlbW92ZVBhcmFt
+ZXRlcigibm9jYWNoZSIpOwotICAgICAgICB0aGlzLnJlbW92ZVJlcXVlc3RIZWFkZXIoIlByYWdt
+YSIpOwotICAgICAgICB0aGlzLnJlbW92ZVJlcXVlc3RIZWFkZXIoIkNhY2hlLUNvbnRyb2wiKTsK
+ICAgICAgIH0KKworICAgICAgLy8gQWRkIHRoZSBIVFRQIDEuMCByZXF1ZXN0IHRvIGF2b2lkIHVz
+ZSBvZiBhIGNhY2hlCisgICAgICB0aGlzLnNldFJlcXVlc3RIZWFkZXIoIlByYWdtYSIsICJuby1j
+YWNoZSIpOworCisgICAgICAvLyBBZGQgdGhlIEhUVFAgMS4xIHJlcXVlc3QgdG8gYXZvaWQgdXNl
+IG9mIGEgY2FjaGUKKyAgICAgIHRoaXMuc2V0UmVxdWVzdEhlYWRlcigiQ2FjaGUtQ29udHJvbCIs
+ICJuby1jYWNoZSIpOwogICAgIH0sCiAKIApAQCAtNzE3LDYgKzc0MiwxMyBAQA0KICAgICAgIH0g
+ZWxzZSB7CiAgICAgICAgIHRoaXMucmVtb3ZlUmVxdWVzdEhlYWRlcigiQ29udGVudC1UeXBlIik7
+CiAgICAgICB9CisKKyAgICAgIC8vIFJlLXRlc3QgdGhlIHByb2hpYml0IGNhY2hpbmcgcHJvcGVy
+dHkuICBXZSBtYXkgbmVlZCB0byBhZGQgb3IgcmVtb3ZlCisgICAgICAvLyB0aGUgIm5vY2FjaGUi
+IHBhcmFtZXRlci4gIFdlIGV4cGxpY2l0bHkgY2FsbCB0aGUgX2FwcGx5IG1ldGhvZCBzaW5jZQor
+ICAgICAgLy8gaXQgd291bGRuJ3QgYmUgY2FsbGVkIG5vcm1hbGx5IHdoZW4gc2V0dGluZyB0aGUg
+dmFsdWUgdG8gaXRzIGFscmVhZHkKKyAgICAgIC8vIGV4aXN0YW50IHZhbHVlLgorICAgICAgdmFy
+IHByb2hpYml0Q2FjaGluZyA9IHRoaXMuZ2V0UHJvaGliaXRDYWNoaW5nKCk7CisgICAgICB0aGlz
+Ll9hcHBseVByb2hpYml0Q2FjaGluZyhwcm9oaWJpdENhY2hpbmcsIHByb2hpYml0Q2FjaGluZyk7
+CiAgICAgfSwKIAogCg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

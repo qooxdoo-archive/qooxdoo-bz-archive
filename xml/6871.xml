@@ -1,0 +1,131 @@
+<bug>
+          <bug_id>6871</bug_id>
+          
+          <creation_ts>2012-10-02 20:47:00 +0200</creation_ts>
+          <short_desc>RPC: request sequence number always increased, periodic reset advised</short_desc>
+          <delta_ts>2014-03-03 08:47:56 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io.remote</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Helder Magalhães">helder.magalhaes</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30870</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2012-10-02 20:47:15 +0200</bug_when>
+            <thetext>In qx.io.remote.Request&#39;s construct method, we increase the sequence number forever:
+
+  // Get the next sequence number for this request
+  this.__seqNum = ++qx.io.remote.Request.__seqNum;
+
+For long-running applications which frequently perform requests, this number may increase to a value that may become an issue:
+1. Such large numbers are harder to (visually) analyze when looking at a communications trace;
+2. Large numbers will become a small communication burden (due to the marshaling + transport + unmarshaling);
+3. Server-size, RPC applications not based in JavaScript may be affected by this (as the 16-big and/or 32-bit integer is quite small when compared to JavaScript&#39;s);
+4. JavaScript itself doesn&#39;t guarantee precision in such higher ranges. For example, the following displays the same in Firefox current release version (15.0.1):
+
+  console.log(10000000000000000);
+  console.log(10000000000000000 + 1);
+
+The idea is that this number is reset, say at the maximum value of a 16-bit int (32767), something like:
+
+  // Get the next sequence number for this request
+  // NOTE: JavaScript switches to exponential notation at 10^21
+  // (see &quot;ToString Applied to the Number Type&quot; of ECMA-262 5.1)
+  // we want to avoid going beyond the maximum value of a 16-bit int
+  // (for performance and compatibility reasons)
+  if (this.__seqNum === 32767) {
+    this.__seqNum = 0;
+  }
+  this.__seqNum = ++qx.io.remote.Request.__seqNum;
+
+This would improve performance, server-side compatibility and avoid errors in long-running applications, while retaining a window of 32k requests which is more than enough to avoid collisions and still allowing to keep track of a large number of requests through the &quot;id&quot; member.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30873</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2012-10-03 16:55:55 +0200</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; The idea is that this number is reset [...], something like:
+&gt; 
+&gt;   // Get the next sequence number for this request
+&gt;   // NOTE: JavaScript switches to exponential notation at 10^21
+&gt;   // (see &quot;ToString Applied to the Number Type&quot; of ECMA-262 5.1)
+&gt;   // we want to avoid going beyond the maximum value of a 16-bit int
+&gt;   // (for performance and compatibility reasons)
+&gt;   if (this.__seqNum === 32767) {
+&gt;     this.__seqNum = 0;
+&gt;   }
+&gt;   this.__seqNum = ++qx.io.remote.Request.__seqNum;
+
+Oops, that should have been something else:
+
+  // JavaScript switches to exponential notation at 10^21
+  // (see &quot;ToString Applied to the Number Type&quot; of ECMA-262 5.1)
+  // Avoid going beyond the maximum value of a 16-bit integer
+  // (for performance and compatibility reasons)
+  // See [BUG #6871] for details
+  if (qx.io.remote.Request.__seqNum === 32767) {
+    qx.io.remote.Request.__seqNum = 0;
+  }
+
+  // Get the next sequence number for this request
+  this.__seqNum = ++qx.io.remote.Request.__seqNum;
+
+There you go, bug-free (by mistake, I was resetting the sequence number all instances instead of the shared counter) and much more readable (don&#39;t mix this logic with actually getting the next sequence number).
+
+
+&gt; This would improve performance, server-side compatibility and avoid errors in
+&gt; long-running applications, while retaining a window of 32k requests which is
+&gt; more than enough to avoid collisions and still allowing to keep track of a
+&gt; large number of requests through the &quot;id&quot; member.
+
+If developers/users believe that 32k is a too short limit, I&#39;d still advocate towards keeping a higher limit such as 2147483647, maximum value of a 32-bit (signed) integer.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30908</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-10-10 09:46:24 +0200</bug_when>
+            <thetext>Sounds reasonable and should not damage anything.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36081</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:47:56 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

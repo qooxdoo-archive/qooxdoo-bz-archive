@@ -1,0 +1,104 @@
+<bug>
+          <bug_id>5552</bug_id>
+          
+          <creation_ts>2011-08-22 17:54:00 +0200</creation_ts>
+          <short_desc>Application close event no longer working</short_desc>
+          <delta_ts>2014-03-03 15:20:11 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.application</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Andy White">awhite</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          <cc>Nicholas.Tindall</cc>
+          <qa_contact name="Tino Butz">tinobutz</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26564</commentid>
+            <who name="Andy White">awhite</who>
+            <bug_when>2011-08-22 17:54:00 +0200</bug_when>
+            <thetext>Prior to 1.5 when I subclassed qx.application.Standalone I could override the &quot;close&quot; method and inform a user about any immanent data lose.  
+
+Within 1.5 I can generate &quot;source&quot; and close still works.  
+
+However, when I generate &quot;build&quot; and run from a web server the close is not working.
+
+I tested with 1.5 doing a create new project per getting started (&quot;First Button&quot;) and then added a single method:
+
+	close: function() {
+		return &quot;no way dude!&quot;;
+	}
+
+I&#39;m not sure why it works with source but not build, didn&#39;t look into it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26571</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-08-23 12:23:35 +0200</bug_when>
+            <thetext>Thanks for reporting, Andy. This is a regression introduced with r27412. Before that change, qx.core.Init.getApplication.ready defined a private static member __application that was used by Init.__close to call the application&#39;s close method. 
+The modification (for bug #5100) split qx.core.Init up into BaseInit, which has the ready method, and Init, which has the __close method. This doesn&#39;t work in the build version since the private optimizer uses different names for Init.__application and BaseInit.__application so when __close is called, the symbol referencing the application evaluates as undefined.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26573</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-08-23 12:40:11 +0200</bug_when>
+            <thetext>Replaced the references to this.__application in qx.core.Init with this.getApplication() calls. Alternatively, we could&#39;ve made __application protected to get around the private optimization, but I think it&#39;s cleaner this way.
+This affects Init.__close and Init.__shutdown which are called once each in the application lifecycle so the added overhead from the function calls is negligible.
+
+Fixed for trunk and branch_1_5_x with r28532.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26581</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-08-24 09:57:17 +0200</bug_when>
+            <thetext>Reopened. qx.test.ui.LayoutTestCase overwrites qx.core.Init.getApplication with a function that returns a mock object. This is a plain JS object with only a getRoot function but none of the methods specified by qx.application.IApplication. So now reloading/shutting down the test application  after a unit test class extending LayoutTestCase was executed throws an exception because core.Init.__close tries to call close() on the mock application object.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26582</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-08-24 10:06:52 +0200</bug_when>
+            <thetext>Added empty close and terminate functions to the mock application object. Fixed for trunk and branch_1_5_x with r28535.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27641</commentid>
+            <who name="Nick T">Nicholas.Tindall</who>
+            <bug_when>2011-11-28 01:04:00 +0100</bug_when>
+            <thetext>*** Bug 5822 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36792</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:11 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

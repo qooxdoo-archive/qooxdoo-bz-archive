@@ -1,0 +1,88 @@
+<bug>
+          <bug_id>5669</bug_id>
+          
+          <creation_ts>2011-09-30 11:58:00 +0200</creation_ts>
+          <short_desc>Error in qx.data.store.Json: this._marshaler is null</short_desc>
+          <delta_ts>2011-12-20 09:00:30 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>27071</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-09-30 11:58:05 +0200</bug_when>
+            <thetext>Our error logging database contains the following error:
+  this._marshaler is null (in qx.data.store.Json._onSuccess)
+
+I am currently not able to reproduce this error, but I assume that this error is caused by the following sequence:
+- a component (popup/form/...) uses the json store to load some data
+- the json store calls a backend service, the backend service requires some
+  seconds to return the response
+- the user closes the component (popup/form/...) before the backend was
+  able to return the request, therefore the json store gets disposed
+- the backend returns the request.
+  Then the callback method &quot;_onSuccess&quot; of the json store is called.
+  This _onSuccess method accesses the property this._marshaler,
+  but this property has been set to null by the dispose method
+  This results in the error &quot;this._marshaler is null&quot;.
+
+I see two different ways to solve this issue:
+A) The following lines of code could be added to the top of the method
+   _onSuccess :
+     if( this._isDisposed() ) {
+       return
+     }
+B) The Json store should have an instance variable that contains all currently running requests. This instance variable has to be filled by the method _createRequst. The dispose method of the json store then has to abort and dispose all running requests.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27089</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-10-04 14:54:00 +0200</bug_when>
+            <thetext>Thanks for the report. I will check that asap.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27510</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-11-14 09:34:13 +0100</bug_when>
+            <thetext>Thanks for the good report Uwe. After some checks, I added the solutions you proposed as A). That seems to be the most solid solution. Additionally, checked that the store disposes its requests properly.
+
+master: 2f7344e9c8a1acf9d8bc274b5a63867bbab573fc
+1.5.x: 9c8b1ea9fcbf09e1b8c2766a779b655db39749f3</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

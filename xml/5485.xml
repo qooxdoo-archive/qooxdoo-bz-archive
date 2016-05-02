@@ -1,0 +1,95 @@
+<bug>
+          <bug_id>5485</bug_id>
+          
+          <creation_ts>2011-08-05 09:35:00 +0200</creation_ts>
+          <short_desc>&quot;success&quot; phase appears before &quot;abort&quot;</short_desc>
+          <delta_ts>2011-10-17 07:11:28 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://goo.gl/rZGdN</bug_file_loc>
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Nick T">Nicholas.Tindall</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26400</commentid>
+            <who name="Nick T">Nicholas.Tindall</who>
+            <bug_when>2011-08-05 09:35:08 +0200</bug_when>
+            <thetext>The documentation for the &quot;getPhase&quot; method says:
+
+When the requests is successful, it progresses the states:
+‘unsent’, ‘opened’, ‘sent’, ‘loading’, ‘load’, ‘success’
+In case of failure, the final state is one of:
+‘abort’, ‘timeout’, ‘statusError’
+
+The way I read that I would be expecting an aborted request to go through the following phases (or similar):
+
+&quot;unsent&quot;, &quot;opened&quot;, &quot;sent&quot;, &quot;loading&quot;, &quot;abort&quot;
+
+But what I&#39;ve noticed is the following sequence: 
+
+000605 playground.Application[472-0]: Phase is: opened
+000605 playground.Application[472-0]: Phase is: sent
+000612 playground.Application[472-0]: Phase is: load
+000612 playground.Application[472-0]: Phase is: success
+000612 playground.Application[472-0]: Phase is: abort
+
+See the attached playground example for a demonstration.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26401</commentid>
+            <who name="Nick T">Nicholas.Tindall</who>
+            <bug_when>2011-08-05 09:36:04 +0200</bug_when>
+            <thetext>I have observed this behaviour in Chrome 13 and Firefox 5</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26619</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-08-30 10:34:27 +0200</bug_when>
+            <thetext>Many thanks for bringing this up. Its related to the fact that phases offer a different perspective of the requests state. Phases are not specified in XHR and there is no 1-1 mapping of transport events (think of readyState changes) to phase events.
+
+XHR, abort when…:
+&quot;readyState=OPENED with send flag&quot;, results in &quot;readyState=DONE&quot; -&gt; &quot;abort&quot; -&gt; &quot;loadend&quot;
+&quot;loading&quot;, results in &quot;readyState=DONE&quot; -&gt; &quot;abort&quot; -&gt; &quot;loadend&quot;
+
+I hope the solution I came up with is &quot;the least surprise&quot; from the point of the user.
+
+Phases, abort when…:
+&quot;sent&quot;, final phase is &quot;abort&quot;
+&quot;loading&quot;, final phase is &quot;abort&quot;
+
+Fixed with r28562 on trunk and r28561 on branch_1_5_x.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

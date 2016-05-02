@@ -1,0 +1,166 @@
+<bug>
+          <bug_id>1500</bug_id>
+          
+          <creation_ts>2008-10-22 15:32:00 +0200</creation_ts>
+          <short_desc>table layout gets mangled with hidden column unhiding</short_desc>
+          <delta_ts>2014-03-03 15:27:53 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.8.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>5950</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-10-22 15:32:50 +0200</bug_when>
+            <thetext>If columns are hidden and then, via the top-right menu, asked to be made visible, the resizing of columns gets mangled and columns are rendered on top of other columns.
+
+Given the following application, unhide column C to see the bug.  (Note that because of bug #1499, you&#39;ll need to first hide then unhide the column since it&#39;ll initially appear as checked in the visibility menu.)
+
+/*
+#require(qx.log.appender.Native)
+#require(qx.log.appender.Console)
+*/
+
+qx.Class.define(&quot;custom.Application&quot;,
+{
+  extend : qx.application.Standalone,
+
+  members :
+  {
+    main : function()
+    {
+      this.base(arguments);
+
+      qx.log.appender.Console;
+      qx.log.appender.Native;
+
+      var container = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+      this.getRoot().add(container, { edge : 10 });
+
+      var tableModel = new qx.ui.table.model.Simple();
+      tableModel.setColumns(
+        [
+          &quot;Column A&quot;,
+          &quot;Column B&quot;,
+          &quot;Column C&quot;,
+          &quot;Column D&quot;,
+          &quot;Column E&quot;,
+          &quot;Column F&quot;,
+          &quot;Column G&quot;
+        ]);
+
+      var custom =
+        {
+          tableColumnModel : function(obj)
+          {
+            return new qx.ui.table.columnmodel.Resize(obj);
+          }          
+        };
+
+      var table = new qx.ui.table.Table(tableModel, custom);
+      table.setMetaColumnCounts([ 1, -1 ]);
+
+      var tcm = table.getTableColumnModel();
+      var resizeBehavior = tcm.getBehavior();
+
+      resizeBehavior.set(0, { width:&quot;1*&quot;, minWidth:180  });
+      resizeBehavior.set(1, { width:50 });
+      resizeBehavior.set(2, { width:80 });
+      resizeBehavior.set(3, { width:170 });
+      resizeBehavior.set(4, { width:50 });
+      resizeBehavior.set(5, { width:170 });
+      resizeBehavior.set(6, { width:60 });
+
+      // Set columns hidden
+      tcm.setColumnVisible(2, false);
+      tcm.setColumnVisible(3, false);
+
+      container.add(table, { flex : 1 });
+
+      var data = [ ];
+      for (var row = 0; row &lt; 10; row++)
+      {
+        var rowData = [ ];
+        for (var col = 0; col &lt;= 6; col++)
+        {
+          rowData.push(&quot;(&quot; + col + &quot;,&quot; + row + &quot;)&quot;);
+        }
+        data.push(rowData);
+      }
+      tableModel.setData(data);
+    }
+  }
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6922</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-12-15 15:54:20 +0100</bug_when>
+            <thetext>Fabian, please have a look and update bug attributes or reassign.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7182</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-12-18 11:54:15 +0100</bug_when>
+            <thetext>move open table bugs to 0.8.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7312</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-01-13 15:08:58 +0100</bug_when>
+            <thetext>fixed in rev. 17208.
+
+@Derrell:
+I had to add a call to &quot;this.__layout.invalidateChildrenCache();&quot; to tell the layout manager, that the children have changed. I suppose you need this in the progressive table as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7350</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-01-14 15:18:28 +0100</bug_when>
+            <thetext>Thanks, Fabian.  I don&#39;t believe this is necessary in Progressive&#39;s table since it doesn&#39;t have any facility for hiding columns.  Once rendered, Progressive&#39;s tables remain unaltered other than what a particular cell renderer might choose to do.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39617</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:53 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

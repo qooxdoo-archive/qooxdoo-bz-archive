@@ -1,0 +1,249 @@
+<bug>
+          <bug_id>4733</bug_id>
+          
+          <creation_ts>2011-03-04 01:10:00 +0100</creation_ts>
+          <short_desc>Nested parts creates circular dependencies</short_desc>
+          <delta_ts>2013-12-16 12:46:08 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>DUPLICATE</resolution>
+          <dup_id>4576</dup_id>
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>23059</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-03-04 01:10:26 +0100</bug_when>
+            <thetext>first the app has a boot part, then
+
+class A:
+...
+qx.io.PartLoader.require([&quot;partnameB&quot;], function()
+{
+  new classB();
+}, this);
+...
+
+class B:
+...
+qx.io.PartLoader.require([&quot;partnameC&quot;], function()
+{
+  new classC();
+}, this);
+...
+
+gives the output of parts boot, A, B, C:
+
+&gt;&gt;&gt; Generate source version...
+  - Processing translations for 21 locales 
+    - Package 0:  10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+    - Package 1:  10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+    - Package 2:  50% 100%
+    - Package 3:  10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+
+Why is package 2 50 -&gt; 100% ?
+
+then we add one more:
+
+class C:
+...
+qx.io.PartLoader.require([&quot;partnameD&quot;], function()
+{
+  new classD();
+}, this);
+...
+
+gives the output of parts boot, A, B, C, D:
+
+&gt;&gt;&gt; Generate source version...
+  - Processing translations for 21 locales 
+    - Package 0:  10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+    - Package 1:  10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+    - Package 2:  20% 50% 70% 100%
+    - Package 3:  10% 30% 50% 60% 80% 100%
+    - Package 4:  50% 100%
+    - Package 5:  20% 50% 70% 100%
+    - Package 6:  10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+
+Now we have one extra package 6 and different percentages of packages. Why is that?
+
+boot
+ I-----partnameA
+        I-----partnameB1
+        I      I-----partnameC
+        I             I-----partnameD
+        I-----partnameB2
+
+now we get 8 packages!!!!
+
+boot
+ I-----partnameA
+        I-----partnameB1
+        I      I-----partnameC1
+        I      I      I-----partnameD
+        I      I-----partnameC2
+        I-----partnameB2
+
+&gt;&gt;&gt; Generate source version...
+  - Processing translations for 21 locales 
+    - Package 0:  10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+    - Package 1:  10% 30% 50% 60% 80% 100%
+    - Package 2:  20% 40% 60% 80% 100%
+    - Package 3:  10% 30% 50% 60% 80% 100%
+    - Package 4:  10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+    - Package 5:  100%
+    - Package 6:  100%
+    - Package 7:  10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+    - Package 8:  30% 60% 100%
+    - Package 9:  50% 100%
+    - Package 10:  20% 50% 70% 100%
+    - Package 11:  100%
+    - Package 12:  100%
+    - Package 13:  100%
+
+now we get 13 packages instead of 7!!!!......6 too much!
+
+What is happening?
+
+the config.json:
+
+      &quot;packages&quot; :
+      {
+        &quot;loader-with-boot&quot; : false,
+        &quot;i18n-with-boot&quot; : false,
+        &quot;parts&quot; :
+        {
+          &quot;boot&quot;:
+          {
+            &quot;include&quot; : [&quot;${QXTHEME}&quot;, &quot;co.p.c.sup.con.Application&quot;]
+          }
+        },
+        &quot;sizes&quot; :
+        {
+          &quot;min-package&quot; : 1,
+          &quot;min-package-unshared&quot;  : 1
+        }
+      }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23064</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-04 08:55:29 +0100</bug_when>
+            <thetext>Thanks for the report Stefan. I am missing a bit the bug description. You start asking questions in the description but do not explain how to reproduce the bug. I also did not see any error message of the generator of circula dependencies. 
+
+Could you please give us some more infos on the circular dependencies issue?
+
+For your questions, please read the manual for the parts:
+http://manual.qooxdoo.org/1.3.x/pages/development/parts_using.html#motivation-and-background
+It should explain the difference between part and package which should answer most of your questions.
+
+Btw. setting the bug to P1, blocker does not get the bug fixed faster. ;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23065</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-04 09:05:39 +0100</bug_when>
+            <thetext>Just two remarks:
+
+1) If you have 4 parts (boot, partnameB, partnameC, partnameD) you need to declare them in your config.json; your config.json only declares the boot part.
+
+2) Progress indication using percentages is, as the name implies, only an indication. The progress indication can only be updated between units of work, e.g. classes processed. If a package only consisted of 2 classes, then after the first you have done 50% of the whole package, and after the second 100%. So the progress indication reports: 50% 100% - See?! :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23075</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-03-04 15:50:28 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; Just two remarks:
+&gt; 
+&gt; 1) If you have 4 parts (boot, partnameB, partnameC, partnameD) you need to
+&gt; declare them in your config.json; your config.json only declares the boot part.
+
+We have, but what I attached before was just a minimum to explain the setup.
+
+But one relevant question here is:
+
+If you use &quot;extend&quot; to extend the job, with the boot part, with another file, which is &quot;include&quot;d before, with more parts. Does that affect the number of packages? Why more packages than parts? Load optimization?
+
+&gt; 2) Progress indication using percentages is, as the name implies, only an
+&gt; indication. The progress indication can only be updated between units of work,
+&gt; e.g. classes processed. If a package only consisted of 2 classes, then after
+&gt; the first you have done 50% of the whole package, and after the second 100%. So
+&gt; the progress indication reports: 50% 100% - See?! :)
+
+Then we understand that it is no source of error.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23076</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-03-04 15:59:55 +0100</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Thanks for the report Stefan. I am missing a bit the bug description. You start
+&gt; asking questions in the description but do not explain how to reproduce the
+&gt; bug. I also did not see any error message of the generator of circula
+&gt; dependencies. 
+&gt; 
+&gt; Could you please give us some more infos on the circular dependencies issue?
+&gt; 
+&gt; For your questions, please read the manual for the parts:
+&gt; http://manual.qooxdoo.org/1.3.x/pages/development/parts_using.html#motivation-and-background
+&gt; It should explain the difference between part and package which should answer
+&gt; most of your questions.
+&gt; 
+&gt; Btw. setting the bug to P1, blocker does not get the bug fixed faster. ;)
+
+THanks!
+
+Yes, we have read it before. It is clear to us what your definition is of parts and packages. But we had the circular dependencies. And we have tried to find the reason of it. But not until today, by manually removing the files of the cache, all works without circular dependencies. Now it works like a charm.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23078</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-04 17:09:35 +0100</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; packages? Why more packages than parts? Load optimization?
+
+For any given application you can have maximally 2 ** (#parts) -1 packages (before collapsing). So if you have 4 parts you can have 15, for 5 parts you can have 31 packages. This has to do with the grouping of classes according to the set of parts they are together used in.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23079</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-04 17:12:16 +0100</bug_when>
+            <thetext>Duplicate of bug#4576.
+
+*** This bug has been marked as a duplicate of bug 4576 ***</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

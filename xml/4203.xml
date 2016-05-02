@@ -1,0 +1,131 @@
+<bug>
+          <bug_id>4203</bug_id>
+          
+          <creation_ts>2010-10-19 14:22:00 +0200</creation_ts>
+          <short_desc>Re-Think Privates Optimization</short_desc>
+          <delta_ts>2014-03-03 08:47:48 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>1.2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          <cc>martin.wittemann</cc>
+    
+    <cc>qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20768</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-10-19 14:22:52 +0200</bug_when>
+            <thetext>The current private optimization of the generator which relies on variable 
+renaming has several issues.
+
+- Scope: It is *not* a class-local operation. No class can be private-optimized 
+on its own. This defeats any kind of atomicity, of operating on individual 
+classes independent of the greater scope of an application.
+
+- Rather, the current private optimization requires *perfect knowledge*: The 
+privates mapping of all classes that go into any particular build have to be 
+known at optimization time, either through calculating them immediately, or 
+memoizing them from previous builds. In short: Private optimization currently 
+works only on *entire applications*.
+
+- Size optimization: It is also only partly an optimization. It gains some 
+transfer size by using short replacements for private identifiers, but the 
+question is how relevant this gain is in the face of gzipping transfered files.
+
+- Quality assurance: The other, and maybe more prominent, aspect of private 
+optimization is that of an assertion. By turning private optimization on the 
+users gains a run-time assertion that no private members are used outside the 
+defining class. This goes more in the direction of other run-time assertions in 
+the framework that are actually turned off for the build version. The question 
+is if it should not be advertised as this, a quality assurance measure that is 
+turned off in the final version.
+
+- Usage: Big projects deliberately turn off privates optimization for their 
+production builds. For a code service that dynamically delivers pre-compiled 
+code to various clients, the current private optimization is not usable at all.
+
+- Bug#4148: The private optimization in its current form also defeats bug#4148, 
+which tries to make compile results string-identical (given identical code 
+input), which is a major requirement for effective change management in the 
+application life cycle (e.g. w.r.t. checksums, server updating, etc.). The 
+current implementation enumerates private identifiers over all classes, and 
+this enumeration depends on the state of the memoized mappings (i.e. the 
+private replacements in the previously compiled classes in the current 
+environment). Currently, bug#4148 can only be achieved when compiling with an 
+empty cache, or with private optimization turned off.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22950</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-02-24 17:12:00 +0100</bug_when>
+            <thetext>I couldn&#39;t find a good alternative to our current enumeration algorithm, if we 
+don&#39;t want to accept much longer replacement strings (see also 
+http://stackoverflow.com/questions/5094760/algorithm-to-map-strings-to-short-replacements). 
+ The current solution allows to encode around 140,000 strings with replacements 
+of at most 3 chars.
+
+So for the time being we have to deal with a global privates map that holds the 
+mappings of all classes&#39; privates to their replacement strings. This global 
+resource is shared by all tasks that do private optimization, within a process 
+and across multiple processes, be they concurrent or sequential in time. They 
+need to lookup existing mappings (so re-compiling an already optimized class 
+will re-use previously assigned keys; without the lookup you would always add 
+new entries with each compile); and they need to add new mappings for privates 
+that haven&#39;t been assigned yet.
+
+This global resource has to be used accordingly. Only one task can ever update 
+it, and all other tasks need to get the update with their next read. There are 
+various ways to achieve that. An elegant, but expensive way, would be a server 
+process that is reachable over a TCP socket. It keeps the privates map in 
+memory, and returns requests for a key with either the existing or a newly 
+created mapping. It needs to process requests sequenctially and would thus 
+function as a serializing lock for the privates map.
+
+A less elegant but more approachable solution is to have the privates map on 
+the file system, and using a file lock for synchronization. This is how it is 
+implemented now (in the context of bug#2008), using the compile cache. A task 
+needing a privates mapping has to lock the file, read it, make the lookup, 
+create a new mapping if needed, and writes the potentially modified map back to 
+disk, then releasing the lock.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36031</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:47:48 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

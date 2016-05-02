@@ -1,0 +1,132 @@
+<bug>
+          <bug_id>8867</bug_id>
+          
+          <creation_ts>2015-01-13 13:40:00 +0100</creation_ts>
+          <short_desc>Wrong calculation of widget dimension (width) in a flex layout</short_desc>
+          <delta_ts>2015-01-14 13:31:54 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.layout</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.1.1</target_milestone>
+          
+          
+          
+          
+          <reporter name="Daniel">qooxdoo</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>42167</commentid>
+            <who name="Daniel">qooxdoo</who>
+            <bug_when>2015-01-13 13:40:22 +0100</bug_when>
+            <thetext>Example:
+Container (width: 400px; HBox: 0px) includes 10 widgets with a flex value of 1.
+Every widget gets a calculated with of 40px.
+
+Remove one widget and change the last flex value of the remaining widget to 2, I expect for the first 8 widgets a calculated width of 40px and the last one 80px.
+The result is 41px/42px and 71px. 
+
+Playground Example:
+// Document is the application root
+var doc = this.getRoot();
+
+var container = new qx.ui.container.Composite(new qx.ui.layout.HBox(0)).set({
+  width: 400,
+  height: 100
+});
+var containerInfos = new qx.ui.container.Composite(new qx.ui.layout.HBox(0)).set({
+  width: 400,
+  height: 100
+});
+doc.add(container, { top: 20, left: 20 });
+doc.add(containerInfos, { top: 200, left: 20 });
+
+//var test = [[1,1,1,1,1,1,1,1,1,1]]; // works fine! all items have 40px width
+var test = [[1,1,1,1,1,1,1,1,2]]; // ???
+test.forEach(function (item) {
+    var filledSpace = true;
+    item.forEach(function (widths) {
+        var line = new qx.ui.core.Widget().set({
+            backgroundColor: (filledSpace) ? &#39;black&#39; : &#39;white&#39;
+        });
+        var widthInfo = new qx.ui.basic.Label(&#39;0px&#39;).set({ allowGrowX: true });
+        
+        line.addListener(&#39;resize&#39;,function(event){
+          widthInfo.setValue(event.getData().width + &#39;px&#39;);
+        },this);
+        
+        container.add(line, { flex: widths });
+        containerInfos.add(widthInfo, { flex: widths });
+        filledSpace = !filledSpace;
+    }, this);
+}, this);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42175</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-01-14 09:21:30 +0100</bug_when>
+            <thetext>I just checked your sample and and some manual pages and found an interesting spot which explains the whole thing a bit: 
+
+First all children are positioned using their regular size hints. If after this step the combined size of the children is larger or smaller than the available size the flex value defines by how much each widget is stretched or shrunken. [1]
+
+This means the flex algorithm takes the given sizes into account which is in this case a default width of 100px. Having that in mind, the original rendering should be 900px wide and the flex algorithm shrinks the widgets.
+I did not dig too deep into it so I can’t tell you more details on how and why it ends up in that result. But having that in mind, it is easy to fix as you can simply set the width of each widget to 0 to get your desired result: http://tinyurl.com/osemgp5
+
+[1] http://manual.qooxdoo.org/current/pages/desktop/ui_layouting.html#flex</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42178</commentid>
+            <who name="Daniel">qooxdoo</who>
+            <bug_when>2015-01-14 13:31:54 +0100</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; I just checked your sample and and some manual pages and found an interesting
+&gt; spot which explains the whole thing a bit: 
+&gt; 
+&gt; First all children are positioned using their regular size hints. If after this
+&gt; step the combined size of the children is larger or smaller than the available
+&gt; size the flex value defines by how much each widget is stretched or shrunken.
+&gt; [1]
+&gt; 
+&gt; This means the flex algorithm takes the given sizes into account which is in
+&gt; this case a default width of 100px. Having that in mind, the original rendering
+&gt; should be 900px wide and the flex algorithm shrinks the widgets.
+&gt; I did not dig too deep into it so I can’t tell you more details on how and why
+&gt; it ends up in that result. But having that in mind, it is easy to fix as you
+&gt; can simply set the width of each widget to 0 to get your desired result:
+&gt; http://tinyurl.com/osemgp5
+&gt; 
+&gt; [1] http://manual.qooxdoo.org/current/pages/desktop/ui_layouting.html#flex
+
+Hi Martin,
+
+Pefect! - Thanks for your research and feedback.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

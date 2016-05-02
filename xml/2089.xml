@@ -1,0 +1,293 @@
+<bug>
+          <bug_id>2089</bug_id>
+          
+          <creation_ts>2009-03-10 16:35:00 +0100</creation_ts>
+          <short_desc>Verify and document focus handling</short_desc>
+          <delta_ts>2014-03-03 15:22:12 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          <dependson>2040</dependson>
+    
+    <dependson>2084</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Fabian Jakobs">fabian.jakobs</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          <cc>info</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>8485</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-10 16:35:15 +0100</bug_when>
+            <thetext>Focus (and blur) handling is a concept, which doesn&#39;t play well with the queueing infrastructure in qooxdoo. We need to document the expected behavior and verify that it is actually working that way. The related methods capture, releaseCapture, activate, deactivate are less critical since they are implemented directly in qooxdoo code and don&#39;t rely on native browser behavior.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8493</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-10 19:30:23 +0100</bug_when>
+            <thetext>One question regarding focus handling is how to handle hidden or excluded widgets. I&#39;ve done some low level DOM tests to see how the browser handles these cases:
+
+Focus of hidden elements
+
+- If the element is not in the DOM nothing happens (the &#39;focus()&#39; call has no effect)
+- If the element is inserted into the DOM but has &quot;display:none&quot; or &quot;visibility:hidden&quot; focus() has no effect in WebKit and results in a blur of the currently focused element in Firefox
+
+Focus of visible elements
+
+-  focus event on the element and blur event on the previously focused element
+- if the focused element is removed from the DOM the elements receives a blur event
+- if the focused element is set to &quot;display:none&quot; or &quot;visibility:hidden&quot; the focus remains on the element and key events are still dispatched on the hidden element
+
+
+I think in qooxdoo we should try to mimic the WebKit behavior.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8540</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-11 20:02:20 +0100</bug_when>
+            <thetext>This is how focus handling in qooxdoo is supposed to work:
+
+1. Focus is always applied after the element flush
+2. If the element to be focused is not visible after the flush, the call will be ignored
+3. If the focused element will become invisible after the flush, the element will be &quot;blured&quot;
+
+Invisible means either
+ - removed from the widget tree
+ - excluded
+ - hidden
+ 
+Active/Inactive capture/releaseCapture are handled respectively.
+
+There are unit tests to verify this behavior. A visual interactive version of the unit test can be found in the contrib bug directory (qooxdoo-contrib/Bugs/2089/gui).
+
+Fixed in rev. 18405</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8541</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-03-12 09:40:47 +0100</bug_when>
+            <thetext>The changes applied to:
+qx/event/handler/Focus.js  
+
+may be problematic because they always do focus() events asyncronously. This way elements may be focused in the wrong order. Some code in the FocusHandler is designed that it need to be executed in the order so these changes might break code where some element needs to be focused and then another element is activated. Through the lazy-execution in IE this will not work in IE anymore as focus() also modifies the active element.
+
+The argumentation for this switch &quot;IE sometimes ignores newly created elements&quot; is also not as good as it need to be. Would be interested what test case exactly has issues here. And also if there isn&#39;t any other way to fix this.
+
+Otherwise the idea of ignoring focus (and other actions) on non-visible (after flush) elements is good.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8542</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-03-12 09:44:23 +0100</bug_when>
+            <thetext>Another thing which is problematic is the code added to qx/html/Element.js as here some thing like blur() or deactivate() are called manually which means that internally some other (fallback) element has to be focused.
+
+Previously the order when focusing another element was:
+
+blur:element1 -&gt; focus:element2
+
+now it may be
+
+blur:element1 -&gt; focus:body -&gt; blur:body -&gt; focus:element2
+
+The solution is to not call &quot;blur()&quot; ourself when some other element is registered for being focused on this flush. This applies to the other actions as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8551</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-12 13:57:11 +0100</bug_when>
+            <thetext>You can checkout the test code from qooxdoo-contrib/Bugs/2089. If you click the reset button several times the input field will have the focus indicator but it is not active. What happens here is that a new input field is created, added to the widget tree and focused. This should absolutely word but it does not in IE without the timeout. I don&#39;t like the timeout as well but on the other hand does it fix the problem and I have not yet seen any issues with it. I would be glad if you are able to break it.
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8552</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-12 14:02:38 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; Another thing which is problematic is the code added to qx/html/Element.js as
+&gt; here some thing like blur() or deactivate() are called manually which means that
+&gt; internally some other (fallback) element has to be focused.
+
+Well but then it is a bug in the FocusHandler. If I call blur on the focused element then no element should have the focus at all. Are you sure about this behavior? From reading the code it looks like it already does what you expect. I&#39;ll check that.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8554</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-03-12 14:32:58 +0100</bug_when>
+            <thetext>I do not talk about breaking the &quot;focus&quot;. I talk about breaking the &quot;activate&quot;. As &quot;focus&quot; is native and applied lazily is is applied after the &quot;activate&quot; even when it was called before by the application code. This is bad.
+
+I have never seen that this focus cases you mention do not work in IE as we have done such things in the API viewer since 0.8 (search panel) and it has never been a problem.
+
+At least it make no sense to change *all* focus events (and may break other stuff which relies on the old behavior) just because some of them do not work. It is really needed to do more detailed testing and evaluation here!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8555</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-03-12 14:34:26 +0100</bug_when>
+            <thetext>This issue in the FocusHandler is a native issue. It is not related to *our* code but to the browser behavior. In the browser everytime an element is focused when the window is in the foreground. Normally it auto-fallbacks to the document or body when calling blur.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8556</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-03-12 14:38:50 +0100</bug_when>
+            <thetext>May we are able to fix the IE issues when doing some kind of forced rendering through doing some &quot;elem.offsetWidth&quot; stuff before or something else. Just an idea. IE still has a flag named &quot;hasLayout&quot; which has some side effects like not being able to add alpha transparence when being falsey. Through adding a &quot;elem.style.zoom=1&quot; this can be fixed. Maybe this helps.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8565</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-12 15:49:58 +0100</bug_when>
+            <thetext>(In reply to comment #9)
+&gt; May we are able to fix the IE issues when doing some kind of forced rendering
+&gt; through doing some &quot;elem.offsetWidth&quot; stuff before or something else. Just an
+&gt; idea. IE still has a flag named &quot;hasLayout&quot; which has some side effects like not
+&gt; being able to add alpha transparence when being falsey. Through adding a
+&gt; &quot;elem.style.zoom=1&quot; this can be fixed. Maybe this helps.
+
+Thanks for the hint. I&#39;ll try both. I really want to get rid of the timeout.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8567</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-12 15:52:41 +0100</bug_when>
+            <thetext>(In reply to comment #8)
+&gt; This issue in the FocusHandler is a native issue. It is not related to *our*
+&gt; code but to the browser behavior. In the browser everytime an element is focused
+&gt; when the window is in the foreground. Normally it auto-fallbacks to the document
+&gt; or body when calling blur.
+
+Right I&#39;ve verified this. I don&#39;t think its a problem though because qx.html.Element is mainly used in widgets an the widget event sequence is as we expect it. The alternative is to let the browser handle this stuff again, but this results to very different behaviours.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8619</commentid>
+            <who name="Mr. Hericus">mrh</who>
+            <bug_when>2009-03-13 21:34:37 +0100</bug_when>
+            <thetext>I&#39;d like to suggest another small patch to qx.html.Element.js.  This also has to do with bug# 2040, 2012, and the others involved here.
+
+I have an application where I&#39;ve added &quot;close&quot; buttons to the tabs in the tabviewer.  When I click on the close button, I remove the tab page from the tab viewer and proceed to dispose() of the tab page, which chains down to the tab button, and the items on the tab button.
+
+I consistently get a null object error that comes from Element.flush() on line 260 (version 18334).  The error does not occur as I am calling the dispose() method on the tab page, but only after I leave the event handler method that was invoked by the user pressing the &quot;close&quot; button on the tab.
+
+I&#39;ve changed the code there to this:
+
+        if(obj.__element){
+        	obj.__element.style.display = obj.__visible ? &quot;&quot; : &quot;none&quot;;
+        }
+
+and the error is successfully avoided in all of my tests.  Tabs dispose properly, and everything is cleaned up.  
+
+Here&#39;s the stack trace I get without the above change:
+
+obj.__element is null
+flush()()Element.js (line 260)
+flush()()Manager.js (line 127)
+dispatchEvent()(Window index.html, qx.event.type.Data[z] $$hash=z _type=useraction _target=window, &quot;useraction&quot;)Direct.js (line 99)
+wrappedFunction()Interface.js (line 422)
+dispatchEvent()(Window index.html, qx.event.type.Data[z] $$hash=z _type=useraction _target=window)Manager.js (line 797)
+fireEvent()(Window index.html, &quot;useraction&quot;, function(), [&quot;click&quot; 0=click])Registration.js (line 294)
+__fireEvent()(click clientX=80, clientY=101, &quot;click&quot;, div)Mouse.js (line 185)
+_onButtonEvent()(click clientX=80, clientY=101)Mouse.js (line 362)
+(?)()(click clientX=80, clientY=101)Function.js (line 383)
+[Break on this error] obj.__element.style.display = obj.__visible ? &quot;&quot; : &quot;none&quot;;
+
+This is on Windows XP with FireFox 3.0.7.
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8620</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-03-16 09:05:42 +0100</bug_when>
+            <thetext>@Mr. Hericus: Thanks for the report, but this is definitely another issue. I would think that this should be fixed in another way as well. The issue is that the element - even if already disposed (or not yet created) is added to the visibility list. There is the error. Maybe you can open a separate bug report for this. Thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8622</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-16 10:31:10 +0100</bug_when>
+            <thetext>@Mr. Hericus:
+
+To get rid of widgets better use the &quot;destroy&quot; method instead of &quot;dispose&quot;. &quot;dispose&quot; immediately cleans up the widget, which conflicts with the queueing architecture of qooxdoo. &quot;Destroy&quot; on the other hand marks the widget as disposable and disposes it AFTER all widget queues have been flushed. I&#39;m interested if you get the same errors with &quot;destroy&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8693</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-18 11:03:54 +0100</bug_when>
+            <thetext>(In reply to comment #9)
+&gt; May we are able to fix the IE issues when doing some kind of forced rendering
+&gt; through doing some &quot;elem.offsetWidth&quot; stuff before or something else. Just an
+&gt; idea. IE still has a flag named &quot;hasLayout&quot; which has some side effects like not
+&gt; being able to add alpha transparence when being falsey. Through adding a
+&gt; &quot;elem.style.zoom=1&quot; this can be fixed. Maybe this helps.
+
+I&#39;ve tested both but neither of them works. The element on which focus is called is in the DOM and has a layout &#39;hasLayout == true&#39;. The offsetWidth trick didn&#39;t work either. Only with the timeout the element is focused in my test.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8694</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-18 11:23:44 +0100</bug_when>
+            <thetext>Listening to the native &quot;focusin&quot; and &quot;focusout&quot; events reveals that without the timeout the body element is focused instead of the input.
+
+For the time being I&#39;ll leave the timeout in place. Please open the bug if you have reproducible test cases, where this is a problem.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8719</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-03-18 16:51:04 +0100</bug_when>
+            <thetext>Have not enough time to build a demo but in my opinion this should not work in IE with the current implementation:
+
+element1.focus();
+element2.activate();
+
+where both elements are not yet created. The focus() also influences the activation in browsers (which perfectly make sense when calling this native method). In this case the focus will be applied, after the timeout, and activates the wrong element: element1 instead of element2. 
+
+This also means that the event which are fired are in the wrong order and doing the wrong thing: The wrong activeElement is configured after the flush.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8722</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-18 17:19:52 +0100</bug_when>
+            <thetext>Sh####t. You are right these timeouts make the whole focus/blur issue non deterministic. Maybe my case is so rare that it doesn&#39;t matter too much. I&#39;ve removed the timeouts again. Maybe someone comes up with a clever trick to fix this. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8728</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-18 18:09:56 +0100</bug_when>
+            <thetext>The IE issue remains but there seems to be no obvious fix now. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37588</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:12 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

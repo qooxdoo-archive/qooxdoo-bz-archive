@@ -1,0 +1,150 @@
+<bug>
+          <bug_id>3607</bug_id>
+          
+          <creation_ts>2010-04-22 16:33:00 +0200</creation_ts>
+          <short_desc>renderLayout throws an exception if one of its childs is already disposed</short_desc>
+          <delta_ts>2010-04-28 08:15:31 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>blocker</bug_severity>
+          <target_milestone>1.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Michael Haitz">michael.haitz</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>17936</commentid>
+            <who name="Michael Haitz">michael.haitz</who>
+            <bug_when>2010-04-22 16:33:48 +0200</bug_when>
+            <thetext>this happens if a popup/window was shown (will be added automaticly to root) and disposed after usage. After some layout changes, renderLayout (with parent is root) was triggered and throws an exception because of his disposed child.
+
+how to fix?
+
+add the following lines to qx.ui.core.LayoutItem#destruct
+
+    if (this.$$parent) {
+      this.$$parent.remove(this);
+    }
+
+
+playground demo will be added as soon as possible.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17937</commentid>
+            <who name="Matthias Hellriegel">Matthias.Hellriegel</who>
+            <bug_when>2010-04-22 16:36:33 +0200</bug_when>
+            <thetext>Playground-Example:
+
+// Create a button
+var button1 = new qx.ui.form.Button(&quot;First Button&quot;, &quot;icon/22/apps/internet-web-browser.png&quot;);
+var button2 = new qx.ui.form.Button(&quot;Sec Button&quot;, &quot;icon/22/apps/internet-web-browser.png&quot;);
+
+// Document is the application root
+var doc = this.getRoot();
+
+// Add button to document at fixed coordinates
+doc.add(button1,
+{
+  left : 100,
+  top  : 50
+});
+doc.add(button2,
+{
+  left : 100,
+  top  : 100
+});
+
+
+var popup = new qx.ui.popup.Popup(new qx.ui.layout.Basic()).set({
+        autoHide    : false,
+  width : 200,
+  height: 200
+      });
+
+
+
+// Add an event listener
+button1.addListener(&quot;mouseup&quot;, function(e)
+{
+  popup.placeToMouse(e);
+  popup.show();
+});
+
+button2.addListener(&quot;execute&quot;, function(e)
+{
+  popup.hide();
+  popup.dispose();
+})
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17949</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-04-22 18:14:36 +0200</bug_when>
+            <thetext>To Martin.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17955</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-23 10:26:19 +0200</bug_when>
+            <thetext>Sounds like something we should include in the upcomming relese.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17956</commentid>
+            <who name="Michael Haitz">michael.haitz</who>
+            <bug_when>2010-04-23 10:58:50 +0200</bug_when>
+            <thetext>be carefull with the fix from #1. This fix only works if qx.ui.core.MChildrenHandling is included.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17958</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-23 12:12:43 +0200</bug_when>
+            <thetext>The fix dosn&#39;t work. I&#39;ll check what&#39;s the reason for this and fix it ASAP.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17959</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-23 12:51:14 +0200</bug_when>
+            <thetext>I took a deeper look at the bug and the problem is the combination of the hide and dispose.
+The hide method adds the widget to the visibility queue of qx.html.Element which is invokes async (!!!). After adding the widget to the queue, the next line diposes the widget. Some time later, as I said async, the queue will be flushed and fails because a disposed widget is in the queue.
+I as this scenario can happen all the time, I implemented an ignoring of disposed objects in the visibility queue. 
+Fixed with r22017 for 1.0.x and r22016 for trunk.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18055</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-28 08:15:31 +0200</bug_when>
+            <thetext>CLOSED</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

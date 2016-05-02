@@ -1,0 +1,107 @@
+<bug>
+          <bug_id>8767</bug_id>
+          
+          <creation_ts>2014-12-02 17:12:00 +0100</creation_ts>
+          <short_desc>Allow arrays as request data on qx.io.AbstractRequest</short_desc>
+          <delta_ts>2014-12-19 10:21:38 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>5.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mustafa Sak">mustafa.sak</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>41805</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-12-02 17:12:18 +0100</bug_when>
+            <thetext>Currently the check of the property &quot;requestData&quot; in qx.io.AbstractRequest does not allow arrays. 
+
+IMHO I don&#39;t see a reason for this restriction.
+
+Recommend to allow arrays, anyway.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41806</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-12-02 17:18:49 +0100</bug_when>
+            <thetext>
+
+
+Committed into:
+master : 547985d6cc4ee176f1a8ba6f608a139c612b368c
+branch_4_0_1 : ca91c427d30c5d6ada49d96d53d11d60e1820155</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41807</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-12-02 17:21:26 +0100</bug_when>
+            <thetext>Hi Richard
+
+The check function validates arrays right now, but I guess its worth to rethink about the check anyway. Currently it allows strings, objects, arrays and function (qx.core.Object); makes this function sense anymore?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41809</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-12-03 09:24:47 +0100</bug_when>
+            <thetext>This fix should also be applied to the next repo, if necessary.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42032</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-12-18 20:29:57 +0100</bug_when>
+            <thetext>This is about &quot;Fault tolerance&quot; vs. &quot;Fail-fast&quot;.
+
+These checks are the topic of discussion:
+
+  requestData: {
+    check: function(value) {
+      return qx.lang.Type.isString(value) ||
+             qx.Class.isSubClassOf(value.constructor, qx.core.Object) ||
+             qx.lang.Type.isObject(value) ||
+             qx.lang.Type.isArray(value);
+    },
+    nullable: true
+  }
+
+The &quot;requestData&quot; is almost always processed by &quot;_serializeData()&quot;. This method tries to serialize the requestData as query-string or as JSON. There the same checks are applied and if &quot;requestData&quot; is nothing meaningful it returns null (wasn&#39;t yet the case - changed that now =&gt; 9a545b63).
+
+I prefer &quot;Fail-fast&quot; (i.e. keeping the property checks which result in a thrown Error) instead of transfering no data at all (i.e. removing the checks and quietly using null as serialized request data) because this leaves the developer puzzled.
+
+I could imagine to be even stricter and only allow native data types (string, array and object), which would remove the magical-processing which in case of a given object just transfers all properties of that object.
+
+But currently it&#39;s a WORKSFORME - the real flaw (accepting no arrays) was already fixed.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

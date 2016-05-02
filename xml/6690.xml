@@ -1,0 +1,138 @@
+<bug>
+          <bug_id>6690</bug_id>
+          
+          <creation_ts>2012-08-04 17:40:00 +0200</creation_ts>
+          <short_desc>generate.py build creates broken code</short_desc>
+          <delta_ts>2014-03-03 15:20:36 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>2.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="John Spackman">john.spackman</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>Oleg.Filippov</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30320</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2012-08-04 17:40:40 +0200</bug_when>
+            <thetext>This code will not run in the build version of an app:
+
+      var a = 1, b = 2, c = 3;
+      if (a == 1)
+    	  console.log(&quot;1&quot;);
+      else if (b == 2)
+    	  for (var i = 0; i &lt; 3; i++)
+    		  console.log(&quot;i=&quot; + i);
+      else
+    	  console.log(&quot;3&quot;);
+
+This is the generated code:
+
+  var a=1,b=2,c=3;if(a==1)console.log(m);else if(b==2)for(var i=0;i&lt;3;i++)console.log(f+i);;else console.log(d);;
+
+The extra semi-colon between the end of the for loop and the last else statement causes a syntax error.  The work around is to use {} braces around the middle if clause:
+
+      else if (b == 2) {
+    	  for (var i = 0; i &lt; 3; i++) 
+    		  console.log(&quot;i=&quot; + i);
+      } else
+
+Or disable all optimisation in config.json by settings let/OPTIMIZE to [].
+
+This happens on master with an empty cache and can be reproduced in a brand new create-application skeleton, just copy &amp; paste the sample code into Application.js</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30321</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-08-04 21:25:22 +0200</bug_when>
+            <thetext>Good one, thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30714</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-09-17 10:54:07 +0200</bug_when>
+            <thetext>*** Bug 6811 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31106</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2012-10-29 15:33:59 +0100</bug_when>
+            <thetext>I don&#39;t quite understand why this bug has been dropped to &quot;normal&quot; severity, or put back again - the bug silently breaks perfectly valid code that works fine during development (ie source builds) and because it only happens when the generator is obfuscating code it is difficult and time consuming to track down the code causing the problem.  
+
+I&#39;ve had to disable optimisations for nearly three months because of it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31111</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-10-29 16:22:59 +0100</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; I don&#39;t quite understand why this bug has been dropped to &quot;normal&quot; severity, or
+&gt; put back again -
+
+Because there is an easy workaround for it (using block syntax).
+
+&gt; 
+&gt; I&#39;ve had to disable optimisations for nearly three months because of it.
+
+I wouldn&#39;t do that. If you don&#39;t want to patch the source code, I would just replace double semis in the compile output.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31117</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2012-10-29 18:24:02 +0100</bug_when>
+            <thetext>Replace double semis?  Unless you mean I should fix the bug in the generator (I don&#39;t know python at all otherwise I would have done that &amp; submitted a pull request) then I still don&#39;t get it, sorry.  The bug is that brackets are silently removed and while the workaround is easy to implement it&#39;s difficult to track down where the workaround should be installed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31118</commentid>
+            <who name="Oleg Filippov">Oleg.Filippov</who>
+            <bug_when>2012-10-29 18:30:16 +0100</bug_when>
+            <thetext>Any new user who doesn&#39;t read this nice conversation and doesn&#39;t know about workarounds will try to make build and get the broken javascript file.
+This issue is absolute critical showstopper!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31119</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-10-29 23:00:12 +0100</bug_when>
+            <thetext>Fixed with
+
+f79d066 (master)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36953</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:36 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

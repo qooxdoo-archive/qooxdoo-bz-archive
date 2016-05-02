@@ -1,0 +1,171 @@
+<bug>
+          <bug_id>2259</bug_id>
+          
+          <creation_ts>2009-04-20 10:42:00 +0200</creation_ts>
+          <short_desc>Virtual: Accessing a Cell-Widget fails for a spanned col/row</short_desc>
+          <delta_ts>2014-03-03 15:24:50 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.virtual</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Fabian Jakobs">fabian.jakobs</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          <cc>mr</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9372</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-20 10:42:15 +0200</bug_when>
+            <thetext>Reported by Macel Ruff &lt;http://www.nabble.com/virtual-table-with-rowSpan%3A-Mouse-events-don%27t-reach-cell-widget-td23124905.html&gt;:
+
+Accessing a Cell-Widget fails for a spanned col/row:
+     var widget = this.widgetCellSpan.getCellWidget(e.getRow(),
+e.getColumn());
+   returns the Spacer.
+   How can I access my Atom at this place by row/column?
+   (my Atom Icon is visible and should exist).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9380</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-20 12:50:00 +0200</bug_when>
+            <thetext>The &quot;getCellWidget&quot; method is an internal method and not meant to be public. I have hidden it from the public API.
+
+In virtual widgets there is no one to one mapping of widgets to cells. The same widget could be used to render different cells. For this reason there will no replacement for the hidden method.
+
+fixed in rev. 18783</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9460</commentid>
+            <who name="Marcel Ruff">mr</who>
+            <bug_when>2009-04-22 12:16:56 +0200</bug_when>
+            <thetext>Please reconsider your decision with the removal of
+getCellWidget(e.getRow(), e.getColumn()) call.
+
+I think this method should remain available and be fixed.
+
+How should I apply an external event (from my messaging middleware)
+which for example changes the icon of the CellWidget?
+I need to maintain an own Hashtable for the currently used
+CellWidget to look it up.
+
+But this shouldn&#39;t be my task:
+Your Table-model knows it during it is displayed,
+but I don&#39;t know it. So it is natural that I can access it
+and change its text/icon/tooltip.
+
+Fabian:
+&quot;In virtual widgets there is no one to one mapping of widgets to cells. 
+The same widget could be used to render different cells. For this reason 
+there will no replacement for the hidden method.&quot;
+
+-&gt; If I access it by row/column to update the state it is perfectly 
+valid (and not in the pool) since Javascript is single threaded.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9474</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-22 14:13:47 +0200</bug_when>
+            <thetext>I see the use case for this function but we must be careful with the semantics. The function can only return a widget for a given cell if this cell is currently rendered. I think for your use case this would be OK.
+
+What about something like this:
+
+/**
+ * Returns the widget used to render the given cell. May return null if the cell isn&#39;t rendered
+ * currently
+ */
+getRenderedWidget : function(row, column) {
+
+}</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9478</commentid>
+            <who name="Marcel Ruff">mr</who>
+            <bug_when>2009-04-22 14:38:50 +0200</bug_when>
+            <thetext>Yes please, then I can remove my separate CellWidget Hashtable again.
+
+But isn&#39;t a cell always rendered in a virtual table?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9481</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-22 15:07:44 +0200</bug_when>
+            <thetext>That is the whole point of the virtual widgets. Only the visible cells plus are actually rendered. This way the virtual widgets scale very well for large amounts of data.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9485</commentid>
+            <who name="Marcel Ruff">mr</who>
+            <bug_when>2009-04-22 15:21:39 +0200</bug_when>
+            <thetext>I know, I run my tests with 20000 entries and it just scales beautifully!
+Your virtual table is similar to the approach on the iPhone (Picker Obective C), this also scales very well.
+
+About my question:
+  But isn&#39;t a cell always rendered in a virtual table?
+I meant: If you have a Cell in your library it is a visible one,
+unvisibles are released and never exist.
+Or do you cache/maintain some additional Cells outside of the visible/rendered area?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9702</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-27 17:15:49 +0200</bug_when>
+            <thetext>fixed in rev. 18916</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9788</commentid>
+            <who name="Marcel Ruff">mr</who>
+            <bug_when>2009-05-05 11:54:34 +0200</bug_when>
+            <thetext>Ok, works perfectly now, just note that the method name is:
+  this.widgetCellSpan.getRenderedCellWidget(row, column);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14483</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:14:53 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14892</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 22:09:43 +0100</bug_when>
+            <thetext>corrected wrong milestone (was 0.9, but was fixed for 0.8.3 already)
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38533</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:50 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

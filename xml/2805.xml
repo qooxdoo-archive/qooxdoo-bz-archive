@@ -1,0 +1,440 @@
+<bug>
+          <bug_id>2805</bug_id>
+          
+          <creation_ts>2009-09-16 16:18:00 +0200</creation_ts>
+          <short_desc>API Viewer generates invalid JSON and XML</short_desc>
+          <delta_ts>2014-03-03 15:24:23 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.apidata</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.0</target_milestone>
+          
+          <blocked>2777</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Helder Magalhães">helder.magalhaes</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          <cc>martin.wittemann</cc>
+    
+    <cc>thron7</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>12363</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-09-16 16:18:20 +0200</bug_when>
+            <thetext>Currently the qooxdoo build system is not generating valid JSON. For example, snippet taken from (generated) &#39;qx.core.Object.js&#39;:
+
+{type:&quot;class&quot;,attributes: [...]
+
+Trying to validate the file contents (using a validator such as JSONLint [1]) shows that:
+
+1. Attributes need to be surrounded with quotes (&quot;type&quot;, &quot;attributes&quot;, &quot;children&quot;);
+2. JSON special characters (such as tab) within the documentation need to be escaped (&#39;\t&#39; in the example); This is only noticed in the legacy branch, where the test descriptions are extracted from the HTML files.
+
+This somehow blocks bug 2777, in the sense that using a &quot;.json&quot; extension with invalid JSON is somehow a bad idea....
+
+Inspecting the python scripts, I&#39;ve also noticed that XML output is somehow broken:
+1. Not all XML entities [2] were being escaped (apostrophe was missing);
+2. Escaping was being deal with by differentiating attributes and other content (why?).
+
+Finally, I&#39;ve noticed that both trunk and legacy branch suffer from this issue (reason why I haven&#39;t set the &quot;Version&quot; nor &quot;Target Milestone&quot; properties).
+
+[1] http://www.jsonlint.com/
+[2] http://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references#Predefined_entities_in_XML</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12365</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-09-16 16:28:49 +0200</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; 2. JSON special characters (such as tab) within the documentation need to be
+&gt; escaped (&#39;\t&#39; in the example); This is only noticed in the legacy branch, where
+&gt; the test descriptions are extracted from the HTML files.
+
+A fix to workaround this issue is described in bug 2798 comment 0 (item 2).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12366</commentid>
+              <attachid>594</attachid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-09-16 16:42:22 +0200</bug_when>
+            <thetext>Created attachment 594
+Proposed fix for the trunk (0.8.x)
+
+Proposed fixes:
+* Properly escape JSON strings (missing characters);
+* Remove different processing for XML (attribute or not);
+* Properly escape XML strings (missing character);
+* Indenting fix.
+
+I&#39;m not very confident regarding the different processing made for XML (if attribute or not), so I&#39;d say this requires some testing and a deeper review. The JSON-related should be safe and were a bit tested by me (by generating API and crawling a bit through the documentation).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12367</commentid>
+              <attachid>595</attachid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-09-16 16:43:16 +0200</bug_when>
+            <thetext>Created attachment 595
+Proposed fix for the legacy branch (0.7.x)
+
+Changes are identical to the trunk version (see previous comment).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12368</commentid>
+              <attachid>596</attachid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-09-16 16:46:10 +0200</bug_when>
+            <thetext>Created attachment 596
+Proposed fix for the legacy branch (0.7.x) - properly marked as patch
+
+(Forgot to mark the previous attachment&#39;s content type as patch.: this attachment supersedes it.)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12452</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-21 11:37:11 +0200</bug_when>
+            <thetext>While valid JSON output (for API data, etc.) might be useful, it might not for typical configuration files (e.g. config.json). Wouldn&#39;t it be preferable to keep using standard JS object literal syntax for configs instead of a strict JSON format? Thomas, your suggestions?
+
+XML output should validate, though, but this is low-prio for such optional output.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12470</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-09-21 16:36:58 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; While valid JSON output (for API data, etc.) might be useful, it might not 
+for typical configuration files (e.g. config.json). Wouldn&#39;t it be preferable 
+to keep using standard JS object literal syntax for configs instead of a strict 
+JSON format? Thomas, your suggestions?
+
+I thought it should be the other way round: data as JS object literals, configs 
+as valid JSON!? At least that&#39;s how I understood you when we talked about 
+config syntax some time ago.
+
+As for data files, I&#39;m fine with both: JS OLS saves space by omitting quotes, 
+JSON would be more general (e.g. to apply standard tools on it, as in Helder&#39;s 
+case). I don&#39;t quite get Helder&#39;s motivation, though. What are you trying to 
+do, Helder?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12474</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-21 16:52:27 +0200</bug_when>
+            <thetext>Thomas, thanks for asking, I indeed forgot that the JSON config files are valid, i.e. strict JSON, sorry. So for the config files, all is well already. Given the supposedly non-negligible increase in size (numbers?), I could image we&#39;d be pragmatic here and continue to keep the api data as JS file. Anyone would currently need this data as valid JSON?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12501</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-09-21 19:55:39 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; I don&#39;t quite get Helder&#39;s motivation, though. What are you trying to 
+&gt; do, Helder?
+
+No big deal, I just stumbled across the invalid JSON while trying to debug what turned to be a Firefox bug...
+
+
+(In reply to comment #7)
+&gt; Given the supposedly non-negligible increase in size (numbers?)
+
+Yes, some numbers to support that would be good. I don&#39;t think the increase is that bad, and it should make a difference whenever native JSON (bug 1400) is enabled. ;-)
+
+
+&gt; Anyone
+&gt; would currently need this data as valid JSON?
+
+No.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15143</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-12-01 15:25:32 +0100</bug_when>
+            <thetext>As for numbers: 
+We currently have around 166,000 (unquoted) keys in the api data. So quoting 
+these would result in around 330KB size increase. As the current total size of 
+api data is around 5.5MB, that&#39;s not too much (about 6%).
+
+I&#39;m assigning this to Daniel as he is working on the link checking of the api 
+data, and prob. needs this bug fixed as a prereq.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15281</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-12-04 09:37:39 +0100</bug_when>
+            <thetext>Yes, I actually started working on that before I knew this bug existed. I took a different approach compared to Helder&#39;s patch in that I added methods to api.py and tree.py that return the API data as Python structures. The ApiLoader then just uses simplejson.dumps() to JSONify them. That way we can add an option to use the old object literal output format in case someone really needs it.
+api.py and tree.py are committed in r20903, including Helder&#39;s indentation/escaping fixes. ApiLoader.py will follow as soon as we sort out the APIViewer, which fails to display the class doc contents since the switch to JSON.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15305</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-12-04 14:21:54 +0100</bug_when>
+            <thetext>Fixed in trunk r20908. Is there any demand to make this change in 0.7 as well? If so, please reopen this report.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15326</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-12-05 13:59:06 +0100</bug_when>
+            <thetext>(In reply to comment #10)
+&gt; api.py and tree.py are committed in r20903, including Helder&#39;s
+&gt; indentation/escaping fixes.
+
+Glad the patches were useful. :-)
+
+
+(In reply to comment #11)
+&gt; Fixed in trunk r20908. Is there any demand to make this change in 0.7 as well?
+&gt; If so, please reopen this report.
+
+Given that patches are available, I&#39;d say it could be done with little effort. Apart from that, this is not important in the legacy branch, at least for me: improving standards compliance is more important as we move on, and that&#39;s the trunk. ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38369</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:23 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>594</attachid>
+            <date>2009-09-16 16:42:00 +0200</date>
+            <delta_ts>2009-09-16 16:42:22 +0200</delta_ts>
+            <desc>Proposed fix for the trunk (0.8.x)</desc>
+            <filename>Qooxdoo-Bug2805-ProposedFix(Trunk0.8.x).patch</filename>
+            <type>text/plain</type>
+            <size>3319</size>
+            <attacher>helder.magalhaes</attacher>
+            
+              <data encoding="base64">SW5kZXg6IHRvb2wvcHlsaWIvZWNtYXNjcmlwdC9iYWNrZW5kL2FwaS5weQ0KPT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQ0K
+LS0tIHRvb2wvcHlsaWIvZWNtYXNjcmlwdC9iYWNrZW5kL2FwaS5weQkocmV2aXNpb24gMjAxMDUp
+DQorKysgdG9vbC9weWxpYi9lY21hc2NyaXB0L2JhY2tlbmQvYXBpLnB5CSh3b3JraW5nIGNvcHkp
+DQpAQCAtMTY5LDcgKzE2OSw3IEBADQogICAgICAgICAgICAgaGFuZGxlU3RhdGljcyh2YWx1ZUl0
+ZW0sIGNsYXNzTm9kZSkKIAogICAgICAgICBlbGlmIGtleSA9PSAicHJvcGVydGllcyI6Ci0gICAg
+ICAgIAloYW5kbGVQcm9wZXJ0aWVzKHZhbHVlSXRlbSwgY2xhc3NOb2RlKQorICAgICAgICAgICAg
+aGFuZGxlUHJvcGVydGllcyh2YWx1ZUl0ZW0sIGNsYXNzTm9kZSkKIAogICAgICAgICBlbGlmIGtl
+eSA9PSAibWVtYmVycyI6CiAgICAgICAgICAgICBoYW5kbGVNZW1iZXJzKHZhbHVlSXRlbSwgY2xh
+c3NOb2RlKQpAQCAtMTQxNiwxMyArMTQxNiwxMyBAQA0KIAogCiBkZWYgcGFja2FnZXNUb0pzb25T
+dHJpbmcobm9kZSwgcHJlZml4ID0gIiIsIGNoaWxkUHJlZml4ID0gIiAgIiwgbmV3TGluZT0iXG4i
+LCBlbmNvZGluZz0idXRmLTgiKToKLSAgICBhc1N0cmluZyA9IHByZWZpeCArICd7dHlwZToiJyAr
+IHRyZWUuZXNjYXBlSnNvbkNoYXJzKG5vZGUudHlwZSkgKyAnIicKKyAgICBhc1N0cmluZyA9IHBy
+ZWZpeCArICd7InR5cGUiOiInICsgdHJlZS5lc2NhcGVKc29uQ2hhcnMobm9kZS50eXBlKSArICci
+JwogCiAgICAgaWYgbm9kZS50eXBlID09ICJjbGFzcyI6CiAgICAgICAgIG5vZGUuc2V0KCJleHRl
+cm5hbFJlZiIsIFRydWUpCiAKICAgICBpZiBub2RlLmhhc0F0dHJpYnV0ZXMoKToKLSAgICAgICAg
+YXNTdHJpbmcgKz0gJyxhdHRyaWJ1dGVzOnsnCisgICAgICAgIGFzU3RyaW5nICs9ICcsImF0dHJp
+YnV0ZXMiOnsnCiAgICAgICAgIGZpcnN0QXR0cmlidXRlID0gVHJ1ZQogICAgICAgICBmb3Iga2V5
+IGluIG5vZGUuYXR0cmlidXRlczoKICAgICAgICAgICAgIGlmIG5vdCBmaXJzdEF0dHJpYnV0ZToK
+QEAgLTE0MzUsNyArMTQzNSw3IEBADQogICAgICAgICBub2RlLnJlbW92ZSgiZXh0ZXJuYWxSZWYi
+KQogCiAgICAgaWYgbm9kZS5oYXNDaGlsZHJlbigpIGFuZCBub2RlLnR5cGUgIT0gImNsYXNzIjoK
+LSAgICAgICAgYXNTdHJpbmcgKz0gJyxjaGlsZHJlbjpbJyArIG5ld0xpbmUKKyAgICAgICAgYXNT
+dHJpbmcgKz0gJywiY2hpbGRyZW4iOlsnICsgbmV3TGluZQogCiAgICAgICAgIGZpcnN0Q2hpbGQg
+PSBUcnVlCiAgICAgICAgIHByZWZpeCA9IHByZWZpeCArIGNoaWxkUHJlZml4CkluZGV4OiB0b29s
+L3B5bGliL2VjbWFzY3JpcHQvZnJvbnRlbmQvdHJlZS5weQ0KPT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQ0KLS0tIHRvb2wv
+cHlsaWIvZWNtYXNjcmlwdC9mcm9udGVuZC90cmVlLnB5CShyZXZpc2lvbiAyMDEwNSkNCisrKyB0
+b29sL3B5bGliL2VjbWFzY3JpcHQvZnJvbnRlbmQvdHJlZS5weQkod29ya2luZyBjb3B5KQ0KQEAg
+LTYyMCwxMCArNjIwLDEwIEBADQogCiAKIGRlZiBub2RlVG9Kc29uU3RyaW5nKG5vZGUsIHByZWZp
+eCA9ICIiLCBjaGlsZFByZWZpeCA9ICIgICIsIG5ld0xpbmU9IlxuIik6Ci0gICAgYXNTdHJpbmcg
+PSBwcmVmaXggKyAne3R5cGU6IicgKyBlc2NhcGVKc29uQ2hhcnMobm9kZS50eXBlKSArICciJwor
+ICAgIGFzU3RyaW5nID0gcHJlZml4ICsgJ3sidHlwZSI6IicgKyBlc2NhcGVKc29uQ2hhcnMobm9k
+ZS50eXBlKSArICciJwogCiAgICAgaWYgbm9kZS5oYXNBdHRyaWJ1dGVzKCk6Ci0gICAgICAgIGFz
+U3RyaW5nICs9ICcsYXR0cmlidXRlczp7JworICAgICAgICBhc1N0cmluZyArPSAnLCJhdHRyaWJ1
+dGVzIjp7JwogICAgICAgICBmaXJzdEF0dHJpYnV0ZSA9IFRydWUKICAgICAgICAgZm9yIGtleSBp
+biBub2RlLmF0dHJpYnV0ZXM6CiAgICAgICAgICAgICBpZiBub3QgZmlyc3RBdHRyaWJ1dGU6CkBA
+IC02MzMsNyArNjMzLDcgQEANCiAgICAgICAgIGFzU3RyaW5nICs9ICd9JwogCiAgICAgaWYgbm9k
+ZS5oYXNDaGlsZHJlbigpOgotICAgICAgICBhc1N0cmluZyArPSAnLGNoaWxkcmVuOlsnICsgbmV3
+TGluZQorICAgICAgICBhc1N0cmluZyArPSAnLCJjaGlsZHJlbiI6WycgKyBuZXdMaW5lCiAKICAg
+ICAgICAgZmlyc3RDaGlsZCA9IFRydWUKICAgICAgICAgcHJlZml4ID0gcHJlZml4ICsgY2hpbGRQ
+cmVmaXgKQEAgLTY1NCw5ICs2NTQsOCBAQA0KIAogZGVmIGVzY2FwZVhtbENoYXJzKHRleHQsIGlu
+QXR0cmlidXRlLCBlbmNvZGluZz0idXRmLTgiKToKICAgICBpZiBpc2luc3RhbmNlKHRleHQsIGJh
+c2VzdHJpbmcpOgotICAgICAgICB0ZXh0ID0gdGV4dC5yZXBsYWNlKCImIiwgIiZhbXA7IikucmVw
+bGFjZSgiPCIsICImbHQ7IikucmVwbGFjZSgiPiIsICImZ3Q7IikKLSAgICAgICAgaWYgaW5BdHRy
+aWJ1dGU6Ci0gICAgICAgICAgICB0ZXh0ID0gdGV4dC5yZXBsYWNlKCJcIiIsICImcXVvdDsiKQor
+ICAgICAgICAjIGh0dHA6Ly93d3cudzMub3JnL1RSL3htbC8jZHQtZXNjYXBlCisgICAgICAgIHRl
+eHQgPSB0ZXh0LnJlcGxhY2UoIlwiIiwgIiZxdW90OyIpLnJlcGxhY2UoIiciLCAiJmFwb3M7Iiku
+cmVwbGFjZSgiJiIsICImYW1wOyIpLnJlcGxhY2UoIjwiLCAiJmx0OyIpLnJlcGxhY2UoIj4iLCAi
+Jmd0OyIpCiAgICAgZWxpZiBpc2luc3RhbmNlKHRleHQsIGJvb2wpOgogICAgICAgICB0ZXh0ID0g
+c3RyKHRleHQpLmxvd2VyKCkKICAgICBlbHNlOgpAQCAtNjY3LDcgKzY2Niw4IEBADQogCiBkZWYg
+ZXNjYXBlSnNvbkNoYXJzKHRleHQpOgogICAgIGlmIGlzaW5zdGFuY2UodGV4dCwgYmFzZXN0cmlu
+Zyk6Ci0gICAgICAgIHRleHQgPSB0ZXh0LnJlcGxhY2UoJyInLCAnXFwiJykucmVwbGFjZSgnXG4n
+LCAnXFxuJykucmVwbGFjZSgnXHInLCAnXFxyJykKKyAgICAgICAgIyBodHRwOi8vdG9vbHMuaWV0
+Zi5vcmcvaHRtbC9yZmM0NjI3I3NlY3Rpb24tMi41CisgICAgICAgIHRleHQgPSB0ZXh0LnJlcGxh
+Y2UoJ1xcJywgJ1xcXFwnKS5yZXBsYWNlKCciJywgJ1xcIicpLnJlcGxhY2UoJ1xuJywgJ1xcbicp
+LnJlcGxhY2UoJ1xyJywgJ1xccicpLnJlcGxhY2UoJ1x0JywgJ1xcdCcpLnJlcGxhY2UoJ1xiJywg
+J1xcYicpLnJlcGxhY2UoJ1xmJywgJ1xcZicpLnJlcGxhY2UoJy8nLCAnXFwvJykKICAgICBlbGlm
+IGlzaW5zdGFuY2UodGV4dCwgYm9vbCk6CiAgICAgICAgIHRleHQgPSBzdHIodGV4dCkubG93ZXIo
+KQogICAgIGVsc2U6Cg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="1" ispatch="0" isprivate="0" isurl="0">
+            <attachid>595</attachid>
+            <date>2009-09-16 16:43:00 +0200</date>
+            <delta_ts>2009-09-16 16:46:10 +0200</delta_ts>
+            <desc>Proposed fix for the legacy branch (0.7.x)</desc>
+            <filename>Qooxdoo-Bug2805-ProposedFix(LegacyBranch0.7.x).patch</filename>
+            <type>text/x-diff</type>
+            <size>3376</size>
+            <attacher>helder.magalhaes</attacher>
+            
+              <data encoding="base64">SW5kZXg6IHFvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3JrL3Rvb2wvbW9kdWxlcy9hcGkucHkNCj09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT0NCi0tLSBxb294ZG9vL2Zyb250ZW5kL2ZyYW1ld29yay90b29sL21vZHVsZXMvYXBp
+LnB5CShyZXZpc2lvbiAyMDA5OSkNCisrKyBxb294ZG9vL2Zyb250ZW5kL2ZyYW1ld29yay90b29s
+L21vZHVsZXMvYXBpLnB5CSh3b3JraW5nIGNvcHkpDQpAQCAtMjE3LDcgKzIxNyw3IEBADQogICAg
+ICAgICAgICAgaGFuZGxlU3RhdGljcyh2YWx1ZUl0ZW0sIGNsYXNzTm9kZSkKIAogICAgICAgICBl
+bGlmIGtleSA9PSAicHJvcGVydGllcyI6Ci0gICAgICAgIAloYW5kbGVQcm9wZXJ0aWVzKHZhbHVl
+SXRlbSwgY2xhc3NOb2RlKQorICAgICAgICAgICAgaGFuZGxlUHJvcGVydGllcyh2YWx1ZUl0ZW0s
+IGNsYXNzTm9kZSkKIAogICAgICAgICBlbGlmIGtleSA9PSAibWVtYmVycyI6CiAgICAgICAgICAg
+ICBoYW5kbGVNZW1iZXJzKHZhbHVlSXRlbSwgY2xhc3NOb2RlKQpAQCAtMTcyNiwxMyArMTcyNiwx
+MyBAQA0KIAogCiBkZWYgcGFja2FnZXNUb0pzb25TdHJpbmcobm9kZSwgcHJlZml4ID0gIiIsIGNo
+aWxkUHJlZml4ID0gIiAgIiwgbmV3TGluZT0iXG4iLCBlbmNvZGluZz0idXRmLTgiKToKLSAgICBh
+c1N0cmluZyA9IHByZWZpeCArICd7dHlwZToiJyArIHRyZWUuZXNjYXBlSnNvbkNoYXJzKG5vZGUu
+dHlwZSkgKyAnIicKKyAgICBhc1N0cmluZyA9IHByZWZpeCArICd7InR5cGUiOiInICsgdHJlZS5l
+c2NhcGVKc29uQ2hhcnMobm9kZS50eXBlKSArICciJwogCiAgICAgaWYgbm9kZS50eXBlID09ICJj
+bGFzcyI6CiAgICAgICAgIG5vZGUuc2V0KCJleHRlcm5hbFJlZiIsIFRydWUpCiAKICAgICBpZiBu
+b2RlLmhhc0F0dHJpYnV0ZXMoKToKLSAgICAgICAgYXNTdHJpbmcgKz0gJyxhdHRyaWJ1dGVzOnsn
+CisgICAgICAgIGFzU3RyaW5nICs9ICcsImF0dHJpYnV0ZXMiOnsnCiAgICAgICAgIGZpcnN0QXR0
+cmlidXRlID0gVHJ1ZQogICAgICAgICBmb3Iga2V5IGluIG5vZGUuYXR0cmlidXRlczoKICAgICAg
+ICAgICAgIGlmIG5vdCBmaXJzdEF0dHJpYnV0ZToKQEAgLTE3NDUsNyArMTc0NSw3IEBADQogICAg
+ICAgICBub2RlLnJlbW92ZSgiZXh0ZXJuYWxSZWYiKQogCiAgICAgaWYgbm9kZS5oYXNDaGlsZHJl
+bigpIGFuZCBub2RlLnR5cGUgIT0gImNsYXNzIjoKLSAgICAgICAgYXNTdHJpbmcgKz0gJyxjaGls
+ZHJlbjpbJyArIG5ld0xpbmUKKyAgICAgICAgYXNTdHJpbmcgKz0gJywiY2hpbGRyZW4iOlsnICsg
+bmV3TGluZQogCiAgICAgICAgIGZpcnN0Q2hpbGQgPSBUcnVlCiAgICAgICAgIHByZWZpeCA9IHBy
+ZWZpeCArIGNoaWxkUHJlZml4CkluZGV4OiBxb294ZG9vL2Zyb250ZW5kL2ZyYW1ld29yay90b29s
+L21vZHVsZXMvdHJlZS5weQ0KPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PQ0KLS0tIHFvb3hkb28vZnJvbnRlbmQvZnJhbWV3
+b3JrL3Rvb2wvbW9kdWxlcy90cmVlLnB5CShyZXZpc2lvbiAyMDA5OSkNCisrKyBxb294ZG9vL2Zy
+b250ZW5kL2ZyYW1ld29yay90b29sL21vZHVsZXMvdHJlZS5weQkod29ya2luZyBjb3B5KQ0KQEAg
+LTYwMCwxMCArNjAwLDEwIEBADQogCiAKIGRlZiBub2RlVG9Kc29uU3RyaW5nKG5vZGUsIHByZWZp
+eCA9ICIiLCBjaGlsZFByZWZpeCA9ICIgICIsIG5ld0xpbmU9IlxuIik6Ci0gICAgYXNTdHJpbmcg
+PSBwcmVmaXggKyAne3R5cGU6IicgKyBlc2NhcGVKc29uQ2hhcnMobm9kZS50eXBlKSArICciJwor
+ICAgIGFzU3RyaW5nID0gcHJlZml4ICsgJ3sidHlwZSI6IicgKyBlc2NhcGVKc29uQ2hhcnMobm9k
+ZS50eXBlKSArICciJwogCiAgICAgaWYgbm9kZS5oYXNBdHRyaWJ1dGVzKCk6Ci0gICAgICAgIGFz
+U3RyaW5nICs9ICcsYXR0cmlidXRlczp7JworICAgICAgICBhc1N0cmluZyArPSAnLCJhdHRyaWJ1
+dGVzIjp7JwogICAgICAgICBmaXJzdEF0dHJpYnV0ZSA9IFRydWUKICAgICAgICAgZm9yIGtleSBp
+biBub2RlLmF0dHJpYnV0ZXM6CiAgICAgICAgICAgICBpZiBub3QgZmlyc3RBdHRyaWJ1dGU6CkBA
+IC02MTMsNyArNjEzLDcgQEANCiAgICAgICAgIGFzU3RyaW5nICs9ICd9JwogCiAgICAgaWYgbm9k
+ZS5oYXNDaGlsZHJlbigpOgotICAgICAgICBhc1N0cmluZyArPSAnLGNoaWxkcmVuOlsnICsgbmV3
+TGluZQorICAgICAgICBhc1N0cmluZyArPSAnLCJjaGlsZHJlbiI6WycgKyBuZXdMaW5lCiAKICAg
+ICAgICAgZmlyc3RDaGlsZCA9IFRydWUKICAgICAgICAgcHJlZml4ID0gcHJlZml4ICsgY2hpbGRQ
+cmVmaXgKQEAgLTcxMiw5ICs3MTIsOCBAQA0KIAogZGVmIGVzY2FwZVhtbENoYXJzKHRleHQsIGlu
+QXR0cmlidXRlLCBlbmNvZGluZz0idXRmLTgiKToKICAgICBpZiBpc2luc3RhbmNlKHRleHQsIGJh
+c2VzdHJpbmcpOgotICAgICAgICB0ZXh0ID0gdGV4dC5yZXBsYWNlKCImIiwgIiZhbXA7IikucmVw
+bGFjZSgiPCIsICImbHQ7IikucmVwbGFjZSgiPiIsICImZ3Q7IikKLSAgICAgICAgaWYgaW5BdHRy
+aWJ1dGU6Ci0gICAgICAgICAgICB0ZXh0ID0gdGV4dC5yZXBsYWNlKCJcIiIsICImcXVvdDsiKQor
+ICAgICAgICAjIGh0dHA6Ly93d3cudzMub3JnL1RSL3htbC8jZHQtZXNjYXBlCisgICAgICAgIHRl
+eHQgPSB0ZXh0LnJlcGxhY2UoIlwiIiwgIiZxdW90OyIpLnJlcGxhY2UoIiciLCAiJmFwb3M7Iiku
+cmVwbGFjZSgiJiIsICImYW1wOyIpLnJlcGxhY2UoIjwiLCAiJmx0OyIpLnJlcGxhY2UoIj4iLCAi
+Jmd0OyIpCiAgICAgZWxpZiBpc2luc3RhbmNlKHRleHQsIGJvb2wpOgogICAgICAgICB0ZXh0ID0g
+c3RyKHRleHQpLmxvd2VyKCkKICAgICBlbHNlOgpAQCAtNzI2LDcgKzcyNSw4IEBADQogCiBkZWYg
+ZXNjYXBlSnNvbkNoYXJzKHRleHQpOgogICAgIGlmIGlzaW5zdGFuY2UodGV4dCwgYmFzZXN0cmlu
+Zyk6Ci0gICAgICAgIHRleHQgPSB0ZXh0LnJlcGxhY2UoJyInLCAnXFwiJykucmVwbGFjZSgnXG4n
+LCAnXFxuJykucmVwbGFjZSgnXHInLCAnXFxyJykKKyAgICAgICAgIyBodHRwOi8vdG9vbHMuaWV0
+Zi5vcmcvaHRtbC9yZmM0NjI3I3NlY3Rpb24tMi41CisgICAgICAgIHRleHQgPSB0ZXh0LnJlcGxh
+Y2UoJ1xcJywgJ1xcXFwnKS5yZXBsYWNlKCciJywgJ1xcIicpLnJlcGxhY2UoJ1xuJywgJ1xcbicp
+LnJlcGxhY2UoJ1xyJywgJ1xccicpLnJlcGxhY2UoJ1x0JywgJ1xcdCcpLnJlcGxhY2UoJ1xiJywg
+J1xcYicpLnJlcGxhY2UoJ1xmJywgJ1xcZicpLnJlcGxhY2UoJy8nLCAnXFwvJykKICAgICBlbGlm
+IGlzaW5zdGFuY2UodGV4dCwgYm9vbCk6CiAgICAgICAgIHRleHQgPSBzdHIodGV4dCkubG93ZXIo
+KQogICAgIGVsc2U6Cg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>596</attachid>
+            <date>2009-09-16 16:46:00 +0200</date>
+            <delta_ts>2009-09-16 16:46:10 +0200</delta_ts>
+            <desc>Proposed fix for the legacy branch (0.7.x) - properly marked as patch</desc>
+            <filename>Qooxdoo-Bug2805-ProposedFix(LegacyBranch0.7.x).patch</filename>
+            <type>text/plain</type>
+            <size>3376</size>
+            <attacher>helder.magalhaes</attacher>
+            
+              <data encoding="base64">SW5kZXg6IHFvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3JrL3Rvb2wvbW9kdWxlcy9hcGkucHkNCj09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT0NCi0tLSBxb294ZG9vL2Zyb250ZW5kL2ZyYW1ld29yay90b29sL21vZHVsZXMvYXBp
+LnB5CShyZXZpc2lvbiAyMDA5OSkNCisrKyBxb294ZG9vL2Zyb250ZW5kL2ZyYW1ld29yay90b29s
+L21vZHVsZXMvYXBpLnB5CSh3b3JraW5nIGNvcHkpDQpAQCAtMjE3LDcgKzIxNyw3IEBADQogICAg
+ICAgICAgICAgaGFuZGxlU3RhdGljcyh2YWx1ZUl0ZW0sIGNsYXNzTm9kZSkKIAogICAgICAgICBl
+bGlmIGtleSA9PSAicHJvcGVydGllcyI6Ci0gICAgICAgIAloYW5kbGVQcm9wZXJ0aWVzKHZhbHVl
+SXRlbSwgY2xhc3NOb2RlKQorICAgICAgICAgICAgaGFuZGxlUHJvcGVydGllcyh2YWx1ZUl0ZW0s
+IGNsYXNzTm9kZSkKIAogICAgICAgICBlbGlmIGtleSA9PSAibWVtYmVycyI6CiAgICAgICAgICAg
+ICBoYW5kbGVNZW1iZXJzKHZhbHVlSXRlbSwgY2xhc3NOb2RlKQpAQCAtMTcyNiwxMyArMTcyNiwx
+MyBAQA0KIAogCiBkZWYgcGFja2FnZXNUb0pzb25TdHJpbmcobm9kZSwgcHJlZml4ID0gIiIsIGNo
+aWxkUHJlZml4ID0gIiAgIiwgbmV3TGluZT0iXG4iLCBlbmNvZGluZz0idXRmLTgiKToKLSAgICBh
+c1N0cmluZyA9IHByZWZpeCArICd7dHlwZToiJyArIHRyZWUuZXNjYXBlSnNvbkNoYXJzKG5vZGUu
+dHlwZSkgKyAnIicKKyAgICBhc1N0cmluZyA9IHByZWZpeCArICd7InR5cGUiOiInICsgdHJlZS5l
+c2NhcGVKc29uQ2hhcnMobm9kZS50eXBlKSArICciJwogCiAgICAgaWYgbm9kZS50eXBlID09ICJj
+bGFzcyI6CiAgICAgICAgIG5vZGUuc2V0KCJleHRlcm5hbFJlZiIsIFRydWUpCiAKICAgICBpZiBu
+b2RlLmhhc0F0dHJpYnV0ZXMoKToKLSAgICAgICAgYXNTdHJpbmcgKz0gJyxhdHRyaWJ1dGVzOnsn
+CisgICAgICAgIGFzU3RyaW5nICs9ICcsImF0dHJpYnV0ZXMiOnsnCiAgICAgICAgIGZpcnN0QXR0
+cmlidXRlID0gVHJ1ZQogICAgICAgICBmb3Iga2V5IGluIG5vZGUuYXR0cmlidXRlczoKICAgICAg
+ICAgICAgIGlmIG5vdCBmaXJzdEF0dHJpYnV0ZToKQEAgLTE3NDUsNyArMTc0NSw3IEBADQogICAg
+ICAgICBub2RlLnJlbW92ZSgiZXh0ZXJuYWxSZWYiKQogCiAgICAgaWYgbm9kZS5oYXNDaGlsZHJl
+bigpIGFuZCBub2RlLnR5cGUgIT0gImNsYXNzIjoKLSAgICAgICAgYXNTdHJpbmcgKz0gJyxjaGls
+ZHJlbjpbJyArIG5ld0xpbmUKKyAgICAgICAgYXNTdHJpbmcgKz0gJywiY2hpbGRyZW4iOlsnICsg
+bmV3TGluZQogCiAgICAgICAgIGZpcnN0Q2hpbGQgPSBUcnVlCiAgICAgICAgIHByZWZpeCA9IHBy
+ZWZpeCArIGNoaWxkUHJlZml4CkluZGV4OiBxb294ZG9vL2Zyb250ZW5kL2ZyYW1ld29yay90b29s
+L21vZHVsZXMvdHJlZS5weQ0KPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PQ0KLS0tIHFvb3hkb28vZnJvbnRlbmQvZnJhbWV3
+b3JrL3Rvb2wvbW9kdWxlcy90cmVlLnB5CShyZXZpc2lvbiAyMDA5OSkNCisrKyBxb294ZG9vL2Zy
+b250ZW5kL2ZyYW1ld29yay90b29sL21vZHVsZXMvdHJlZS5weQkod29ya2luZyBjb3B5KQ0KQEAg
+LTYwMCwxMCArNjAwLDEwIEBADQogCiAKIGRlZiBub2RlVG9Kc29uU3RyaW5nKG5vZGUsIHByZWZp
+eCA9ICIiLCBjaGlsZFByZWZpeCA9ICIgICIsIG5ld0xpbmU9IlxuIik6Ci0gICAgYXNTdHJpbmcg
+PSBwcmVmaXggKyAne3R5cGU6IicgKyBlc2NhcGVKc29uQ2hhcnMobm9kZS50eXBlKSArICciJwor
+ICAgIGFzU3RyaW5nID0gcHJlZml4ICsgJ3sidHlwZSI6IicgKyBlc2NhcGVKc29uQ2hhcnMobm9k
+ZS50eXBlKSArICciJwogCiAgICAgaWYgbm9kZS5oYXNBdHRyaWJ1dGVzKCk6Ci0gICAgICAgIGFz
+U3RyaW5nICs9ICcsYXR0cmlidXRlczp7JworICAgICAgICBhc1N0cmluZyArPSAnLCJhdHRyaWJ1
+dGVzIjp7JwogICAgICAgICBmaXJzdEF0dHJpYnV0ZSA9IFRydWUKICAgICAgICAgZm9yIGtleSBp
+biBub2RlLmF0dHJpYnV0ZXM6CiAgICAgICAgICAgICBpZiBub3QgZmlyc3RBdHRyaWJ1dGU6CkBA
+IC02MTMsNyArNjEzLDcgQEANCiAgICAgICAgIGFzU3RyaW5nICs9ICd9JwogCiAgICAgaWYgbm9k
+ZS5oYXNDaGlsZHJlbigpOgotICAgICAgICBhc1N0cmluZyArPSAnLGNoaWxkcmVuOlsnICsgbmV3
+TGluZQorICAgICAgICBhc1N0cmluZyArPSAnLCJjaGlsZHJlbiI6WycgKyBuZXdMaW5lCiAKICAg
+ICAgICAgZmlyc3RDaGlsZCA9IFRydWUKICAgICAgICAgcHJlZml4ID0gcHJlZml4ICsgY2hpbGRQ
+cmVmaXgKQEAgLTcxMiw5ICs3MTIsOCBAQA0KIAogZGVmIGVzY2FwZVhtbENoYXJzKHRleHQsIGlu
+QXR0cmlidXRlLCBlbmNvZGluZz0idXRmLTgiKToKICAgICBpZiBpc2luc3RhbmNlKHRleHQsIGJh
+c2VzdHJpbmcpOgotICAgICAgICB0ZXh0ID0gdGV4dC5yZXBsYWNlKCImIiwgIiZhbXA7IikucmVw
+bGFjZSgiPCIsICImbHQ7IikucmVwbGFjZSgiPiIsICImZ3Q7IikKLSAgICAgICAgaWYgaW5BdHRy
+aWJ1dGU6Ci0gICAgICAgICAgICB0ZXh0ID0gdGV4dC5yZXBsYWNlKCJcIiIsICImcXVvdDsiKQor
+ICAgICAgICAjIGh0dHA6Ly93d3cudzMub3JnL1RSL3htbC8jZHQtZXNjYXBlCisgICAgICAgIHRl
+eHQgPSB0ZXh0LnJlcGxhY2UoIlwiIiwgIiZxdW90OyIpLnJlcGxhY2UoIiciLCAiJmFwb3M7Iiku
+cmVwbGFjZSgiJiIsICImYW1wOyIpLnJlcGxhY2UoIjwiLCAiJmx0OyIpLnJlcGxhY2UoIj4iLCAi
+Jmd0OyIpCiAgICAgZWxpZiBpc2luc3RhbmNlKHRleHQsIGJvb2wpOgogICAgICAgICB0ZXh0ID0g
+c3RyKHRleHQpLmxvd2VyKCkKICAgICBlbHNlOgpAQCAtNzI2LDcgKzcyNSw4IEBADQogCiBkZWYg
+ZXNjYXBlSnNvbkNoYXJzKHRleHQpOgogICAgIGlmIGlzaW5zdGFuY2UodGV4dCwgYmFzZXN0cmlu
+Zyk6Ci0gICAgICAgIHRleHQgPSB0ZXh0LnJlcGxhY2UoJyInLCAnXFwiJykucmVwbGFjZSgnXG4n
+LCAnXFxuJykucmVwbGFjZSgnXHInLCAnXFxyJykKKyAgICAgICAgIyBodHRwOi8vdG9vbHMuaWV0
+Zi5vcmcvaHRtbC9yZmM0NjI3I3NlY3Rpb24tMi41CisgICAgICAgIHRleHQgPSB0ZXh0LnJlcGxh
+Y2UoJ1xcJywgJ1xcXFwnKS5yZXBsYWNlKCciJywgJ1xcIicpLnJlcGxhY2UoJ1xuJywgJ1xcbicp
+LnJlcGxhY2UoJ1xyJywgJ1xccicpLnJlcGxhY2UoJ1x0JywgJ1xcdCcpLnJlcGxhY2UoJ1xiJywg
+J1xcYicpLnJlcGxhY2UoJ1xmJywgJ1xcZicpLnJlcGxhY2UoJy8nLCAnXFwvJykKICAgICBlbGlm
+IGlzaW5zdGFuY2UodGV4dCwgYm9vbCk6CiAgICAgICAgIHRleHQgPSBzdHIodGV4dCkubG93ZXIo
+KQogICAgIGVsc2U6Cg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

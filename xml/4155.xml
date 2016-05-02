@@ -1,0 +1,202 @@
+<bug>
+          <bug_id>4155</bug_id>
+          
+          <creation_ts>2010-10-05 08:22:00 +0200</creation_ts>
+          <short_desc>Code clarity and less error prone</short_desc>
+          <delta_ts>2014-03-03 15:19:10 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>website.dom</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P5</priority>
+          <bug_severity>trivial</bug_severity>
+          <target_milestone>1.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Andreas Ecker">qooxdoo</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20476</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-10-05 08:22:53 +0200</bug_when>
+            <thetext>In framework/source/class/qx/html/Element.js function __flush looks like this:
+
+ 1    __flush : function()
+ 2    {
+ 3      if (qx.core.Variant.isSet(&quot;qx.debug&quot;, &quot;on&quot;))
+ 4      {
+ 5        if (this.DEBUG) {
+ 6          this.debug(&quot;Flush: &quot; + this.getAttribute(&quot;id&quot;));
+ 7        }
+ 8      }
+10
+11      var children = this.__children;
+12
+13      if (children)
+14      {
+15        var len = children.length;
+16        var child;
+17        for (var i=0; i&lt;len; i++)
+18        {
+19          child = children[i];
+20
+21          if (child.__visible &amp;&amp; child.__included &amp;&amp; !child.__element) {
+22            child.__flush();
+23          }
+24        }
+25      }
+26
+27      if (!this.__element)
+28      {
+29        this.__element = this._createDomElement();
+30        this.__element.$$element = this.$$hash;
+31
+32        this._copyData(false);
+33
+34        if (children &amp;&amp; len &gt; 0) {
+35          this._insertChildren();
+36        }
+37      }
+38      else
+39      {
+40        this._syncData();
+41
+42        if (this.__modifiedChildren) {
+43          this._syncChildren();
+44        }
+45      }
+46
+47      delete this.__modifiedChildren;
+48    },
+------------------
+
+We have changed line 15 as of previous bug report in declaring variable len instead of length). Variable len is then used in line 17 and inside another block without new definition in line 34. This is cross declaration and is error prone and gives less code clarity. Block scope does not exist in javascript today and that is why it is possible, but it is not beautiful or clear. Additionally, at later change of the javascript language it might create an error. We propose to rewrite it to the following:
+-------------------
+
+ 1    __flush : function()
+ 2    {
+ 3      if (qx.core.Variant.isSet(&quot;qx.debug&quot;, &quot;on&quot;))
+ 4      {
+ 5        if (this.DEBUG) {
+ 6          this.debug(&quot;Flush: &quot; + this.getAttribute(&quot;id&quot;));
+ 7        }
+ 8      }
+10
+11      var children = this.__children;
+12
+13      if (children)
+14      {
+15*
+16        var child;
+17*       for (var i=0, len = children.length; i&lt;len; i++)
+18        {
+19          child = children[i];
+20
+21          if (child.__visible &amp;&amp; child.__included &amp;&amp; !child.__element) {
+22            child.__flush();
+23          }
+24        }
+25      }
+26
+27      if (!this.__element)
+28      {
+29        this.__element = this._createDomElement();
+30        this.__element.$$element = this.$$hash;
+31
+32        this._copyData(false);
+33
+34*       if (children &amp;&amp; children.length &gt; 0) {
+35          this._insertChildren();
+36        }
+37      }
+38      else
+39      {
+40        this._syncData();
+41
+42        if (this.__modifiedChildren) {
+43          this._syncChildren();
+44        }
+45      }
+46
+47      delete this.__modifiedChildren;
+48    },</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20480</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-10-05 09:35:36 +0200</bug_when>
+            <thetext>Again, I don&#39;t get the problem here exactly. Is it about just the clarity of code? Because it seems to work as expected.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20485</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-10-05 11:48:38 +0200</bug_when>
+            <thetext>I don&#39;t think you understand what I am saying:
+
+&quot;This is cross declaration and is error prone and gives less code clarity. Block scope does not exist in javascript today and that is why it is possible, but it is not beautiful or clear. Additionally, at later change of the javascript language it might create an error.&quot;
+
+If block scope was working for javascript like in almost all other languages, it would not have been possible as you have done here and that is why the code is not clean and nice!!! Instead it is more difficult to read.
+
+I can tell you that not all developers approaching qooxdoo know that javascript does not support block scope. Instead what you have done here can be looked upon as an optimization and that should be done by the &quot;generator&quot;.
+
+Keep consequent, universal, clear and readable code!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20486</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-10-05 11:49:46 +0200</bug_when>
+            <thetext>Spaghetti code can work as expected too... :-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20500</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-10-06 08:19:41 +0200</bug_when>
+            <thetext>Well, but I don&#39;t write the heart of the element queue the way that someone not familiar with JavaScript can read it. But if its just moving that one variable out of that block, we can change it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20504</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-10-06 10:27:39 +0200</bug_when>
+            <thetext>Keep a fact-oriented discussion, please! No, you wouldn&#39;t change it if you wouldn&#39;t find it technically correct. :-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20840</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-22 09:47:36 +0200</bug_when>
+            <thetext>Moved var declaration out of block in r23569</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36375</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:10 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

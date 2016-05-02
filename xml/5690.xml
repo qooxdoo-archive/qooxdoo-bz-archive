@@ -1,0 +1,212 @@
+<bug>
+          <bug_id>5690</bug_id>
+          
+          <creation_ts>2011-10-07 16:25:00 +0200</creation_ts>
+          <short_desc>Wrong calculation of relative path in config.json</short_desc>
+          <delta_ts>2014-03-03 15:26:20 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Sebastian Fastner">mail</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>27129</commentid>
+            <who name="Sebastian Fastner">mail</who>
+            <bug_when>2011-10-07 16:25:09 +0200</bug_when>
+            <thetext>My file structure:
+
+C:\workspaces\qooxdoo : Path to qooxdoo
+C:\workspaces\myproj  : My generated project
+
+On windows the config.json file is filled with a QOOXDOO_PATH of C:/workspaces/qooxdoo instead of ../qooxdoo in git bash shell.
+
+This is fixed if the relative path is calculated by os.path.relpath from python itself.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27130</commentid>
+              <attachid>1068</attachid>
+            <who name="Sebastian Fastner">mail</who>
+            <bug_when>2011-10-07 16:25:53 +0200</bug_when>
+            <thetext>Created attachment 1068
+Patch to fix relative path calculation</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27134</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-10-07 21:15:47 +0200</bug_when>
+            <thetext>Sebastian,
+
+thanks for the patch. I&#39;m just not sure I&#39;m getting all of it...
+
+(In reply to comment #2)
+&gt; My file structure:
+&gt; 
+&gt; C:\workspaces\qooxdoo : Path to qooxdoo
+&gt; C:\workspaces\myproj  : My generated project
+&gt; 
+&gt; On windows the config.json file is filled with a QOOXDOO_PATH of
+&gt; C:/workspaces/qooxdoo
+
+Mh, this doesn&#39;t happen on my version of Windows. Can you run a &#39;generate.py info&#39; and post the output?!
+
+&gt; instead of ../qooxdoo in git bash shell.
+
+Does that mean you are running all qooxdoo commands from a git bash? But you are using a Windows Python, right?!
+
+I have such a configuration, too, and can repro the absolute QOOXDOO_PATH. But everything is fine when I use the Windows cmd shell (all else, Python, qooxdoo SDK, being equal). It looks like the git bash is using a somewhat oldish file system driver that reminds me of the earlier cygwin drivers.
+
+Having said that I don&#39;t have a problem with generating source and build versions of a skeleton app on gitbash (although it is significantly slower compared to running on cmd). So I wonder what is your actual issue with the absolute path in config.json?!
+
+&gt; 
+&gt; This is fixed if the relative path is calculated by os.path.relpath from python
+&gt; itself.
+
+Unfortunately, os.path.relpath was only added with Python 2.6, but we are still supporting 2.5.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27171</commentid>
+            <who name="Sebastian Fastner">mail</who>
+            <bug_when>2011-10-11 13:43:38 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+
+Output of &#39;generate.py info&#39;:
+
+&gt;&gt;&gt; Environment information
+  - Platform: Windows 7 6.1.7600
+  - Python version: 2.7.1 (r271:86832, Nov 27 2010, 18:30:46) [MSC v.1500 32 bit (Intel)]
+  - qooxdoo path: c:\Dev\workspaces\git\TEPCLN\web\unify\qooxdoo\qooxdoo
+  - Framework version: 1.5.1
+  - Kit looks OK: True
+  - Looking for generated versions...
+    - Done (0m00.24)
+
+My issues with absolute path is that we are working on different operating systems and Mac and Linux don&#39;t work with absolute windows paths. Beginners could have trouble to find the solution to manually change the config.json file.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27174</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-10-11 23:49:13 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; My issues with absolute path is that we are working on different operating
+&gt; systems and Mac and Linux don&#39;t work with absolute windows paths. Beginners
+&gt; could have trouble to find the solution to manually change the config.json
+&gt; file.
+
+I doubt beginners will try to run the same project on multiple platforms :-).
+
+So let me re-state these questions:
+
+- Does the skeleton with the absolute path generate source and build on Windows ok?
+
+- Does using the Windows cmd shell produce a relative path when creating the skeleton?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27175</commentid>
+            <who name="Sebastian Fastner">mail</who>
+            <bug_when>2011-10-12 09:19:24 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+
+&gt; I doubt beginners will try to run the same project on multiple platforms :-).
+I think they do, if you think about company developers as qooxdoo or unify beginners, not development beginners.
+
+&gt; - Does the skeleton with the absolute path generate source and build on Windows
+&gt; ok?
+Yes, it works well on windows only.
+
+&gt; - Does using the Windows cmd shell produce a relative path when creating the
+&gt; skeleton?
+Yes :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27195</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-10-12 13:54:15 +0200</bug_when>
+            <thetext>It&#39;s a rather rare case with an obvious work-around.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31097</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-10-29 09:37:50 +0100</bug_when>
+            <thetext>See related bug#1274.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31729</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-12-13 16:42:20 +0100</bug_when>
+            <thetext>I&#39;m closing this wontfix, but will add a section to the manual about supported 
+shells. I think the use case of the git shell with its ideosyncratic fs driver 
+to windows is not strong enough to merit the effort of fixing this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39073</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:20 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>1068</attachid>
+            <date>2011-10-07 16:25:00 +0200</date>
+            <delta_ts>2011-10-07 16:25:53 +0200</delta_ts>
+            <desc>Patch to fix relative path calculation</desc>
+            <filename>0001-Fix-relative-path-detection-in-create-application.patch</filename>
+            <type>text/plain</type>
+            <size>1052</size>
+            <attacher>mail</attacher>
+            
+              <data encoding="base64">RnJvbSA4NWQxZGI4NTEwNmRlMmE5NzE2Mzc2MDcxOThjNjlmNzdlYjBiYWIzIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBTZWJhc3RpYW4gRmFzdG5lciA8bWFpbEBzZWJhc3RpYW5mYXN0
+bmVyLmRlPgpEYXRlOiBGcmksIDcgT2N0IDIwMTEgMTY6MTQ6MTkgKzAyMDAKU3ViamVjdDogW1BB
+VENIXSBGaXggcmVsYXRpdmUgcGF0aCBkZXRlY3Rpb24gaW4gY3JlYXRlIGFwcGxpY2F0aW9uCgot
+LS0KIHFvb3hkb28vdG9vbC9iaW4vY3JlYXRlLWFwcGxpY2F0aW9uLnB5IHwgICAgMyArKy0KIDEg
+ZmlsZXMgY2hhbmdlZCwgMiBpbnNlcnRpb25zKCspLCAxIGRlbGV0aW9ucygtKQoKZGlmZiAtLWdp
+dCBhL3Fvb3hkb28vdG9vbC9iaW4vY3JlYXRlLWFwcGxpY2F0aW9uLnB5IGIvcW9veGRvby90b29s
+L2Jpbi9jcmVhdGUtYXBwbGljYXRpb24ucHkKaW5kZXggZTNhOWFlOS4uOWEzMmFlNCAxMDA3NTUK
+LS0tIGEvcW9veGRvby90b29sL2Jpbi9jcmVhdGUtYXBwbGljYXRpb24ucHkKKysrIGIvcW9veGRv
+by90b29sL2Jpbi9jcmVhdGUtYXBwbGljYXRpb24ucHkKQEAgLTE2Nyw3ICsxNjcsOCBAQCBkZWYg
+cGF0Y2hTa2VsZXRvbihkaXIsIGZyYW1ld29ya19kaXIsIG9wdGlvbnMpOgogICAgICAgICBlbHNl
+OgogICAgICAgICAgICAgcmVsUGF0aCA9IFBhdGgucmVsX2Zyb21fdG8obm9ybWFsaXplUGF0aChk
+aXIpLCBub3JtYWxpemVQYXRoKGZyYW1ld29ya19kaXIpKQogICAgIGVsc2U6Ci0gICAgICAgIHJl
+bFBhdGggPSBQYXRoLnJlbF9mcm9tX3RvKG5vcm1hbGl6ZVBhdGgoZGlyKSwgbm9ybWFsaXplUGF0
+aChmcmFtZXdvcmtfZGlyKSkKKyAgICAgICAgcmVsUGF0aCA9IG9zLnBhdGgucmVscGF0aChmcmFt
+ZXdvcmtfZGlyLCBkaXIpCisgICAgICAgICNyZWxQYXRoID0gUGF0aC5yZWxfZnJvbV90byhub3Jt
+YWxpemVQYXRoKGRpciksIG5vcm1hbGl6ZVBhdGgoZnJhbWV3b3JrX2RpcikpCiAKICAgICByZWxQ
+YXRoID0gcmUuc3ViKHInXFwnLCAiLyIsIHJlbFBhdGgpCiAgICAgaWYgcmVsUGF0aFstMV0gPT0g
+Ii8iOgotLSAKMS43LjQubXN5c2dpdC4wCgo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

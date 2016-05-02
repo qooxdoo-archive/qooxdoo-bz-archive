@@ -1,0 +1,138 @@
+<bug>
+          <bug_id>5062</bug_id>
+          
+          <creation_ts>2011-04-29 16:52:00 +0200</creation_ts>
+          <short_desc>searching for Spinner, gets you bad results</short_desc>
+          <delta_ts>2014-03-03 15:24:08 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>app.apiviewer.desktop</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.4.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Gabriel Munteanu">jajalinux</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          
+          <qa_contact name="Adrian Olaru">adrian.olaru</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>24251</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-04-29 16:52:08 +0200</bug_when>
+            <thetext>like qx.ui.form.Spinner~maximum.
+I should search for maximum to get that result.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24268</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-05-02 10:50:14 +0200</bug_when>
+            <thetext>Could you be a bit more detailed about that report? Don&#39;t get whats wrong here.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24273</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-05-02 11:03:47 +0200</bug_when>
+            <thetext>When searching for Spinner, you should get the result:
+qx.ui.form.Spinner
+and the properties where spinner is in the name of the property.
+in general, one should get results when searching in the name of an item, not in the fullname.
+in this case:
+qx.ui.form.Spinner#editable
+or
+qx.ui.form.Spinner~maximum
+
+shouldn&#39;t be among results, as spinner is not found in the name of the properties:
+editable and maximum.
+However,
+qx.ui.control.ColorSelector#hsb-spinner-composite should be shown as spinner is in the name of the property.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24277</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-05-02 11:32:23 +0200</bug_when>
+            <thetext>Agreed!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24301</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-05-03 10:31:42 +0200</bug_when>
+            <thetext>in the apiindex.json file, there is a duplicate entry.
+i take the example of menu property in the qx.ui.form.MenuButton class.
+go here: http://demo.qooxdoo.org/devel/apiviewer and search for menu, with only properties toggle on, and menubutton in the namespace as filter.
+
+you will see 4 entries, with 2 identical:
+qx.ui.form.MenuButton#menu
+[this info can be used to solve bug #5063]
+this is happening because we have in apiindex.json file these 2 entries in the __index__ key:
+&quot;#qx.ui.form.MenuButton#menu&quot;:[[5,339]],
+and
+&quot;#menu&quot;:[[6,339],[6,359],[6,387]],
+where 339 is the index of qx.ui.form.MenuButton in __fullNames__ value, and 5 is entry in __types__ [6 is property in __type__].
+
+in order to solve this bug [that is, when searching for button, the qx.ui.form.MenuButton#menu should not appear] we must remove the &quot;#qx.ui.form.MenuButton#menu&quot;:[[5,339]], entry and add [5,339] to the other one:
+
+&quot;#menu&quot;:[[6,339],[6,359],[6,387],[5,339]],
+this will solve also http://bugzilla.qooxdoo.org/show_bug.cgi?id=5063 because we removed the duplicate.
+
+also, I still can&#39;t figure out why menu is a property and an entry at the same time, but maybe there is a good reason for it which escapes me.
+
+Martin, I guess you could redirect it to Daniel to solve it at generation time.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24393</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-05-09 15:55:34 +0200</bug_when>
+            <thetext>I chose &quot;entry&quot; as the type for the &quot;apply&quot; node&#39;s children because it&#39;s the most generic type we have. I didn&#39;t want to use &quot;property&quot; since the value of those is the name of a property on the current class, while an &quot;apply&quot; child&#39;s value is the fully qualified name of a property that might be defined on an ancestor  class.
+What I didn&#39;t realize was that the type of any node with a &quot;name&quot; or &quot;fullName&quot; attribute will be added to the __types__ index, which is how the &quot;entry&quot; type slipped in there. This also leads to the bogus &quot;#class#property&quot; entries. 
+
+So I simply changed the attribute name from &quot;name&quot; to &quot;applies&quot; and modified the APIViewer&#39;s MethodPanel to use that instead.
+
+Fixed with r27102 (trunk) and r27103 (branch_1_4_x).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24396</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-05-09 16:44:35 +0200</bug_when>
+            <thetext>*** Bug 5063 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24757</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-05-27 10:43:33 +0200</bug_when>
+            <thetext>*** Bug 4792 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38277</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:08 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

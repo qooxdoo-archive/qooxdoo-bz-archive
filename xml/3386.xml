@@ -1,0 +1,148 @@
+<bug>
+          <bug_id>3386</bug_id>
+          
+          <creation_ts>2010-01-28 16:38:00 +0100</creation_ts>
+          <short_desc>Support recursive data in Object.set</short_desc>
+          <delta_ts>2010-02-17 08:56:37 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Guilherme Krycek">gradinf</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>16570</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2010-01-28 16:38:03 +0100</bug_when>
+            <thetext>I want to be able to do something like that: 
+
+myModel.set(
+{
+         first:
+         {
+                name: &quot;...&quot;,
+                address: &quot;123&quot;
+         },
+         second:
+         {
+                dunno: &quot;1234&quot;,
+                foo: &quot;bar&quot;
+         }
+});
+
+but the &quot;set&quot; method can&#39;t handle recursive data.
+
+I need to set the data separately right now:
+
+myModel.getFirst().set({name: &quot;...&quot;, address: &quot;123&quot;});
+myModel.getSecond().set({dunno: &quot;1234&quot;, foo: &quot;bar&quot;});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16616</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-02-01 10:11:15 +0100</bug_when>
+            <thetext>I&#39;m not sure if we want such a behavior in the basic qooxdoo object. I will discuss that with the core team and come back with a solution.
+
+--&gt; to me!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16617</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-02-01 10:11:32 +0100</bug_when>
+            <thetext>up prio</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16624</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2010-02-01 13:09:47 +0100</bug_when>
+            <thetext>I would like to highlight another suggestion for the &quot;set&quot; method, here is what I&#39;ve written in the mailing list:
+
+&quot;Another thing that I&#39;m missing is the ability to use the &quot;set&quot; method without to worry about it&#39;s item. 
+
+I explain: I want the items that exists in the array to be set, the others, ignored. But qooxdoo gives me &quot;No such property X&quot;. 
+
+This error is really helpful when you are setting wrong properties so I would like to let qx.debug ON to see those errors. But there is some case (especially data fetched from the server) that has a lot of other data that has no relation to that relative model but has to be fetched to be used somewhere else in the application.
+
+And it&#39;s good to get all the data at once to reduce the calls to the server. Removing all items that won&#39;t be used in the model can be annoying depending on the data length. That would be better ignored. 
+
+I suggest a third parameter to that function to let the developer decide if he wants the errors or not and the default set to the same value of qx.debug.&quot;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16646</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-02-02 16:52:31 +0100</bug_when>
+            <thetext>After a quick chat with the team, we decided not to implement such a thing. 
+
+First, this feature has to be implemented in the core object which is used by all objects in qooxdoo. But not very much objects could use this feature so it would be much code for some edge cases.
+
+The second and more important reason is, that you can not distinguish if a map should be set or the element in the map. Imagine the property &quot;first&quot; in your example is null. The only thing you could do is to set the map as value. The next time the first property is set to an object. Now you have a different result because you can use the data in another way. 
+Additionally, you have to support maps and arrays which could lead to some code which I don&#39;t like to have in every qooxdoo object.
+
+To your second proposal: Both warnings are wrapped with a qx.debug on so the errors should not appear if you switch it off. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16651</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2010-02-02 18:40:17 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+
+I thought about it and you right, there is no way to know when a map should be passed as argument to the setter or if it&#39;s expected to be set recursively. 
+
+&gt; To your second proposal: Both warnings are wrapped with a qx.debug on so the
+&gt; errors should not appear if you switch it off. 
+
+Switching it off will make the whole app to ignore those and other errors. I just want to get those errors ignored when setting something that came from the server. Just like I said, I can have 50 fields and want to set just 20 of them against the class properties. 
+
+But in every other case I want errors to be shown (padding, margin, etc) because a mismatched there will led to unexpected behavior.
+
+I have patched the class within a mixin so there is no problem if the suggestion is ignored. But I would like to know how you would handle the scenario I describe, maybe I&#39;m doing something stupid, I don&#39;t know. 
+
+I&#39;m going to face that scenario a lot and I guess other will too, and I don&#39;t want to be deleting every field I don&#39;t want to set it but I don&#39;t want to loose the ability to debug my code.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16663</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-02-03 12:30:07 +0100</bug_when>
+            <thetext>As your use case is somehow exotic in the case of the generic set, I would have proposed the thing you already done, writing a mixin.
+I don&#39;t know how you crate your data classes but an idea would be to use the JSON marshaler. This could create you a class fitting your data. That would be the way I would go.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16843</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-02-17 08:56:37 +0100</bug_when>
+            <thetext>CLOSED</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

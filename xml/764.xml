@@ -1,0 +1,544 @@
+<bug>
+          <bug_id>764</bug_id>
+          
+          <creation_ts>2008-01-17 17:04:00 +0100</creation_ts>
+          <short_desc>Changing of theme causes error in disposed qx.ui.table.rowrenderer.Default</short_desc>
+          <delta_ts>2008-06-22 08:34:22 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>0.7.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          <blocked>753</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Denis">nomus</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2781</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-01-17 17:04:40 +0100</bug_when>
+            <thetext>Hello,
+
+This problem is related to situation that occurs after the following steps:
+- there was a table;
+- the table was disposed;
+- theme was changed.
+As a result there will be error in qx.ui.table.rowrenderer.Default. This error is related to code that was added to qx.ui.table.rowrenderer.Default constructor in version 0.7.3 (lines 58-68). Those lines connect row renderer to font and color theme managers. And row renderer remains connected to them after it was disposed.
+The following code snippet can be used to check the problem (click “Test” button to get the error):
+
+var doc = qx.ui.core.ClientDocument.getInstance();
+
+// table model
+var tableModel = new qx.ui.table.model.Simple();
+tableModel.setColumns([ &quot;ID&quot;, &quot;A number&quot;, &quot;A date&quot;, &quot;Boolean test&quot; ]);
+var rowData = [];
+var now = new Date().getTime();
+var dateRange = 400 * 24 * 60 * 60 * 1000; // 400 days
+for (var row = 0; row &lt; 100; row++) {
+  var date = new Date(now + Math.random() * dateRange - dateRange / 2);
+  rowData.push([ row, Math.random() * 10000, date, (Math.random() &gt; 0.5) ]);
+}
+tableModel.setData(rowData);
+tableModel.setColumnEditable(1, true);
+tableModel.setColumnEditable(2, true);
+
+// table
+var table = new qx.ui.table.Table(tableModel);
+table.setLeft(30);
+table.setTop(30);
+table.setWidth(500);
+table.setHeight(350);
+table.getTableColumnModel().setDataCellRenderer(3, new qx.ui.table.cellrenderer.Boolean());
+doc.add(table);
+
+var btnTest = new qx.ui.form.Button(&quot;Test&quot;);
+btnTest.setLeft(50);
+btnTest.setTop(450);
+btnTest.addEventListener(&quot;execute&quot;, function(event) {
+    doc.remove(table);
+    table.dispose();
+    table = null;
+    qx.theme.manager.Meta.getInstance().setTheme(qx.theme.Ext);
+}, this);
+doc.add(btnTest);
+
+
+A possible workaround for this problem is to apply the following patch:
+
+qx.Class.patch(qx.util.manager.Value,
+    qx.Mixin.define(&quot;patch.qx.util.manager.Value&quot;,
+    {
+        members :
+        {
+            _updateObjects : function()
+            {
+              var reg = this._registry;
+              var entry;
+        
+              for (var key in reg)
+              {
+                entry = reg[key];
+                if (! entry.object.isDisposed()) {
+                    entry.callback.call(entry.object, this.resolveDynamic(entry.value));
+                }
+              }
+            }
+        }
+    })
+);
+
+
+Best regards,
+Denis</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2785</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-01-21 09:04:11 +0100</bug_when>
+            <thetext>This looks like the source for memory leaks when tables are disposed (see bug
+753).
+
+It will cause other problems for anything else that&#39;s connected to themes, and
+dispose is attempted.
+
+The fix must be much deeper than that proposed. The object being connected to a
+theme should have some record of that connection (qx.util.manager.Value.connect
+should call back to the object to notify it of the connection) and Widget.js
+destruct (or Object.js?) should then disconnect the the object from the theme
+value.
+
+Hugh
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2786</commentid>
+              <attachid>282</attachid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-01-21 12:39:53 +0100</bug_when>
+            <thetext>Created attachment 282
+Auto-disconnects all theme connections to an object on dispose
+
+Here is a patch which implements the deeper fix as proposed. Any connections made to an object via the theme system are automatically disconnected when the object is disposed, allowing the browser to free the object properly and also preventing errors when theme changes try to notify connected objects. 
+
+Note that the original proposed patch is incomplete in that the _registry is scanned in qx.theme.manager.Border.js as well as qx.io.Alias.js. However, with this patch the original patch is not needed.
+
+I tried initially to put the _hasConnectionTo method into widget.js but found that qooxdoo would not start - qx.ui..core.Border uses connect() but is only derived from qx.core.Object. Therefore the additional code to disconnect had to go in Object.js.
+
+I&#39;ve carried out some testing with my test harness from bug 753 and the results have been much improved. There is still a slight leak, but that is to be tracked down in that bug rather than this one. After 28 instantiations of the table with IE iconised twice there was a 14.6 MB difference in memory usage with the patch applied to a compiled qooxdoo. 
+
+I&#39;m going to be applying this patch to our installations of qooxdoo 0.7.3.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2793</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-01-22 17:44:45 +0100</bug_when>
+            <thetext>Hugh,
+
+Thank you for the patch. It works without problems in my application.
+
+Those who do not want to change qooxdoo sources (like me) can use the following workaround based on the patch.
+
+
+qx.Class.patch(qx.core.Object,
+    qx.Mixin.define(&quot;patch.qx.core.Object&quot;,
+    {
+        members :
+        {
+            /**
+             * This object has a themed connection to a value
+             *
+             * We remember the connection so we can disconnect on disposal.
+             *
+             * @type member
+             * @param themeValue {qx.util.manager.Value} theme value connected here
+             * @return {void}
+             */
+            _hasConnectionTo : function(themeValue)
+            {
+                if (! this._themeValues) {
+                    this._themeValues = {};
+                }
+                this._themeValues[themeValue.toHashCode()] = themeValue;
+            }
+        },
+        destruct : function()
+        {
+          // Cleanup properties
+          var clazz = this.constructor;
+          var properties;
+          var store = qx.core.Property.$$store;
+          var storeUser = store.user;
+          var storeTheme = store.theme;
+          var storeInherit = store.inherit;
+          var storeUseinit = store.useinit;
+          var storeInit = store.init;
+
+          while(clazz)
+          {
+            properties = clazz.$$properties;
+            if (properties)
+            {
+              for (var name in properties)
+              {
+                if (properties[name].dispose) {
+                  this[storeUser[name]] = this[storeTheme[name]] = this[storeInherit[name]] = this[storeUseinit[name]] = this[storeInit[name]] = undefined;
+                }
+              }
+            }
+
+            clazz = clazz.superclass;
+          }
+
+          // Disconnect from themed values to avoid object hanging around
+          for (var themeValue in this._themeValues) {
+            this._themeValues[themeValue].disconnect(this);
+          }
+          this._disposeFields(&quot;_themeValues&quot;);
+
+          // Delete Entry from Object DB
+          if (this.__dbKey != null)
+          {
+            if (qx.core.Object.__disposeAll) {
+              qx.core.Object.__db[this.__dbKey] = null;
+            } else {
+              delete qx.core.Object.__db[this.__dbKey];
+            }
+          }
+        }
+    })
+);
+
+qx.Class.patch(qx.util.manager.Value,
+    qx.Mixin.define(&quot;patch.qx.util.manager.Value&quot;,
+    {
+        members :
+        {
+            connect : function(callback, obj, value)
+            {
+              if (qx.core.Variant.isSet(&quot;qx.debug&quot;, &quot;on&quot;))
+              {
+                if (!callback) {
+                  throw new Error(&quot;Can not connect to invalid callback: &quot; + callback);
+                }
+
+                if (!obj) {
+                  throw new Error(&quot;Can not connect to invalid object: &quot; + obj);
+                }
+
+                if (value === undefined) {
+                  throw new Error(&quot;Undefined values are not allowed for connect: &quot; + callback + &quot;[&quot; + obj + &quot;]&quot;);
+                }
+
+                if (typeof value === &quot;boolean&quot;) {
+                  throw new Error(&quot;Boolean values are not allowed for connect: &quot; + callback + &quot;[&quot; + obj + &quot;]&quot;);
+                }
+              }
+
+              // Store references for dynamic values
+              var vObjHashCode = obj.toHashCode();
+              var key = &quot;v&quot; + vObjHashCode + &quot;$&quot; + qx.core.Object.toHashCode(callback);
+              var reg = this._registry;
+              if (! this._connections) {
+                  this._connections = {};
+              }
+              var connections = this._connections;
+
+              // Preprocess value (if function is defined)
+              if (value !== null &amp;&amp; this._preprocess) {
+                value = this._preprocess(value);
+              }
+
+              // Callback handling
+              if (this.isDynamic(value))
+              {
+                // Store reference for themed values
+                reg[key] =
+                {
+                  callback : callback,
+                  object   : obj,
+                  value    : value
+                };
+                // Remember which keys are connected
+                if (connections[vObjHashCode] === undefined) // any keys for this object?
+                {
+                  connections[vObjHashCode] = [];       // no, prepare to store a list of keys
+                }
+                connections[vObjHashCode].push(key);    // add new key
+                // Notify Object about connection for later disconnect
+                obj._hasConnectionTo(this);
+              }
+              else if (reg[key])
+              {
+                // In all other cases try to remove previously created references
+                delete reg[key];
+              }
+
+              // Finally executing given callback
+              callback.call(obj, this.resolveDynamic(value) || value);
+            },
+            /**
+             * Disconnect an object from this value
+             *
+             * @type member
+             * @param obj {Object} Any object previously connected
+             * @return {void}
+             */
+            disconnect : function(obj)
+            {
+              // If value is disposed, it&#39;s already disconnected
+              if (this.isDisposed()) {
+                return;
+              }
+
+              // Otherwise disconnect from this value
+              var vObjHashCode = obj.toHashCode();
+              var connections = this._connections;
+              var reg = this._registry;
+
+              // Error checking
+              if (qx.core.Variant.isSet(&quot;qx.debug&quot;, &quot;on&quot;))
+              {
+                if (!obj) {
+                  throw new Error(&quot;Can not disconnect from an empty object&quot;);
+                }
+
+                if (!connections[vObjHashCode]) {
+                  throw new Error(&quot;disconnect: themed value &quot; + this + &quot; has no connection to object: &quot; + obj);
+                }
+              }
+
+              // Disconnect all keys
+              var lKeys = connections[vObjHashCode];
+              while (lKeys.length) {
+                delete reg[lKeys.pop()];
+              }
+
+              // Forget about object
+              delete connections[vObjHashCode];
+            }
+        },
+        destruct : function() {
+            this._disposeFields(&quot;_registry&quot;, &quot;_dynamic&quot;, &quot;_connections&quot;);
+        }
+    })
+);
+
+
+Best regards,
+Denis
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2843</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-02-11 10:54:28 +0100</bug_when>
+            <thetext>I have fixed this issue in the legacy branch and trunk.
+
+The solution does not require this administration. It is enough to call the value manager&#39;s connect method with a &quot;null&quot; value. Since &quot;null&quot; is never a dynamic value, the reference to the connected widget is removed from the value manager. I have added this disconnect to all relevant dispose functions.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2846</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-02-11 11:28:07 +0100</bug_when>
+            <thetext>Hey Fabian, great work. However after reviewing what the valuemanager does, I think we should replace the new code using a new method &quot;disconnect&quot; which do not all of the checks of the connect() method and also omits the call of the callback method. This is not necessary at all at dispose at only leads to another queue flush sometimes which is not what we want here.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2847</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-02-11 11:34:25 +0100</bug_when>
+            <thetext>yes, you are right. This would help readability as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2848</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-02-11 11:58:29 +0100</bug_when>
+            <thetext>done</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2851</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-02-11 13:26:14 +0100</bug_when>
+            <thetext>I&#39;m not happy with the fix which has been applied. It doesn&#39;t appear to cover all instances of the problem and makes the code easy to break.
+
+One of the principles I use and try to pass on to anyone that I&#39;m teaching how to code properly is making code safe and easy to *not* break.
+
+What you&#39;ve done is to match &quot;connect&quot; calls with &quot;disconnect&quot; calls. So if this isn&#39;t done, there is a problem. It&#39;s easy to create broken code.
+
+I&#39;ve found, for example, that adding event listeners is very safe at the moment. You don&#39;t have to bother about cleaning up references - when a target object is disposed, it forgets about all the listener objects. That&#39;s neat and creates simple sparse code (which seems to be the qooxdoo way).
+
+But multiple calls to disconnect isn&#39;t neat. It jars with the _disposeXxxx methods introduced in 0.7.x. 
+
+I&#39;m not sure that you&#39;ve covered all instances of the disconnect requirements in your fixes. I couldn&#39;t find a reference to _styleBackgroundImage which is connected to qx.io.Alias.getInstance in qx.ui.core.Widget._applyBackgroundImage. If you can&#39;t get it right now, what chance do developers have of getting it right?
+
+At the very least there should be automatic debugging code written along the line of my patches which detects failure to disconnect at the of object disposal, and/or looks for disposed objects still connected to Values. It should give error messages in a debug build so that the developer is informed of the problem. 
+
+Ideally you should introduce my patch as written which is very safe.  Yes, I know it has to be built into Object but will that have a big impact? I&#39;ve certainly not noticed any problems here. Perhaps a secondary mixin object could be introduced for any object which is connected to a theme which could implement hasConnectionTo. So all you have to do when using Connect is to ensure you use the mixin. Alternatively if the mixin isn&#39;t used it you could do it manually.
+
+The other advantage of my patch is that it is a small amount of code which replaces multiple lines like:
+
+qx.legacy.theme.manager.Color.getInstance().disconnect
+
+which can&#39;t be compressed (at the moment). 
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2858</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-02-11 16:21:14 +0100</bug_when>
+            <thetext>I don&#39;t like the extension of qx.core.Object and even less the idea of adding another map to each object instance. On the other hand I really like the concept of making the code easy not to break.
+
+I have taken your extension of the value manager and created a mixin called &quot;qx.util.manager.MConnectedObject&quot;. By including this mixin the value manager connection will automatically be disconnected, while disposing the object.
+
+I think this really fixes all the issues.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2861</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-02-11 17:53:29 +0100</bug_when>
+            <thetext>OK, that looks a lot nicer - and if hasConnectionTo isn&#39;t implemented in the object it will fail with a runtime error.
+
+Perhaps you could make the failure a bit nicer by checking first and logging an appropriate error message if hasConnectionTo doesn&#39;t exist.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2863</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-02-12 08:59:25 +0100</bug_when>
+            <thetext>I have already done that in trunk. Still have to port it back to legacy.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3463</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-06-22 08:34:22 +0200</bug_when>
+            <thetext>Just a note that this was ported to legacy_0_7_x with checkin 11716 on 11 Feb 2008.
+
+Hugh</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>282</attachid>
+            <date>2008-01-21 12:39:00 +0100</date>
+            <delta_ts>2008-01-21 12:39:53 +0100</delta_ts>
+            <desc>Auto-disconnects all theme connections to an object on dispose</desc>
+            <filename>qxBug764.patch</filename>
+            <type>text/plain</type>
+            <size>4512</size>
+            <attacher>hgibson</attacher>
+            
+              <data encoding="base64">SW5kZXg6IHFvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9jb3JlL09i
+amVjdC5qcw0KPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PQ0KLS0tIHFvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJj
+ZS9jbGFzcy9xeC9jb3JlL09iamVjdC5qcwkocmV2aXNpb24gMTEyNTQpDQorKysgcW9veGRvby9m
+cm9udGVuZC9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2NvcmUvT2JqZWN0LmpzCSh3b3JraW5n
+IGNvcHkpDQpAQCAtNjUsNiArNjUsOSBAQA0KICAgICAgIHRoaXMuX19kYktleSA9IHF4LmNvcmUu
+T2JqZWN0Ll9fZGIubGVuZ3RoOwogICAgICAgcXguY29yZS5PYmplY3QuX19kYi5wdXNoKHRoaXMp
+OwogICAgIH0KKyAgICAKKyAgICAvLyBUaGVtZSB2YWx1ZXMgd2UgYXJlIGNvbm5lY3RlZCB0byAt
+IGtleSBpcyBoYXNoY29kZSBvZiB0aGVtZWQgdmFsdWUsIHZhbHVlIGlzIHRoZW1lZCB2YWx1ZSBv
+YmplY3QKKyAgICB0aGlzLl90aGVtZVZhbHVlcyA9IHt9OwogICB9LAogCiAKQEAgLTgwNyw2ICs4
+MTAsMjAgQEANCiAgICAgICAgICAgfQogICAgICAgICB9CiAgICAgICB9CisgICAgfSwKKyAgICAK
+KyAgICAvKioKKyAgICAgKiBUaGlzIG9iamVjdCBoYXMgYSB0aGVtZWQgY29ubmVjdGlvbiB0byBh
+IHZhbHVlCisgICAgICoKKyAgICAgKiBXZSByZW1lbWJlciB0aGUgY29ubmVjdGlvbiBzbyB3ZSBj
+YW4gZGlzY29ubmVjdCBvbiBkaXNwb3NhbC4KKyAgICAgKgorICAgICAqIEB0eXBlIG1lbWJlcgor
+ICAgICAqIEBwYXJhbSB0aGVtZVZhbHVlIHtxeC51dGlsLm1hbmFnZXIuVmFsdWV9IHRoZW1lIHZh
+bHVlIGNvbm5lY3RlZCBoZXJlCisgICAgICogQHJldHVybiB7dm9pZH0KKyAgICAgKi8KKyAgICBf
+aGFzQ29ubmVjdGlvblRvIDogZnVuY3Rpb24odGhlbWVWYWx1ZSkKKyAgICB7CisgICAgdGhpcy5f
+dGhlbWVWYWx1ZXNbdGhlbWVWYWx1ZS50b0hhc2hDb2RlKCldID0gdGhlbWVWYWx1ZTsKICAgICB9
+CiAgIH0sCiAKQEAgLTg2MCw2ICs4NzcsMTIgQEANCiAgICAgICBjbGF6eiA9IGNsYXp6LnN1cGVy
+Y2xhc3M7CiAgICAgfQogCisgICAgLy8gRGlzY29ubmVjdCBmcm9tIHRoZW1lZCB2YWx1ZXMgdG8g
+YXZvaWQgb2JqZWN0IGhhbmdpbmcgYXJvdW5kCisgICAgZm9yICh2YXIgdGhlbWVWYWx1ZSBpbiB0
+aGlzLl90aGVtZVZhbHVlcykgeworICAgICAgdGhpcy5fdGhlbWVWYWx1ZXNbdGhlbWVWYWx1ZV0u
+ZGlzY29ubmVjdCh0aGlzKTsKKyAgICB9CisgICAgdGhpcy5fZGlzcG9zZUZpZWxkcygiX3RoZW1l
+VmFsdWVzIik7CisgICAgCiAgICAgLy8gRGVsZXRlIEVudHJ5IGZyb20gT2JqZWN0IERCCiAgICAg
+aWYgKHRoaXMuX19kYktleSAhPSBudWxsKQogICAgIHsKSW5kZXg6IHFvb3hkb28vZnJvbnRlbmQv
+ZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91dGlsL21hbmFnZXIvVmFsdWUuanMNCj09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT0NCi0tLSBxb294ZG9vL2Zyb250ZW5kL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdXRpbC9t
+YW5hZ2VyL1ZhbHVlLmpzCShyZXZpc2lvbiAxMTI1NCkNCisrKyBxb294ZG9vL2Zyb250ZW5kL2Zy
+YW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdXRpbC9tYW5hZ2VyL1ZhbHVlLmpzCSh3b3JraW5nIGNv
+cHkpDQpAQCAtNDQsNiArNDQsMTAgQEANCiAKICAgICAvLyBTdG9yZXMgdGhlIG9iamVjdHMKICAg
+ICB0aGlzLl9yZWdpc3RyeSA9IHt9OworICAgIAorICAgIC8vIFN0b3JlcyBvYmplY3RzIHdoaWNo
+IGFyZSBjb25uZWN0ZWQgdG8gdGhpcyB2YWx1ZS4KKyAgICAvLyBLZXkgaXMgb2JqZWN0IGhhc2hj
+b2RlLCB2YWx1ZSBpcyBsaXN0IG9mIGtleXMgaW4gX3JlZ2lzdHJ5CisgICAgdGhpcy5fY29ubmVj
+dGlvbnMgPSB7fTsKIAogICAgIC8vIENyZWF0ZSBlbXB0eSBkeW5hbWljIG1hcAogICAgIHRoaXMu
+X2R5bmFtaWMgPSB7fTsKQEAgLTkzLDggKzk3LDEwIEBADQogICAgICAgfQogCiAgICAgICAvLyBT
+dG9yZSByZWZlcmVuY2VzIGZvciBkeW5hbWljIHZhbHVlcwotICAgICAgdmFyIGtleSA9ICJ2IiAr
+IG9iai50b0hhc2hDb2RlKCkgKyAiJCIgKyBxeC5jb3JlLk9iamVjdC50b0hhc2hDb2RlKGNhbGxi
+YWNrKTsKKyAgICAgIHZhciB2T2JqSGFzaENvZGUgPSBvYmoudG9IYXNoQ29kZSgpOworICAgICAg
+dmFyIGtleSA9ICJ2IiArIHZPYmpIYXNoQ29kZSArICIkIiArIHF4LmNvcmUuT2JqZWN0LnRvSGFz
+aENvZGUoY2FsbGJhY2spOwogICAgICAgdmFyIHJlZyA9IHRoaXMuX3JlZ2lzdHJ5OworICAgICAg
+dmFyIGNvbm5lY3Rpb25zID0gdGhpcy5fY29ubmVjdGlvbnM7CiAKICAgICAgIC8vIFByZXByb2Nl
+c3MgdmFsdWUgKGlmIGZ1bmN0aW9uIGlzIGRlZmluZWQpCiAgICAgICBpZiAodmFsdWUgIT09IG51
+bGwgJiYgdGhpcy5fcHJlcHJvY2VzcykgewpAQCAtMTExLDYgKzExNywxNCBAQA0KICAgICAgICAg
+ICBvYmplY3QgICA6IG9iaiwKICAgICAgICAgICB2YWx1ZSAgICA6IHZhbHVlCiAgICAgICAgIH07
+CisgICAgICAgIC8vIFJlbWVtYmVyIHdoaWNoIGtleXMgYXJlIGNvbm5lY3RlZAorICAgICAgICBp
+ZiAoY29ubmVjdGlvbnNbdk9iakhhc2hDb2RlXSA9PT0gdW5kZWZpbmVkKSAvLyBhbnkga2V5cyBm
+b3IgdGhpcyBvYmplY3Q/CisgICAgICAgIHsKKyAgICAgICAgICBjb25uZWN0aW9uc1t2T2JqSGFz
+aENvZGVdID0gW107ICAgICAgIC8vIG5vLCBwcmVwYXJlIHRvIHN0b3JlIGEgbGlzdCBvZiBrZXlz
+CisgICAgICAgIH0KKyAgICAgICAgY29ubmVjdGlvbnNbdk9iakhhc2hDb2RlXS5wdXNoKGtleSk7
+ICAgIC8vIGFkZCBuZXcga2V5CisgICAgICAgIC8vIE5vdGlmeSBPYmplY3QgYWJvdXQgY29ubmVj
+dGlvbiBmb3IgbGF0ZXIgZGlzY29ubmVjdAorICAgICAgICBvYmouX2hhc0Nvbm5lY3Rpb25Ubyh0
+aGlzKTsKICAgICAgIH0KICAgICAgIGVsc2UgaWYgKHJlZ1trZXldKQogICAgICAgewpAQCAtMTIy
+LDcgKzEzNiw0NyBAQA0KICAgICAgIGNhbGxiYWNrLmNhbGwob2JqLCB0aGlzLnJlc29sdmVEeW5h
+bWljKHZhbHVlKSB8fCB2YWx1ZSk7CiAgICAgfSwKIAorICAgIC8qKgorICAgICAqIERpc2Nvbm5l
+Y3QgYW4gb2JqZWN0IGZyb20gdGhpcyB2YWx1ZQorICAgICAqCisgICAgICogQHR5cGUgbWVtYmVy
+CisgICAgICogQHBhcmFtIG9iaiB7T2JqZWN0fSBBbnkgb2JqZWN0IHByZXZpb3VzbHkgY29ubmVj
+dGVkCisgICAgICogQHJldHVybiB7dm9pZH0KKyAgICAgKi8KKyAgICBkaXNjb25uZWN0IDogZnVu
+Y3Rpb24ob2JqKQorICAgICAgeworICAgICAgLy8gSWYgdmFsdWUgaXMgZGlzcG9zZWQsIGl0J3Mg
+YWxyZWFkeSBkaXNjb25uZWN0ZWQKKyAgICAgIGlmICh0aGlzLmlzRGlzcG9zZWQoKSkgeworICAg
+ICAgICByZXR1cm47CisgICAgICB9CisgICAgICAKKyAgICAgIC8vIE90aGVyd2lzZSBkaXNjb25u
+ZWN0IGZyb20gdGhpcyB2YWx1ZQorICAgICAgdmFyIHZPYmpIYXNoQ29kZSA9IG9iai50b0hhc2hD
+b2RlKCk7CisgICAgICB2YXIgY29ubmVjdGlvbnMgPSB0aGlzLl9jb25uZWN0aW9uczsKKyAgICAg
+IHZhciByZWcgPSB0aGlzLl9yZWdpc3RyeTsKKyAgICAgIAorICAgICAgLy8gRXJyb3IgY2hlY2tp
+bmcKKyAgICAgIGlmIChxeC5jb3JlLlZhcmlhbnQuaXNTZXQoInF4LmRlYnVnIiwgIm9uIikpCisg
+ICAgICB7CisgICAgICAgIGlmICghb2JqKSB7CisgICAgICAgICAgdGhyb3cgbmV3IEVycm9yKCJD
+YW4gbm90IGRpc2Nvbm5lY3QgZnJvbSBhbiBlbXB0eSBvYmplY3QiKTsKKyAgICAgICAgfQorICAg
+ICAgICAgIAorICAgICAgICBpZiAoIWNvbm5lY3Rpb25zW3ZPYmpIYXNoQ29kZV0pIHsKKyAgICAg
+ICAgICB0aHJvdyBuZXcgRXJyb3IoImRpc2Nvbm5lY3Q6IHRoZW1lZCB2YWx1ZSAiICsgdGhpcyAr
+ICIgaGFzIG5vIGNvbm5lY3Rpb24gdG8gb2JqZWN0OiAiICsgb2JqKTsKKyAgICAgICAgfQorICAg
+ICAgfQogCisgICAgICAvLyBEaXNjb25uZWN0IGFsbCBrZXlzCisgICAgICB2YXIgbEtleXMgPSBj
+b25uZWN0aW9uc1t2T2JqSGFzaENvZGVdOworICAgICAgd2hpbGUgKGxLZXlzLmxlbmd0aCkgewor
+ICAgICAgICBkZWxldGUgcmVnW2xLZXlzLnBvcCgpXTsKKyAgICAgIH0KKyAgICAgIAorICAgICAg
+Ly8gRm9yZ2V0IGFib3V0IG9iamVjdAorICAgICAgZGVsZXRlIGNvbm5lY3Rpb25zW3ZPYmpIYXNo
+Q29kZV07CisgICAgICB9LAorCiAgICAgLyoqCiAgICAgICogUmV0dXJucyB0aGUgZHluYW1pY2Fs
+bHkgaW50ZXJwcmV0ZWQgcmVzdWx0IGZvciB0aGUgaW5jb21pbmcgdmFsdWUKICAgICAgKgpAQCAt
+MTc1LDYgKzIyOSw2IEBADQogICAqLwogCiAgIGRlc3RydWN0IDogZnVuY3Rpb24oKSB7Ci0gICAg
+dGhpcy5fZGlzcG9zZUZpZWxkcygiX3JlZ2lzdHJ5IiwgIl9keW5hbWljIik7CisgICAgdGhpcy5f
+ZGlzcG9zZUZpZWxkcygiX3JlZ2lzdHJ5IiwgIl9keW5hbWljIiwgIl9jb25uZWN0aW9ucyIpOwog
+ICB9CiB9KTsK
+</data>
+
+          </attachment>
+      
+
+    </bug>

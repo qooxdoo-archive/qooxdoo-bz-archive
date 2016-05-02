@@ -1,0 +1,158 @@
+<bug>
+          <bug_id>3650</bug_id>
+          
+          <creation_ts>2010-04-29 10:44:00 +0200</creation_ts>
+          <short_desc>Models loaded by JSON store seems to be disposed</short_desc>
+          <delta_ts>2010-06-28 08:38:22 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martin Wittemann">martin.wittemann</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>gradinf</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>18091</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-29 10:44:41 +0200</bug_when>
+            <thetext>We have a couple of threads on the ML [1][2] which seem to have the same root problem, the model loaded by the store magically vanishes.
+
+Currently, I have no idea what the problem could be. But Juan Matias posted a good example to test the behavior. Try to add some new folders to child folders and not only to the root folder:
+
+// working example
+var data = { 
+&quot;name&quot;:&quot;root&quot;, 
+&quot;kids&quot;:        [ 
+               { 
+               &quot;name&quot;:&quot;node 1&quot;, 
+               &quot;kids&quot;:        [ 
+                               { 
+                               &quot;name&quot;:&quot;node 3&quot;, 
+                               &quot;kids&quot;:[] 
+                               } 
+                               ] 
+               }, 
+               { 
+               &quot;name&quot;:&quot;node 2&quot;, 
+               &quot;kids&quot;:[] 
+               } 
+               ] 
+}; 
+var doc = this.getRoot(); 
+
+// Add button 
+var button1 = new qx.ui.form.Button(&quot;Add folder&quot;); 
+
+button1.addListener(&quot;execute&quot;, function(e){ 
+       var o = {&quot;name&quot;: &quot;New node&quot;, &quot;kids&quot;: []}; 
+       var n = qx.data.marshal.Json.createModel(o, true); 
+       controller.getSelection().getItem(0).getKids().push(n); 
+}); 
+doc.add(button1, {left: 70, top: 50}); 
+
+// Add tree 
+var tree = new qx.ui.tree.Tree().set({width: 200, height: 300}); 
+doc.add(tree, {left: 10, top: 80}); 
+
+// create the store, model and controller 
+
+var model = qx.data.marshal.Json.createModel(data, true); 
+var controller = new qx.data.controller.Tree(null, tree, &quot;kids&quot;, &quot;name&quot;); 
+var store = new qx.data.store.Json(); 
+store.setModel(model); 
+
+store.bind(&quot;model&quot;, controller, &quot;model&quot;); 
+
+
+
+
+// not working example
+var doc = this.getRoot(); 
+
+// Add button 
+var button1 = new qx.ui.form.Button(&quot;Add folder&quot;); 
+
+button1.addListener(&quot;execute&quot;, function(e){ 
+       var o = {&quot;name&quot;: &quot;New node&quot;, &quot;kids&quot;: []}; 
+       var n = qx.data.marshal.Json.createModel(o, true); 
+       controller.getSelection().getItem(0).getKids().push(n); 
+}); 
+doc.add(button1, {left: 70, top: 50}); 
+
+// Add tree 
+var tree = new qx.ui.tree.Tree().set({width: 200, height: 300}); 
+doc.add(tree, {left: 10, top: 80}); 
+
+// create the store, model and controller 
+
+var controller = new qx.data.controller.Tree(null, tree, &quot;kids&quot;, &quot;name&quot;); 
+var store = new qx.data.store.Json(&quot;tree.json&quot;); 
+
+store.bind(&quot;model&quot;, controller, &quot;model&quot;); 
+
+
+[1] http://qooxdoo.678.n2.nabble.com/odd-model-behavior-with-qx-ui-tree-TreeFolder-td4921818.html#a4948272
+[2] http://qooxdoo.678.n2.nabble.com/binding-problem-with-Tree-and-Storage-td4938991.html#a4948235</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18678</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-06-14 13:37:30 +0200</bug_when>
+            <thetext>Accept</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18680</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-06-14 14:06:39 +0200</bug_when>
+            <thetext>After checking the problem I think this isn&#39;t a bug. Its just a problem of the data supplied. The tree.json from the framework contains child nodes not having the kids property. 
+// ...
+        {
+            &quot;name&quot;: &quot;3&quot;
+        },
+// ...
+
+This way, the add method will throw an exception because there is not kids property to query. 
+
+controller.getSelection().getItem(0).getKids().push(n); 
+
+Adding the kids property to all child nodes of the tree.json will solve the problem.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18952</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-06-28 08:38:22 +0200</bug_when>
+            <thetext>2 weeks --&gt; CLOSED</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

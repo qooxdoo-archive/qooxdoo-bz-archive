@@ -1,0 +1,147 @@
+<bug>
+          <bug_id>6580</bug_id>
+          
+          <creation_ts>2012-07-02 10:41:00 +0200</creation_ts>
+          <short_desc>Cannot tell marshaler not to marshal objects</short_desc>
+          <delta_ts>2012-08-20 13:29:07 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>2.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Johannes Kissel">johannes.kissel</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>alexander.steitz</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>29978</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2012-07-02 10:41:02 +0200</bug_when>
+            <thetext>I have a data store which stores arbitrary key-value-data. This works quite fine except for objects: If I store an Object or an Array, I&#39;ll get back a qx.core.Object or a qx.data.Array, because I cannot tell the marshaler not to marshal these objects. The marshaler delegate is not an option, because I don&#39;t know the properties of the stored objects.
+
+So I need an API to tell the marshaler not to marshal certain objects. My suggestion is a flag $$no_marshal which is added to these objects:
+
+http://tinyurl.com/cv9d9b9
+
+That way the relevant objects can be marked directly. It&#39;s also quite easy to implement and the API needn&#39;t be changed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29984</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-07-03 08:14:06 +0200</bug_when>
+            <thetext>The idea is good. I&#39;m not quite sure if I like to put the information in the model, which is what you suggest with the flag, right?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29986</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2012-07-03 09:11:38 +0200</bug_when>
+            <thetext>Yes, that&#39;s correct.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30056</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-07-09 14:07:31 +0200</bug_when>
+            <thetext>I don&#39;t like the idea of adding the information to the original data. We don&#39;t have that concept in the whole framework and its hard to document.
+Would the addition of a new delegate method help? This method could decide if the data should be marshaled or not? It could get the properties of the current model, the depth in the model tree and the parent property. Could that also work out for you?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30057</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2012-07-09 14:14:25 +0200</bug_when>
+            <thetext>Yes, an additional delegate method is also OK. All the values which shouldn&#39;t be marshaled are on the same nesting level. I understand your point with the documentation ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30064</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-07-09 16:29:48 +0200</bug_when>
+            <thetext>Added a new method to the delegate with the following signature:
+
+ignore(String properties, (String | null) parentProperty, Number depth)
+
+master: 25cdc411eddd97c28d06ecb85815a167d54669fe
+
+Does that work out for you?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30065</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2012-07-09 17:31:48 +0200</bug_when>
+            <thetext>I&#39;ll test as soon as it&#39;s on github. Should be OK, since I only need the nesting level.
+
+I&#39;m not sure, what the parent property is.
+
+Example:
+
+{
+
+  foo : { bar : 42, baz : true }
+
+}
+
+properties: &quot;bar;baz&quot;
+parent property: &quot;foo&quot;
+depth: 1
+
+Is that correct?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30067</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-07-10 07:51:54 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; I&#39;ll test as soon as it&#39;s on github. Should be OK, since I only need the
+&gt; nesting level.
+Ops. seems like I forgot to push the commit. Sorry! With that, the hash also changed.
+
+master: 37cb633acd2cf2655635e9d41aec94749c7ee4cd
+
+
+&gt; I&#39;m not sure, what the parent property is.
+&gt; 
+&gt; Example:
+&gt; 
+&gt; {
+&gt; 
+&gt;   foo : { bar : 42, baz : true }
+&gt; 
+&gt; }
+&gt; 
+&gt; properties: &quot;bar;baz&quot;
+&gt; parent property: &quot;foo&quot;
+&gt; depth: 1
+&gt; 
+&gt; Is that correct?
+
+Exactly. In case you just know that your model contains some data stored as &#39;xyz&#39; and you don&#39;t need those as models.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

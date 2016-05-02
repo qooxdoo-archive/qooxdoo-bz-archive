@@ -1,0 +1,197 @@
+<bug>
+          <bug_id>7274</bug_id>
+          
+          <creation_ts>2013-03-01 11:13:00 +0100</creation_ts>
+          <short_desc>qx.data.controller.Form.createModel() problems with lists</short_desc>
+          <delta_ts>2014-09-23 08:22:28 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Benoît Collignon">b.collignon</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>32392</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2013-03-01 11:13:19 +0100</bug_when>
+            <thetext>Hi,
+
+I think a found a bug the method qx.data.controller.Form.createModel()
+
+When a list is added to a form and the selection changes, it wrongly returns [null] when the selection is empty. It should return [].  
+
+By the way, I don&#39;t know why the changeSelection is triggered three times when the selection becomes empty. 
+
+Here is an example that shows the problem : http://ow.ly/ia599 (Sorry, I was unable to use the tinyurl shortener).
+
+Best Regards,
+
+Benoît.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32393</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2013-03-01 11:20:54 +0100</bug_when>
+            <thetext>Actually, when I replace:
+
+currentData[names[i]] = itemValue; // @ line #188 in qx.data.controller.Form
+
+by:
+
+if (itemValue!=null) currentData[names[i]] = itemValue;
+
+It works... but I don&#39;t know if it might have some bad repercussions on the global behaviour...
+
+Regards,
+
+Benoît.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32406</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-03-04 07:54:02 +0100</bug_when>
+            <thetext>Thanks for the report and the proposed fix.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33160</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2013-07-01 09:22:40 +0200</bug_when>
+            <thetext>Hi Martin,
+
+Forget about the proposed fix. It creates problems when dealing with form items without initial model/value (when it is retreived after the form creation with a store for instance).
+
+The fix must be implemented otherwise...
+
+
+(In reply to comment #1)
+&gt; Actually, when I replace:
+&gt; 
+&gt; currentData[names[i]] = itemValue; // @ line #188 in qx.data.controller.Form
+&gt; 
+&gt; by:
+&gt; 
+&gt; if (itemValue!=null) currentData[names[i]] = itemValue;
+&gt; 
+&gt; It works... but I don&#39;t know if it might have some bad repercussions on the
+&gt; global behaviour...
+&gt; 
+&gt; Regards,
+&gt; 
+&gt; Benoît.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33178</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-07-02 08:22:41 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; Hi Martin,
+&gt; 
+&gt; Forget about the proposed fix. It creates problems when dealing with form items
+&gt; without initial model/value (when it is retreived after the form creation with
+&gt; a store for instance).
+&gt; 
+&gt; The fix must be implemented otherwise...
+
+Thanks for the pointer.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33819</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-09-03 09:34:39 +0200</bug_when>
+            <thetext>I just wanted to check that issue but did see that everything was like expected. Check out the folloing sample:
+
+var list = new qx.ui.form.List();
+var i1 = new qx.ui.form.ListItem(&quot;A&quot;);
+var i2 = new qx.ui.form.ListItem(&quot;B&quot;);
+list.add(i1);
+list.add(i2);
+
+i1.setModel(&quot;A&quot;);
+i2.setModel(&quot;B&quot;);
+
+var form = new qx.ui.form.Form();
+form.add(list, &quot;LIST&quot;);
+
+this.getRoot().add(new qx.ui.form.renderer.Single(form));
+
+var c = new qx.data.controller.Form(null, form);
+var m = c.createModel();
+
+console.log(&quot;Initial&quot;, m.getLIST());
+m.addListener(&quot;changeLIST&quot;, function(e) {
+  console.log(&quot;change&quot;, e.getData());
+});
+
+
+As you see, the initial value is null as you mentioned. The value should reflect the model of the selected list item, as you can see if you select a list item. You get either &quot;A&quot; or &quot;B&quot; as content of the model&#39;s property. So if no item is selected, there is no model item and a null value is the right thing to do.
+As long as I&#39;m not missing something, everything works as expected and I can close the bug as &#39;WORKSFORME&#39;. If anything is unclear or wrong, feel free to reopen the issue.
+
+Added a unit test for regression testing: 4abfea6fd474257e6bd66b2f2ac3ccbfb7186a88</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33826</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2013-09-04 11:01:05 +0200</bug_when>
+            <thetext>Hi Martin,
+
+Thanks for your tests. Actually I think I found what&#39;s wrong... It&#39;s related to getModelSelection() (but not necessary to createModel() ).
+
+Here&#39;s an updated example (based on yours) : http://tinyurl.com/nugp5nu
+
+You can see that m.getList() returns null, what&#39;s correct.
+But the problem appears when I use list.getSelectionModel(): it returns [null] because getSelectionModel() returns a qx.data.Array. However, it can lead to problems because you can&#39;t make the difference with &quot;no selection at all&quot; and &quot;a selected item with the null value&quot;.
+
+Voilà, hope it&#39;s clearer now :-)
+
+Best Regards,
+
+Benoît.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33830</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2013-09-04 15:33:18 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+
+... So according to me, getModelSelection() should return null in that special case.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41206</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-09-23 08:22:28 +0200</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,118 @@
+<bug>
+          <bug_id>6404</bug_id>
+          
+          <creation_ts>2012-05-11 11:56:00 +0200</creation_ts>
+          <short_desc>Scope of Symbols in &#39;with&#39; Block is not Properly Detected</short_desc>
+          <delta_ts>2014-03-03 15:24:05 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.dependencies</component>
+          <version>1.6</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>DUPLICATE</resolution>
+          <dup_id>3356</dup_id>
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>2.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>29413</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-05-11 11:56:46 +0200</bug_when>
+            <thetext>The following code:
+
+  var b = new qx.ui.form.SelectBox();
+  var dummy = new qx.ui.form.ListItem(&#39;dummy&#39;);
+
+  with(b) {add(dummy);}
+
+leads to the generator message:
+
+  - Warning: Hint: Unknown global symbol referenced: add (gui.Application:78)
+
+But the &#39;add&#39; symbol belongs to the scope of the &#39;b&#39; object that parameterizes 
+the &#39;with&#39; statement.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29418</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-05-11 14:28:58 +0200</bug_when>
+            <thetext>It&#39;s actually quite hard to fix this. For the unknown symbols in a &#39;with&#39; 
+block, these could be reduced in this way:
+
+- Trace a variable to its class. This would be something new in the generator, 
+but could be useful in other contexts too. The issue would be to find the last 
+varUse as lval of the &#39;with&#39; parameter in the current scope, and see if it is a 
+known class. This would cover this common case:
+
+  var o = new x.y.Z();
+
+  with (o) { ...}
+
+- Then tweak the generator&#39;s scope analysis to take the properties of the x.y.Z 
+class into consideration.
+
+But this would only get you so far. It could potentially reduce the number of 
+false positive &quot;unknown symbol&quot; warnings, but its reach would be quite limited. 
+Objects passed in as arguments, or passed down to &#39;o&#39; via intermediate vars 
+would make it more difficult:
+
+  function (p) {
+    var q = p;
+    var t = new x.y.Z();
+    var o = t;
+    ...
+    o = q;
+
+   with (o) {...}
+
+- It would also introduce the new concept of &quot;object scope&quot; to the generator, 
+which currently only handles &quot;function scope&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31080</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-10-27 14:18:53 +0200</bug_when>
+            <thetext>The rational in comment#1 is not quite complete, compare with bug#3356. Basically, the argument &quot;x&quot; in &quot;with(x){..}&quot; can be an arbitrary expression, not just an identifier (in this it is also different from &quot;catch(x)&quot;). That makes it even more difficult to trace its value to a known class, in order to identify known properties of this class being used in the &#39;with&#39; block.
+
+Moreover (and in contrast to my understanding of ECMA262), browser engines treat the &#39;with&#39; block not as a nested name space. It&#39;s just that at runtime symbols are first being matched against the object derived from &quot;x&quot;, and then the normal symbol lookup/scope chain is deployed. 
+
+So the generator can either warn about all those seemingly &quot;global&quot; symbols, or skip checking them at all. We settled for letting the generator check them, and then use @ignore() comments to silence undue warnings.
+
+*** This bug has been marked as a duplicate of bug 3356 ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38260</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:05 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

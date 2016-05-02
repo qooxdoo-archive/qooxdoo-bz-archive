@@ -1,0 +1,173 @@
+<bug>
+          <bug_id>7279</bug_id>
+          
+          <creation_ts>2013-03-05 13:18:00 +0100</creation_ts>
+          <short_desc>Speed up lint checking during compile jobs</short_desc>
+          <delta_ts>2014-03-03 15:20:17 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>2.1.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Andreas Ecker">qooxdoo</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>32413</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2013-03-05 13:18:39 +0100</bug_when>
+            <thetext>Currently, when compiling an app, e.g. via generate.py source, the built-in linting seems to check the application classes as well as all library classes. As a typical library comes with an individual lint job anyway (and should be assumed as valid from an app&#39;s p.o.v.), the compile jobs should be restricted to the local application classes. This could bring some speed ups - given that the implicit linting should stay turned on by default.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32442</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2013-03-12 15:12:01 +0100</bug_when>
+            <thetext>Committed a fix to master with 84365c6
+
+@Thomas, please review.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32448</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-03-13 11:24:35 +0100</bug_when>
+            <thetext>A problem I see with restricting the lint checking to the application classes 
+is that a compile job might end up with a broken app without the user ever 
+noticing. E.g. if the application uses a library which in turn requires a 
+second library, but the user only adds the first library in his config.json. 
+Then when compiling the app the first library would be missing some global 
+symbols that are provided by the second library. But without lint-checking the 
+first library these missing symbols would never be warned about, the compile 
+job would finish without warnings, and the user would only see the broken app 
+when he runs it in the browser.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32449</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-03-13 11:41:33 +0100</bug_when>
+            <thetext>An alternative, as discussed with Andreas, to restricting the scope of classes 
+for lint checking would be to cache its results. This would allow to print 
+warnings everytime a class with issues is used (one of the advantages of the 
+current implementation), while still avoiding recurring checks on unchanged 
+classes (which causes the current slow-down).
+
+Changed the bug summary to reflect the original intention.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32460</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2013-03-14 17:35:41 +0100</bug_when>
+            <thetext>@Thomas, yes, that would probably be the best solution. I.e. caching the lint results, thus being able to always lint all classes (in effect only with a payload for the ones that changed).
+
+I&#39;m just noticing this change of scope of the bug. As the initial commit (for restricting lint checks to app classes) didn&#39;t work for hybrid jobs (source-hybrid), I have already committed the following fix:
+master with d7368cdd06
+
+When implementing the proposed caching strategy, and given that leads to significant speed-ups, one could revert those two commits.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32524</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-03-27 13:08:22 +0100</bug_when>
+            <thetext>I was thinking to and fro about caching lint results. The problem is that the 
+&#39;unknown globals&#39; check introduces a dependency to the class list that lint 
+checked against. The other checks can be done on class code in isolation. But 
+this would make cache invalidation more cumbersome. On the other hand this is a 
+check you definitely want to perform on every build job (see my other comment). 
+The other checks can be restricted more easily (doing them less frequently and 
+only on a subset of the involved classes), and cached results could be 
+invalidated more easily (as they only depend on the class code).
+
+So my resolution was to split &#39;unknown globals&#39; checking from the rest of the 
+lint checks. The globals check is done everytime an app is built, to make sure 
+there are no surprises about undefined symbols when running the app. The other 
+checks which don&#39;t require a class list and can be done lexically are done at 
+an early point in time (during dependency analysis) when the class code is 
+accessed the first time. For the time being checking is restricted to freshly 
+parsed classes, and to application classes only.
+
+This leaves us with the status quo ante where warnings would appear on and off 
+across build runs, but now hopefully with a much better basis for caching.
+
+master: a4e0e3f</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32662</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-04-30 18:44:35 +0200</bug_when>
+            <thetext>New approach:
+
+A major insight was that we can loosen the dependency to the finished class 
+list. In order to detect unknown symbols it suffices to know the set of 
+*available* classes, and not necessarily the set of actually *used* classes. 
+
+This allows to link globals checking to the dependency analysis done during 
+class list exploration. Dependent symbols (globals and others) are extracted 
+from the source tree anyhow, so I switched back to checking unknown symbols at 
+this point. This we had before the introduction of the lint.py module.
+
+The major drawback here was that dependency analysis was not yet honoring JSDoc 
+hints, particularly @ignore. This was now implemented. To make hint matching of 
+symbols faster, for any source tree a dedicated &quot;hints tree&quot; is compiled from 
+the JSDoc comments contained with that source tree. When dependency symbols are 
+then detected, they are matched in a dedicated step against the tree of hint 
+objects. This is condsiderably faster than the old approach that did hint 
+matching against the underlying comments everytime a symbol was extracted. It 
+also supports the Lint idea of scoped hints, similar to lexical scopes of 
+variables.
+
+By using this approach it turns out that hint checking only incurs a slight 
+runtime penalty, compared to dependency analysis without hints checking.
+
+master: 134a3e9</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32921</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-06-12 12:31:26 +0200</bug_when>
+            <thetext>Besides globals checking, compile-time lint checking is done, restricted on 
+local classes. The results of these checks are cached (with the classInfo 
+objects), so warnings can be repeated on every build run, but need no 
+re-calculation for unchanged classes (&quot;reliable warnings&quot;). 
+
+This checking can be turned off through the compile-options/code/lint-check 
+config key. (This was e.g. done for the framework&#39;s &#39;test&#39; and &#39;api&#39; jobs, to 
+speed up processing, as these jobs have the entire framework classes as their 
+&quot;local&quot; namespace).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36830</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:17 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

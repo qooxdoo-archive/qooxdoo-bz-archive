@@ -1,0 +1,108 @@
+<bug>
+          <bug_id>390</bug_id>
+          
+          <creation_ts>2007-05-04 11:18:00 +0200</creation_ts>
+          <short_desc>XmlHttpTransport broken for text/javascript</short_desc>
+          <delta_ts>2007-05-11 13:56:23 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>blocker</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Rüdiger Herrmann">rherrmann</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>1227</commentid>
+            <who name="Rüdiger Herrmann">rherrmann</who>
+            <bug_when>2007-05-04 11:18:16 +0200</bug_when>
+            <thetext>Issuing a Request that returns javaScript may cause the following error:
+Error: Undefined value for property content of class &#39;qx.io.remote.Response&#39; is not allowed!
+
+Steps to reproduce:
+- create a request object like this
+  new qx.io.remote.Request( url, &quot;GET&quot;, qx.util.Mime.JAVASCRIPT );
+- send request to server that returns JavaScript statement(s) 
+  i.e. &quot;alert(&#39;hello&#39;);&#39;
+
+XmlHttpTransport.getResponseContent() returns undefined in this case (see window.eval in line 732 +/-)
+Line 879 in Exchange.js tries to set the responseContent which leads to the above exception.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1230</commentid>
+            <who name="Rüdiger Herrmann">rherrmann</who>
+            <bug_when>2007-05-04 11:51:48 +0200</bug_when>
+            <thetext>*** Bug 391 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1237</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2007-05-07 13:31:37 +0200</bug_when>
+            <thetext>Thanks for the bug report. It&#39;s now fixed in svn. Please verify that it is now working for you.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1256</commentid>
+            <who name="Rüdiger Herrmann">rherrmann</who>
+            <bug_when>2007-05-10 14:07:39 +0200</bug_when>
+            <thetext>Still doesn&#39;t work for me.
+I can&#39;t see any difference in the files, also.
+From what I found out, the source of the problem is in line732 of XmlHttpTransport:
+  return vText &amp;&amp; vText.length &gt; 0 ? window.eval(vText) : null;
+if vText contains something like &quot;altert(&#39;hey ho&#39;);&quot; the window.eval returns undefined.
+In Exhange, line 880
+  var vContent = vImpl.getResponseContent();
+  vResponse.setContent(vContent);
+the vContent (which is undefined in this case) is passed to setContent that raises the error.
+Since I don&#39;t care about the return value, I replaced the above mentioned line in XmlHttpTransport with the following:
+  if( vText &amp;&amp; vText.length &gt; 0 ) {
+    window.eval(vText);
+  }
+  return &quot;&quot;;
+This works for me.
+Please note, that when running in FF the error is not visible in FireBug but ony in the error console. Don&#39;t know if that relevant.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1258</commentid>
+            <who name="Rüdiger Herrmann">rherrmann</who>
+            <bug_when>2007-05-10 15:06:23 +0200</bug_when>
+            <thetext>Forgot to mark bug as reopened</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1269</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2007-05-11 13:56:23 +0200</bug_when>
+            <thetext>Right. I have reviewed all return statements in getResponseContent. Should now really be fixed.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

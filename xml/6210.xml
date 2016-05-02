@@ -1,0 +1,281 @@
+<bug>
+          <bug_id>6210</bug_id>
+          
+          <creation_ts>2012-03-12 16:38:00 +0100</creation_ts>
+          <short_desc>New parser does not recognize &quot;trailing comma&quot; syntax error</short_desc>
+          <delta_ts>2014-03-03 15:19:32 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>2.1</target_milestone>
+          
+          <blocked>6209</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Vladimir Dobriakov">vladimir.dobriakov</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>christian.hagendorn</cc>
+    
+    <cc>mustafa.sak</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>28795</commentid>
+            <who name="Vladimir Dobriakov">vladimir.dobriakov</who>
+            <bug_when>2012-03-12 16:38:39 +0100</bug_when>
+            <thetext>Trailing comma syntax error like described in bug 6208 (http://bugzilla.qooxdoo.org/show_bug.cgi?id=6208) is not recognized as such by the new parser on `./generate build`
+
+Currently `./generate build` runs through.
+
+Expected: stop the build and show an error message.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28797</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-03-12 20:01:20 +0100</bug_when>
+            <thetext>My understanding of the spec is such that trailing commas in lists are *no* syntax error, and to the best of my knowledge all JS engines allow it. The &#39;lint&#39; program might impose a tighter interpretation here, but it should issue no more than a warning.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28798</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2012-03-13 07:15:50 +0100</bug_when>
+            <thetext>Sorry, I also thought that this is an syntax error, but I haven&#39;t read the spec.
+But so fare as I know has IE some problems with &quot;trailing comma&quot;, we should check this behavior.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28799</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-03-13 07:55:08 +0100</bug_when>
+            <thetext>Chris, please check if IE has some issues with that and if so, we should consider to brean on that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28840</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2012-03-15 14:51:04 +0100</bug_when>
+            <thetext>I checked the behavior, IE has problems when a trailing comma is used by object declaration, but when a trailing comma is used by array everything is okay.
+
+Here an article from dojo:
+http://www.enterprisedojo.com/2010/12/19/beware-the-trailing-comma-of-death/</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28843</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-03-15 15:16:01 +0100</bug_when>
+            <thetext>In array literals, as the trailing comma is seemingly also accepted in older IEs, this behaviour will remain. Also, no Lint warning will be issued. (The parser should even accept extra intervening commas in the list, and multiple trailing commas).
+
+As for object literals, the spec doesn&#39;t account for &quot;empty&quot; property entries. A single trailing comma is tolerated by most modern browsers, though, but not in older IEs. The parser will therefore be changed to raise a syntax error in these cases.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28970</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-03-27 12:00:58 +0200</bug_when>
+            <thetext>As discussed the parser is adapted to handle things the following way:
+
+Array literals:
+  - &quot;empty&quot; elements are accepted in all positions, as per spec (&#39;elisions&#39;), 
+e.g. &quot;[,1,,2,]&quot; is a legal array literal
+  - specifically a dangling comma is accepted, and is reproduced on output
+     (it wouldn&#39;t hurt to drop a dangling comma once, as it doesn&#39;t seem to 
+influence the &#39;length&#39; property of the array, ie. [,1,,2,].length == 
+[,1,,2].length == 4); but preserving it makes the compile pass idempotent, 
+which is important for cases like [1,,] which would become [1,] otherwise).
+
+Map literals:
+  - elisions are not accepted anywhere, not as dangling comma, nor at the 
+beginning of the map, nor midway through it.
+  - (except for the dangling case, which is due to IE, this is also the 
+behaviour of modern JS engines)
+
+master: c557e9a</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28975</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-03-27 15:50:50 +0200</bug_when>
+            <thetext>Turns out that the .length property *is* affected by a dangling comma, namely 
+in IE 6&amp;7:
+[1,2,].length == 3 !</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30138</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2012-07-16 11:38:21 +0200</bug_when>
+            <thetext>Have to reopen because I got an python error on parsing decoration code.
+
+Looks like, the parser doesn&#39;t like trailing comma in decorator array.
+
+Here the displeasure code:
+
+decorator : [
+        qx.ui.decoration.MLinearBackgroundGradient,
+        qx.ui.decoration.MBorderRadius,
+        qx.ui.decoration.MBoxShadow,
+        qx.ui.decoration.MSingleBorder,
+      ],
+
+And here the python stack trace:
+
+&gt;&gt;&gt; Checking Javascript source code...
+Traceback (most recent call last):
+  File &quot;../qooxdoo/tool/bin/ecmalint.py&quot;, line 429, in &lt;module&gt;
+    rc = main()
+  File &quot;../qooxdoo/tool/bin/ecmalint.py&quot;, line 405, in main
+    lint = Lint(filename)
+  File &quot;../qooxdoo/tool/bin/ecmalint.py&quot;, line 52, in __init__
+    self.tree = treegenerator.createSyntaxTree(tokenizer.parseStream(content))
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 295, in createSyntaxTree
+    rootBlock.addChild(readStatement(stream))
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 323, in readStatement
+    variable = readObjectOperation(stream, variable)
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 682, in readObjectOperation
+    readParamList(item, stream)
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 725, in readParamList
+    lastExpr = readExpression(stream)
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 308, in readExpression
+    return readStatement(stream, True, **kwargs)
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 429, in readStatement
+    item = readMap(stream)
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 786, in readMap
+    keyvalue.addListChild(&quot;value&quot;, readExpression(stream))
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 308, in readExpression
+    return readStatement(stream, True, **kwargs)
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 429, in readStatement
+    item = readMap(stream)
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 786, in readMap
+    keyvalue.addListChild(&quot;value&quot;, readExpression(stream))
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 308, in readExpression
+    return readStatement(stream, True, **kwargs)
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 429, in readStatement
+    item = readMap(stream)
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 786, in readMap
+    keyvalue.addListChild(&quot;value&quot;, readExpression(stream))
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 308, in readExpression
+    return readStatement(stream, True, **kwargs)
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 434, in readStatement
+    item = readArray(stream)
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 815, in readArray
+    item.addChild(readExpression(stream))
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 308, in readExpression
+    return readStatement(stream, True, **kwargs)
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 535, in readStatement
+    raiseSyntaxException(stream.curr(), expectedDesc)
+  File &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;, line 272, in raiseSyntaxException
+    raise SyntaxException(msg)
+ecmascript.frontend.SyntaxException.SyntaxException: Expected expression but found token/RB: &#39;]&#39;. file:, line:289, column:7</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30150</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-07-16 16:33:16 +0200</bug_when>
+            <thetext>(In reply to comment #8)
+&gt; Here the displeasure code:
+&gt; 
+&gt; decorator : [
+&gt;         qx.ui.decoration.MLinearBackgroundGradient,
+&gt;         qx.ui.decoration.MBorderRadius,
+&gt;         qx.ui.decoration.MBoxShadow,
+&gt;         qx.ui.decoration.MSingleBorder,
+&gt;       ],
+
+Can you give more of the context?! E.g. together with a minimal qx.Theme.define map that reproduces the issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30153</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-07-16 17:38:39 +0200</bug_when>
+            <thetext>Cannot repro. I used this theme class:
+
+qx.Theme.define(&quot;custom.theme.Decoration&quot;,
+{
+  extend : qx.theme.modern.Decoration,
+
+  decorations :
+  {
+    &quot;selected-css&quot; : {
+        decorator : [
+          qx.ui.decoration.MLinearBackgroundGradient,
+          qx.ui.decoration.MBorderRadius,
+          qx.ui.decoration.MBoxShadow,
+          qx.ui.decoration.MSingleBorder,
+        ]
+    }
+  }
+});
+
+Worked fine.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30155</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-07-16 17:43:37 +0200</bug_when>
+            <thetext>(In reply to comment #8)
+&gt; &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;,
+&gt; line 786, in readMap
+&gt;     keyvalue.addListChild(&quot;value&quot;, readExpression(stream))
+&gt;   File
+&gt; &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;,
+&gt; line 308, in readExpression
+&gt;     return readStatement(stream, True, **kwargs)
+&gt;   File
+&gt; &quot;/home/msak/workspace/qooxdoo/tool/pylib/ecmascript/frontend/treegenerator_2.py&quot;,
+&gt; line 429, in readStatement
+&gt;     item = readMap(stream)
+&gt;   File
+
+Which job are you running? As the Python stack lists &quot;treegenerator_2.py&quot; it must be a job that still uses the old parser. &#39;lint&#39;?!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30176</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-07-17 15:58:48 +0200</bug_when>
+            <thetext>(In reply to comment #11)
+&gt; Which job are you running? As the Python stack lists &quot;treegenerator_2.py&quot; it
+&gt; must be a job that still uses the old parser. &#39;lint&#39;?!
+
+Mustafa says it was the &#39;lint&#39; job.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30177</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-07-17 16:06:12 +0200</bug_when>
+            <thetext>This issue should dissolve when lint checking is itegrated with the compile pipeline (bug #4615), and therefore runs on the new parser.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30719</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-09-17 14:14:43 +0200</bug_when>
+            <thetext>The &#39;lint&#39; job now runs on the new parser, and the issue is resolved.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36525</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:32 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

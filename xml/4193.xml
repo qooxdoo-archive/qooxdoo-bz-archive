@@ -1,0 +1,343 @@
+<bug>
+          <bug_id>4193</bug_id>
+          
+          <creation_ts>2010-10-16 23:46:00 +0200</creation_ts>
+          <short_desc>Missing check of value in Validate class</short_desc>
+          <delta_ts>2014-03-03 08:47:40 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.controls</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20734</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-10-16 23:46:57 +0200</bug_when>
+            <thetext>First time a value of a widget is null when it has been untouched (case 1). After the first input it gets a value i.e. a string (case 2). If the characters of the string is removed it becomes an empty string (case 3). The validate functions need to check for case (1 and) 3 too, which they don&#39;t do today.
+
+What has been done:
+1. introduced empty checking
+2. moved error message into the if-block (increase speed and better structure!!!!)
+
+The change means that empty input can be checked.
+
+patch is here:
+
+Index: framework/source/class/qx/util/Validate.js
+===================================================================
+--- framework/source/class/qx/util/Validate.js	(revision 23539)
++++ framework/source/class/qx/util/Validate.js	(working copy)
+@@ -63,11 +63,12 @@
+      * Returns the function that checks for a number.
+      *
+      * @param errorMessage {String?null} Custom error message.
++     * @param checkEmpty {Boolean?false} Check for empty field.
+      * @return {Function} The {@link #checkNumber} Function.
+      */
+-    number : function(errorMessage) {
++    number : function(errorMessage, checkEmpty) {
+       return function(value) {
+-        qx.util.Validate.checkNumber(value, null, errorMessage);
++        qx.util.Validate.checkNumber(value, null, errorMessage, checkEmpty);
+       }
+     },
+ 
+@@ -82,17 +83,18 @@
+      * @param formItem {qx.ui.form.IForm} The form item to check if used in a 
+      *   {@link qx.ui.form.Form}.
+      * @param errorMessage {String?undefined} Custom error message.
++     * @param checkEmpty {Boolean?false} Check for empty field.
+      * @throws {qx.core.ValidationError} If the value parameter is not a
+      *    finite number
+      */
+-    checkNumber : function(value, formItem, errorMessage)
++    checkNumber : function(value, formItem, errorMessage, checkEmpty)
+     {
+-      errorMessage = errorMessage ||
+-        qx.locale.Manager.tr(&quot;%1 is not a number.&quot;, value);
++      var empty = checkEmpty ? !value : false;
+ 
+-      if ((typeof value !== &quot;number&quot; &amp;&amp; (!(value instanceof Number)))
++      if (empty || (typeof value !== &quot;number&quot; &amp;&amp; (!(value instanceof Number)))
+         || (!(isFinite(value))))
+       {
++        errorMessage = errorMessage || qx.locale.Manager.tr(&quot;%1 is not a number.&quot;, value);
+         throw new qx.core.ValidationError(&quot;Validation Error&quot;, errorMessage);
+       }
+     },
+@@ -102,11 +104,12 @@
+      * Returns the function that checks for a email address.
+      *
+      * @param errorMessage {String?null} Custom error message.
++     * @param checkEmpty {Boolean?false} Check for empty field.
+      * @return {Function} The {@link #checkEmail} Function.
+      */
+-    email : function(errorMessage) {
++    email : function(errorMessage, checkEmpty) {
+       return function(value) {
+-        qx.util.Validate.checkEmail(value, null, errorMessage);
++        qx.util.Validate.checkEmail(value, null, errorMessage, checkEmpty);
+       }
+     },
+ 
+@@ -121,16 +124,17 @@
+      * @param formItem {qx.ui.form.IForm} The form item to check if used in a 
+      *   {@link qx.ui.form.Form}.
+      * @param errorMessage {String?null} Custom error message.
++     * @param checkEmpty {Boolean?false} Check for empty field.
+      * @throws {qx.core.ValidationError} If the value parameter is not
+      *    a valid email address.
+      */
+-    checkEmail : function(value, formItem, errorMessage)
++    checkEmail : function(value, formItem, errorMessage, checkEmpty)
+     {
+-      errorMessage = errorMessage ||
+-        qx.locale.Manager.tr(&quot;&#39;%1&#39; is not an email address.&quot;, (value || &quot;&quot;));
++      var reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
++      var empty = checkEmpty ? !value :false;
+ 
+-      var reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+-      if (reg.test(value) === false) {
++      if (empty || reg.test(value) === false) {
++        errorMessage = errorMessage || qx.locale.Manager.tr(&quot;&#39;%1&#39; is not an email address.&quot;, (value || &quot;&quot;));
+         throw new qx.core.ValidationError(&quot;Validation Error&quot;,errorMessage);
+       }
+     },
+@@ -140,11 +144,12 @@
+      * Returns the function that checks for a string.
+      *
+      * @param errorMessage {String?null} Custom error message.
++     * @param checkEmpty {Boolean?false} Check for empty field.
+      * @return {Function} The {@link #checkString} Function.
+      */
+-    string : function(errorMessage) {
++    string : function(errorMessage, checkEmpty) {
+       return function(value) {
+-        qx.util.Validate.checkString(value, null, errorMessage);
++        qx.util.Validate.checkString(value, null, errorMessage, checkEmpty);
+       }
+     },
+ 
+@@ -159,14 +164,15 @@
+      * @param formItem {qx.ui.form.IForm} The form item to check if used in a 
+      *   {@link qx.ui.form.Form}.
+      * @param errorMessage {String?null} Custom error message.
++     * @param checkEmpty {Boolean?false} Check for empty field.
+      * @throws {qx.core.ValidationError} If the value parameter is not a string.
+      */
+-    checkString : function(value, formItem, errorMessage)
++    checkString : function(value, formItem, errorMessage, checkEmpty)
+     {
+-      errorMessage = errorMessage ||
+-        qx.locale.Manager.tr(&quot;%1 is not a string.&quot;, value);
++      var empty = checkEmpty ? !value : false;
+ 
+-      if (typeof value !== &quot;string&quot; &amp;&amp; (!(value instanceof String))) {
++      if (empty || typeof value !== &quot;string&quot; &amp;&amp; (!(value instanceof String))) {
++        errorMessage = errorMessage || qx.locale.Manager.tr(&quot;%1 is not a string.&quot;, value);
+         throw new qx.core.ValidationError(&quot;Validation Error&quot;, errorMessage);
+       }
+     },
+@@ -176,11 +182,12 @@
+      * Returns the function that checks for a url.
+      *
+      * @param errorMessage {String?null} Custom error message.
++     * @param checkEmpty {Boolean?false} Check for empty field.
+      * @return {Function} The {@link #checkUrl} Function.
+      */
+-    url : function(errorMessage) {
++    url : function(errorMessage, checkEmpty) {
+       return function(value) {
+-        qx.util.Validate.checkUrl(value, null, errorMessage);
++        qx.util.Validate.checkUrl(value, null, errorMessage, checkEmpty);
+       }
+     },
+ 
+@@ -195,15 +202,16 @@
+      * @param formItem {qx.ui.form.IForm} The form item to check if used in a 
+      *   {@link qx.ui.form.Form}.
+      * @param errorMessage {String?null} Custom error message.
++     * @param checkEmpty {Boolean?false} Check for empty field.
+      * @throws {qx.core.ValidationError} If the value parameter is not a url.
+      */
+-    checkUrl : function(value, formItem, errorMessage)
++    checkUrl : function(value, formItem, errorMessage, checkEmpty)
+     {
+-      errorMessage = errorMessage ||
+-        qx.locale.Manager.tr(&quot;%1 is not an url.&quot;, value);
++      var reg =  /([A-Za-z0-9])+:\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&amp;%@!\-\/]))?/;
++      var empty = checkEmpty ? !value :false;
+ 
+-      var reg =  /([A-Za-z0-9])+:\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&amp;%@!\-\/]))?/;
+-      if (!reg.test(value)) {
++      if (empty || !reg.test(value)) {
++        errorMessage = errorMessage || qx.locale.Manager.tr(&quot;%1 is not an url.&quot;, value);
+         throw new qx.core.ValidationError(&quot;Validation Error&quot;, errorMessage);
+       }
+     },
+@@ -213,11 +221,12 @@
+      * Returns the function that checks for a color.
+      *
+      * @param errorMessage {String?null} Custom error message.
++     * @param checkEmpty {Boolean?false} Check for empty field.
+      * @return {Function} The {@link #checkColor} Function.
+      */
+-    color : function(errorMessage) {
++    color : function(errorMessage, checkEmpty) {
+       return function(value) {
+-        qx.util.Validate.checkColor(value, null, errorMessage);
++        qx.util.Validate.checkColor(value, null, errorMessage, checkEmpty);
+       }
+     },
+ 
+@@ -233,15 +242,23 @@
+      * @param formItem {qx.ui.form.IForm} The form item to check if used in a 
+      *   {@link qx.ui.form.Form}.     
+      * @param errorMessage {String?null} Custom error message.
++     * @param checkEmpty {Boolean?false} Check for empty field.
+      * @throws {qx.core.ValidationError} If the value parameter is not a color.
+      */
+-    checkColor : function(value, formItem, errorMessage)
++    checkColor : function(value, formItem, errorMessage, checkEmpty)
+     {
++      var empty = checkEmpty ? !value :false;
++
+       try {
+         qx.util.ColorUtil.stringToRgb(value);
++
++        if(empty)
++        {
++          throw &quot;Empty&quot;;
++        }
++
+       } catch (e) {
+-        errorMessage = errorMessage ||
+-          qx.locale.Manager.tr(&quot;%1 is not a color! %2&quot;, value, e);
++        errorMessage = errorMessage || qx.locale.Manager.tr(&quot;%1 is not a color! %2&quot;, value, e);
+         throw new qx.core.ValidationError(&quot;Validation Error&quot;, errorMessage);
+       }
+     },
+@@ -258,16 +275,17 @@
+      * @param from {Number} The lower border of the range.
+      * @param to {Number} The upper border of the range.
+      * @param errorMessage {String?null} Custom error message.
++     * @param checkEmpty {Boolean?false} Check for empty field.
+      * @return {Function} A function taking one parameter (value).
+      */
+-    range : function(from, to, errorMessage)
++    range : function(from, to, errorMessage, checkEmpty)
+     {
+       return function(value)
+       {
+-        errorMessage = errorMessage ||
+-          qx.locale.Manager.tr(&quot;%1 is not in the range from [%2, %3].&quot;, value, from, to);
++        var empty = checkEmpty ? !value :false;
+ 
+-        if (value &lt; from || value &gt; to) {
++        if (empty || value &lt; from || value &gt; to) {
++          errorMessage = errorMessage || qx.locale.Manager.tr(&quot;%1 is not in the range from [%2, %3].&quot;, value, from, to);
+           throw new qx.core.ValidationError(&quot;Validation Error&quot;, errorMessage);
+         }
+       }
+@@ -281,16 +299,17 @@
+      *
+      * @param array {Array} The array holding the possibilities.
+      * @param errorMessage {String?null} Custom error message.
++     * @param checkEmpty {Boolean?false} Check for empty field.
+      * @return {Function} A function taking one parameter (value).
+      */
+-    inArray : function(array, errorMessage)
++    inArray : function(array, errorMessage, checkEmpty)
+     {
+       return function(value)
+       {
+-        errorMessage = errorMessage ||
+-          qx.locale.Manager.tr(&quot;%1 is not in %2&quot;, value, array);
++        var empty = checkEmpty ? !value :false;
+ 
+-        if (array.indexOf(value) === -1) {
++        if (empty || array.indexOf(value) === -1) {
++          errorMessage = errorMessage || qx.locale.Manager.tr(&quot;%1 is not in %2&quot;, value, array);
+           throw new qx.core.ValidationError(&quot;Validation Error&quot;, errorMessage);
+         }
+       }
+@@ -305,16 +324,17 @@
+      * incoming
+      * @param reg {RegExp} The RegExp for the check.
+      * @param errorMessage {String?null} Custom error message.
++     * @param checkEmpty {Boolean?false} Check for empty field.
+      * @return {Function} A function taking one parameter (value).
+      */
+-    regExp : function(reg, errorMessage)
++    regExp : function(reg, errorMessage, checkEmpty)
+     {
+       return function(value)
+       {
+-        errorMessage = errorMessage ||
+-          qx.locale.Manager.tr(&quot;%1 does not fit %2.&quot;, value, reg);
++        var empty = checkEmpty ? !value :false;
+ 
+-        if (!reg.test(value)) {
++        if (empty || !reg.test(value)) {
++          errorMessage = errorMessage || qx.locale.Manager.tr(&quot;%1 does not fit %2.&quot;, value, reg);
+           throw new qx.core.ValidationError(&quot;Validation Error&quot;, errorMessage);
+         }
+       }
+@@ -322,5 +342,3 @@
+   }
+ });
+ 
+-
+-</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20751</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-19 07:50:53 +0200</bug_when>
+            <thetext>To Martin for review.
+
+@Stefan: Please attach patch files instead of inline code.
+
+(Note: Proposed changes not to be applied as long as CLA is pending).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35985</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:47:40 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

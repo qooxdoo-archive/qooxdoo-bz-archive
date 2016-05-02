@@ -1,0 +1,224 @@
+<bug>
+          <bug_id>6751</bug_id>
+          
+          <creation_ts>2012-08-27 23:24:00 +0200</creation_ts>
+          <short_desc>Mobile radio button layout</short_desc>
+          <delta_ts>2012-09-06 16:33:58 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>mobile.layout</component>
+          <version>2.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="eda">edadasiewicz</reporter>
+          <assigned_to name="Christopher Zuendorf">christopher.zuendorf</assigned_to>
+          
+          <qa_contact name="Christopher Zuendorf">christopher.zuendorf</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30505</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2012-08-27 23:24:27 +0200</bug_when>
+            <thetext>It would be helpful to be able to position mobile radio buttons horizontally in a Vertical Box layout.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30591</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2012-09-04 10:43:49 +0200</bug_when>
+            <thetext>Do you want to several RadioButtons including Label in one Line?
+Or just one RadioButton aside the according label text?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30594</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2012-09-04 14:35:33 +0200</bug_when>
+            <thetext>I was trying to position multiple radiobuttons preceeded by their label horizontally:
+
+label1 (btn1) label2 (btn2)
+
+I noticed that the documentation is confusing.  In the constructor it lists a boolean parameter as being the value of the checkbox?  I would have assumed this to be string parameter as being the label of the button.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30597</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2012-09-04 15:02:36 +0200</bug_when>
+            <thetext>The constructor parameter gets the default value of the widget.
+The label text is passed when you add the checkbox to a form.
+
+You are right, we should improve the documentation in this case.
+
+I have just written a form renderer which gives the possibility for case 1:
+label (button)
+label (button)
+
+
+For your case, I would propose you to extend the renderer
+qx.ui.mobile.form.renderer.Single  and overwrite the  method
+
+addItems : function(items, names, title) 
+
+
+When the current item is an instance of qx.ui.mobile.form.RadioButton, and it is followed ( preceded) by other radio buttons,
+you could add them into a composite, and add them as a bulk into one row.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30614</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2012-09-05 18:07:21 +0200</bug_when>
+            <thetext>Fixed with: 
+57c5fca42953b0ae4fe1d8a2ee2765762eb38877</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30615</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2012-09-05 21:48:35 +0200</bug_when>
+            <thetext>I pulled the latest code from git and tried overriding addItems() with the following:
+
+addItems : function(items, names, title) {
+  if(title != null)
+  {
+    this._addGroupHeader(title);
+  }
+
+  for(var i=0, l=items.length; i&lt;l; i++)
+  {
+    var item = items[i];
+    var name = names[i];
+    var isFirstItem = (i==0);
+    var isLastItem = (i==items.length-1);
+
+    if (item instanceof qx.ui.mobile.form.RadioButton) {
+      var cont = new qx.ui.mobile.container.Composite(new qx.ui.mobile.layout.HBox());
+      cont.add(name);
+      cont.add(item);
+      for( ; i&lt;l; i++) {
+        item = items[i];
+        name = names[i];
+        isLastItem = (i==items.length-1);
+        if (item instanceof qx.ui.mobile.form.RadioButton) {
+          cont.add(name);
+          cont.add(item);
+        } else {
+          isLastItem = false;
+          break;
+        }
+      }
+      this._addInOneLine(cont, null, isFirstItem, isLastItem);
+      if (!isLastItem) {
+        this._addSeparationRow();
+      } else {
+        break;
+      }
+    }
+    if (this._isOneLineWidget(item)) {
+      this._addInOneLine(item, name, isFirstItem, isLastItem);
+    } else {
+      this._addInSeparateLines(item, name, isFirstItem, isLastItem);
+    }
+    if(!isLastItem) {
+      this._addSeparationRow();
+    }
+  }
+}
+
+but I get the following error in Widget.js (line 691):
+
+TypeError: child.getLayoutParent is not a function
+
+I&#39;m assuming I did something dumb...  Any ideas?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30619</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2012-09-06 11:10:32 +0200</bug_when>
+            <thetext>My Solution:  
+
+
+addItems : function(items, names, title) {
+  if(title != null)
+  {
+    this._addGroupHeader(title);
+  }
+
+  for(var i=0, l=items.length; i&lt;l; i++)
+  {
+    var item = items[i];
+    var name = names[i];
+    var isFirstItem = (i==0);
+    var isLastItem = (i==items.length-1);
+
+    if (item instanceof qx.ui.mobile.form.RadioButton) {
+      var cont = new qx.ui.mobile.container.Composite(new qx.ui.mobile.layout.HBox());
+      
+      for(var j=i; j&lt;items.length; j++) {
+        item = items[j];
+        name = names[j];
+
+        // Search for further RadioButtons.
+        if (item instanceof qx.ui.mobile.form.RadioButton) {
+          var label = new qx.ui.mobile.form.Label(name);
+          label.setLabelFor(item.getId());
+          
+          cont.add(label);
+          cont.add(item);
+          
+          isLastItem = (j==items.length-1);
+          
+          i=j;
+        }
+      }
+      
+      // FLUSH RadioButtons line
+      this._addInOneLine(cont, null, isFirstItem, isLastItem);
+      
+      if (!isLastItem) {
+        this._addSeparationRow();
+      }
+    } else {
+      if (this._isOneLineWidget(item)) {
+        this._addInOneLine(item, name, isFirstItem, isLastItem);
+      } else {
+        this._addInSeparateLines(item, name, isFirstItem, isLastItem);
+      }
+      if(!isLastItem) {
+        this._addSeparationRow();
+      }
+    }
+  }
+},</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30632</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2012-09-06 16:33:58 +0200</bug_when>
+            <thetext>Thank you.  That is just what I wanted.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

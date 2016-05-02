@@ -1,0 +1,146 @@
+<bug>
+          <bug_id>6249</bug_id>
+          
+          <creation_ts>2012-03-26 10:28:00 +0200</creation_ts>
+          <short_desc>Problem with qx.ui.list.List().refresh() when new group is created and is visible</short_desc>
+          <delta_ts>2014-03-03 08:46:27 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.list</component>
+          <version>1.6</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Omri Har-Shemesh">omrihar</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          <cc>edemircan</cc>
+    
+    <cc>omrihar</cc>
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>28954</commentid>
+            <who name="Omri Har-Shemesh">omrihar</who>
+            <bug_when>2012-03-26 10:28:13 +0200</bug_when>
+            <thetext>A tricky bug which occurs when a list item is selected, its group changes and the list needs to scroll down to show the item in its new location.
+A playground example: http://tinyurl.com/6qxsqg4
+Select, for example, name7 from the list and then click the button on the top.
+The button will change this items group to &quot;4&quot;, thus creating a new group. When the list tries to scroll to it you get an error. 
+
+As far as I can tell, the bug stems from the fact that in the refresh() function of the list, (qx.ui.list.List:621-622) the number of items in the list is being updated AFTER the selection is being updated. This results in a wrong number of items for the selection manager in the function getItemPosition (qx.ui.virtual.core.Axis:366), which then returns null since index &gt;= itemCount.
+
+I tried replacing these two rows, which then solves the problem for me, but I&#39;m not sure if there are other adverse effects resulting form this switch. I would be happy to be informed if there are otherwise effects resulting from this change.
+
+Best wishes,
+Omri</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29379</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2012-05-09 12:31:40 +0200</bug_when>
+            <thetext>Hey guys today I encountered the same case as Omri I think.
+here beneath is the playground code :)
+
+1. After running the code scroll down a bit
+2. Select the listItem named &quot;Name 8&quot;
+3. Click on the button &quot;Bam!&quot;
+4. see the result
+
+Omri thanks for the temp solution and QX guys thanks in advance for the fix
+
+Bye,
+Erol
+
+&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt; playground code &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;
+
+
+// create the tree
+var list = new qx.ui.list.List();
+list.set({
+  width: 150,
+  height: 300
+});
+this.getRoot().add(list, {left: 10, top: 10});
+
+var persons = new qx.data.Array();
+for(var i=0;i&lt;20;i++){
+  persons.push(qx.data.marshal.Json.createModel({name: (&quot;Name &quot;+i), age : i}));
+};
+
+var delegate = {
+    sorter : function(a, b) {
+      var aOlder = this.group(a);
+      var bOlder = this.group(b);
+      if (aOlder &lt; bOlder) { return 1; }
+      else if (aOlder &gt; bOlder) { return -1;}
+      else {
+				var aLabel = a.getAge();
+				var bLabel = b.getAge();
+        return aLabel &gt; bLabel ? 1 : aLabel == bLabel ? 0 : -1;
+			}
+    },
+    bindItem : function(controller, item, id) {
+      controller.bindProperty(&quot;name&quot;, &quot;label&quot;,null , item, id);
+      //controller.bindProperty(&quot;&quot;, &quot;model&quot;,null , item, id);
+    },
+    configureGroupItem : function(group) {
+      group.setPadding(3);
+      group.setBackgroundColor(&quot;#AAA&quot;);
+    },
+    bindGroupItem : function(controller, item, id) {
+        controller.bindProperty(&quot;&quot;, &quot;value&quot;, {
+          converter : function(data){
+        		if(data){ return &quot;older then 20&quot;; }
+            else{ return &quot;younger then 20&quot;; }
+        	}
+        }, item, id);
+    },
+    group : function(person) {
+      return person.getAge()&lt;=20;
+    }
+};
+list.setDelegate(delegate);
+list.setModel(persons);
+
+
+var button = new qx.ui.form.Button(&quot;Bam!&quot;);
+button.addListener(&quot;execute&quot;, function(){
+  persons.getItem(8).setAge(21);
+  list.refresh();
+},this);
+this.getRoot().add(button, {left: 200, top: 10});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35540</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:27 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

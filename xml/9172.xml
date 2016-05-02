@@ -1,0 +1,109 @@
+<bug>
+          <bug_id>9172</bug_id>
+          
+          <creation_ts>2015-06-18 17:56:00 +0200</creation_ts>
+          <short_desc>Incorrect arguments in call to .on()</short_desc>
+          <delta_ts>2015-06-19 14:30:30 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>website</product>
+          <component>documentation</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>NEW</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>alexander.steitz</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>43390</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2015-06-18 17:56:08 +0200</bug_when>
+            <thetext>In the documentation for q.io.xhr (url, settings?), the example code shows:
+
+  xmlhttp.on(&#39;loadend&#39;, function(callback, xhr) {
+    if (xhr.responseText) {
+    ...
+
+The function passed as the second argument to .on() does not have a &#39;callback&#39; parameter. The only argument provided to that function is xhr. The &#39;callback&#39; value should be stored, in this example, by closure from the outer function. The code should look like this:
+
+  xmlhttp.on(&#39;loadend&#39;, function(xhr) {
+    if (xhr.responseText) {
+    ...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43391</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2015-06-19 09:40:54 +0200</bug_when>
+            <thetext>Hi Derrell,
+
+the example code uses a &#39;bind&#39; some lines further and this is the reason why the &#39;callback&#39; parameter is handed in.
+
+--snip--
+ xmlhttp.on(&#39;loadend&#39;, function(callback, xhr) {
+    if (xhr.responseText) {
+      // when there is a response, pass it back to the callback function and correct scope
+      callback(this, JSON.parse(xhr.responseText));
+    }
+  }.bind(this, callback));
+--snip--
+
+-&gt; http://demo.qooxdoo.org/devel/website-api/#Xhr
+
+To me the code looks correct.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43393</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2015-06-19 14:30:30 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Hi Derrell,
+&gt; 
+&gt; the example code uses a &#39;bind&#39; some lines further and this is the reason why
+&gt; the &#39;callback&#39; parameter is handed in.
+&gt; 
+&gt; --snip--
+&gt;  xmlhttp.on(&#39;loadend&#39;, function(callback, xhr) {
+&gt;     if (xhr.responseText) {
+&gt;       // when there is a response, pass it back to the callback function and
+&gt; correct scope
+&gt;       callback(this, JSON.parse(xhr.responseText));
+&gt;     }
+&gt;   }.bind(this, callback));
+&gt; --snip--
+&gt; 
+&gt; -&gt; http://demo.qooxdoo.org/devel/website-api/#Xhr
+&gt; 
+&gt; To me the code looks correct.
+
+You are correct, of course. May I suggest that the purpose of this snippet of code is to demonstrate the on() function, not to demonstrate bind(). It is confusing to people looking for an example of using the on() function (as I was when I encountered this). The &#39;callback&#39; value can be accessed via its existence in the outer execution scope, without the need for the extra parameter being bound to the function, and callback&#39;s value will be retained by closure. I suggest getting rid of the &#39;callback&#39; argument to bind() and getting rid of the &#39;callback&#39; argument to on(). If I&#39;m reading this correctly, there should be no other changes required, and then the example use of on() is what is needed in the normal case.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,402 @@
+<bug>
+          <bug_id>2570</bug_id>
+          
+          <creation_ts>2009-07-09 17:14:00 +0200</creation_ts>
+          <short_desc>Optimization: Optimize &#39;var&#39; keyword</short_desc>
+          <delta_ts>2014-03-03 15:19:04 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          <keywords>Performance</keywords>
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>derrell.lipman</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10833</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-09 17:14:16 +0200</bug_when>
+            <thetext>Multiple &#39;var&#39; statements in a scope can be collected into a single &#39;var&#39; 
+statement, listing the various variable declarations.
+
+The Scope module should be a good help to do this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22296</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-01-17 14:04:23 +0100</bug_when>
+            <thetext>We should check first if thats worth the effort! Adrian, could you check and do some measurements in the different browsers what the benefit would be to extract all the var statements in one?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22401</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2011-01-25 13:19:07 +0100</bug_when>
+            <thetext>First of all, I think that this is more a coding style rule rather than an optimization feature and I actually prefer declaring more than one variables with var. BUT this will not make you JavaScript code ran any faster. 
+
+At best it will reduce the weight of the code transfered over the wire by a few hundred bytes. But that&#39;s it.
+
+Also, this is a draconian effort, something that is hard for one man to handle. Instead, we should all adhere to this style (if we want too) and declare vars like this from now on. Also, if we find var declarations that we can turn them into one, we should also refactor that code on the go.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22403</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-01-25 14:09:31 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+
+Adrian, you mistook the intent of this bug. First, it is a &#39;tool-generator&#39; bug as you can see from the bug component, so it concerns an optimization *automatically* applied by the generator, not applied by hand. It&#39;s *not* about coding style.
+
+Then, you simply state &quot;this will not make your JavaScript code ran any faster&quot;. Have you any proof of that (in terms of time measurements)?! That was exactly your task, to write some good tests declaring lots of variables one-by-one, or in a single (a few) &#39;var&#39; statements, and measure the result in relevant browsers, so we have a solid base to make a decision upon. Do you think you can do that?!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22415</commentid>
+              <attachid>875</attachid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2011-01-25 17:45:31 +0100</bug_when>
+            <thetext>Created attachment 875
+tests</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22416</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-01-25 17:52:05 +0100</bug_when>
+            <thetext>I was about to be blown away. On the very first run of the test app, it was 5x faster to use a single var than multiple var statements, on my test machine. Subsequent runs, however, vary which one is faster, and only by a little bit (1.1x) for me. That&#39;s more like what I had expected.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22417</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2011-01-25 17:56:53 +0100</bug_when>
+            <thetext>Description:
+
+make 2 function which declare 1000 variables in 2 ways:
+
+  var x=1, y=2, z=3;
+
+or
+
+  var x=1;
+  var y=2;
+  var z=3;
+
+
+Run this function 10000 times and compare the results.
+
+Here&#39;s my results:
+
+On Ubuntu 10.04 LTS - the Lucid Lynx:
+  Chrome 8.0.552.237: Both are running with the same speed. 
+  Firefox 3.5.13: 2nd version is roughly 4.8 times faster.
+
+Window XP:
+  Safari: Both are running with the same speed.
+  IE 8.0: 1st version is roughly 6 times faster.
+  Opera 10.61: Both are running with the same speed.
+
+For more browsers, you can find the test file attached.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22418</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2011-01-25 18:05:28 +0100</bug_when>
+            <thetext>On Window XP:
+  IE6: Varies by 1 time, which one is faster.
+  IE7: 1st version is roughly 3 times faster.
+
+I&#39;ve ran out of browsers to test. :)
+
+Thomas are you happy with the results?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22419</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2011-01-25 18:08:50 +0100</bug_when>
+            <thetext>My system has 4GB of memory and an Intel Core 2 duo processor E7500 running @ 2.93GHz.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22420</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-01-25 18:10:31 +0100</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; Here&#39;s my results:
+&gt; 
+&gt; On Ubuntu 10.04 LTS - the Lucid Lynx:
+&gt;   Chrome 8.0.552.237: Both are running with the same speed. 
+&gt;   Firefox 3.5.13: 2nd version is roughly 4.8 times faster.
+&gt; 
+&gt; Window XP:
+&gt;   Safari: Both are running with the same speed.
+&gt;   IE 8.0: 1st version is roughly 6 times faster.
+&gt;   Opera 10.61: Both are running with the same speed.
+
+I would appreciate some absolute figures.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22421</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2011-01-25 18:38:00 +0100</bug_when>
+            <thetext>OFC, just keep in mind that these absolute figures are dependent on many things OS related.
+
+1st: var x=1,y=2,z=3;
+2nd: var x=1; var y=2; var z=3;
+
+variable declared: 1000.
+iterations ran: 10000.
+OS Memory: 4GB
+Processor: Intel Core 2 Duo E7500 @ 2.93GHz
+
+Results:
+
+Ubuntu 10.04 LTS - the Lucid Lynx:
+  Chrome 8.0.552.237: 1st: 0.07s 2nd: 0.07s.
+  Firefox 3.5.13: 1st: 0.019s 2nd: 0.004s. 4.8x faster.
+
+Window XP:
+  Chrome 8.0.552.237: 1st: 0.01s 2nd: 0.01s.
+  Safari 5.0.1: 1st: 0.029s 2nd: 0.033s.
+  IE 8.0: 1st: 0.114s 2nd:0.628s. 5.5x faster.
+  IE 7.0: 1st: 0.280s 2nd: 0.972s. 3.5x faster.
+  IE 6.0: 1st: 0.250s 2nd: 0.250s.
+  Opera 10.61: 1st: 0.06s 2nd: 0.009s. 1.5x faster.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22422</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2011-01-25 18:59:37 +0100</bug_when>
+            <thetext>@Thomas, do you need anything else for this big, or should we close it?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22423</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2011-01-25 19:00:33 +0100</bug_when>
+            <thetext>(In reply to comment #11)
+&gt; @Thomas, do you need anything else for this big, or should we close it?
+
+s/big/bug</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22424</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-01-25 19:28:58 +0100</bug_when>
+            <thetext>Close it?!
+
+- With which result? On first sight, from some browsers the first variant seems 
+to be faster, for others the second. So should we implement such an 
+optimization into the generator or not?!
+
+- On a closer look, not only the relative speed gains are interesting, but also 
+the absolute figures. Firefox is still fast even with the first (slower) 
+version, whereas the penalty for IE choosing the second variant might be much 
+more perceivable for the user, so maybe it&#39;s worth implementing the first 
+nevertheless.
+
+- On an even closer look, some of your figures seem to be wrong. E.g. you wrote
+         &quot;Opera 10.61: 1st: 0.06s 2nd: 0.009s. 1.5x faster&quot;
+   But if my math doesn&#39;t fail me, 0.06/0.009 = 6.666, which makes the second 
+variant more like 6.5x faster, and not 1.5x.
+
+- On an even more closer look, I think we need to look at the test code itself, 
+and to scrutinize the way the test results are produced, and whether they are 
+reliable.
+
+No, I don&#39;t think we should close it :).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22425</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2011-01-25 19:45:15 +0100</bug_when>
+            <thetext>Here&#39;s a response from jsmentors mailing list that backs up my first opinion about this: It will not make you code faster.
+
+Since all variables are created before the function is executed, the difference is never something you can take for granted. There is absolutely zero difference in either way of declaring vars. Purely a parser issue. And it&#39;s typically something that&#39;ll change on a day-to-day basis. And whatever difference there is, will be so minimal it&#39;s not worth it as an argument for whatever you want to decide.
+
+
+@Thomas. Your math did failed you. But you must be tired. 0.06 * 1.5 = 0.09. But you can calculate this in many ways. Actually you can &quot;see&quot; the result without even make any calculations.
+
+Anyway I think that my job here is done. I have nothing more to say about this. If you think that you can make any optimizations or tests or whatever here, go ahead.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22426</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-01-25 20:14:00 +0100</bug_when>
+            <thetext>(In reply to comment #14)
+&gt; Here&#39;s a response from jsmentors mailing list that backs up my first opinion
+&gt; about this: It will not make you code faster.
+
+Can you provide a link?
+
+&gt; Since all variables are created before the function is executed, the difference
+&gt; is never something you can take for granted.
+
+Why not?! If the figures are reproducable they at least reflect the current implementations in the various browsers.
+
+&gt; There is absolutely zero
+&gt; difference in either way of declaring vars.
+
+Well, your figures clearly indicate otherwise. If this is considered significant is another question.
+
+&gt; Purely a parser issue.
+
+Indeed, and that&#39;s what we care about.
+
+&gt; And it&#39;s
+&gt; typically something that&#39;ll change on a day-to-day basis.
+
+Oh is it?! How would you know?!
+
+&gt; And whatever
+&gt; difference there is, will be so minimal it&#39;s not worth it as an argument for
+&gt; whatever you want to decide.
+
+You can leave that to others.
+
+&gt; @Thomas. Your math did failed you. But you must be tired. 0.06 * 1.5 = 0.09.
+&gt; But you can calculate this in many ways. Actually you can &quot;see&quot; the result
+&gt; without even make any calculations.
+
+No, it&#39;s just the other way round: If you could only &quot;see&quot; that it is a 0.009 (not 0.09) in the second figure! That&#39;s an order of magnitude.
+
+&gt; 
+&gt; Anyway I think that my job here is done. I have nothing more to say about this.
+
+I&#39;m not so sure. I&#39;d rather have you do a bit more grunt work, and write a test, similar to the first one, but which doesn&#39;t use eval but provides the two functions literally. I&#39;m sure you can write a (Python or otherwise) script that generates the code. Please attach, and do the measurements again :-).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22427</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2011-01-25 21:29:21 +0100</bug_when>
+            <thetext>jsmentors discussion:
+https://groups.google.com/d/topic/jsmentors/zpY4O5AR_Zo/discussion
+
+a jsperf.com test:
+http://jsperf.com/vardeclaration
+
+another jsperf.com test (discovered after I&#39;ve done my test - the above one):
+http://jsperf.com/vars
+
+0.009 is a typo. It should be 0.09.
+
+I can do some more measurements...but this is a waste of time. I think that I provided a lot of feedback that can be used as a base for decision making. 
+
+ttyl.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22428</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-01-26 09:30:35 +0100</bug_when>
+            <thetext>We won&#39;t implement this optimization at the moment, even though the 
+investigation could be improved for both our own tests, as well as those at 
+e.g. jsperf.com. If you break the performance figures of Adi&#39;s tests down to a 
+single &#39;var&#39; statement, the differences are in such a slim range. Applying this 
+optimization to specific code (e.g. a method), where you usually have only a 
+few local vars per scope instead of 1,000, it seems there is not much you could 
+gain.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36330</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:04 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>875</attachid>
+            <date>2011-01-25 17:45:00 +0100</date>
+            <delta_ts>2011-01-25 17:45:31 +0100</delta_ts>
+            <desc>tests</desc>
+            <filename>index.html</filename>
+            <type>text/html</type>
+            <size>3251</size>
+            <attacher>adrian.olaru</attacher>
+            
+              <data encoding="base64">PCFET0NUWVBFIGh0bWwgUFVCTElDICItLy9XM0MvL0RURCBYSFRNTCAxLjAgVHJhbnNpdGlvbmFs
+Ly9FTiIgImh0dHA6Ly93d3cudzMub3JnL1RSL3hodG1sMS9EVEQveGh0bWwxLXRyYW5zaXRpb25h
+bC5kdGQiPgo8aHRtbCB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94aHRtbCI+CjxoZWFk
+PgogIDx0aXRsZT5KYXZhU2NyaXB0IFJvY2tzISBHb29kaWVzPC90aXRsZT4KICA8c2NyaXB0Pgog
+ICAgLy9mcm9tIEpTIFBlcmZvcm1hbmNlIFJvY2tzIGJvb2sgYnkgVGhvbWFzIEZ1Y2tzIGFuZCBB
+bXkgSG95CiAgICAvL2h0dHA6Ly9qYXZhc2NyaXB0cm9ja3MuY29tL3BlcmZvcm1hbmNlLwogICAg
+Ly8KICAgIGZ1bmN0aW9uIGxvZyhpbmZvKXsKICAgICAgaWYoIWRvY3VtZW50LmdldEVsZW1lbnRC
+eUlkKCdyZXN1bHRzJykpewogICAgICAgIHZhciByZXN1bHRzID0gZG9jdW1lbnQuY3JlYXRlRWxl
+bWVudCgncHJlJyk7CiAgICAgICAgcmVzdWx0cy5pZCA9ICdyZXN1bHRzJzsKICAgICAgICBkb2N1
+bWVudC5nZXRFbGVtZW50c0J5VGFnTmFtZSgnYm9keScpWzBdLmFwcGVuZENoaWxkKHJlc3VsdHMp
+OwogICAgICB9CiAgICAgIAogICAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgncmVzdWx0cycp
+LmlubmVySFRNTCArPSBpbmZvLnJlcGxhY2UoL1xuLywnPGJyLz4nKTsKICAgIH0KCgogICAgZnVu
+Y3Rpb24gdGltZShzY29wZSl7CiAgICAgIHRpbWUuc2NvcGUgPSB0aW1lLnNjb3BlIHx8IHt9Owog
+ICAgICBpZih0aW1lLnNjb3BlW3Njb3BlXSkgewogICAgICAgIHZhciBkdXJhdGlvbiA9IChuZXcg
+RGF0ZSgpKS5nZXRUaW1lKCktdGltZS5zY29wZVtzY29wZV07CiAgICAgICAgdGltZS5zY29wZVtz
+Y29wZV0gPSBudWxsOwogICAgICAgIGxvZygoc2NvcGUudG9TdHJpbmcoKS5yZXBsYWNlKC8mL2cs
+ICcmYW1wOycpLnJlcGxhY2UoLzwvZywgJyZsdDsnKS5yZXBsYWNlKC8+L2csICcmZ3Q7JykpKyc8
+YnIvPjxiPicrKGR1cmF0aW9uLzEwMDApLnRvRml4ZWQoMykrJ3M8L2I+JysnPGJyLz48YnIvPicp
+OwogICAgICAgIHJldHVybiBkdXJhdGlvbjsKICAgICAgfSBlbHNlIHsKICAgICAgICB0aW1lLnNj
+b3BlW3Njb3BlXSA9IChuZXcgRGF0ZSgpKS5nZXRUaW1lKCk7CiAgICAgIH0KICAgIH0KCiAgICBm
+dW5jdGlvbiBzaG93U291cmNlKCl7CiAgICAgIHZhciBiID0gZG9jdW1lbnQuYm9keSwgcyA9IGIu
+Z2V0RWxlbWVudHNCeVRhZ05hbWUoJ3NjcmlwdCcpLCBzb3VyY2UsIGksIHRleHQgPSAnJzsKICAg
+ICAgaWYoIShzb3VyY2UgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnc291cmNlJykpKXsKICAg
+ICAgICBzb3VyY2UgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdkaXYnKTsKICAgICAgICBiLmFw
+cGVuZENoaWxkKHNvdXJjZSk7CiAgICAgIH0KICAgICAgZm9yKGk9MDtpPHMubGVuZ3RoO2krKykK
+ICAgICAgICBpZighc1tpXS5zcmMpIHRleHQgKz0gCiAgICAgICAgICBzW2ldLmlubmVySFRNTC5y
+ZXBsYWNlKC8mL2csICcmYW1wOycpCiAgICAgICAgICAgIC5yZXBsYWNlKC88L2csICcmbHQ7Jyku
+cmVwbGFjZSgvPi9nLCAnJmd0OycpLnJlcGxhY2UoL1xuLywnPGJyLz4nKTsKICAgICAgc291cmNl
+LmlubmVySFRNTCA9ICc8cHJlIHN0eWxlPSJwYWRkaW5nOjVweDtmb250LXNpemU6MTJweDt3aWR0
+aDo3NTBweDtib3JkZXI6MXB4IHNvbGlkICM4ODg7YmFja2dyb3VuZDojZWVlO2NvbG9yOiM0NDQi
+Pjxjb2RlPicgKyB0ZXh0ICsgJ1xuXG48L2NvZGU+PC9wcmU+JzsKICAgIH0KCiAgICBmdW5jdGlv
+biB0ZXN0KGl0ZXJhdGlvbnMsIG1ldGhvZDEsIG1ldGhvZDIpewogICAgICBsb2coJzxiPicraXRl
+cmF0aW9ucysnIGl0ZXJhdGlvbnMuPC9iPjxici8+PGJyLz4nKTsKICAgICAgdmFyIGk9aXRlcmF0
+aW9ucywgZDEsIGQyOwogICAgICAvLyB3YXJtdXAKICAgICAgd2hpbGUoaS0tKSB7aWYobWV0aG9k
+MSltZXRob2QxKCk7aWYobWV0aG9kMiltZXRob2QyKCk7fQogICAgICAKICAgICAgaWYobWV0aG9k
+MSl7CiAgICAgICAgaT1pdGVyYXRpb25zOwogICAgICAgIHRpbWUobWV0aG9kMSk7CiAgICAgICAg
+d2hpbGUoaS0tKSBtZXRob2QxKCk7CiAgICAgICAgZDEgPSB0aW1lKG1ldGhvZDEpOwogICAgICB9
+CiAgICAgIAogICAgICBpZihtZXRob2QyKXsKICAgICAgICBpPWl0ZXJhdGlvbnM7CiAgICAgICAg
+dGltZShtZXRob2QyKTsKICAgICAgICB3aGlsZShpLS0pIG1ldGhvZDIoKTsKICAgICAgICBkMiA9
+IHRpbWUobWV0aG9kMik7CiAgICAgIH0KICAgICAgCiAgICAgIGlmKGQxJiZkMil7CiAgICAgICAg
+aWYoZDE+ZDIpCiAgICAgICAgICBsb2coJzxzcGFuIHN0eWxlPSJjb2xvcjpncmVlbiI+PGI+VmFy
+aWFudCAyPC9iPiBpcyA8Yj4nKyhkMS9kMikudG9GaXhlZCgxKSsnIHRpbWVzPC9iPiBmYXN0ZXIu
+PC9zcGFuPicpOwogICAgICAgIGVsc2UgaWYoZDI+ZDEpCiAgICAgICAgICBsb2coJzxzcGFuIHN0
+eWxlPSJjb2xvcjpncmVlbiI+PGI+VmFyaWFudCAxPC9iPiBpcyA8Yj4nKyhkMi9kMSkudG9GaXhl
+ZCgxKSsnIHRpbWVzPC9iPiBmYXN0ZXIuPC9zcGFuPicpOwogICAgICAgIGVsc2UKICAgICAgICAg
+IGxvZygnPHNwYW4gc3R5bGU9ImNvbG9yOmdyZWVuIj5Cb3RoIHZhcmlhbnRzIHJ1biB3aXRoIHRo
+ZSBzYW1lIHNwZWVkLjwvc3Bhbj4nKTsKICAgICAgfQogICAgfQogIDwvc2NyaXB0Pgo8L2hlYWQ+
+Cjxib2R5PgogIDxoMj52YXIgeD0xLCB5PTIsIHo9MyB2cy4gdmFyIHg9MTsgdmFyIHk9MjsgdmFy
+IHo9Mzs8aDI+CiAgPHNjcmlwdD4KICAgIHZhciBpID0gMTAwMDsKCiAgICBldmFsKChmdW5jdGlv
+bihkYXRhLCBpKSB7CiAgICAgIHdoaWxlKGktLSl7CiAgICAgICAgZGF0YS5wdXNoKCd2YXIgdicg
+KyBpICsgJz0nICsgaSk7CiAgICAgIH0KICAgICAgcmV0dXJuICdmdW5jdGlvbiBkZWNsYXJlTXVs
+dGlWYXIoKSB7JyArIGRhdGEuam9pbignOycpICsgJzt9JzsKICAgIH0pKFtdLCBpKSk7CgoKICAg
+IGV2YWwoKGZ1bmN0aW9uKGRhdGEsIGkpIHsKICAgICAgd2hpbGUoaS0tKXsKICAgICAgICBkYXRh
+LnB1c2goJ3YnKyBpICsgJz0nICsgaSk7CiAgICAgIH0KICAgICAgcmV0dXJuICdmdW5jdGlvbiBk
+ZWNsYXJlT25lVmFyKCkge3ZhciAnICsgZGF0YS5qb2luKCcsJykgKyAnO30nOwogICAgfSkoW10s
+IGkpKTsKICA8L3NjcmlwdD4KCiAgPGEgaHJlZj0iIyIgb25jbGljaz0idGVzdCgxMDAwMCwgZGVj
+bGFyZU9uZVZhciwgZGVjbGFyZU11bHRpVmFyKSI+cnVuIHRlc3Q8L2E+CjwvYm9keT4KPC9odG1s
+Pgo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

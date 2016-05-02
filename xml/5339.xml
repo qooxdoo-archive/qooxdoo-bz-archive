@@ -1,0 +1,108 @@
+<bug>
+          <bug_id>5339</bug_id>
+          
+          <creation_ts>2011-07-07 14:35:00 +0200</creation_ts>
+          <short_desc>Very seldom exception in our application caused by the QX-Slidebar: TypeError: this.getChildren()[0] is undefined</short_desc>
+          <delta_ts>2014-03-03 15:19:40 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          <cc>alexander.steitz</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>25830</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-07-07 14:35:39 +0200</bug_when>
+            <thetext>Our error reporting tool shows that our application sometimes gets the following exception:
+  TypeError: this.getChildren()[0] is undefined
+
+The stack trace of this exception goes back to the method qx.ui.container.SlideBar._onRemoveChild:
+
+    _onRemoveChild : function()
+    {
+      qx.event.Timer.once(
+        function() {
+          this.scrollBy(this.getChildControl(&quot;scrollpane&quot;).getScrollX());
+        },
+        this,
+        50
+      );
+    },
+
+This problem cannot be reproduced at the moment, and this problem is very seldom.
+
+Can anyone, without investing much time, easily see a potential problem in this logic?
+I would guess that the problem is that the slidebar control has been destructed before the timer-time is over, and then the timer-function tries to operate on a disposed child control.
+
+This issue is not very importing for us, I am just trying to reduce some of the errors that are reported to our error tool.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25831</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-07-07 15:16:41 +0200</bug_when>
+            <thetext>&gt; I would guess that the problem is that the slidebar control has been destructed
+&gt; before the timer-time is over, and then the timer-function tries to operate on
+&gt; a disposed child control.
+Your guess is right. The &quot;this&quot; within the &quot;_onRemoveChild&quot; method points to the &quot;content&quot; child control which does have the &quot;scrollpane&quot; as first children (-&gt; &quot;getChildren()[0]). So this seems to fit together.
+
+One further question: which browser is affected?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25841</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-07-07 17:03:53 +0200</bug_when>
+            <thetext>The browser for which the error was reported is:
+  Browser:firefox 3.6, system:winxp
+
+The username (which was logged together with these exception) indicates that this was no real user, but an automatic test user. 
+Probably the test tool (selenium) sends the requests so fast that we ran into this timing problem.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27122</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-10-06 16:53:56 +0200</bug_when>
+            <thetext>Added extra check to prevent the scrolling if the child control is already disposed.
+
+Fixed with revision #28863 (branch 1_5_x) and #28864 (trunk).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36579</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:40 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

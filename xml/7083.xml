@@ -1,0 +1,148 @@
+<bug>
+          <bug_id>7083</bug_id>
+          
+          <creation_ts>2012-12-07 08:44:00 +0100</creation_ts>
+          <short_desc>getBoundingClientRect might return decimal values</short_desc>
+          <delta_ts>2014-03-03 15:25:37 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>website.bom</component>
+          <version>2.0.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>critical</bug_severity>
+          <target_milestone>2.1.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tobias Tost">ttost</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>31666</commentid>
+            <who name="Tobias Tost">ttost</who>
+            <bug_when>2012-12-07 08:44:05 +0100</bug_when>
+            <thetext>With the latest chrome (rev. 23), we got several situations where element.getBoundingClientRect return decimal values which breaks qooxdoo&#39;s internal location and dimension handling. We were able to fix that by encapsulating the getBoundingClientRect-access to qx.bom.Element and round the values there. More specifically, I added this method:
+
+ /**
+  * Retrieves bounding rectangle structure as defined in 
+  * https://developer.mozilla.org/en-US/docs/DOM/element.getBoundingClientRect
+  *
+  * @param element {Element} element to measure
+  */
+  getBoundingRect : function(elem) {
+
+        if (elem.getBoundingClientRect)
+        {
+          var rect = elem.getBoundingClientRect();
+          return {
+                left: Math.round(rect.left), 
+                top: Math.round(rect.top),
+                right: Math.round(rect.right),
+                bottom: Math.round(rect.bottom)
+            };
+        }
+        var rect = {
+            left: 0, 
+            top: 0,
+            right: 0,
+            bottom: 0};
+
+        // Stop at the body
+        var body = qx.dom.Node.getDocument(elem).body;
+        var box = qx.bom.element.BoxSizing;
+
+        if (box.get(elem) !== &quot;border-box&quot;)
+        {
+            rect.left -= this.__num(elem, &quot;borderLeftWidth&quot;);
+            rect.top -= this.__num(elem, &quot;borderTopWidth&quot;);
+            rect.right -= this.__num(elem, &quot;borderRightWidth&quot;);
+            rect.bottom -= this.__num(elem, &quot;borderBottomWidth&quot;);
+        };
+
+        while (elem &amp;&amp; elem !== body)
+        {
+            // Add node offsets
+            rect.left += elem.offsetLeft;
+            rect.top += elem.offsetTop;
+            rect.right += elem.offsetRight;
+            rect.bottom += elem.offsetBottom;
+
+            // Mozilla does not add the borders to the offset
+            // when using box-sizing=content-box
+            if (box.get(elem) !== &quot;border-box&quot;)
+            {
+                rect.left += this.__num(elem, &quot;borderLeftWidth&quot;);
+                rect.top += this.__num(elem, &quot;borderTopWidth&quot;);
+                rect.right += this.__num(elem, &quot;borderRightWidth&quot;);
+                rect.bottom += this.__num(elem, &quot;borderBottomWidth&quot;);
+            }
+
+            // Mozilla does not add the border for a parent that has
+            // overflow set to anything but visible
+            if (elem.parentNode &amp;&amp; this.__style(elem.parentNode, &quot;overflow&quot;) != &quot;visible&quot;)
+            {
+                rect.left += this.__num(elem.parentNode, &quot;borderLeftWidth&quot;);
+                rect.top += this.__num(elem.parentNode, &quot;borderTopWidth&quot;);
+                rect.right += this.__num(elem.parentNode, &quot;borderRightWidth&quot;);
+                rect.bottom += this.__num(elem.parentNode, &quot;borderBottomWidth&quot;);
+            }
+
+            // One level up (offset hierarchy)
+            elem = elem.offsetParent;
+        }
+        return rect;
+  },
+
+bom.Location and bom.Dimension is now using this method instead of the native getBoundingClientRect as we are under control how this thing has to look like, now. I&#39;m not sure about the gecko-pre-Mozilla-3 part in the else-part - we have no browser in our environment that do not support getBoundingClientRect. 
+
+Without this change, qx crashes due to Integer-assertion - if you assert is has to be integer, better encapsulate it to be under control.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32130</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2013-02-05 16:23:34 +0100</bug_when>
+            <thetext>Tobias, where exactly did you run into this issue? qx.bom.element.Location/Dimension already round the returned values and I can&#39;t find any other uses of getBoundingClientRect in the framework classes.
+
+That said, Firefox 3.6 and even IE 6 support it, so I don&#39;t think we need the alternate code any more.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32234</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2013-02-13 16:07:01 +0100</bug_when>
+            <thetext>Closing as worksforme. Opened a separate report for the removal of the obsolete workarounds:
+
+http://bugzilla.qooxdoo.org/show_bug.cgi?id=7231</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38813</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:37 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

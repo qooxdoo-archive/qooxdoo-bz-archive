@@ -1,0 +1,268 @@
+<bug>
+          <bug_id>2613</bug_id>
+          
+          <creation_ts>2009-07-23 16:26:00 +0200</creation_ts>
+          <short_desc>qx.io.remote.Request&#39;s content is null, when state is &quot;failed&quot;</short_desc>
+          <delta_ts>2014-03-03 15:22:05 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>0.8.2</version>
+          <rep_platform>Firefox 3.0</rep_platform>
+          <op_sys>Linux</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="skar">skar.karthikeyan</reporter>
+          <assigned_to name="Derrell Lipman">derrell.lipman</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>3</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>11043</commentid>
+            <who name="skar">skar.karthikeyan</who>
+            <bug_when>2009-07-23 16:26:24 +0200</bug_when>
+            <thetext>qx.io.remote.Request&#39;s content is either null or the content of the previous &quot;completed&quot; request, when the currrent request&#39;s state is &quot;failed&quot;. However, the current request&#39;s content does reach the browser as firebug/wireshark confirm them, but it&#39;s not what we receive via the getContent() method. 
+
+The qooxdoo code is as follows:
+
+&gt; loginButton.addListener(&quot;execute&quot;, function(e) {
+&gt;         var req1 = new qx.io.remote.Request(&quot;/user_sessions/test&quot;,
+&gt; &quot;POST&quot;, &quot;text/plain&quot;);
+&gt;         req1.addListener(&quot;completed&quot;, function(res){
+&gt;           alert(&quot;Login completed:&quot; + res.getContent() + &quot; and status
+&gt; code is:&quot; + res.getStatusCode());
+&gt;           R     =   res;
+&gt;         });
+&gt;
+&gt;         req1.addListener(&quot;timeout&quot;, function(fail){
+&gt;           alert(&quot;Login timed out:&quot; + fail.getContent() + &quot; and status
+&gt; code is:&quot; + fail.getStatusCode());
+&gt;           R     =   fail;
+&gt;         });
+&gt;
+&gt;         req1.addListener(&quot;failed&quot;, function(t){
+&gt;           alert(&quot;Login failed:&quot; + t.getContent() + &quot; and status code
+&gt; is:&quot; + t.getStatusCode());
+&gt;           R     =   t;
+&gt;         });
+&gt;         req1.setParameter(&quot;_method&quot;,&quot;put&quot;);
+&gt;         req1.send();
+&gt;
+&gt;       }, this);
+&gt;
+
+Now, the rails code is:
+
+&gt; def test
+&gt;     render :text =&gt; &quot;Login failed!!!&quot;, :status =&gt; 403
+&gt;   end
+
+The above method resides in the user_sessions_controller. You can have
+it in any controller, but change the url in the qooxdoo request accordingly.
+
+Now, firebug shows the &quot;Login failed!!!&quot; string as the POST result, but
+qooxdoo gives me an alert box with content as &quot;null&quot; but status code 403
+is shown properly. Hope that explains the problem. If for eg, there is another content/status returned like &quot;Login success&quot;/200 randomly as the first result from the rails method, then when the next request &quot;fails&quot; with &quot;Login failed!!!&quot;/403, &quot;Login success&quot; is shown as the &quot;failed&quot; request&#39;s content , while status code of 403 is correctly received.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11047</commentid>
+              <attachid>562</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-07-23 16:35:16 +0200</bug_when>
+            <thetext>Created attachment 562
+proposed patch
+
+@Fabian
+@Andreas J
+
+This patch has been shown to fix the bug. I&#39;d like another pair or tw of eyes to look at this before it is committed, as the code now attempts to obtain the response text regardless of whether Exchange.wasSuccessful() is true.
+
+Thoughts?
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11074</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-07-24 13:23:28 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; This patch has been shown to fix the bug. [...] the code now attempts to obtain the
+&gt; response text regardless of whether Exchange.wasSuccessful() is true.
+&gt; 
+&gt; Thoughts?
+
+Generally, it sounds good. What I&#39;m not sure about is regarding the response section:
+
+&gt;+      try
+&gt;       {
+&gt;-        try {
+&gt;-          vResponseText = this.getRequest().responseText;
+&gt;-        } catch(ex) {}
+&gt;+        vResponseText = this.getRequest().responseText;
+&gt;+      }
+&gt;+      catch(ex)
+&gt;+      {
+&gt;+        vResponseText = null;
+&gt;       }
+
+I haven&#39;t tested the patch but I recall that gecko seems to have a weird behavior in case invalid XML is parsed [1]. I&#39;m afraid that, in that situation, the response text will contain unexpected data. If this case is already being handled (I recall you said that library is already integrated in qooxdoo [2]), then it looks good. ;-)
+
+
+[1] http://www.ilinsky.com/articles/XMLHttpRequest/#bugs-gecko-parsererror
+[2] http://bugzilla.qooxdoo.org/show_bug.cgi?id=2171#c1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11081</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-07-24 14:51:22 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Created an attachment (id=562)
+&gt; proposed patch
+&gt; 
+&gt; @Fabian
+&gt; @Andreas J
+&gt; 
+&gt; This patch has been shown to fix the bug. I&#39;d like another pair or tw of eyes to
+&gt; look at this before it is committed, as the code now attempts to obtain the
+&gt; response text regardless of whether Exchange.wasSuccessful() is true.
+
+To me the old behavior was just wrong. I would expect to be able to read the contents
+even if the request failed. Have you looked at the other transports? I think they set the
+contents only for successful requests as well.
+
+&gt; 
+&gt; Thoughts?
+&gt; 
+&gt; Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11087</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-07-24 15:18:47 +0200</bug_when>
+            <thetext>@Helder, thanks for the review! The change in this area applies only on responses other than &quot;completed&quot; one. Are you saying that in the case of &quot;failed&quot;, the server might have sent back
+invalid XML? That could already be the case in a &quot;completed&quot; request, right?
+
+@Fabian, yes the behavior WAS wrong. My question is whether you see anyplace in the fix that seems like it will break something else. As to the other transports, they do similar things, but I&#39;m not sure (although I haven&#39;t studied it recently) that it&#39;s even possible to send back a failure message with Iframe or Script transport, so it&#39;s likely less of an issue.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11179</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-08-03 17:14:08 +0200</bug_when>
+            <thetext>Patch applied in trunk r19752.
+Closing bug.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12133</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-10 13:30:41 +0200</bug_when>
+            <thetext>reopen to assign</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12134</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-10 13:31:31 +0200</bug_when>
+            <thetext>assigned</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12135</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-10 13:32:29 +0200</bug_when>
+            <thetext>resolved fixed</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37538</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:05 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>562</attachid>
+            <date>2009-07-23 16:35:00 +0200</date>
+            <delta_ts>2009-07-23 16:35:16 +0200</delta_ts>
+            <desc>proposed patch</desc>
+            <filename>x.patch</filename>
+            <type>text/plain</type>
+            <size>2588</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9pby9yZW1vdGUv
+RXhjaGFuZ2UuanMgYi9xb294ZG9vL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvaW8vcmVtb3Rl
+L0V4Y2hhbmdlLmpzCmluZGV4IGQ3OGU3MWEuLjI0NmI5OTUgMTAwNjQ0Ci0tLSBhL3Fvb3hkb28v
+ZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9pby9yZW1vdGUvRXhjaGFuZ2UuanMKKysrIGIvcW9v
+eGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2lvL3JlbW90ZS9FeGNoYW5nZS5qcwpAQCAt
+OTA0LDYgKzkwNCwxMCBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LmlvLnJlbW90ZS5FeGNoYW5nZSIs
+CiAgICAgICAgICAgICAgICAgdmFsdWUgPSAiZmFpbGVkIjsKICAgICAgICAgICAgICAgfQogICAg
+ICAgICAgICAgfQorICAgICAgICAgICAgZWxzZSBpZiAodmFsdWUgPT0gImZhaWxlZCIpCisgICAg
+ICAgICAgICB7CisgICAgICAgICAgICAgIHZSZXNwb25zZS5zZXRDb250ZW50KHZJbXBsLmdldFJl
+c3BvbnNlQ29udGVudCgpKTsKKyAgICAgICAgICAgIH0KIAogICAgICAgICAgICAgdlJlc3BvbnNl
+LnNldFN0YXR1c0NvZGUodkltcGwuZ2V0U3RhdHVzQ29kZSgpKTsKICAgICAgICAgICAgIHZSZXNw
+b25zZS5zZXRSZXNwb25zZUhlYWRlcnModkltcGwuZ2V0UmVzcG9uc2VIZWFkZXJzKCkpOwpkaWZm
+IC0tZ2l0IGEvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2lvL3JlbW90ZS90cmFu
+c3BvcnQvWG1sSHR0cC5qcyBiL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9pby9y
+ZW1vdGUvdHJhbnNwb3J0L1htbEh0dHAuanMKaW5kZXggZDkxMmExMS4uY2Y1NzU5NiAxMDA2NDQK
+LS0tIGEvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2lvL3JlbW90ZS90cmFuc3Bv
+cnQvWG1sSHR0cC5qcworKysgYi9xb294ZG9vL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvaW8v
+cmVtb3RlL3RyYW5zcG9ydC9YbWxIdHRwLmpzCkBAIC02MjgsMTEgKzYyOCwxMyBAQCBxeC5DbGFz
+cy5kZWZpbmUoInF4LmlvLnJlbW90ZS50cmFuc3BvcnQuWG1sSHR0cCIsCiAgICAgICB2YXIgdlN0
+YXR1cyA9IHRoaXMuZ2V0U3RhdHVzQ29kZSgpOwogICAgICAgdmFyIHZSZWFkeVN0YXRlID0gdGhp
+cy5nZXRSZWFkeVN0YXRlKCk7CiAKLSAgICAgIGlmIChxeC5pby5yZW1vdGUuRXhjaGFuZ2Uud2Fz
+U3VjY2Vzc2Z1bCh2U3RhdHVzLCB2UmVhZHlTdGF0ZSwgdGhpcy5fX2xvY2FsUmVxdWVzdCkpCisg
+ICAgICB0cnkKICAgICAgIHsKLSAgICAgICAgdHJ5IHsKLSAgICAgICAgICB2UmVzcG9uc2VUZXh0
+ID0gdGhpcy5nZXRSZXF1ZXN0KCkucmVzcG9uc2VUZXh0OwotICAgICAgICB9IGNhdGNoKGV4KSB7
+fQorICAgICAgICB2UmVzcG9uc2VUZXh0ID0gdGhpcy5nZXRSZXF1ZXN0KCkucmVzcG9uc2VUZXh0
+OworICAgICAgfQorICAgICAgY2F0Y2goZXgpCisgICAgICB7CisgICAgICAgIHZSZXNwb25zZVRl
+eHQgPSBudWxsOwogICAgICAgfQogCiAgICAgICByZXR1cm4gdlJlc3BvbnNlVGV4dDsKQEAgLTcx
+MiwxMiArNzE0LDEzIEBAIHF4LkNsYXNzLmRlZmluZSgicXguaW8ucmVtb3RlLnRyYW5zcG9ydC5Y
+bWxIdHRwIiwKICAgICAgKi8KICAgICBnZXRSZXNwb25zZUNvbnRlbnQgOiBmdW5jdGlvbigpCiAg
+ICAgewotICAgICAgaWYgKHRoaXMuZ2V0U3RhdGUoKSAhPT0gImNvbXBsZXRlZCIpCisgICAgICB2
+YXIgc3RhdGUgPSB0aGlzLmdldFN0YXRlKCk7CisgICAgICBpZiAoc3RhdGUgIT09ICJjb21wbGV0
+ZWQiICYmIHN0YXRlICE9ICJmYWlsZWQiKQogICAgICAgewogICAgICAgICBpZiAocXguY29yZS5W
+YXJpYW50LmlzU2V0KCJxeC5kZWJ1ZyIsICJvbiIpKQogICAgICAgICB7CiAgICAgICAgICAgaWYg
+KHF4LmNvcmUuU2V0dGluZy5nZXQoInF4LmlvUmVtb3RlRGVidWciKSkgewotICAgICAgICAgICAg
+dGhpcy53YXJuKCJUcmFuc2ZlciBub3QgY29tcGxldGUsIGlnbm9yaW5nIGNvbnRlbnQhIik7Cisg
+ICAgICAgICAgICB0aGlzLndhcm4oIlRyYW5zZmVyIG5vdCBjb21wbGV0ZSBvciBmYWlsZWQsIGln
+bm9yaW5nIGNvbnRlbnQhIik7CiAgICAgICAgICAgfQogICAgICAgICB9CiAKQEAgLTczMyw2ICs3
+MzYsMTkgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC5pby5yZW1vdGUudHJhbnNwb3J0LlhtbEh0dHAi
+LAogCiAgICAgICB2YXIgdlRleHQgPSB0aGlzLmdldFJlc3BvbnNlVGV4dCgpOwogCisgICAgICBp
+ZiAoc3RhdGUgPT0gImZhaWxlZCIpCisgICAgICB7CisgICAgICAgICAgaWYgKHF4LmNvcmUuVmFy
+aWFudC5pc1NldCgicXguZGVidWciLCAib24iKSkKKyAgICAgICAgICB7CisgICAgICAgICAgICBp
+ZiAocXguY29yZS5TZXR0aW5nLmdldCgicXguaW9SZW1vdGVEZWJ1Z0RhdGEiKSkKKyAgICAgICAg
+ICAgIHsKKyAgICAgICAgICAgICAgdGhpcy5kZWJ1ZygiRmFpbGVkOiAiICsgdlRleHQpOworICAg
+ICAgICAgICAgfQorICAgICAgICAgIH0KKworICAgICAgICAgIHJldHVybiB2VGV4dDsKKyAgICAg
+IH0KKwogICAgICAgc3dpdGNoKHRoaXMuZ2V0UmVzcG9uc2VUeXBlKCkpCiAgICAgICB7CiAgICAg
+ICAgIGNhc2UgInRleHQvcGxhaW4iOgo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

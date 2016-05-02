@@ -1,0 +1,147 @@
+<bug>
+          <bug_id>7095</bug_id>
+          
+          <creation_ts>2012-12-12 16:33:00 +0100</creation_ts>
+          <short_desc>Table blocking mouse wheel even if empty</short_desc>
+          <delta_ts>2013-07-22 12:47:38 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter>krejci</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>mikee</cc>
+    
+    <cc>soulie</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>31718</commentid>
+            <who name="">krejci</who>
+            <bug_when>2012-12-12 16:33:02 +0100</bug_when>
+            <thetext>Here is example in playground: http://tinyurl.com/aarbeto
+
+There is 30 textfields followed by empty table and another 30 textfields to make page long enough so the scrollbar appears.
+
+Place your mouse around textfield 15 and start scrolling with mouse wheel without moving the mouse. Once cursor touches that table, all scrolling stops until you move away from the table.
+
+I understand it&#39;s required when there are inner scrollbars in table to scroll table to the bottom first, but when it&#39;s empty, it shouldn&#39;t behave like this.
+
+I have application with long forms and for customer it&#39;s big pain as he cannot scroll through document smoothly.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31722</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-12-13 08:38:37 +0100</bug_when>
+            <thetext>Thanks for the report. Thats currently a missing feature of the tabe that the scroll events are passed to the parent if the scrolling is either at the top or bottom end.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31749</commentid>
+            <who name="">krejci</who>
+            <bug_when>2012-12-17 09:58:20 +0100</bug_when>
+            <thetext>Thanks for the reply. Is there at least some workaround ? Or maybe point me into source code where can I find this issue and try to solve it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31757</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-12-18 08:24:38 +0100</bug_when>
+            <thetext>Thats the piece of code which blocks the scrolling:
+https://github.com/qooxdoo/qooxdoo/blob/master/framework/source/class/qx/ui/table/pane/Scroller.js#L893
+
+So you have to find out when the scrolling is not at the edges and stop the event. Do you plan to post a pull request on that? :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32019</commentid>
+            <who name="Michal Dvorak">mikee</who>
+            <bug_when>2013-01-28 16:03:22 +0100</bug_when>
+            <thetext>Problem is that you use delta from X axis and compare it against vertical scroller.
+
+Here is snippet of the fixed code for vertical scroller. It does not solve the problem for horizontal scroller thou. I&#39;ve just read delta again from &quot;y&quot;.
+
+      var position = this.__verScrollBar.getPosition();
+      var max = this.__verScrollBar.getMaximum();
+      delta = e.getWheelDelta(&quot;y&quot;);
+        // pass the event to the parent if the scrollbar is at an edge
+      if (delta &lt; 0 &amp;&amp; position &lt;= 0 || delta &gt; 0 &amp;&amp; position &gt;= max) {
+        return;
+      }
+
+      e.stop();</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32021</commentid>
+            <who name="Michal Dvorak">mikee</who>
+            <bug_when>2013-01-28 16:52:06 +0100</bug_when>
+            <thetext>Issued pull req
+https://github.com/qooxdoo/qooxdoo/pull/42</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32800</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-05-22 17:19:11 +0200</bug_when>
+            <thetext>Just gave the table a try in the demo browser and can&#39;t reproduce the issue with the current version:
+
+http://tinyurl.com/oampebm
+
+Am I missing something or is the sample simply not good enough?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32804</commentid>
+            <who name="Michal Dvorak">mikee</who>
+            <bug_when>2013-05-22 21:12:14 +0200</bug_when>
+            <thetext>I have just tried in latest Chrome and IE10 and it indeed reproduces the bug. Both current and devel do that.
+Try scrolling the window using wheen when you have mouse over the table, and then again when its right to the table. Former works, first one does not. My patch takes care of it, it just needs testing.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32996</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-06-19 13:31:24 +0200</bug_when>
+            <thetext>Just checked it with another PC using a mouse wheel instead of a touchpad and seems like my touchpad somehow manages to skip the table in some scenarios.
+
+Merged your pul request and added docs.
+
+master: fadf8e981614565d6b65e8e8274314a260081533</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32997</commentid>
+            <who name="Michal Dvorak">mikee</who>
+            <bug_when>2013-06-19 13:32:36 +0200</bug_when>
+            <thetext>That is possible, sw of touchpad emulates mouse in many creative ways. Thanks for the merge.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33040</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-06-21 08:10:02 +0200</bug_when>
+            <thetext>*** Bug 5726 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

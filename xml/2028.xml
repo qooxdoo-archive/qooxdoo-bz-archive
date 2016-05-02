@@ -1,0 +1,110 @@
+<bug>
+          <bug_id>2028</bug_id>
+          
+          <creation_ts>2009-03-03 10:46:00 +0100</creation_ts>
+          <short_desc>Config: Improve handling of multiple includes of the same file</short_desc>
+          <delta_ts>2014-03-03 15:19:40 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.config</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.6</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>8206</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-03-03 10:46:00 +0100</bug_when>
+            <thetext>The way multiple includes are handled in the generator currently disallows a 
+lot of re-use of common settings. base.json defines qx.version or a 
+build-script job, but an export config like inspector.json cannot include 
+base.json to make use of this, even though it could use the job definition 
+verbatim. If it tries this results in multiple imports of the same config file, 
+since e.g. application.json is importing base.json and inspector.json, which 
+also tries to import base.json. The simple cyclic check currently in use 
+prevents this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27449</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-08 08:55:52 +0100</bug_when>
+            <thetext>The current (1.6-pre) trunk already has this issue, although it goes undetected 
+(why?!). But if you e.g. include QOOXDOO_PATH from os.environ (see bug#5632), 
+it triggers the cycle detection. Then, you cannot build our components, because 
+e.g. the Inspector component&#39;s config.json includes inspector.json, and then 
+application.json, which includes inspector.json as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27450</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-08 09:29:08 +0100</bug_when>
+            <thetext>Actually, I found a clue. When I provided QOOXDOO_PATH through the os 
+environment, it had an absolute path. That seems to influence the check when 
+looking for cycles. Although in the includeTrace variable all paths are stored 
+as absolute, the comparison seems to do something else.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27453</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-08 12:37:48 +0100</bug_when>
+            <thetext>I&#39;ve replaced the simple occurs check on a list of known include files with a 
+true cycle check in a directed tree. This addresses the issue much better. It 
+hopefully will have both less false positives as well as false negtives. Now it 
+should be no problem to include the same file multiple times across the include 
+tree, as long as no cycles are created.
+
+Of course having the same file parsed and evaluated multiple times costs 
+resources, both time and space. But I think it&#39;s a safe way to go. I&#39;m not sure 
+I could read in a file only once, and then just reference it when it is 
+included the next time. Jobs are integrated by erasure (not by reference), and 
+there could be different &#39;as&#39; prefixes. Maybe properties of the included config 
+are modified by the including file (I&#39;m not sure). It is import that the 
+including config can reference jobs from the included config undisturbed, and 
+there must be no interference with other files including the same config 
+somewhere else in the tree.
+
+Also, it has to be seen if this approach supports the include patterns that we 
+(and maybe others) will want to use satisfactorily. If not, the bug may be 
+re-opened.
+
+With 6306aee.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36582</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:40 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,134 @@
+<bug>
+          <bug_id>1894</bug_id>
+          
+          <creation_ts>2009-02-02 23:14:00 +0100</creation_ts>
+          <short_desc>Opacity inheritance issue, improper behavior in IE.</short_desc>
+          <delta_ts>2009-09-09 11:54:00 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Michael Rea">michael.rea</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          <cc>christian.hagendorn</cc>
+    
+    <cc>michael.rea</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>7553</commentid>
+            <who name="Michael Rea">michael.rea</who>
+            <bug_when>2009-02-02 23:14:58 +0100</bug_when>
+            <thetext>Observed that if a label is placed inside of a widget with a layout of canvas, and the opacity of the widget is set to something less than 1 (say .5), the text in the label will not show up at all, in IE7.  All works fine in FF &amp; Chrome.  It appears as if the label text opacity is being ignored (effectively set to 0).
+
+You can replicate the failure mode by placing this code block in a layout.  I put it into an edited version of ..\demobrowser\source\class\demobrowser\demo\widget\Label.js.
+
+	  var myWidget = new qx.ui.core.Widget();
+	  myWidget._setLayout(new qx.ui.layout.Canvas());
+	  myWidget.setDecorator(&quot;pane&quot;);
+	  myWidget.setOpacity(0.4);
+
+      var label3 = new qx.ui.basic.Label(&quot;Hey, Qooxdoo is pretty cool.&quot;).set({
+        decorator: &quot;main&quot;,
+        width: 100,
+      });
+      
+      myWidget._add(label3, {left: 0, top: 0});
+      this.getRoot().add(myWidget, {left:20, top:100});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8408</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-03-09 12:41:54 +0100</bug_when>
+            <thetext>@Alex, is this expected to work as described? Chris may also have some IE specific ideas.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8430</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-03-09 15:03:48 +0100</bug_when>
+            <thetext>The in IE used filter (alpha) set also the opacity to the label, so it is hardly visible.
+A short workaround could be to override the wrongly set opacity like:
+  var label3 = new qx.ui.basic.Label(&quot;Hey, Qooxdoo is pretty cool.&quot;).set({
+        decorator: &quot;main&quot;,
+        width: 100,
+        opacity: 0.9 // use values &lt; 1.0, otherwise no opacity is set 
+      });
+      </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8631</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-03-16 14:57:41 +0100</bug_when>
+            <thetext>This behaviour is a bug in IE 7 and is already fixed with IE 8.
+
+The problem is that the opacity value of the alpha filter is inherited in a wrong way. Instead of setting the opacity value of the parent element (e.g. 40) to all child elements it seems that each child does multiple the values.
+It *seems* that e.g. the first element has not an opacity of 40% but 40% * 40%. The more child element there are the smaller the opacity value.
+
+The opacity is applied to the &quot;container&quot; element of each widget. A solution can be to also apply a filter value of &quot;100&quot; to the direct &quot;content&quot; child element in order to restore the right opacity value in IE 7.
+
+--snip--
+&lt;DIV type=&quot;qxContainer&quot; style=&quot;FILTER: alpha(opacity=40); LEFT: 20px; WIDTH: 102px; CURSOR: default; ZOOM: 1; POSITION: absolute; TOP: 100px; HEIGHT: 20px&quot; &gt;
+   &lt;DIV type=&quot;qxContent&quot; style=&quot;filter: alpha(opacity=100);OVERFLOW-Y: hidden; Z-INDEX: 10; LEFT: 0px; OVERFLOW-X: hidden; WIDTH: 100px; POSITION: absolute; TOP: 0px; HEIGHT: 17px&quot; &gt;
+--snip--
+
+Not 100% sure about that, though.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8664</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-03-17 15:48:48 +0100</bug_when>
+            <thetext>Fixed the opacity alpha filter issues with adding an additional alpha filter to the corresponding content element with the value 0.99 (since 1.0 leads to resetting the filter) to correct the inheriting of opacity values in IE &lt;= 7
+
+Fixed with Revision #18460</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11885</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-04 14:18:46 +0200</bug_when>
+            <thetext>This issue occurs also now on IE8. I found out that, if the AlphaImageLoader is used anywhere in the HTML document, than the opacity inheritance issue occurs.
+
+At the time when I have tested this issue on IE8, we haven&#39;t used the AlphaImageLoader for IE8. But for bug #2185 we also use the AlphaImageLoader on IE8.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11887</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-04 14:22:47 +0200</bug_when>
+            <thetext>Applied the fix also for IE8. This is done with r19999.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12066</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2009-09-09 11:54:00 +0200</bug_when>
+            <thetext>Closing</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

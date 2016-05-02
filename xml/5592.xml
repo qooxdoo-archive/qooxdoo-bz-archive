@@ -1,0 +1,153 @@
+<bug>
+          <bug_id>5592</bug_id>
+          
+          <creation_ts>2011-09-07 15:40:00 +0200</creation_ts>
+          <short_desc>DataBinding: the model is set to null and a chandeModel event is fired</short_desc>
+          <delta_ts>2013-06-18 17:14:03 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>2.1.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26699</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-09-07 15:40:06 +0200</bug_when>
+            <thetext>The problem can best be explained by the following qooxdoo code that can be executed in the playground:
+
+-- Start of playground code --------------------------------------------------------
+var listView = new qx.ui.container.SlideBar();
+this.getRoot().add( listView, {left: 50, right: 100} );
+
+var model1 = qx.data.marshal.Json.createModel({label: &quot;Hello 1&quot;});
+var model2 = qx.data.marshal.Json.createModel({label: &quot;Hello 2&quot;});
+
+var modelArray = new qx.data.Array();
+
+var listController = new qx.data.controller.List(modelArray, listView, &quot;label&quot;);
+      var delegate = 
+      {
+        createItem : function() {
+          var result = new qx.ui.form.ListItem()
+          result.addListener(&quot;changeModel&quot;, function() {
+              qx.log.Logger.debug(&quot;got changeModel event, model=&quot; + this.getModel());
+            }, result);
+          return result;
+        },
+        
+        bindItem : function(thisObject, item, index) {
+          listController.bindDefaultProperties(item, index);
+        }
+      };
+
+listController.setDelegate(delegate);
+
+modelArray.push( model1 );
+modelArray.push( model2 );
+
+qx.log.Logger.debug(&quot;now removing model1&quot;);
+
+modelArray.remove(model1);
+-- End of playground code ----------------------------------------------------------
+
+This playground code generates the following output (since Qooxdoo 1.5):
+
+-- Start of output of playground code ----------------------------------------------
+got changeModel event, model=qx.data.model.label[799-0]
+got changeModel event, model=qx.data.model.label[800-0]
+now removing model1
+got changeModel event, model=qx.data.model.label[800-0]
+got changeModel event, model=null
+-- End of output of playground code ------------------------------------------------
+
+The problem is that the event &quot;changeModel&quot; is fired when the model is null, see the last line of the output.
+If the same code is executed in Qooxdoo 1.4, this event is not fired.
+
+This behaviour causes a problem in our application, after we have updated to Qooxdoo 1.5.
+
+I would guess that the problem is somewhere located in the method qx.data.SingleValueBinding.__bindEventToProperty:
+This method remembers an arrayIndex and reuses the once remembered array index, even after an element has been removed from the first position in the array. Because this method continues to use the array index that got invalid, getItem(arrayIndex) returns undefined and the model gets set to null.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26714</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-09-07 17:34:49 +0200</bug_when>
+            <thetext>Thanks for the report. I will take care of that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32979</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-06-18 16:14:06 +0200</bug_when>
+            <thetext>I just checked the code and reduced the sample a bit:
+
+var listView = new qx.ui.form.List();
+this.getRoot().add(listView);
+
+var modelArray = new qx.data.Array([&quot;A&quot;, &quot;B&quot;]);
+var listController = new qx.data.controller.List(modelArray, listView);
+
+var delegate = {
+  createItem : function() {
+    var result = new qx.ui.form.ListItem();
+    result.addListener(&quot;changeModel&quot;, function(e) {
+        console.log(
+          &quot;got changeModel event&quot;,
+          e.getOldData(), &quot;-&gt;&quot;, e.getData()
+        );
+      }, result);
+    return result;
+  }
+};
+
+listController.setDelegate(delegate);
+
+qx.log.Logger.debug(&quot;removing &#39;A&#39;&quot;);
+modelArray.remove(&quot;A&quot;);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32982</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-06-18 17:10:47 +0200</bug_when>
+            <thetext>After some debugging and checking the behavior, I think that the new behavior is as good as the old one.  The data binding resets data if the binding can&#39;t be established and thats where the &quot;null&quot; comes from. As its easy to work around with a simple check, I don&#39;t think its worth changing the behavior back to what it was. Let me know if you disagree and feel free to reopen the issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32983</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2013-06-18 17:14:03 +0200</bug_when>
+            <thetext>It&#39;s okay for me.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

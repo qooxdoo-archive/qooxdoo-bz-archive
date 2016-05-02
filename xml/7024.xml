@@ -1,0 +1,105 @@
+<bug>
+          <bug_id>7024</bug_id>
+          
+          <creation_ts>2012-11-21 10:53:00 +0100</creation_ts>
+          <short_desc>Problem with lazy loading of themes</short_desc>
+          <delta_ts>2013-01-07 11:50:43 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>2.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>31407</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2012-11-21 10:53:32 +0100</bug_when>
+            <thetext>We have encountered a problem with the lazy loading of themes.
+This problem only occurs if the theme classes are loaded lazy.
+This issue can be reproduced by the attached playground code.
+
+The attached playground code produces the following error:
+Error: The include definition in class &quot;qx.ui.decoration.MSingleBorder_MBackgroundColor_MSingleBorder_MBoxShadow&quot; contains an invalid mixin at position 0: [Class qx.ui.decoration.MSingleBorder]
+
+The problem is that the method qx.theme.manager.Decoration.resolve creates the class &quot;qx.ui.decoration.MSingleBorder&quot;, although a mixing with the same name already exists:
+  if (!qx.Class.getByName(name)) {
+    qx.Class.define(name, {
+      extend : qx.ui.decoration.DynamicDecorator,
+      include : clazz
+    });
+  } 
+The theme class &quot;MyDeco2&quot; is then defined after the class &quot;MSingleBorder&quot; has been defined. Therefore the new decoration &quot;mydeco2&quot; then references the class &quot;MSingleBorder&quot; instead of the mixing &quot;MSingleBorder&quot;. This problem then causes the error message &quot;invalid mixin&quot;.
+
+
+-- start playground code ---------------------------------------
+qx.Theme.define(&quot;MyDeco1&quot;,
+{
+  decorations :  { &quot;mydeco1&quot; : {
+    decorator : [ qx.ui.decoration.MSingleBorder]
+  } }
+});
+
+var globalDecoration = qx.theme.manager.Decoration.getInstance().getTheme();
+qx.Theme.include(globalDecoration, MyDeco1);
+qx.theme.manager.Decoration.getInstance().resolve(&quot;mydeco1&quot;);
+
+
+qx.event.Timer.once( function() {
+    qx.Theme.define(&quot;MyDeco2&quot;,
+    {
+      decorations :  { &quot;mydeco2&quot; : {
+        decorator : [ qx.ui.decoration.MSingleBorder, 
+                     qx.ui.decoration.MBackgroundColor, 
+                    qx.ui.decoration.MSingleBorder, qx.ui.decoration.MBoxShadow]
+      } }
+    });
+
+    var globalDecoration = qx.theme.manager.Decoration.getInstance().getTheme();
+    qx.Theme.include(globalDecoration, MyDeco2);
+    qx.theme.manager.Decoration.getInstance().resolve(&quot;mydeco2&quot;);
+  }, this, 1000);
+-- end playground code -----------------------------------------</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31423</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-11-22 08:21:23 +0100</bug_when>
+            <thetext>Thanks for the report and the valuable details. The fix was quite easy with this input. I just put the dynamically created decorator classes into a separate namespace to prevent name collision.
+
+master: 72389fe5232467fcc9e6c276cca503769f69001d
+2.1.x: 1d7f15a34c4fa4701dbed873ba5ad1b54da0799b</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

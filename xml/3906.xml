@@ -1,0 +1,167 @@
+<bug>
+          <bug_id>3906</bug_id>
+          
+          <creation_ts>2010-07-30 11:19:00 +0200</creation_ts>
+          <short_desc>cross-browser setAttributeNS function</short_desc>
+          <delta_ts>2014-03-03 15:27:06 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.xml</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Burak Arslan">burak.arslan</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>19520</commentid>
+            <who name="Burak Arslan">burak.arslan</who>
+            <bug_when>2010-07-30 11:19:49 +0200</bug_when>
+            <thetext>there&#39;s no standard way of setting xml attributes with namespaces.
+
+here&#39;s a function that i propose to do that.
+
+setAttributeNS: function(doc, node, name, ns, value) {
+    if (qx.core.Variant.isSet(&quot;qx.client&quot;, &quot;mshtml&quot;)) {
+        var attr = doc.createNode(2, name, ns);
+        attr.nodeValue = value;
+        node.setAttributeNode(attr);
+    }
+    else {
+        node.setAttributeNS(ns, name, value);
+    }
+}</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19521</commentid>
+            <who name="Burak Arslan">burak.arslan</who>
+            <bug_when>2010-07-30 11:26:47 +0200</bug_when>
+            <thetext>see here for more info:
+
+http://msmvps.com/blogs/martin_honnen/archive/2009/04/15/creating-xml-with-namespaces-with-javascript-and-msxml.aspx</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21168</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-11-08 18:05:14 +0100</bug_when>
+            <thetext>Burak, that seems like a useful addition but if I&#39;m reading the article you linked correctly, &quot;doc&quot; would have to be a Msxml2.DOMDocument ActiveX object, right? How would we get that? Or am I missing something?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21172</commentid>
+            <who name="Burak Arslan">burak.arslan</who>
+            <bug_when>2010-11-08 20:18:37 +0100</bug_when>
+            <thetext>doc is the return value from qx.xml.Document.create()
+
+http://demo.qooxdoo.org/current/apiviewer/#qx.xml.Document~create</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21173</commentid>
+            <who name="Burak Arslan">burak.arslan</who>
+            <bug_when>2010-11-08 20:22:02 +0100</bug_when>
+            <thetext>you can see how those functions (this one and the one from http://bugzilla.qooxdoo.org/show_bug.cgi?id=3907) are used in my soap client.
+
+http://github.com/arskom/qxsoap</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21186</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-11-09 14:07:56 +0100</bug_when>
+            <thetext>OK, now I get it. Added to trunk in r23715.
+
+A cross-browser getAttributeNS would complement this nicely but all I could come up with was this:
+
+getAttributeNS : function(node, namespaceUri, namespacePrefix, attributeName)
+{
+  if (qx.core.Variant.isSet(&quot;qx.client&quot;, &quot;mshtml&quot;)) {
+    return node.getAttributeNode(namespacePrefix + &quot;:&quot; + attributeName).value;
+  } else {
+    return node.getAttributeNS(namespaceUri, attributeName);
+  }
+}
+
+Do you know a better way to achieve this?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21187</commentid>
+            <who name="Burak Arslan">burak.arslan</who>
+            <bug_when>2010-11-09 14:16:10 +0100</bug_when>
+            <thetext>you shouldn&#39;t take prefix as an argument.
+
+and for that to work, you must maintain an internal namespace -&gt; prefix and prefix -&gt; namespace map.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21188</commentid>
+            <who name="Burak Arslan">burak.arslan</who>
+            <bug_when>2010-11-09 14:20:07 +0100</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; you shouldn&#39;t take prefix as an argument.
+&gt; 
+&gt; and for that to work, you must maintain an internal namespace -&gt; prefix and
+&gt; prefix -&gt; namespace map.
+
+this is the preferred way of doing it. that way, you&#39;ll avoid undocumented browser-dependent behaviour of namespace prefix assignment and have a consistent document producer.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21194</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-11-09 15:51:24 +0100</bug_when>
+            <thetext>OK, but such a map would have to be maintained by the application since there&#39;s no way for the static methods in qx.xml.Element to get this information from the document, right? Please open a new report for getAttributeNS if I&#39;m wrong.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21195</commentid>
+            <who name="Burak Arslan">burak.arslan</who>
+            <bug_when>2010-11-09 16:00:28 +0100</bug_when>
+            <thetext>(In reply to comment #8)
+&gt; OK, but such a map would have to be maintained by the application since there&#39;s
+&gt; no way for the static methods in qx.xml.Element to get this information from
+&gt; the document, right? Please open a new report for getAttributeNS if I&#39;m wrong.
+
+just use two static objects to hold the ns-&gt;pref and pref-&gt; ns maps. i see no harm in keeping those in a global variable. that&#39;s actually what i do in my soap client.
+
+of course, that should come with a warning about direct manipulation of the returned document.
+
+so, you decide: static nsmap/prefmap ok or i file another bug for getAttributeNS ?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21207</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-11-10 09:48:16 +0100</bug_when>
+            <thetext>Please open another report. Maybe we&#39;ll take the namespace approach, but in any case it&#39;s a separate issue/enhancement.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39344</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:06 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,95 @@
+<bug>
+          <bug_id>6442</bug_id>
+          
+          <creation_ts>2012-05-24 01:48:00 +0200</creation_ts>
+          <short_desc>parent item not available in build but available in source</short_desc>
+          <delta_ts>2013-12-16 12:46:20 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.6</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Scott Chapman">scott</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>29540</commentid>
+            <who name="Scott Chapman">scott</who>
+            <bug_when>2012-05-24 01:48:51 +0200</bug_when>
+            <thetext>Here&#39;s my code snippet, in a handler for a cellClick in a table:
+      var handleCellClick = function(e) {
+        if (e.getColumn() == 2) {
+          var group_task_id = tableModel.getRowData(e.getRow())[0];
+          var mainTabs = qx.core.Init.getApplication().getUserData(&quot;mainTabs&quot;);
+          mainTabs.openOrSelectGroupTaskDetailTab(group_task_id);
+        } 
+        if (e.getColumn() == 7) {
+          var group_task_id = tableModel.getRowData(e.getRow())[0];
+          var req = new qx.io.request.Xhr(&quot;/group_task/&quot;+group_task_id);
+          req.setMethod(&quot;DELETE&quot;);
+          req.addListener(&quot;success&quot;, function(e) {
+            this.resetSelection();
+            this.setFocusedCell();
+              var parent = this.getLayoutParent();
+              console.log(&#39;point a&#39;);
+              parent.__GroupsQueuedTasksTable.kickReload();
+              console.log(&#39;point b&#39;);
+              parent.__GroupsCompletedTasksTable.kickReload();
+            }, this);
+          req.send();
+        } 
+      };
+When I hit the source area, the kickReload between &quot;point a&quot; and &quot;point b&quot; works fine.
+After I do a generate.py build, the kickReload generates an error on the console:
+Uncaught TypeError: Cannot call method &#39;kickReload&#39; of undefined 
+
+This happens on Windows 7 and Ubuntu 10.04 in Firefox 12.0 and Chrome 19.0.1084.46 m.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29541</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-05-24 08:06:45 +0200</bug_when>
+            <thetext>Hey,
+The problem is in the application code, as you can see in the following lines:
+              var parent = this.getLayoutParent();
+              console.log(&#39;point a&#39;);
+              parent.__GroupsQueuedTasksTable.kickReload();
+              console.log(&#39;point b&#39;);
+              parent.__GroupsCompletedTasksTable.kickReload();
+You are accessing a variable starting with two underscores. That means that its a private variable of your parent object. In the source version, there is no way to prevent such a call, even if it should not be possible to access privates at all. Using the build version, an optimization step reduces the names in length to save some byte in the code and with that, the original name is gone and can not be accessed anymore.
+
+Regards,
+Martin</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

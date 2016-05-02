@@ -1,0 +1,289 @@
+<bug>
+          <bug_id>6296</bug_id>
+          
+          <creation_ts>2012-04-10 14:23:00 +0200</creation_ts>
+          <short_desc>Avoid Exception in Exception Handler</short_desc>
+          <delta_ts>2014-03-03 15:25:22 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>2.1.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="John Spackman">john.spackman</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>christian.hagendorn</cc>
+    
+    <cc>datouxia</cc>
+    
+    <cc>dev</cc>
+    
+    <cc>dreux.benjamin</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>29086</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2012-04-10 14:23:44 +0200</bug_when>
+            <thetext>I had an odd error today that was resolved by deleting the generator cache:
+
+&gt;&gt;&gt; Scanning libraries  ^H/Traceback (most recent call last):
+  File &quot;/home/grasshopper/smart/Local/WebContent/public/grasshopper/qooxdoo-trunk/tool/bin/generator.py&quot;, line 244, in &lt;module&gt;
+    if str(e): # there&#39;s something to print
+  File &quot;/home/grasshopper/smart/Local/WebContent/public/grasshopper/qooxdoo-trunk/tool/pylib/generator/resource/Resource.py&quot;, line 48, in __repr__
+    return &quot;&lt;%s:%s&gt;&quot; % (self.__class__.__name__, self.id)
+AttributeError: &#39;Image&#39; object has no attribute &#39;id&#39;
+
+The changes I&#39;d made were installed on the machine by svn update, and AFAICT there&#39;s nothing particularly structural in the changes – just a few minor fixes and tweaks but it killed the generator.  
+
+This was on a production machine so I didn&#39;t really have time to hang around and find out what was going on, but I&#39;ve come across this once before and found that deleting the cache solved the problem.
+
+I&#39;m using trunk from about 6 weeks ago a598dfab0cbd00b14768f0b75105034a75f53814.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29088</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-04-10 15:07:37 +0200</bug_when>
+            <thetext>The problem here is that an initial exception is covered up by a secondary exception triggered in the exception handler of the first, so there is no information left about the first exception.
+
+The second has to do with stringifying an Image object, which was most likely read from the cache and is not yet read to be stringified. This is generally acceptable, as exceptions can happen between reading a cache file and re-instantiating the objects. But this issue should never blur the original exception.
+
+I therefore re-focus this bug to make sure the exception handler always runs through without raising a secondary exception.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29662</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-06-04 17:22:46 +0200</bug_when>
+            <thetext>*** Bug 5970 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29663</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-06-04 17:29:35 +0200</bug_when>
+            <thetext>Christian ran across an instance of this issue, and we could inspect it with 
+the exception handler turned off. His description is similar in some points to 
+what Stefan wrote in bug#5970:
+
+- He made changes to the code base.
+- He updated from master.
+- And ran a build job.
+
+With the exception handler turned off, here is the ensuing stack trace:
+
+----------------------------------------------------------------------------
+    Initializing: playground
+----------------------------------------------------------------------------
+&gt;&gt;&gt; &gt;&gt;&gt; Processing configuration
+----------------------------------------------------------------------------
+    Executing: source::source-script
+----------------------------------------------------------------------------
+&gt;&gt;&gt; &gt;&gt;&gt; Scanning libraries  Traceback (most recent call last):
+  File &quot;/Users/cs/workspace/qooxdoo.git/tool/bin/generator.py&quot;, line 233, in 
+&lt;module&gt;
+    main()
+  File &quot;/Users/cs/workspace/qooxdoo.git/tool/bin/generator.py&quot;, line 216, in 
+main
+    generatorObj.run()
+  File &quot;/Users/cs/workspace/qooxdoo.git/tool/pylib/generator/Generator.py&quot;, 
+line 485, in run
+    prepareGenerator1()
+  File &quot;/Users/cs/workspace/qooxdoo.git/tool/pylib/generator/Generator.py&quot;, 
+line 418, in prepareGenerator1
+    self._libraries)     = self.scanLibrary(config.get(&quot;library&quot;, []))
+  File &quot;/Users/cs/workspace/qooxdoo.git/tool/pylib/generator/Generator.py&quot;, 
+line 1923, in scanLibrary
+    checkObj, cacheTime  = self._cache.read(cacheId, memory=True)
+  File &quot;/Users/cs/workspace/qooxdoo.git/tool/pylib/generator/runtime/Cache.py&quot;, 
+line 253, in read
+    content = pickle.loads(fcontent)
+  File 
+&quot;/Users/cs/workspace/qooxdoo.git/tool/pylib/generator/resource/Resource.py&quot;, 
+line 58, in __hash__
+    return self.hash
+AttributeError: (&quot;&#39;CombinedImage&#39; object has no attribute &#39;hash&#39;&quot;, &lt;type 
+&#39;set&#39;&gt;, ([&lt;generator.resource.Resource.Resource object at 0x107c5bcd0&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107cc5590&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc55d0&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5610&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107c46390&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5650&gt;, 
+&lt;generator.resource.Image.Image object at 0x107c46590&gt;, 
+&lt;generator.resource.Image.Image object at 0x107c468d0&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107cc5690&gt;, 
+&lt;generator.resource.Image.Image object at 0x107c46650&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc56d0&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107c5bf10&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107cc5710&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5750&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5790&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc57d0&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5810&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107c52450&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107cc5850&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5890&gt;, 
+&lt;generator.resource.Image.Image object at 0x107c46750&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107cc58d0&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5910&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5950&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107cc5990&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc59d0&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5a10&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5a50&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107cc5a90&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107c5b0d0&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107cc5ad0&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107cc5b10&gt;, 
+&lt;generator.resource.Image.Image object at 0x107c46850&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5b50&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107c5b790&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107c38e50&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107c52750&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107cc5b90&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5bd0&gt;, 
+&lt;generator.resource.Image.Image object at 0x107c46a10&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107cc5c10&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5c90&gt;, 
+&lt;generator.resource.CombinedImage.CombinedImage object at 0x107cc5cd0&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107cc5d90&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107cc5dd0&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5e10&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107cc5e50&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5e90&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5ed0&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5f10&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5f50&gt;, 
+&lt;generator.resource.Image.Image object at 0x107c46690&gt;, 
+&lt;generator.resource.CombinedImage.CombinedImage object at 0x107c38810&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107c38ed0&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5f90&gt;, 
+&lt;generator.resource.Image.Image object at 0x107cc5fd0&gt;, 
+&lt;generator.resource.Image.Image object at 0x107ccf050&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107c38e90&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107ccf090&gt;, 
+&lt;generator.resource.Image.Image object at 0x107ccf0d0&gt;, 
+&lt;generator.resource.Image.Image object at 0x107ccf110&gt;, 
+&lt;generator.resource.Image.Image object at 0x107ccf150&gt;, 
+&lt;generator.resource.Image.Image object at 0x107ccf1d0&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107ccf210&gt;, 
+&lt;generator.resource.Image.Image object at 0x107ccf250&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107ccf290&gt;, 
+&lt;generator.resource.Image.Image object at 0x107ccf2d0&gt;, 
+&lt;generator.resource.Image.Image object at 0x107ccf310&gt;, 
+&lt;generator.resource.Image.Image object at 0x107ccf350&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107ccf390&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107c526d0&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107c523d0&gt;, 
+&lt;generator.resource.Image.Image object at 0x107ccf3d0&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107ccf410&gt;, 
+&lt;generator.resource.Image.Image object at 0x107ccf450&gt;, 
+&lt;generator.resource.Image.Image object at 0x107c46c90&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107ccf4d0&gt;, 
+&lt;generator.resource.Image.Image object at 0x107ccf510&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107ccf550&gt;, 
+&lt;generator.resource.Resource.Resource object at 0x107c524d0&gt;],))
+
+So this hints at the Resource.__hash__ method.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30178</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-07-17 19:12:45 +0200</bug_when>
+            <thetext>Maybe this could be fixed by fixing up Resource.__setstate__ for pickling, 
+patching the &#39;id&#39; member, e.g.
+
+   d[&#39;id&#39;] = self.id
+
+?!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30543</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-08-31 09:53:58 +0200</bug_when>
+            <thetext>*** Bug 6549 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30549</commentid>
+            <who name="Benjamin Dreux">dreux.benjamin</who>
+            <bug_when>2012-08-31 14:39:39 +0200</bug_when>
+            <thetext>I had the exact same issue as John
+
+thomas.herchenroeder recommended to me to rerun the job.
+For me it doesn&#39;t work.
+
+I also tryed to comment out the last bit of code that i changed, but it doesn&#39;t work.
+
+I tryed to remove the cache and build folder in my app.
+This doesn&#39;t work.
+
+My final attempt was to restart my computer, and i don&#39;t know why but that was working.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30764</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-09-21 10:00:01 +0200</bug_when>
+            <thetext>Made an initial commit to rescue the original exception.
+
+master: b62ebdf</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31153</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-10-30 18:42:54 +0100</bug_when>
+            <thetext>Changes to the exception handler in generator.py:
+repr() can also be the cause of a nested exception, so removed this from 
+fall-back handling to make the handler more robust (albeit increasingly 
+non-indicative in its console logging).
+
+Also changed the class that is (one of) the causes of the primary exception:
+Changed Resource.__hash__ to use id() as a fall-back when self.id is not 
+available.
+
+Letting this version run in the wild until further insights can be gleaned.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32981</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-06-18 16:45:39 +0200</bug_when>
+            <thetext>I&#39;m tentatively closing this bug. We haven&#39;t had any reports of this issue 
+recurring in the last couple of months, part. not failing in the exception 
+handler. 
+
+Applied the last fix concerning this from master in branch.
+
+2.1.x: e62b323</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38723</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:22 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

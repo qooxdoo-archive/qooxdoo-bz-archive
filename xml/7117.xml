@@ -1,0 +1,115 @@
+<bug>
+          <bug_id>7117</bug_id>
+          
+          <creation_ts>2013-01-04 06:44:00 +0100</creation_ts>
+          <short_desc>Boost performance of variant/environment value comparison</short_desc>
+          <delta_ts>2014-03-03 15:20:30 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          <keywords>Performance</keywords>
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>3.5</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Helder Magalhães">helder.magalhaes</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>31810</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2013-01-04 06:44:45 +0100</bug_when>
+            <thetext>I&#39;ve been looking at browser detection code (which uses a blend of variants and environment with comparisons) and noticed several patterns being used:
+
+1. Raw comparison between environment string value and desired numeric value
+   this is one of the most common forms, e.g.:
+   if(qx.core.Environment.get(&quot;engine.version&quot;) &gt;= 8) {...}
+2. Parse environment string value as float/int and compare with numeric value
+   also very common e.g.:
+   if (parseFloat(qx.core.Environment.get(&quot;engine.version&quot;)) == 533.16) {...}
+3. Parse environment string value as float/int and compare with string value
+   unexpected and rare, e.g.:
+   if (parseFloat(qx.core.Environment.get(&quot;engine.version&quot;)) &gt;= &quot;1.9&quot;) {...}
+
+
+I&#39;ve created a simple testcase to compare the approaches, and measured time in several implementations:
+
+  function dummy_get(x){return &quot;543.21&quot;;}
+  console.time(&quot;a&quot;);
+  for(var i = 0; i &lt; 10000; ++i){
+    parseFloat(&quot;543.21&quot;) == 543.21; //~100ms Fx20a, ~75ms IE9, ~20ms Cr23
+    //&quot;543.21&quot; == 543.21; //~70ms Fx20a, ~55ms IE9, ~15ms Cr23
+    //dummy_get(&quot;engine.version&quot;) == 543.21; //similar to previous
+  }
+  console.timeEnd(&quot;a&quot;);
+
+
+The overall conclusions were:
+* Methods &#39;parseFloat&#39; and &#39;parseInt&#39; are more consuming than they appear;
+* By fixing the code we can easily achieve about 25% boost on Firefox, slightly less on Internet Explorer and even less on Chrome regarding these operations;
+* This sort of things is performance critical as browser/environment/feature checks are used very often in the codebase.
+
+
+Foreseen actions in this bug&#39;s scope, IMO:
+
+1. Remove all parseFloat, parseInt and unexpected strings from environment/browser checks and let JavaScript perform the appropriate casts when necessary;
+2. Put a notice in the version&#39;s release notes regarding the environment checks (removal of parseFloat etc.) as this is probably spread over user code as well.
+
+
+This seems low-risk and performance gains seem to worth it. Thoughts?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31811</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2013-01-04 11:52:41 +0100</bug_when>
+            <thetext>I&#39;ve just double checked the standard [1] to make sure that parse[Float|Int] can be suppressed in this case: the comparison algorithm (11.8.5 and 11.9.3 of [1]) takes types into account and automatically performs a native cast to Number (9.3.1 of [1]) when comparing to a Number.
+
+[1] http://www.ecma-international.org/publications/standards/Ecma-262.htm</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31827</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-01-07 10:33:44 +0100</bug_when>
+            <thetext>Thanks for the good input. You spoke of a performance gain of about 25%. I guess this is based on the 100% the checks currently take. I would rather be interested in the performance gain we could achieve in total compared to e.g a playground startup. The question is, will the application be much faster? See the absolute values of your tests, I am not sure if its worth the effort.
+I just wrote a little test and checked how often the pasreInt and parseFloat methods are called during the startup of the playground (no matter where it comes from):
+
+parseInt: 116
+parseFloat: 46
+
+Thats not that much and if we break it down to the measured numbers, it could save us 25% of 1,6 ms in the best case which is not that much. So I don&#39;t think its worth the effort.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36915</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:30 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

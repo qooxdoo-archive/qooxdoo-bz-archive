@@ -1,0 +1,165 @@
+<bug>
+          <bug_id>2398</bug_id>
+          
+          <creation_ts>2009-05-19 13:29:00 +0200</creation_ts>
+          <short_desc>Cache: Add uniqueness feature to distinguish classes of same names, but from different applications</short_desc>
+          <delta_ts>2009-10-23 16:17:23 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          <blocked>2354</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10034</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-05-19 13:29:32 +0200</bug_when>
+            <thetext>If we add a uniqueness feature, e.g. the file path of the class file or the root directory of the application, then classes of same name but from different applications can live side by side in a system-wide cache directory.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10116</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-05-26 09:35:23 +0200</bug_when>
+            <thetext>The idea of a &quot;cache key&quot;, an additional key to identify the cache item:
+
+There are different cache items, some relating to a specific file, some 
+relating to a bunch of files or an intermediate generated result. Therefore, it 
+might be necessary to use different cache keys for the various items. Also, it 
+depends on whether they should be accessible cross-application, like e.g. 
+compiled framework class files.
+
+Categories of cache items:
+
+Class-specific cache items:
+- compiled code
+- class meta data
+Here, it might be desirable to have a cross-application key, so that cache 
+items could be re-used across applications. This would be interesting e.g. to 
+re-use compiled framework classes. So here, the OS path to the class file would 
+be good, since it is the same across applications that all use the same qooxdoo 
+installation.
+
+Library-specific cache items:
+- library scan results, e.g. class list
+Here, a library-specific key like the root path to the library would work. The 
+cache items could be re-used across applications, yet be specific to that 
+library so that another library could be used in another app and got separate 
+cache items.
+
+Runtime-specific cache items:
+- privates used names (within optimizing an application)
+This should not be shared across applications, so here some &quot;application key&quot; 
+would be necessary. It should still be cross-generator-invocation, so things 
+like the pid of the generator process are ruled out. Possible keys would be  
+the path to the main Manifest.json.
+
+Process-dependend keys might create the problem of cache pollution (in the weak 
+sense), where across multiple generator runs new cache items are added that 
+never get read again nor overwritten, but add to the number of files in the 
+cache until it is cleared.
+
+It has also to be clarified how to pass the right cache key to the compile.py 
+script if it is called with its --cache option (e.g from the generator in 
+compileClassesMP()).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10136</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-05-26 17:01:09 +0200</bug_when>
+            <thetext>Changed cache keys, to bear context-specific identifier. Now, the cache id&#39;s 
+are created like this:
+
+&quot;compiled-&quot; + filePath
+&quot;tree-&quot; + filePath
+&quot;compiledsize-&quot; + filePath
+&quot;lib-&quot; + lib[&quot;path&quot;]
+&quot;privates-&quot; +  self._context[&#39;config&#39;]._fname
+&quot;protected-&quot; +  self._context[&#39;config&#39;]._fname
+ &quot;resinlib-&quot; + lib._path
+&quot;meta-&quot; + filePath
+&quot;deps-&quot; + filePath
+&quot;translation-&quot; + filePath
+&quot;locale-&quot; + $QXPATH/tool/data/cldr/main
+&quot;img-&quot; + fileName
+&quot;imgcomb-&quot; + meta_fname
+&quot;api-&quot; + filePath
+
+With r19238.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12238</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-14 10:50:07 +0200</bug_when>
+            <thetext>Thomas, this looks like it has been fixed (which would be great). Could you please verify this and close it retroactively for last release?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12244</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-09-14 11:03:08 +0200</bug_when>
+            <thetext>The patch with r19238 seemed to have fixed this, at least there were no 
+observations to the contrary since then.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12245</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-09-14 11:05:21 +0200</bug_when>
+            <thetext>closed</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13470</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-23 16:17:23 +0200</bug_when>
+            <thetext>The constraint has been relaxed for the 
+
+  &quot;privates-xxx&quot;
+
+files in the cache, to cope with a bug concerning variable capture of optimized 
+privates (bug#2391), so now we&#39;re back to a cach-global 
+
+  &quot;privates&quot;
+
+file. I think this won&#39;t be an issue, since even if you have identical class 
+names in different paths on the system (like 
+/a/b/app/source/class/app/Application.js and 
+/d/e/app/source/class/app/Application.js), privates of both classes would get 
+entered in the privates file side-by-side. If the private names differ, it&#39;s no 
+problem. If they have common private names, both apps&#39; builds would share the 
+same replacement string, which should be fine, too. Only if both apps were 
+libraries which were used commonly in the another application could it be an 
+issue. But this could never happen, as you mustn&#39;t have two libs with identical 
+name spaces in the same app.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,292 @@
+<bug>
+          <bug_id>2095</bug_id>
+          
+          <creation_ts>2009-03-11 12:45:00 +0100</creation_ts>
+          <short_desc>Replace protected fields with privates</short_desc>
+          <delta_ts>2014-03-03 15:22:28 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.oo</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.4</target_milestone>
+          <dependson>2471</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Daniel Wagner">daniel.wagner</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>dev</cc>
+    
+    <cc>fabian.jakobs</cc>
+    
+    <cc>info</cc>
+    
+    <cc>martin.wittemann</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>8517</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-03-11 12:45:00 +0100</bug_when>
+            <thetext>Running the &quot;lint&quot; job on the framework classes reveals 107 protected members that should be replaced with privates. Most of these are in the ui.virtual and data namespaces, so perhaps they can wait until the code is finalized.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8518</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-03-11 12:49:38 +0100</bug_when>
+            <thetext>Set target to 0.8.3</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9080</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-04-02 10:15:22 +0200</bug_when>
+            <thetext>to Daniel, please continue fixing those issues.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9191</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-04-08 10:36:47 +0200</bug_when>
+            <thetext>Could somebody tell me the current state of the bug? What´s the plan to deal with the protected fields? Just replace all protected field with private once? I don´t think thats a good plan for all cases!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9204</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-04-08 15:37:10 +0200</bug_when>
+            <thetext>Yes, it might not be a good idea to do it for //all// protected fields. After some more thoughts with Fabian, it might be best to split the single lint check into two checks:
+* one for private fields (which is ok)
+* and a second for prot. fields (which should be optional)
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9216</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-09 09:40:28 +0200</bug_when>
+            <thetext>I have an alternative solution to the problem that qooxdoo users may silently override member fields or methods and thus break functionality.
+
+My suggestions is:
+
+1. Every time a member field or method is overridden qx.Class.define will print a warning messages.
+2. This message can be disabled by wrapping the value into a special function call. 
+
+Example:
+
+Given the base Class A:
+
+      qx.Class.define(&quot;qx.test.core.A&quot;, 
+      {
+        extend : qx.core.Object,
+        members : {
+          _foo : 12,
+          bar : &quot;juhu&quot;
+        }
+      });   
+      
+Silently overriding either _foo or bar in a subclass B will issue a warning:
+
+        qx.Class.define(&quot;qx.test.core.B&quot;, 
+        {
+          extend : qx.test.core.A,
+          members : {
+            _foo : 14
+          }
+        }); 
+        
+To mark the field as overridden the value has to be ancapsulated with a marker call:
+
+      qx.Class.define(&quot;qx.test.core.B&quot;, 
+      {
+        extend : qx.test.core.A,
+        members : {
+          _foo : qx.override(14)
+        }
+      });
+      
+      
+Right now we are already annotating overriden fields and methods with special comments. This approach would basically convert these comments into code. To avoid any performance regressions in the build version we could remove these calls in the optimizer.
+      
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9222</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-04-09 10:08:43 +0200</bug_when>
+            <thetext>Sounds really good. At least better then replacing everything in the framework. That would lead to some serious bugs for sure.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9343</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-04-17 11:27:39 +0200</bug_when>
+            <thetext>It good to think about alternative solutions to the problem that qooxdoo users may silently
+override member fields or methods. However, I don&#39;t think it is favorable to require the users to wrap all the overridings in special JS code as suggested in #c5. IMHO it is just too common to exercise polymorphism all over the place, so that syntactic sugar may be too ugly (also think of methods or Varaian.select switches).
+
+What about a way to extract the overriding information from the doc comments and offer appropriate (auto-generated) checks in a special source version.? That should cover most cases. It could also be interesting to use the JsDocs for extracting info about the argument and return types and include auto-generated checks for them as well. Would that be feasible?
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9345</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-04-17 11:55:37 +0200</bug_when>
+            <thetext>The suggestion brought in by Andreas is also interesting, but does not make such a huge difference to the annotation in the code. The user has to say that he is willingly overwriting something and thats the how it should be. 
+I would prefer the way with the least work to do. The main point to me is, that the user does get a change to do it no matter how. The checks should be available only in the source version in both scenarios.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9374</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-20 11:11:35 +0200</bug_when>
+            <thetext>Mhh, overriding protected field is a common thing IMHO and should not result in any warning at all. I surely hope that developers know what they are doing. Overriding functions or members may always be problematic when dealing with inheritance. This is nothing new. Are there any type of warning for this kind of usage in Java? Just wondered.
+
+What I can think of is something like Andreas&#39; suggestion to have &quot;@override&quot; attributes in the API documentation and do print out warnings during some kind of lint jobs when a field which is overridden is not marked with this attribute. I have seen this annotations in other frameworks as well and this might be a good thing to support by lint.
+
+Sure, this do not offer runtime checks, but this is also the case for all the other lint-checks which are only available when using the command line tool.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9375</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-04-20 11:18:27 +0200</bug_when>
+            <thetext>The idea of bringing this check to the lint checks is a good one i think. But as far as i know the lint took checks each file on its own. That does not work anymore if you want to check such stuff in inheritance chains. I guess that could be some work to get the lint tool do such checks?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9376</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-20 11:24:38 +0200</bug_when>
+            <thetext>It may load the API data through the cached access through the generator. The API-process has information about overriding of methods and may be a good source for this kind of information.
+
+Just to keep in mind: To have these inter-class informations available through lint might be a good thing for other additional checks as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9384</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-20 14:59:00 +0200</bug_when>
+            <thetext>we are already annotating overridden methods with 
+
+// overridden
+foo : function() {}
+
+
+comment. Andreas&#39; suggestion would turn them into 
+
+/**
+ * @overridden
+ */
+ foo : function() {}
+ 
+ doc strings. Both approaches have the problem that they may get out of sync with the code and while building a special instrumented version of the code may be possible I fear that very few will actually to it.
+ 
+ My approach turns comments into code, which is always executed in the source version. 
+ 
+ foo : qx.override(function() {})
+ 
+ For me this is in no way uglier than the comments of the previous solutions. This way we can decide whether the user wants to overrride a method/filed from the super class and act accordingly. 
+ 
+ I can think of other attributes, which could be implemented this way:
+ 
+   * deprecated
+   * abstract
+   * ...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9389</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-20 16:07:33 +0200</bug_when>
+            <thetext>I still prefer the API-doc-thingy. Even the code part &quot;may get out of sync
+with the code&quot; as it may be possible that the extended classes were changed etc. In fact the same out-of-code issue is true for all cases of parameter documentation etc. and never where a huge problem.
+
+My suggestion would be to transform the &quot;//overridden&quot; comments into &quot;@overridden&quot; and do not modifiy the runtime code. This is the more traditional procedure as to introduce new global methods and forcing the user to learn this new pattern. Remember that namespaces for example where never used as a function container before. This means that the only way this could be done would be &quot;qx.Class.override&quot; or something like this - but this is even worse regarding readability and understanding.
+
+I would also add a hint to the API viewer whenever a method is overridden without the @overridden attribute or when the attribute is defined, but no parent function was found. This way it is processed identically to other API errors (missing docs or to many params documented, etc.)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9408</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-04-21 09:09:00 +0200</bug_when>
+            <thetext>Sure the comments for the parameters could also get out of sync too but that could not cause a application to have wired bugs. Imagine overwriting something incidentally... that could cause some really serious bugs hard to find. So I think thats quite something different here.
+
+Your point of giving namespaces some functions has something in deed. Thats nothing we have in the framework and i don&#39;t know if we want such a thing.
+
+The hint in the API-Viewer is a good thing to have additionally. But i guess the last place I would look at to find a bug is the API viewer. I dont take a look at it at all in most cases.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11326</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-08-13 15:24:26 +0200</bug_when>
+            <thetext>to me for review and further dispatch</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12011</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-08 16:18:00 +0200</bug_when>
+            <thetext>This needs to take into account a possible enhancement laid out in bug #2417. Moved to 0.9.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12020</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-09-08 17:11:11 +0200</bug_when>
+            <thetext>Note that comment #16 dyslexically references the wrong bug. It should reference #2471, #2417.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14750</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:26:06 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0 (for issues with status &quot;NEW&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15739</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-12-11 13:32:35 +0100</bug_when>
+            <thetext>As this depends also on bug #2471, which is an unaddressed enhancement so far, moved this issue to 1.1 for now.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21962</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-12-14 16:35:07 +0100</bug_when>
+            <thetext>Thomas, here are some informations about the &quot;remove protected&quot; lint warning.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21964</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-12-14 16:36:35 +0100</bug_when>
+            <thetext>*** Bug 4478 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23116</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-07 19:17:20 +0100</bug_when>
+            <thetext>We have changed our mind, so that protected data fields are ok to have, also in 
+the framework. I removed warnings about protected data field usage from 
+ecmalint.py.
+
+With r25392.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37691</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:28 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

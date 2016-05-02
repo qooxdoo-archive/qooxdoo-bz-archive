@@ -1,0 +1,80 @@
+<bug>
+          <bug_id>6707</bug_id>
+          
+          <creation_ts>2012-08-13 15:49:00 +0200</creation_ts>
+          <short_desc>Patch data with multiple &quot;=&quot; in a Line corrupt Patterns</short_desc>
+          <delta_ts>2014-03-03 15:19:18 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.migration</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>2.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Alexander Steitz">alexander.steitz</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30365</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2012-08-13 15:49:42 +0200</bug_when>
+            <thetext>Trying to migrate a desktop skeleton to 2.1 fails with an error message of the migrator.py script.
+
+Somehow the regular expressions seem to be wrong.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30366</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-08-13 16:06:40 +0200</bug_when>
+            <thetext>This line caused the issue:
+
+  \bqx\.lang\.Object\.hasMinLength\((.*)\s*,\s*(.*)\)=($1.length &gt;= $2)
+
+The issue is that the line contains two &quot;=&quot; signs. As &quot;=&quot; is part of the syntax of patch files, it is critical when it appears in either the search or replacement string. 
+
+The migrator tries to amend for this, and supports escaping &quot;=&quot; signs with a backslash (&quot;\=&quot;). For those cases when there are multiple unescaped &quot;=&quot; signs in the patch line, all but the last would previously be assigned to the search pattern (ie. the search pattern automatically extended until the last unescaped &quot;=&quot;).
+
+I inverted that logic in that the first unescaped &quot;=&quot; is now used to separate the search pattern from the replacement, no matter what comes after it. If you have &quot;=&quot; in your search pattern, you have to escape it.
+
+(I think it is more intuitive to use escapes in the search pattern than in the replacement, so unescaped &quot;=&quot; in the replacement are now harmeless. It would be ugly, too, to escape the replacement in this case: &quot;... $1.length &gt;\= $2..&quot;).
+
+But this introduces a subtle difference to the old processing, and there might be old *.dat files that implicitly rely on the old implementation, so we might get issues with old *.dat files when they are processed during migration. In such cases we have to correct the .dat files.
+
+master: 2246b2f</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36431</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:18 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

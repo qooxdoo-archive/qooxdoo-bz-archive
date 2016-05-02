@@ -1,0 +1,88 @@
+<bug>
+          <bug_id>552</bug_id>
+          
+          <creation_ts>2007-07-11 16:56:00 +0200</creation_ts>
+          <short_desc>ScrollBar raises error &quot;Element must be created previously&quot;</short_desc>
+          <delta_ts>2007-07-13 09:54:56 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>0.7</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Rüdiger Herrmann">rherrmann</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>1983</commentid>
+            <who name="Rüdiger Herrmann">rherrmann</who>
+            <bug_when>2007-07-11 16:56:47 +0200</bug_when>
+            <thetext>I apologize, but all attempts to create a standalone snippet couldn&#39;t reproduce the behavior.
+
+I have a complex widget that contains among other things a horizontal and a vertical scoll bar. 
+If the complex widget is created, set to invisible and - after some time - made visible, the above error occurs.
+
+I could track the error source to the ScrollBar._positionKnob() function.
+The calls to this._scrollBar.setScrollTop(value) / setScrollLeft(value) are executed before this._scrollBar appears.
+After replacing the ScrollBar._positionKnob() with this hack:
+    _positionKnob : function(value)
+    {
+      if (this._horizontal) {
+        if( this._scrollBar.isCreated() ) {
+          this._scrollBar.setScrollLeft(value);
+        } else {
+          this._scrollBar.addEventListener( &quot;appear&quot;, function( evt ) {
+            this.setScrollLeft(value);
+          }, this._scrollBar );
+        }
+      } else {
+        if( this._scrollBar.isCreated() ) {
+          this._scrollBar.setScrollTop(value);
+        } else {
+          this._scrollBar.addEventListener( &quot;appear&quot;, function( evt ) {
+            this.setScrollTop(value);
+          }, this._scrollBar );
+        }
+      }
+    },
+
+the error did not show up any more.
+Any ideas?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1997</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-07-13 09:54:56 +0200</bug_when>
+            <thetext>The &quot;onappear&quot; handling is already in and should be already synchronized. The whole fix can this way be done with a lot less code. I&#39;ve committed a change to rev 8984 + 8985</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,449 @@
+<bug>
+          <bug_id>8990</bug_id>
+          
+          <creation_ts>2015-03-05 16:33:00 +0100</creation_ts>
+          <short_desc>Allow for an &quot;external&quot; synchronous form validation</short_desc>
+          <delta_ts>2015-03-11 11:11:09 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>4.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>5.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Andriy Syrovenko">andriys</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>42721</commentid>
+              <attachid>1366</attachid>
+            <who name="Andriy Syrovenko">andriys</who>
+            <bug_when>2015-03-05 16:33:12 +0100</bug_when>
+            <thetext>Created attachment 1366
+Patch that applies to both master and branch_4_1_x
+
+Let me start by describing my use case first.
+
+I have an ordinary form with some fields and an OK button. When user clicks OK I convert the form model data into a JSON object via qx.util.Serializer.toNativeObject(), end send it to the server using a qx.io.rest.Resource object. I do not close/hide the form at this moment, just lock it using the qx.ui.core.MBlocker mixin.
+
+Server does its own validation, and if request validation fails, I may get some details in return (in JSON format as well). The typical reply looks like this:
+
+[{ &quot;field_name&quot;: [&quot;The problem description&quot;] }]
+
+where the &quot;field_name&quot; is, basically, the name of the form item as was specified in a call to qx.ui.form.Form.add(). What I&#39;d like to do in this case is to display a validation tooltip for this form item, similarly to what qooxdoo does when browser-side form validation fails.
+
+So, what I&#39;d like to do in case of server-side validation error is the following:
+
+1. Find form item by name.
+2. Associate the problem description from the server reply with this item by calling item.setInvalidMessage().
+3. Mark item as invalid by calling item.setValid(false);
+4. Toggle the tooltip visibility.
+
+Currently there doesn&#39;t seem to be a way I can do (1) and (4) with qooxdoo. The proposed patch adds two simple methods to make this possible:
+
+- qx.ui.form.Form.getNamedItem() - Returns the form item with the given name.
+- qx.ui.form.validation.Manager.invalidate() - Sets the valid state of the manager to false.
+
+With these two methods in place my error handler can be as simple as this:
+
+__onRestError : function(e) {
+  var resp, key, item;
+  resp = e.getRequest().getResponse();
+  for(key in resp) {
+    item = this.__form.getNamedItem(key);
+    if(item) {
+      item.setInvalidMessage(resp[key][0]);
+      item.setValid(false);
+      this.__form.getValidationManager().invalidate();
+      break;
+    }
+  }
+}
+
+The attached patch should apply cleanly to both master and 4.1 at this moment.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42723</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-03-06 08:42:25 +0100</bug_when>
+            <thetext>Thanks for the report and the proposed patch. The first thing came to my mind is the question why you don&#39;t use the async mechanisms the validation offers to go back to the server. This would solve the problem as well without having to trigger the invalid state by hand. Check out the demo [1] if you haven&#39;t seen that feature.
+
+Anyway, the first part of adding getNamedItem method seems ok to me but having a method called invalidate next to the already existing validate methods seems strange as one is really setting the form to invalid and the other one is checking the validity. 
+
+[1] http://demo.qooxdoo.org/current/demobrowser/index.html#ui~FormValidator.html</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42724</commentid>
+            <who name="Andriy Syrovenko">andriys</who>
+            <bug_when>2015-03-06 09:00:57 +0100</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Thanks for the report and the proposed patch. The first thing came to my mind
+&gt; is the question why you don&#39;t use the async mechanisms the validation offers to
+&gt; go back to the server.
+Sure I am aware of the asynchronous validation. Sorry, I should have mentioned it in my initial request. However, it does not quite apply in my particular case, because in a dynamically changing environment the final request may still fail, even if already validated (and I&#39;d like to handle this case gracefully when it happens), and using asynchronous validator to submit the request (as opposed to just validate it) is weird, unintuitive, and I guess may accidentally be triggered at wrong time.
+
+&gt; Anyway, the first part of adding getNamedItem method seems ok to me but having
+&gt; a method called invalidate next to the already existing validate methods seems
+&gt; strange as one is really setting the form to invalid and the other one is
+&gt; checking the validity.
+I can change the patch to provide setValid(bool) instead (as an addition to an already existing getValid()). My initial thoughts, however, were that it will then provide means to switch the state to both valid and invalid, and allowing forcing the state to valid when it is not in fact is a way to allow foot shooting to some extent. While providing a method that can only set state to invalid (bot not valid) is a better alternative. And the only way to set state back to valid should be by triggering the validation again (call validate()). What do you think?
+
+And, by the way, there&#39;s an alternative to adding the getNamedItem() method as well. There&#39;s already getItems() method in place, but (a) it is marked as internal and (b) it always makes a dictionary containing all the items, which might be an overkill in my case. Or we can do both- add the new method and remove the internal mark from the existing one.
+
+Thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42725</commentid>
+            <who name="Andriy Syrovenko">andriys</who>
+            <bug_when>2015-03-06 09:04:12 +0100</bug_when>
+            <thetext>As a followup to my previous comment. I just thought that there&#39;s another case when asynchronous validation may not apply- when you&#39;re just writing a frontend, have no means to add anything to the backend, and server does not provide any suitable entry points that can be used for validation.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42734</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-03-09 09:34:38 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; Sure I am aware of the asynchronous validation. Sorry, I should have mentioned
+&gt; it in my initial request. However, it does not quite apply in my particular
+&gt; case, because in a dynamically changing environment the final request may still
+&gt; fail, even if already validated (and I&#39;d like to handle this case gracefully
+&gt; when it happens), and using asynchronous validator to submit the request (as
+&gt; opposed to just validate it) is weird, unintuitive, and I guess may
+&gt; accidentally be triggered at wrong time.
+
+That sounds like a strange validation algorithm to me. I mean you validate, says that its valid and the algorithm might come back and say &quot;I changed my mind, its invalid so never mind the state I set before&quot;. For me, there should be only three possible states:
+1. unknown (or that former state)
+2. valid
+3. invalid
+As long as an async validation is not done, the algorithm can not decide wether its valid or not so it should stay in state 1. Maybe I don&#39;t have enough insight into you environment / use case? Or maybe its just that the way of adding async validators seems weird to you?
+
+
+&gt; I can change the patch to provide setValid(bool) instead (as an addition to an
+&gt; already existing getValid()). My initial thoughts, however, were that it will
+&gt; then provide means to switch the state to both valid and invalid, and allowing
+&gt; forcing the state to valid when it is not in fact is a way to allow foot
+&gt; shooting to some extent. While providing a method that can only set state to
+&gt; invalid (bot not valid) is a better alternative. And the only way to set state
+&gt; back to valid should be by triggering the validation again (call validate()).
+&gt; What do you think?
+I agree that setting the state to valid when the validation algorithm states its invalid does not make much sense. But on the other hand, that could also be said for the other way around. Which brings me back to my first point.
+
+&gt; And, by the way, there&#39;s an alternative to adding the getNamedItem() method as
+&gt; well. There&#39;s already getItems() method in place, but (a) it is marked as
+&gt; internal and (b) it always makes a dictionary containing all the items, which
+&gt; might be an overkill in my case. Or we can do both- add the new method and
+&gt; remove the internal mark from the existing one.
+That sounds like a good idea. But I would simply remove the internal flag as that should not be too much effort to get gather all items.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42736</commentid>
+            <who name="Andriy Syrovenko">andriys</who>
+            <bug_when>2015-03-09 10:21:49 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; That sounds like a strange validation algorithm to me. I mean you validate,
+&gt; says that its valid and the algorithm might come back and say &quot;I changed my
+&gt; mind, its invalid so never mind the state I set before&quot;.
+No, that&#39;s not the validation algorithm that changed its mind, its the external conditions (that the validation depends on) have changed in between the moments of request validation and submission.
+
+&gt; For me, there should be only three possible states:
+&gt; 1. unknown (or that former state)
+&gt; 2. valid
+&gt; 3. invalid
+&gt; As long as an async validation is not done, the algorithm can not decide wether
+&gt; its valid or not so it should stay in state 1.
+This is true, but as I said above, when server-side validation is involved the validation state may change in between the validation and submission. Consider at least the following types of validation:
+
+1. Check for uniqueness (what&#39;s unique when validated might not be unique any
+   more when submitted).
+2. Time constraints check (not earlier/later then now).
+3. Referential dependency checks (what we are referring to might just have been
+   deleted).
+
+&gt; Maybe I don&#39;t have enough
+&gt; insight into you environment / use case? Or maybe its just that the way of
+&gt; adding async validators seems weird to you?
+In short: for my project I must perform validation during request submission. I must
+do it atomically, i.e. open transaction, validate, then either update data and submit, or rollback. Opening transaction during async validation request and closing it when submitting the data is a VERY bad approach. Does in this case async validation still apply?
+
+Also please consider the case I described in comment #3
+
+&gt; I agree that setting the state to valid when the validation algorithm states
+&gt; its invalid does not make much sense. But on the other hand, that could also be
+&gt; said for the other way around.
+Not quite true. If the state is invalid, it should only be possible to make it valid by changing the form data and revalidate. If the state is valid, it may become invalid because some external conditions that affect the state of validation have changed.
+
+&gt; &gt; And, by the way, there&#39;s an alternative to adding the getNamedItem() method as
+&gt; &gt; well. There&#39;s already getItems() method in place, but (a) it is marked as
+&gt; &gt; internal and (b) it always makes a dictionary containing all the items, which
+&gt; &gt; might be an overkill in my case. Or we can do both- add the new method and
+&gt; &gt; remove the internal mark from the existing one.
+&gt; That sounds like a good idea. But I would simply remove the internal flag as
+&gt; that should not be too much effort to get gather all items.
+Both methods have drawbacks: getItems() makes new dictionary every time it&#39;s called, while getNamedItem() does linear search which may be slow. But in general, I&#39;m fine with just removing the internal flag. I&#39;ll submit a new patch shortly.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42737</commentid>
+              <attachid>1367</attachid>
+            <who name="Andriy Syrovenko">andriys</who>
+            <bug_when>2015-03-09 10:48:05 +0100</bug_when>
+            <thetext>Created attachment 1367
+Patch v2
+
+New version of the patch. Here, instead of introducing a new method qx.ui.form.Form.getNamedItem(), I simply moved the existing method qx.ui.form.Form.getItems() from the INTERNAL section to the new GET section in the source file and removed the @internal flag.
+
+As a previous patch, this one also adds the invalidate() method to the qx.ui.form.validation.Manager class.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42747</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-03-10 09:16:12 +0100</bug_when>
+            <thetext>I will talk to the core team and see what we can do for you.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42783</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-03-10 13:55:38 +0100</bug_when>
+            <thetext>I just talked with the rest of the core team members and we don&#39;t see that you use case is generic enough to be part of the framework. Anyway, we want to make it possible for you to get you problem fixed. So here here is a proposal:
+
+1. remove the internal flag of the getItems method
+2. make __setValid protected instead of private to make it possible for you to extend and override</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42788</commentid>
+              <attachid>1368</attachid>
+            <who name="Andriy Syrovenko">andriys</who>
+            <bug_when>2015-03-10 15:09:42 +0100</bug_when>
+            <thetext>Created attachment 1368
+Patch v3
+
+Thank you for your response. The solution you&#39;ve proposed looks great. Here&#39;s the new (third) version of the patch.
+
+As you suggested, the patch does two things:
+
+1. It removes the @internal flag from the qx.ui.form.Form.getItems() method.
+   I also moved this method up in the source file and introduced a new (logical)
+   section &quot;GET&quot; for the sake of the source code structure consistency.
+
+2. It makes the qx.ui.form.validation.Manager._setValid() method protected.
+   I also updated the documentation a bit to be consistent with the rest of the
+   validation manager methods.
+
+The patch should apply cleanly to both 4.1 and master branches.
+Thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42800</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-03-11 11:11:09 +0100</bug_when>
+            <thetext>Thanks for the patch and the cooperation. :) Applied the patch to the master which will be in the next release.
+
+master: 1e45588e7fdba42e08e5a31525a2b7b137e931da</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="1" ispatch="1" isprivate="0" isurl="0">
+            <attachid>1366</attachid>
+            <date>2015-03-05 16:33:00 +0100</date>
+            <delta_ts>2015-03-09 10:48:05 +0100</delta_ts>
+            <desc>Patch that applies to both master and branch_4_1_x</desc>
+            <filename>extern_validation.patch</filename>
+            <type>text/plain</type>
+            <size>1865</size>
+            <attacher>andriys</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkvZm9ybS9Gb3JtLmpzIGIv
+ZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS9mb3JtL0Zvcm0uanMKaW5kZXggOTNjOTJjMS4u
+MWRjNzg1ZCAxMDA2NDQKLS0tIGEvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS9mb3JtL0Zv
+cm0uanMKKysrIGIvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS9mb3JtL0Zvcm0uanMKQEAg
+LTI3MSw2ICsyNzEsMzQgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC51aS5mb3JtLkZvcm0iLAogICAg
+IH0sCiAKIAorICAgIC8qCisgICAgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCisgICAgICAgR0VUCisgICAg
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tCisgICAgKi8KKworCisgICAgLyoqCisgICAgICogUmV0dXJucyB0
+aGUgZm9ybSBpdGVtIHdpdGggdGhlIGdpdmVuIG5hbWUuCisgICAgICoKKyAgICAgKiBAcmV0dXJu
+IHtxeC51aS5mb3JtLklGb3JtP251bGx9IFRoZSBmb3JtIGl0ZW0gb3IgPGNvZGU+bnVsbDwvY29k
+ZT4uCisgICAgICoKKyAgICAgKiBAcGFyYW0gbmFtZSB7U3RyaW5nfSBUaGUgbmFtZSBvZiB0aGUg
+aXRlbS4KKyAgICAgKi8KKyAgICBnZXROYW1lZEl0ZW0gOiBmdW5jdGlvbihuYW1lKSB7CisgICAg
+ICAvLyBnbyB0aHJvdWdoIGFsbCBncm91cHMKKyAgICAgIGZvciAodmFyIGkgPSAwOyBpIDwgdGhp
+cy5fX2dyb3Vwcy5sZW5ndGg7IGkrKykgeworICAgICAgICB2YXIgZ3JvdXAgPSB0aGlzLl9fZ3Jv
+dXBzW2ldOworICAgICAgICAvLyBnZXQgYWxsIGl0ZW1zCisgICAgICAgIGZvciAodmFyIGogPSAw
+OyBqIDwgZ3JvdXAubmFtZXMubGVuZ3RoOyBqKyspIHsKKyAgICAgICAgICBpZihuYW1lID09PSBn
+cm91cC5uYW1lc1tqXSkgeworICAgICAgICAgICAgcmV0dXJuIGdyb3VwLml0ZW1zW2pdOworICAg
+ICAgICAgIH0KKyAgICAgICAgfQorICAgICAgfQorICAgICAgcmV0dXJuIG51bGw7CisgICAgfSwK
+KwogCiAgICAgLyoKICAgICAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KZGlmZiAtLWdpdCBhL2ZyYW1ld29y
+ay9zb3VyY2UvY2xhc3MvcXgvdWkvZm9ybS92YWxpZGF0aW9uL01hbmFnZXIuanMgYi9mcmFtZXdv
+cmsvc291cmNlL2NsYXNzL3F4L3VpL2Zvcm0vdmFsaWRhdGlvbi9NYW5hZ2VyLmpzCmluZGV4IGVl
+OGJmNTAuLjQ3YzUzNDYgMTAwNjQ0Ci0tLSBhL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkv
+Zm9ybS92YWxpZGF0aW9uL01hbmFnZXIuanMKKysrIGIvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9x
+eC91aS9mb3JtL3ZhbGlkYXRpb24vTWFuYWdlci5qcwpAQCAtMjY4LDYgKzI2OCwxNCBAQCBxeC5D
+bGFzcy5kZWZpbmUoInF4LnVpLmZvcm0udmFsaWRhdGlvbi5NYW5hZ2VyIiwKIAogCiAgICAgLyoq
+CisgICAgICogU2V0cyB0aGUgdmFsaWQgc3RhdGUgb2YgdGhlIG1hbmFnZXIgdG8gZmFsc2UuCisg
+ICAgICovCisgICAgaW52YWxpZGF0ZSA6IGZ1bmN0aW9uKCkgeworICAgICAgdGhpcy5fX3NldFZh
+bGlkKGZhbHNlKTsKKyAgICB9LAorCisKKyAgICAvKioKICAgICAgKiBDaGVja3MgaWYgdGhlIGZv
+cm0gaXRlbSBpcyByZXF1aXJlZC4gSWYgc28sIHRoZSB2YWx1ZSBpcyBjaGVja2VkCiAgICAgICog
+YW5kIHRoZSByZXN1bHQgd2lsbCBiZSByZXR1cm5lZC4gSWYgdGhlIGZvcm0gaXRlbSBpcyBub3Qg
+cmVxdWlyZWQsIHRydWUKICAgICAgKiB3aWxsIGJlIHJldHVybmVkLgo=
+</data>
+
+          </attachment>
+          <attachment isobsolete="1" ispatch="1" isprivate="0" isurl="0">
+            <attachid>1367</attachid>
+            <date>2015-03-09 10:48:00 +0100</date>
+            <delta_ts>2015-03-10 15:09:42 +0100</delta_ts>
+            <desc>Patch v2</desc>
+            <filename>extern_validation_v2.patch</filename>
+            <type>text/plain</type>
+            <size>2577</size>
+            <attacher>andriys</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkvZm9ybS9Gb3JtLmpzIGIv
+ZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS9mb3JtL0Zvcm0uanMKaW5kZXggOTNjOTJjMS4u
+ZDdjODJlYiAxMDA2NDQKLS0tIGEvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS9mb3JtL0Zv
+cm0uanMKKysrIGIvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS9mb3JtL0Zvcm0uanMKQEAg
+LTI3MSw2ICsyNzEsMzIgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC51aS5mb3JtLkZvcm0iLAogICAg
+IH0sCiAKIAorICAgIC8qCisgICAgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCisgICAgICAgR0VUCisgICAg
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tCisgICAgKi8KKworCisgICAgLyoqCisgICAgICogUmV0dXJucyBh
+bGwgYWRkZWQgaXRlbXMgYXMgYSBtYXAuCisgICAgICoKKyAgICAgKiBAcmV0dXJuIHtNYXB9IEEg
+bWFwIGNvbnRhaW5pbmcgZm9yIGV2ZXJ5IGl0ZW0gYW4gZW50cnkgd2l0aCBpdHMgbmFtZS4KKyAg
+ICAgKi8KKyAgICBnZXRJdGVtcyA6IGZ1bmN0aW9uKCkgeworICAgICAgdmFyIGl0ZW1zID0ge307
+CisgICAgICAvLyBnbyB0aHJldyBhbGwgZ3JvdXBzCisgICAgICBmb3IgKHZhciBpID0gMDsgaSA8
+IHRoaXMuX19ncm91cHMubGVuZ3RoOyBpKyspIHsKKyAgICAgICAgdmFyIGdyb3VwID0gdGhpcy5f
+X2dyb3Vwc1tpXTsKKyAgICAgICAgLy8gZ2V0IGFsbCBpdGVtcworICAgICAgICBmb3IgKHZhciBq
+ID0gMDsgaiA8IGdyb3VwLm5hbWVzLmxlbmd0aDsgaisrKSB7CisgICAgICAgICAgdmFyIG5hbWUg
+PSBncm91cC5uYW1lc1tqXTsKKyAgICAgICAgICBpdGVtc1tuYW1lXSA9IGdyb3VwLml0ZW1zW2pd
+OworICAgICAgICB9CisgICAgICB9CisgICAgICByZXR1cm4gaXRlbXM7CisgICAgfSwKKwogCiAg
+ICAgLyoKICAgICAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KQEAgLTM4NSwyOCArNDExLDYgQEAgcXguQ2xh
+c3MuZGVmaW5lKCJxeC51aS5mb3JtLkZvcm0iLAogICAgICovCiAKICAgICAvKioKLSAgICAgKiBS
+ZXR1cm5zIGFsbCBhZGRlZCBpdGVtcyBhcyBhIG1hcC4KLSAgICAgKgotICAgICAqIEByZXR1cm4g
+e01hcH0gQSBtYXAgY29udGFpbmluZyBmb3IgZXZlcnkgaXRlbSBhbiBlbnRyeSB3aXRoIGl0cyBu
+YW1lLgotICAgICAqCi0gICAgICogQGludGVybmFsCi0gICAgICovCi0gICAgZ2V0SXRlbXMgOiBm
+dW5jdGlvbigpIHsKLSAgICAgIHZhciBpdGVtcyA9IHt9OwotICAgICAgLy8gZ28gdGhyZXcgYWxs
+IGdyb3VwcwotICAgICAgZm9yICh2YXIgaSA9IDA7IGkgPCB0aGlzLl9fZ3JvdXBzLmxlbmd0aDsg
+aSsrKSB7Ci0gICAgICAgIHZhciBncm91cCA9IHRoaXMuX19ncm91cHNbaV07Ci0gICAgICAgIC8v
+IGdldCBhbGwgaXRlbXMKLSAgICAgICAgZm9yICh2YXIgaiA9IDA7IGogPCBncm91cC5uYW1lcy5s
+ZW5ndGg7IGorKykgewotICAgICAgICAgIHZhciBuYW1lID0gZ3JvdXAubmFtZXNbal07Ci0gICAg
+ICAgICAgaXRlbXNbbmFtZV0gPSBncm91cC5pdGVtc1tqXTsKLSAgICAgICAgfQotICAgICAgfQot
+ICAgICAgcmV0dXJuIGl0ZW1zOwotICAgIH0sCi0KLQotICAgIC8qKgogICAgICAqIENyZWF0ZXMg
+YW5kIHJldHVybnMgdGhlIHVzZWQgdmFsaWRhdGlvbiBtYW5hZ2VyLgogICAgICAqCiAgICAgICog
+QHJldHVybiB7cXgudWkuZm9ybS52YWxpZGF0aW9uLk1hbmFnZXJ9IFRoZSB2YWxpZGF0aW9uIG1h
+bmFnZXIuCmRpZmYgLS1naXQgYS9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L3VpL2Zvcm0vdmFs
+aWRhdGlvbi9NYW5hZ2VyLmpzIGIvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS9mb3JtL3Zh
+bGlkYXRpb24vTWFuYWdlci5qcwppbmRleCBlZThiZjUwLi40N2M1MzQ2IDEwMDY0NAotLS0gYS9m
+cmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L3VpL2Zvcm0vdmFsaWRhdGlvbi9NYW5hZ2VyLmpzCisr
+KyBiL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkvZm9ybS92YWxpZGF0aW9uL01hbmFnZXIu
+anMKQEAgLTI2OCw2ICsyNjgsMTQgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC51aS5mb3JtLnZhbGlk
+YXRpb24uTWFuYWdlciIsCiAKIAogICAgIC8qKgorICAgICAqIFNldHMgdGhlIHZhbGlkIHN0YXRl
+IG9mIHRoZSBtYW5hZ2VyIHRvIGZhbHNlLgorICAgICAqLworICAgIGludmFsaWRhdGUgOiBmdW5j
+dGlvbigpIHsKKyAgICAgIHRoaXMuX19zZXRWYWxpZChmYWxzZSk7CisgICAgfSwKKworCisgICAg
+LyoqCiAgICAgICogQ2hlY2tzIGlmIHRoZSBmb3JtIGl0ZW0gaXMgcmVxdWlyZWQuIElmIHNvLCB0
+aGUgdmFsdWUgaXMgY2hlY2tlZAogICAgICAqIGFuZCB0aGUgcmVzdWx0IHdpbGwgYmUgcmV0dXJu
+ZWQuIElmIHRoZSBmb3JtIGl0ZW0gaXMgbm90IHJlcXVpcmVkLCB0cnVlCiAgICAgICogd2lsbCBi
+ZSByZXR1cm5lZC4K
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>1368</attachid>
+            <date>2015-03-10 15:09:00 +0100</date>
+            <delta_ts>2015-03-10 15:09:42 +0100</delta_ts>
+            <desc>Patch v3</desc>
+            <filename>extern_validation_v3.patch</filename>
+            <type>text/plain</type>
+            <size>3417</size>
+            <attacher>andriys</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkvZm9ybS9Gb3JtLmpzIGIv
+ZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS9mb3JtL0Zvcm0uanMKaW5kZXggOTNjOTJjMS4u
+ZDdjODJlYiAxMDA2NDQKLS0tIGEvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS9mb3JtL0Zv
+cm0uanMKKysrIGIvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS9mb3JtL0Zvcm0uanMKQEAg
+LTI3MSw2ICsyNzEsMzIgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC51aS5mb3JtLkZvcm0iLAogICAg
+IH0sCiAKIAorICAgIC8qCisgICAgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCisgICAgICAgR0VUCisgICAg
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tCisgICAgKi8KKworCisgICAgLyoqCisgICAgICogUmV0dXJucyBh
+bGwgYWRkZWQgaXRlbXMgYXMgYSBtYXAuCisgICAgICoKKyAgICAgKiBAcmV0dXJuIHtNYXB9IEEg
+bWFwIGNvbnRhaW5pbmcgZm9yIGV2ZXJ5IGl0ZW0gYW4gZW50cnkgd2l0aCBpdHMgbmFtZS4KKyAg
+ICAgKi8KKyAgICBnZXRJdGVtcyA6IGZ1bmN0aW9uKCkgeworICAgICAgdmFyIGl0ZW1zID0ge307
+CisgICAgICAvLyBnbyB0aHJldyBhbGwgZ3JvdXBzCisgICAgICBmb3IgKHZhciBpID0gMDsgaSA8
+IHRoaXMuX19ncm91cHMubGVuZ3RoOyBpKyspIHsKKyAgICAgICAgdmFyIGdyb3VwID0gdGhpcy5f
+X2dyb3Vwc1tpXTsKKyAgICAgICAgLy8gZ2V0IGFsbCBpdGVtcworICAgICAgICBmb3IgKHZhciBq
+ID0gMDsgaiA8IGdyb3VwLm5hbWVzLmxlbmd0aDsgaisrKSB7CisgICAgICAgICAgdmFyIG5hbWUg
+PSBncm91cC5uYW1lc1tqXTsKKyAgICAgICAgICBpdGVtc1tuYW1lXSA9IGdyb3VwLml0ZW1zW2pd
+OworICAgICAgICB9CisgICAgICB9CisgICAgICByZXR1cm4gaXRlbXM7CisgICAgfSwKKwogCiAg
+ICAgLyoKICAgICAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KQEAgLTM4NSwyOCArNDExLDYgQEAgcXguQ2xh
+c3MuZGVmaW5lKCJxeC51aS5mb3JtLkZvcm0iLAogICAgICovCiAKICAgICAvKioKLSAgICAgKiBS
+ZXR1cm5zIGFsbCBhZGRlZCBpdGVtcyBhcyBhIG1hcC4KLSAgICAgKgotICAgICAqIEByZXR1cm4g
+e01hcH0gQSBtYXAgY29udGFpbmluZyBmb3IgZXZlcnkgaXRlbSBhbiBlbnRyeSB3aXRoIGl0cyBu
+YW1lLgotICAgICAqCi0gICAgICogQGludGVybmFsCi0gICAgICovCi0gICAgZ2V0SXRlbXMgOiBm
+dW5jdGlvbigpIHsKLSAgICAgIHZhciBpdGVtcyA9IHt9OwotICAgICAgLy8gZ28gdGhyZXcgYWxs
+IGdyb3VwcwotICAgICAgZm9yICh2YXIgaSA9IDA7IGkgPCB0aGlzLl9fZ3JvdXBzLmxlbmd0aDsg
+aSsrKSB7Ci0gICAgICAgIHZhciBncm91cCA9IHRoaXMuX19ncm91cHNbaV07Ci0gICAgICAgIC8v
+IGdldCBhbGwgaXRlbXMKLSAgICAgICAgZm9yICh2YXIgaiA9IDA7IGogPCBncm91cC5uYW1lcy5s
+ZW5ndGg7IGorKykgewotICAgICAgICAgIHZhciBuYW1lID0gZ3JvdXAubmFtZXNbal07Ci0gICAg
+ICAgICAgaXRlbXNbbmFtZV0gPSBncm91cC5pdGVtc1tqXTsKLSAgICAgICAgfQotICAgICAgfQot
+ICAgICAgcmV0dXJuIGl0ZW1zOwotICAgIH0sCi0KLQotICAgIC8qKgogICAgICAqIENyZWF0ZXMg
+YW5kIHJldHVybnMgdGhlIHVzZWQgdmFsaWRhdGlvbiBtYW5hZ2VyLgogICAgICAqCiAgICAgICog
+QHJldHVybiB7cXgudWkuZm9ybS52YWxpZGF0aW9uLk1hbmFnZXJ9IFRoZSB2YWxpZGF0aW9uIG1h
+bmFnZXIuCmRpZmYgLS1naXQgYS9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L3VpL2Zvcm0vdmFs
+aWRhdGlvbi9NYW5hZ2VyLmpzIGIvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS9mb3JtL3Zh
+bGlkYXRpb24vTWFuYWdlci5qcwppbmRleCBlZThiZjUwLi45NDY1NmQ3IDEwMDY0NAotLS0gYS9m
+cmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L3VpL2Zvcm0vdmFsaWRhdGlvbi9NYW5hZ2VyLmpzCisr
+KyBiL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkvZm9ybS92YWxpZGF0aW9uL01hbmFnZXIu
+anMKQEAgLTI1OCw3ICsyNTgsNyBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LnVpLmZvcm0udmFsaWRh
+dGlvbi5NYW5hZ2VyIiwKICAgICAgIH0KICAgICAgIHZhbGlkID0gZm9ybVZhbGlkICYmIHZhbGlk
+OwogCi0gICAgICB0aGlzLl9fc2V0VmFsaWQodmFsaWQpOworICAgICAgdGhpcy5fc2V0VmFsaWQo
+dmFsaWQpOwogCiAgICAgICBpZiAocXgubGFuZy5PYmplY3QuaXNFbXB0eSh0aGlzLl9fYXN5bmNS
+ZXN1bHRzKSkgewogICAgICAgICB0aGlzLmZpcmVFdmVudCgiY29tcGxldGUiKTsKQEAgLTQ0Niwx
+MiArNDQ2LDEyIEBAIHF4LkNsYXNzLmRlZmluZSgicXgudWkuZm9ybS52YWxpZGF0aW9uLk1hbmFn
+ZXIiLAogCiAKICAgICAvKioKLSAgICAgKiBJbnRlcm5hbCBzZXR0ZXIgZm9yIHRoZSB2YWxpZCBt
+ZW1iZXIuIEl0IGdlbmVyYXRlcyB0aGUgZXZlbnQgaWYKLSAgICAgKiBuZWNlc3NhcnkgYW5kIHN0
+b3JlcyB0aGUgbmV3IHZhbHVlCisgICAgICogU2V0cyB0aGUgdmFsaWQgc3RhdGUgb2YgdGhlIG1h
+bmFnZXIuIEl0IGdlbmVyYXRlcyB0aGUgZXZlbnQgaWYKKyAgICAgKiBuZWNlc3NhcnkgYW5kIHN0
+b3JlcyB0aGUgbmV3IHZhbHVlLgogICAgICAqCi0gICAgICogQHBhcmFtIHZhbHVlIHtCb29sZWFu
+fG51bGx9IFRoZSBuZXcgdmFsaWQgdmFsdWUgb2YgdGhlIG1hbmFnZXIuCisgICAgICogQHBhcmFt
+IHZhbHVlIHtCb29sZWFufG51bGx9IFRoZSBuZXcgdmFsaWQgc3RhdGUgb2YgdGhlIG1hbmFnZXIu
+CiAgICAgICovCi0gICAgX19zZXRWYWxpZDogZnVuY3Rpb24odmFsdWUpIHsKKyAgICBfc2V0VmFs
+aWQ6IGZ1bmN0aW9uKHZhbHVlKSB7CiAgICAgICB0aGlzLl9zaG93VG9vbFRpcCh2YWx1ZSk7CiAg
+ICAgICB2YXIgb2xkVmFsdWUgPSB0aGlzLl9fdmFsaWQ7CiAgICAgICB0aGlzLl9fdmFsaWQgPSB2
+YWx1ZTsKQEAgLTY0Miw3ICs2NDIsNyBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LnVpLmZvcm0udmFs
+aWRhdGlvbi5NYW5hZ2VyIiwKICAgICAgICAgfQogICAgICAgfQogICAgICAgLy8gc2V0IHRoZSBh
+Y3R1YWwgdmFsaWQgc3RhdGUgb2YgdGhlIG1hbmFnZXIKLSAgICAgIHRoaXMuX19zZXRWYWxpZCh2
+YWxpZCk7CisgICAgICB0aGlzLl9zZXRWYWxpZCh2YWxpZCk7CiAgICAgICAvLyByZXNldCB0aGUg
+cmVzdWx0cwogICAgICAgdGhpcy5fX2FzeW5jUmVzdWx0cyA9IHt9OwogICAgICAgLy8gZmlyZSB0
+aGUgY29tcGxldGUgZXZlbnQgKG5vIGVudHJ5IGluIHRoZSByZXN1bHRzIHdpdGggbnVsbCkK
+</data>
+
+          </attachment>
+      
+
+    </bug>

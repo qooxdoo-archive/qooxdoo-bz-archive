@@ -1,0 +1,114 @@
+<bug>
+          <bug_id>8047</bug_id>
+          
+          <creation_ts>2014-01-24 10:22:00 +0100</creation_ts>
+          <short_desc>Ability to run qx code (based on qx.Bootstrap) inside a closure</short_desc>
+          <delta_ts>2014-02-18 09:03:26 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>VERIFIED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>4.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mustafa Sak">mustafa.sak</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          <cc>alexander.steitz</cc>
+    
+    <cc>daniel.wagner</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>34829</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-01-24 10:22:04 +0100</bug_when>
+            <thetext>To be able to run qx code inside a closure without a dependency to window object, we need to inject any object to qx.Bootstrap.createNamespace as as &quot;root&quot;.
+
+Bootstrap allows to inject such an root object, but not in load-time. I would prefer to define a hook object like qx.$$namespaceRoot, which can be defined on the loader script before bootstrap will be parsed by the browser.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34905</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-01-30 14:22:25 +0100</bug_when>
+            <thetext>Here my patch:
+
+diff --git a/framework/source/class/qx/Bootstrap.js b/framework/source/class/qx/Bootstrap.js
+index 1cee2fe..bcc8d0b 100644
+@@ -44,7 +44,13 @@ qx.Bootstrap = {
+   {
+     var splits = name.split(&quot;.&quot;);
+     var part = splits[0];
+-    var parent = this.__root &amp;&amp; this.__root[part] ? this.__root : window;
++    var parent = window;
++    if (this.__root &amp;&amp; this.__root[part]) {
++      parent = this.__root;
++    }
++    else if (qx.$$namespaceRoot) {
++      parent = qx.$$namespaceRoot;
++    }
+ 
+     for (var i=0, len=splits.length-1; i&lt;len; i++, part=splits[i])
+     {</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35037</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2014-02-12 13:42:50 +0100</bug_when>
+            <thetext>@Mustafa
+
+This slightly modified patch is also doing the job and will be integrated due the fact it is a bit more streamlined.
+
+
+@@ -44,7 +44,7 @@
+   {
+     var splits = name.split(&quot;.&quot;);
+     var part = splits[0];
+-    var parent = this.__root &amp;&amp; this.__root[part] ? this.__root : window;
++    var parent = qx.$$namespaceRoot &amp;&amp; qx.$$namespaceRoot[part] ? qx.$$namespaceRoot : window;
+ 
+     for (var i=0, len=splits.length-1; i&lt;len; i++, part=splits[i])
+     {
+@@ -292,7 +292,7 @@
+      * @internal
+      */
+     setRoot : function(root) {
+-      this.__root = root;
++      qx.$$namespaceRoot = root;
+     },</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35038</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2014-02-12 13:48:25 +0100</bug_when>
+            <thetext>Fixed with 
+
+d023509c51d93be1c81c2c8c76f034baee129742 (master)</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

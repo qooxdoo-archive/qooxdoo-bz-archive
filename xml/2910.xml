@@ -1,0 +1,196 @@
+<bug>
+          <bug_id>2910</bug_id>
+          
+          <creation_ts>2009-10-09 15:42:00 +0200</creation_ts>
+          <short_desc>Still be able to apply the same value as the init value to a property</short_desc>
+          <delta_ts>2010-03-10 08:54:32 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Wayne">w.si</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>info</cc>
+    
+    <cc>matthew+qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>13048</commentid>
+            <who name="Wayne">w.si</who>
+            <bug_when>2009-10-09 15:42:06 +0200</bug_when>
+            <thetext>Define a property with init value and provide an apply function. Then create an instance of the class and set the class property with exactly the same value as the predefined init value, you will see the value is successfully applied and the apply funcion is invoked as well.
+
+This shouldn&#39;t happen at all because the value is not changed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13345</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-20 10:57:14 +0200</bug_when>
+            <thetext>to Fabian.
+
+How is the current behavior, is it consistent, does it need changes (I recall a similar issue report)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13350</commentid>
+            <who name="Wayne">w.si</who>
+            <bug_when>2009-10-20 11:10:59 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; to Fabian.
+&gt; 
+&gt; How is the current behavior, is it consistent, does it need changes (I recall a
+&gt; similar issue report)
+&gt; 
+
+Currently you are able to set the property with a value exactly same as the init value and the apply function then gets triggered and event fired. It is annoying, espcially in the two way data binding. I seemed to report a same issue before but I can&#39;t find it now so I&#39;m not sure. I&#39;m pretty sure the behaviour changed somehow in the framework because my code suddenly stopped working after a framework checkout.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13366</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-20 15:22:37 +0200</bug_when>
+            <thetext>I&#39;ll take a look at this behavior and check whether it is a regression.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13569</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-27 11:31:35 +0100</bug_when>
+            <thetext>to martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13571</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-10-27 13:10:40 +0100</bug_when>
+            <thetext>Just a note from the original author: This should not be the case. Right. So it seems to be a bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13591</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-10-27 15:41:49 +0100</bug_when>
+            <thetext>Accept</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13724</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-30 11:45:12 +0100</bug_when>
+            <thetext>Unfortunately it&#39;s not easy to fix. In the qooxdoo code base there are several places, where the code depends on this (wrong) behavior.
+
+e.g in the constructor of &quot;qx.ui.core.scroll.ScrollBar&quot;:
+
+  construct : function(orientation)
+  {
+    // ...
+    if (orientation != null) {
+      this.setOrientation(orientation);
+    } else {
+      this.initOrientation();
+    }
+  }
+    
+If &quot;orientation&quot; is defined it should be set, otherwise the property should be initialized with its init value. The &quot;orientation&quot; property has an apply method and it is important that it is called on initialization. In this case if the passed in &quot;orientation&quot; argument equals the &quot;init&quot; value we depend on the fact that apply is called even if the internal value has not changed.
+
+If we fix this bug we have to write something like this:
+
+    if (orientation != null &amp;&amp; orientation !== this.getOrientation()) {
+      this.setOrientation(orientation);
+    } else {
+      this.initOrientation();
+    }
+    
+This change would have to be made in all affected qooxdoo classes and (which is already hard) and in user code. This must be considered if the bug is going to be fixed.
+ 
+
+    
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13727</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-10-30 12:18:15 +0100</bug_when>
+            <thetext>(In reply to comment #7)
+To avoid having to make too many extensive changes, would it be possible to use the current (incorrect) behaviour whilst only inside the class constructor?
+
+This should be the best of both worlds I think :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13736</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-10-30 13:19:09 +0100</bug_when>
+            <thetext>(In reply to comment #8)
+I guess that would not solve the problem because the code showed by fabian could be in a helper method or even created on demand during the first access. So restricting the &quot;old&quot; behavior to the constructors would no help neither solve the problem.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13745</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-10-30 14:12:10 +0100</bug_when>
+            <thetext>I wasn&#39;t suggesting checking if setProp was called BY a constructor, I meant checking it it is called DURING the constructor.
+
+Something along the lines of putting a semiphore in qx.Class.__wrapConstructor so we know when we are duing the execution of a construct and when we are not.
+
+This way if it is called from a helper function, or dynamic code then it shouldn&#39;t matter.
+IF this code is called outside of a constructor, I think the new behaviour is ok as you are dealing with uninitialized properties.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14154</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-11-17 15:01:07 +0100</bug_when>
+            <thetext>After some long discussion here in the core developer team, we decided that the impact of the change would be to large and too hard to handle. One reason is the missing deprecation possibility. Another reason is the problem of detecting where an piece of code depends on that described behavior and possibly fails in some special scenarios we don&#39;t even think of.
+So we decided to document the behavior in the wiki to make sure that this is the behavior like it should be:
+http://qooxdoo.org/documentation/0.8/defining_properties#applying_an_init_value</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14171</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-11-18 00:35:38 +0100</bug_when>
+            <thetext>This is perfectly understandable for now but might be questionous for a reimplementation as it means to keep old bugs even in rewrites. Remind me a bit of .Net which still contains compat code for Windows 95. Hope this is not the qooxdoo way. I wish here would be a more detailed statement about the timeframe one want to keep the wrong behavior. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14399</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-11-24 10:14:27 +0100</bug_when>
+            <thetext>CLOSED</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14627</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:16:09 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17175</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-10 08:54:32 +0100</bug_when>
+            <thetext>*** Bug 3464 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

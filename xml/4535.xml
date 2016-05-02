@@ -1,0 +1,152 @@
+<bug>
+          <bug_id>4535</bug_id>
+          
+          <creation_ts>2011-01-10 10:42:00 +0100</creation_ts>
+          <short_desc>Two or more inline applications don&#39;t work</short_desc>
+          <delta_ts>2011-01-13 10:55:57 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.application</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>thron7</cc>
+          <qa_contact name="Tino Butz">tinobutz</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>22140</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-01-10 10:42:50 +0100</bug_when>
+            <thetext>When two or more inline applications are compiled and attached to two or more separate div&#39;s, only the first will be run and displayed.
+
+This is either a bug or a huge limitation, which actualizes the previous topic about incremental generation of code and reusing a base.
+
+A quick fix solution: make a separate compile with all the inline constituents so they get the same base of code.
+
+Problem: If we have many different pages in a site then there will be a huge amount of compilations. One example of this is that one widget is put on every page, while other widgets are available in different combinations in different pages. You then have to make either one huge compilation and the package loaded every time a page is loaded even though that page does not use all the inlines (not practical and SLOW) or a huge number of compilations, one for each page with widgets.
+
+This looks to me as a design flaw.
+
+How would you work around this bug or problem?
+
+If not a bug it is an important enhancement cause it stops all developement of sites with inlined widgets.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22170</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-01-11 13:53:13 +0100</bug_when>
+            <thetext>Do I get it right that you want to load more than one qooxdoo inline app on the same HTML page? I&#39;m not surprised that thats not going to work. Thats not the way we would propose to do it. Here is my suggestion:
+
+You have one application which you include in every page. This basic app has one main task, check what page you are on and what code is needed. This different code parts should be wrapped as separate parts which means you can load it on demand. So you can load one or even more parts and assign them to one or more inline roots. The huge advantage here is, that you do not load things more than once like all the stuff which is used by all inline apps. This also has only one compilation step because we only have one app. What do you think about that?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22187</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-01-12 14:27:42 +0100</bug_when>
+            <thetext>I agree with Martin.
+
+What you probably have in mind is a freely combinable component architecture, which we currently don&#39;t support as we have a different focus. The best approximation with the current framework is to have a *single app* per page which can manifest itself in multiple inline islands. Although the different inline roots display different widgets and behaviours, they belong to the same application, like e.g. different dialogs in a desktop app. This assures you have a single qooxdoo run time, and only those classes in the page that are really needed.
+
+But even if you accept the one-app-per-page strategy, you can break up the problem nicely into components *during development*. You just make a separate library out of every component, and then create a &quot;real app&quot; skeleton for every page. This app can be (nearly) empty of code and only draws in via config the components you want to use on this particular page. The only code you have to write is the main application class that loads the components and hooks them into the appropriate inline roots. You don&#39;t even have to use parts.
+
+Yes, this means as many compilations has you have pages, qooxdoo is just meant for single-page applications. But as you develop the components, you only have to re-compile those page apps that use the changed component, and I think this is fair. We cannot support to only re-compile a specific component and everything will work out of itself, as you then need load-time dynamic dependency resolution. There are people doing this, but this puts a lot of work on the server side, doing dependency management in the server, carrying dependency information with every component as meta info, and you need a dynamic loader in the client that plays along. It&#39;s a totally different approach to loading, which we currently cannot support natively.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22200</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-01-12 18:09:20 +0100</bug_when>
+            <thetext>Martin!
+
+Happy New Year! I hope you had a nice holiday.
+
+Thanks for your good answer. We are looking at all limits here and we will after this put some hooks in the &quot;boot&quot; package and some in the page html/javascript code.
+
+If an inline application has no anchored isles then it seems to be ok as long as we do not refer to any non-existing div.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22201</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-01-12 18:18:09 +0100</bug_when>
+            <thetext>Thomas!
+
+Initially, we wanted to do totally separate compilations, but we saw it was not possible.
+Second, we tried to go page by page compilation, which is not as good as the final.
+Third, we chose a boot package dynamically loading.
+
+Thanks for the thorough answer. We needed this statement of yours. It clarifies how you reason and what we see.
+
+We have chosen the package loading due to big memory and speed impact. This has been seen after testing.
+
+We created the central boot package and it works fine. But there are still some issues with the resources. But it might be a mistake some place.
+
+Happy New Year to you too.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22202</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-01-13 00:53:58 +0100</bug_when>
+            <thetext>The setup is as described above. We use qx.data.store.Json to load the resource file.
+
+This is the specific error:
+
+019214 qx.io.remote.transport.XmlHttp[274]: Could not load from file: ../../cm/source/resource/com/pe/loc/lan.json
+
+It happens ONLY when we try to load a resource file after all packages in one compilation. The path is completely correct!
+
+If the specific package is run standalone there is NO problem.
+
+Do you have any clue?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22207</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-01-13 08:14:49 +0100</bug_when>
+            <thetext>Happy new year to you too. :)
+
+The &quot;../../&quot; in the URL brings always the thought of same origin policy into my mind. Have you tested to copy the file manually right beside the index file and load that to make sure its not a same origin problem?
+
+Btw. can I mark that bug as resolved with the two answers?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22217</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-01-13 10:32:16 +0100</bug_when>
+            <thetext>yes, resolved as it is not implemented and it is not a bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22219</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-01-13 10:55:57 +0100</bug_when>
+            <thetext>Thanks. :)</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,270 @@
+<bug>
+          <bug_id>6678</bug_id>
+          
+          <creation_ts>2012-07-26 18:06:00 +0200</creation_ts>
+          <short_desc>Clicking on the caption bar of a window with a listener causes the window to redisplay</short_desc>
+          <delta_ts>2012-08-01 15:57:07 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.popups</component>
+          <version>2.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="eda">edadasiewicz</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30271</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2012-07-26 18:06:35 +0200</bug_when>
+            <thetext>I noticed that when I clicked on the caption bar of a window in my application that it would move.  I was able to create a much smaller version (called creeper) consisting of the following file:
+
+qx.Class.define(&quot;creeper.Application&quot;,
+{
+  extend : qx.application.Standalone,
+  members :
+  {
+    main : function()
+    {
+      this.base(arguments);
+      var win = new qx.ui.window.Window(&quot;Boo&quot;);
+      win.addListener(&quot;close&quot;, function() {
+        win.destroy();
+      }, this);
+      win.addListenerOnce(&quot;appear&quot;, function() {
+        win.set({marginTop: 10});
+      }, this);
+      win.open();
+    }
+  }
+});
+
+Every time I click on the caption or &quot;non-button&quot; portion of the caption bar, the window drops down 10 pixels.  If I change the event from &quot;appear&quot; to &quot;resize&quot; the same thing happens.  The actual app is calculating where to place the window based upon already displayed windows and the bounds of the current window so it needs to be done after the window is rendered.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30273</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-07-27 08:23:34 +0200</bug_when>
+            <thetext>This is due to the margin top you set:
+
+var win = new qx.ui.window.Window(&quot;Boo&quot;);
+win.set({marginTop: 10});
+win.open();
+
+What should that be for? The window is out of any rendering flow anyway so having a margin does not make much sens for me.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30280</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2012-07-27 14:15:42 +0200</bug_when>
+            <thetext>In the real application the window is subclassed and the appear event is used to place the window based upon previously placed windows and the bounds of the new window.  I noticed that when I clicked on the caption bar that the window would move but the listener for the event was only added once.  I don&#39;t understand why every time I click on the caption bar the window moves down by 10 pixels.  It&#39;s not like the marginTop is being incremented by 10 it should have been set to 10 only once.  This is not much different from the code which centers a window on the resize event.  I also noticed that if I move the window that its final position is not where I dropped it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30292</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2012-07-30 21:58:13 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; This is due to the margin top you set:
+&gt; 
+&gt; var win = new qx.ui.window.Window(&quot;Boo&quot;);
+&gt; win.set({marginTop: 10});
+&gt; win.open();
+&gt; 
+&gt; What should that be for? The window is out of any rendering flow anyway so
+&gt; having a margin does not make much sens for me.
+
+All I really want to know is why every time I click on the caption bar that the window moves down the screen.  If it is something that I am doing wrong then please let me know.  I did some more experimenting and I determined that I don&#39;t even need the listener.  The following code will drop the window down a diagonal every time I click on the caption bar:
+
+qx.Class.define(&quot;creeper.Application&quot;,
+{
+  extend : qx.application.Standalone,
+  members :
+  {
+    main : function()
+    {
+      this.base(arguments);
+      var win = new qx.ui.window.Window(&quot;Boo&quot;);
+      win.set({
+        marginTop: 50,
+        marginLeft:50})
+      win.addListener(&quot;close&quot;, function() {
+        win.destroy();
+      }, this);
+      win.open();
+    }
+  }
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30293</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-07-31 08:31:38 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; (In reply to comment #1)
+&gt; &gt; This is due to the margin top you set:
+&gt; &gt; 
+&gt; &gt; var win = new qx.ui.window.Window(&quot;Boo&quot;);
+&gt; &gt; win.set({marginTop: 10});
+&gt; &gt; win.open();
+&gt; &gt; 
+&gt; &gt; What should that be for? The window is out of any rendering flow anyway so
+&gt; &gt; having a margin does not make much sens for me.
+&gt; 
+&gt; All I really want to know is why every time I click on the caption bar that the
+&gt; window moves down the screen.  If it is something that I am doing wrong then
+&gt; please let me know.  I did some more experimenting and I determined that I
+&gt; don&#39;t even need the listener.  The following code will drop the window down a
+&gt; diagonal every time I click on the caption bar:
+&gt; 
+&gt; qx.Class.define(&quot;creeper.Application&quot;,
+&gt; {
+&gt;   extend : qx.application.Standalone,
+&gt;   members :
+&gt;   {
+&gt;     main : function()
+&gt;     {
+&gt;       this.base(arguments);
+&gt;       var win = new qx.ui.window.Window(&quot;Boo&quot;);
+&gt;       win.set({
+&gt;         marginTop: 50,
+&gt;         marginLeft:50})
+&gt;       win.addListener(&quot;close&quot;, function() {
+&gt;         win.destroy();
+&gt;       }, this);
+&gt;       win.open();
+&gt;     }
+&gt;   }
+&gt; });
+
+
+Well, can&#39;t tell you if your are doning something wrong if you don&#39;t tell me what you would expect the margin would for a window? Sure, the window should not move if you set a margin but the main question is, why do you set the margin in the first place?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30294</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2012-07-31 14:22:46 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; (In reply to comment #3)
+&gt; &gt; (In reply to comment #1)
+&gt; &gt; &gt; This is due to the margin top you set:
+&gt; &gt; &gt; 
+&gt; &gt; &gt; var win = new qx.ui.window.Window(&quot;Boo&quot;);
+&gt; &gt; &gt; win.set({marginTop: 10});
+&gt; &gt; &gt; win.open();
+&gt; &gt; &gt; 
+&gt; &gt; &gt; What should that be for? The window is out of any rendering flow anyway so
+&gt; &gt; &gt; having a margin does not make much sens for me.
+&gt; &gt; 
+&gt; &gt; All I really want to know is why every time I click on the caption bar that the
+&gt; &gt; window moves down the screen.  If it is something that I am doing wrong then
+&gt; &gt; please let me know.  I did some more experimenting and I determined that I
+&gt; &gt; don&#39;t even need the listener.  The following code will drop the window down a
+&gt; &gt; diagonal every time I click on the caption bar:
+&gt; &gt; 
+&gt; &gt; qx.Class.define(&quot;creeper.Application&quot;,
+&gt; &gt; {
+&gt; &gt;   extend : qx.application.Standalone,
+&gt; &gt;   members :
+&gt; &gt;   {
+&gt; &gt;     main : function()
+&gt; &gt;     {
+&gt; &gt;       this.base(arguments);
+&gt; &gt;       var win = new qx.ui.window.Window(&quot;Boo&quot;);
+&gt; &gt;       win.set({
+&gt; &gt;         marginTop: 50,
+&gt; &gt;         marginLeft:50})
+&gt; &gt;       win.addListener(&quot;close&quot;, function() {
+&gt; &gt;         win.destroy();
+&gt; &gt;       }, this);
+&gt; &gt;       win.open();
+&gt; &gt;     }
+&gt; &gt;   }
+&gt; &gt; });
+&gt; 
+&gt; 
+&gt; Well, can&#39;t tell you if your are doning something wrong if you don&#39;t tell me
+&gt; what you would expect the margin would for a window? Sure, the window should
+&gt; not move if you set a margin but the main question is, why do you set the
+&gt; margin in the first place?
+
+There are certain parts in the application where a window will be displayed and request input from the user.  There can be error checking in this window and it could cause another window to be displayed with an error message.  I am using the marginTop so that the windows do not overlap and marginLeft to center the window within the leftmost 250 pixels.  The app needs to run on devices which have small screens and could be without a pointing device so I don&#39;t want the windows hiding each other.  I chose windows since I needed the modal property.  While testing on various devices I noticed that if I clicked on the caption bar that the window would move -- making it annoying to the user.  I was not sure if I was missing something or whether this is just a bug.  I have been trying other combinations of code but cannot get the window to not move.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30295</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-08-01 07:53:29 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; There are certain parts in the application where a window will be displayed and
+&gt; request input from the user.  There can be error checking in this window and it
+&gt; could cause another window to be displayed with an error message.  I am using
+&gt; the marginTop so that the windows do not overlap and marginLeft to center the
+&gt; window within the leftmost 250 pixels.  The app needs to run on devices which
+&gt; have small screens and could be without a pointing device so I don&#39;t want the
+&gt; windows hiding each other.  I chose windows since I needed the modal property. 
+&gt; While testing on various devices I noticed that if I clicked on the caption bar
+&gt; that the window would move -- making it annoying to the user.  I was not sure
+&gt; if I was missing something or whether this is just a bug.  I have been trying
+&gt; other combinations of code but cannot get the window to not move.
+
+Margin is ment for defining the outer distance of the surrounding widgets. As the windows don&#39;t have an surrounding widget in total, that can/should not work. A window is free positioned and therefore don&#39;t know the concept of a &#39;container&#39; where the margin could applied to.
+For your use case, you should simply position the windows right with either left and top coordinates or with the move method.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30305</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2012-08-01 15:57:07 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; (In reply to comment #5)
+&gt; &gt; There are certain parts in the application where a window will be displayed and
+&gt; &gt; request input from the user.  There can be error checking in this window and it
+&gt; &gt; could cause another window to be displayed with an error message.  I am using
+&gt; &gt; the marginTop so that the windows do not overlap and marginLeft to center the
+&gt; &gt; window within the leftmost 250 pixels.  The app needs to run on devices which
+&gt; &gt; have small screens and could be without a pointing device so I don&#39;t want the
+&gt; &gt; windows hiding each other.  I chose windows since I needed the modal property. 
+&gt; &gt; While testing on various devices I noticed that if I clicked on the caption bar
+&gt; &gt; that the window would move -- making it annoying to the user.  I was not sure
+&gt; &gt; if I was missing something or whether this is just a bug.  I have been trying
+&gt; &gt; other combinations of code but cannot get the window to not move.
+&gt; 
+&gt; Margin is ment for defining the outer distance of the surrounding widgets. As
+&gt; the windows don&#39;t have an surrounding widget in total, that can/should not
+&gt; work. A window is free positioned and therefore don&#39;t know the concept of a
+&gt; &#39;container&#39; where the margin could applied to.
+&gt; For your use case, you should simply position the windows right with either
+&gt; left and top coordinates or with the move method.
+
+
+Thanks for clearing that up.  The moveTo method did just what I wanted.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

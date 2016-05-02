@@ -1,0 +1,115 @@
+<bug>
+          <bug_id>8591</bug_id>
+          
+          <creation_ts>2014-09-17 16:37:00 +0200</creation_ts>
+          <short_desc>resetHiddenRows() reset bad row values</short_desc>
+          <delta_ts>2014-09-23 16:02:28 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>4.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>NEW</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="William Oprandi">william.oprandi</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>derrell.lipman</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>41184</commentid>
+            <who name="William Oprandi">william.oprandi</who>
+            <bug_when>2014-09-17 16:37:59 +0200</bug_when>
+            <thetext>Hi,
+
+just try this playground example : http://tinyurl.com/k28s56l
+
+As you can see, when I call &quot;resetHiddenRows&quot; method for the second time, the value of column ID is equal to &quot;9&quot; instead of &quot;8&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41187</commentid>
+            <who name="William Oprandi">william.oprandi</who>
+            <bug_when>2014-09-17 19:22:28 +0200</bug_when>
+            <thetext>I offered a pull request here : https://github.com/qooxdoo/qooxdoo/pull/96</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41225</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-09-23 13:25:42 +0200</bug_when>
+            <thetext>Thanks for the report. You closed the linked pull request due to a bug. Is the new pull request already filed?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41230</commentid>
+            <who name="William Oprandi">william.oprandi</who>
+            <bug_when>2014-09-23 14:30:59 +0200</bug_when>
+            <thetext>No, I spend over 1 hour yesterday to try to fix myself the problem but I think the problem is harder to fix than I thought.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41231</commentid>
+            <who name="William Oprandi">william.oprandi</who>
+            <bug_when>2014-09-23 14:40:09 +0200</bug_when>
+            <thetext>Hi,
+
+No, I spend over 1 hour to try to fix myself the problem but I think the problem is harder to fix than I though. It seems to have different behavior between getRowData() and getRowDataAsMap(). Apparently, I can do :
+
+var row = model.getRowData()
+row.a = &quot;foo&quot;
+row.b = &quot;bar&quot;
+If &quot;a&quot; and &quot;b&quot; are NOT column. But It doesn&#39;t work with getRowDataAsMap.
+And If I want to change value of a column data, I need to use setValue(id, row, value).
+
+Well, I don&#39;t know if I&#39;m clear but I&#39;m not a expert of qooxdoo table so I&#39;m not the best to understand and fix the problem. But I feel the behavior of filter is very strange.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41232</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2014-09-23 15:42:47 +0200</bug_when>
+            <thetext>I took a quick look at this. The Filtered table model appears to have some issues. It works fine for a limited set of uses, but can&#39;t currently be used in the fashion that is being requested here. The problem looks to be that when the application calls setRowsAsMapArray(), that bypasses the Filtered code entirely (that method is not overridden in the Filtered class). When resetHiddenRows() is then called, and uses its local copy of the data in this.__fullArr, that variable does not contain the most up-to-date data because the data has been changed by calls to setRowsAsMapArray().
+
+I believe that fixing this problem should be accomplished by changing the Simple model&#39;s __rowArr to be protected instead of private. Then, Filtered need not keep its own copy of the data, i.e., __fullArr can probably be removed entirely; it can instead rely on this._rowArr.
+
+This suggestion is based on my fairly substantial experience with Simple and very limited experience with Filtered, but it&#39;s the way I&#39;d begin if I were working on this. Trying to solve the problem entirely in Filtered appears to require overriding many more functions from its superclass, Simple, so is probably not the best way to go.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41233</commentid>
+            <who name="William Oprandi">william.oprandi</who>
+            <bug_when>2014-09-23 16:02:28 +0200</bug_when>
+            <thetext>@Derell Lipman, but if the cell value is changed with cell editor, it&#39;s works.
+And this.__fullArr is created by slice function, so it point to same memory address I think.
+
+Just filter some rows, get a row (with getRowData and getRowDataAsMap), and try to set few cells (column and not column) with different ways :
+- setRowsDataAsMap(...)
+- setValue(...)
+- directly row.field = ...
+Sometimes it will works if the field is a column, or if it&#39;s not a column. To understand the different behaviors you&#39;ll need to analyze source code of Filtered and Simple class.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

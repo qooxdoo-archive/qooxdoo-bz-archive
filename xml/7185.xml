@@ -1,0 +1,173 @@
+<bug>
+          <bug_id>7185</bug_id>
+          
+          <creation_ts>2013-01-31 16:44:00 +0100</creation_ts>
+          <short_desc>document behavior of this.tr() in string compositions</short_desc>
+          <delta_ts>2014-03-31 08:59:19 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Michael">micha-1</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>32064</commentid>
+            <who name="Michael">micha-1</who>
+            <bug_when>2013-01-31 16:44:05 +0100</bug_when>
+            <thetext>After including buttons to switch the language of my app I had the issue that two labels were not changed after setting the locale.
+
+After searching, reading docu and asking the mailing list I got the hint that the reason was, that the translation functions this.tr...  need constant string arguments not some dynamic calculated string. I didn&#39;t knew this and even after reading the docu it was not clear:
+
+&quot;it is always better to prefer a format string over string concatenation to compose messages.&quot;
+
+This reads for me that it&#39;s not really forbidden to use concatenated strings with the tr() functions.
+
+To avoid those mistakes it would be helpful if generate.py could spit out a warning if the arguments are not constant strings.
+And adding a sentence to the docu which says this too would also help those who read documentation
+
+thanks,
+ Michael</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32074</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-02-01 08:26:49 +0100</bug_when>
+            <thetext>I just gave it a try and I did get a warning during the creation of the source version:
+
+JS Code:
+      var s = &quot;abc&quot;;
+      this.tr(s);
+
+Warning:
+- Warning: Unknown expression as argument to translation method
+
+Didn&#39;t you get that too?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32077</commentid>
+            <who name="Michael">micha-1</who>
+            <bug_when>2013-02-01 12:05:20 +0100</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; 
+&gt; Didn&#39;t you get that too?
+
+interresting, when using your example I get the warning too.
+
+I desperatly searched through my changes I made yesterday to get the bug again (next time I&#39;ll tag it in svn :-) )
+
+I can reproduce it, though it is different than reported.
+The code for my label is:
+
+//////
+var label = new qx.ui.basic.Label(&quot;&lt;b&gt;&quot; + this.tr(&quot;Definitionen&quot;) + &quot;&lt;/b&gt;&quot;);
+/////
+
+generate.py translations works of course, the argument is constant.
+Then I add the transaltion in the po files: none for german, and &quot;definitions&quot; for the english version.
+
+Then I call generate.py, also without warning.
+
+When updating the app and switching the language, the label is not updated.
+
+Where is the error?
+
+ Michael
+
+ps: is the &quot;this&quot; pointer the wrong one, when in the label constructor?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32078</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-01 12:39:12 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; //////
+&gt; var label = new qx.ui.basic.Label(&quot;&lt;b&gt;&quot; + this.tr(&quot;Definitionen&quot;) + &quot;&lt;/b&gt;&quot;);
+&gt; /////
+
+I think your LocalizedString is not propagated to the Label constructor because of the string operation.
+
+this.tr() returns an object of type qx.locale.LocalizedString. If you pass that to Label directly, Label can re-translate the contained string. But if you do a string operation before, you are casting the LocalizedString into a normal string, losing the re-translation possibility. What gets passed to the Label constructor is the equivalent of &quot;&lt;b&gt;&quot; + this.tr(&quot;Definition&quot;).toString() + &quot;&lt;/b&gt;&quot; and this is just an ordinary string value.
+
+I think it&#39;s best to make the markup part of the key (&#39;new qx.ui.basic.Label(this.tr(&quot;&lt;b&gt;Definitionen&lt;/b&gt;&quot;))&#39;).
+
+&gt; ps: is the &quot;this&quot; pointer the wrong one, when in the label constructor?
+
+No, that&#39;s fine.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32079</commentid>
+            <who name="Michael">micha-1</who>
+            <bug_when>2013-02-01 12:44:02 +0100</bug_when>
+            <thetext>
+Thanks for the explanation. I got it working the way you propose.
+
+But it&#39;s a interresting error possibility.
+
+
+ Michael</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32080</commentid>
+            <who name="Michael">micha-1</who>
+            <bug_when>2013-02-01 12:47:50 +0100</bug_when>
+            <thetext>Maybe a line in the docu could be added which addresses this behavior?
+
+ Michael</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32081</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-01 12:49:56 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Maybe a line in the docu could be added which addresses this behavior?
+&gt; 
+&gt;  Michael
+
+Good point!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32454</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-03-14 10:56:09 +0100</bug_when>
+            <thetext>adapted summary</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39818</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-31 08:59:19 +0200</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

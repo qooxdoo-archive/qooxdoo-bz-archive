@@ -1,0 +1,136 @@
+<bug>
+          <bug_id>3019</bug_id>
+          
+          <creation_ts>2009-11-02 13:48:00 +0100</creation_ts>
+          <short_desc>qx.ui.tabview.Page adds it&#39;s button to itself</short_desc>
+          <delta_ts>2014-03-03 15:22:03 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Matthew">matthew+qooxdoo</reporter>
+          <assigned_to name="Jonathan Weiß">qooxdoo-bugs</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>13777</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-11-02 13:48:42 +0100</bug_when>
+            <thetext>qx.ui.tabview.Page is responsible for creating it&#39;s own button. Then, when the page is added to a tabview, the tabview ill add the button to the bar.
+
+If you look at qx.ui.tabview.Page._createChildControlImpl though, it immediately adds the button to itself even though it isn&#39;t needed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13778</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-11-02 13:51:48 +0100</bug_when>
+            <thetext>I know this is trivial, but could somebody have a look at this as it is causing us some severe layout problems. We have our own system in place for creating the UI that is very powerful and easy to use. It will add child widgets to the parent after any &quot;internal&quot; children and will try and keep the correct order no matter when the children get added. I can&#39;t explain in detail here, but we could effectively end up with some code that looks like this:
+
+var initalOffset = page.getChildren().length;
+...
+tabview.add(parent));
+...
+page.addAt(child2, initialOffset + 1);
+...
+page.addAt(child1, initialOffset + 0); 
+...
+page.addAt(child3, initialOffset + 2);
+
+
+Here, initialOffset should be the ammount of &quot;internal&quot; children. It is set to 1 because a freshly created page contains it&#39;s own button. Then as soon as we add the page to the tabview, the button is removed rendering our internalOffset invalid.
+In this example, </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13780</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-02 13:56:57 +0100</bug_when>
+            <thetext>Matt, have you noticed some code/info missing from your comment #1 ?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13781</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-11-02 13:59:43 +0100</bug_when>
+            <thetext>The code is not the real generated code, it would be far too complex to post it for this example. It is just to show how we handle offsets. The &quot;...&quot; is just to show that some other operations could take place there.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13782</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-02 14:07:38 +0100</bug_when>
+            <thetext>I meant your report ended rather abruptly with &quot;In this example, &quot;  ??</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13783</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-11-02 14:10:07 +0100</bug_when>
+            <thetext>Oops Sorry! I typed it out once and thought it was very clear so decided to retype it. This was accidently left in from the first draught. Please ignore the last line</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13784</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-02 14:22:52 +0100</bug_when>
+            <thetext>Johnny, looks like some optimization request (i.e. deferred creation of sub widgets). Are there some parallels from other widgets we could borrow from?
+
+Matt, if we didn&#39;t address this soon due to priority, chance you&#39;d have a look yourself and propose a patch?
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13785</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-11-02 14:25:17 +0100</bug_when>
+            <thetext>Just remove line 203: this._add(control);
+
+We can still create the control as we do currently, but there is no reason we need to add it to the page.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15172</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2009-12-02 11:38:29 +0100</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15173</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2009-12-02 11:42:52 +0100</bug_when>
+            <thetext>Matthew, you are right. Since we use the user data of TabButton widget (which 
+is also not optimal - see bug id #2380), we can remove the line you mentioned.
+
+Fixed in trunk (r20869).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37527</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:03 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

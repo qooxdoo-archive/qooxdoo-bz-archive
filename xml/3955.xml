@@ -1,0 +1,192 @@
+<bug>
+          <bug_id>3955</bug_id>
+          
+          <creation_ts>2010-08-04 09:52:00 +0200</creation_ts>
+          <short_desc>IE automatically scroll the page to the top</short_desc>
+          <delta_ts>2012-05-16 09:33:54 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>1.2</version>
+          <rep_platform>IE</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.3.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christian Hagendorn">christian.hagendorn</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          <cc>omega41</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>19640</commentid>
+              <attachid>780</attachid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2010-08-04 09:52:11 +0200</bug_when>
+            <thetext>Created attachment 780
+Application to reproduce issue.
+
+Bug report from mckwil:
+&quot;... When I have a SelectBox appearing in a Scroll container (on the bottom half of the page), selecting any  item in the SelectBox (even the same item) will automatically scroll the page to the top. ...&quot;
+http://qooxdoo.678.n2.nabble.com/Very-Strange-SelectBox-behaviour-td5366531.html#a5366531</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22662</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-02-10 12:22:43 +0100</bug_when>
+            <thetext>i have tested it in the playground: http://tinyurl.com/4spz8to , and it works for me. i guess when i solved this issue: http://bugzilla.qooxdoo.org/show_bug.cgi?id=4464 , this one got solved too.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22664</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-02-10 13:01:33 +0100</bug_when>
+            <thetext>Gabriel, I have tested the issue with a sceleton application and the issue still exist with the current trunk (r24984). It seems to me that this issue doesn&#39;t occur with the playground.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22711</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-02-14 14:00:31 +0100</bug_when>
+            <thetext>in class qx.ui.form.SelectBox :
+removing the line 392: var popup = this.getChildControl(&quot;popup&quot;); and the popup.isVisible() from the &quot;if&quot; 2 lines below , solves the problem.
+Thing is, I can&#39;t find a connection between the scroll and this getChildControl method. maybe someone else has a clue to what is hapenning.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22712</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-02-14 14:30:13 +0100</bug_when>
+            <thetext>Gabriel, could you please attach you patch to the bug report and assign the bug back to me. I will have a look.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22713</commentid>
+              <attachid>883</attachid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-02-14 14:57:34 +0100</bug_when>
+            <thetext>Created attachment 883
+selectbox_patch</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23467</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-03-22 16:55:23 +0100</bug_when>
+            <thetext>I have tested the issue with IE9 and IE9 is also effected form this issue. Also the new VirtualSelectBox and VirtualComboBox has the problem.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23487</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-03-23 14:23:35 +0100</bug_when>
+            <thetext>I could find the reason why IE automatically scrolls. The problem depends on the DOM structure.
+
+The application code creates this structure:
+&lt;div (qx.ui.root.Application)&gt;
+  &lt;div (qx.ui.popup.Popup) /&gt;
+  &lt;div (qx.ui.container.Scroll) /&gt;
+&lt;/div&gt;
+When the popup is closed, the &quot;display&quot; property is set to &quot;none&quot; which triggers a rendering. The internal rendering process now sets the &quot;scrollTop&quot; attribute to &quot;0&quot; from the scroll container.
+
+However when the Dom structure is:
+&lt;div (qx.ui.root.Application)&gt;
+  &lt;div (qx.ui.container.Scroll) /&gt;
+  &lt;div (qx.ui.popup.Popup) /&gt;
+&lt;/div&gt;
+The internal rendering doesn&#39;t change the &quot;scrollTop&quot; attribute and it works like expected.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23488</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-03-23 14:37:49 +0100</bug_when>
+            <thetext>I applied a fix on trunk (1.4) with r25967 and branch (1.3.1) with r25969. The popup is lazy added to the application root.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>780</attachid>
+            <date>2010-08-04 09:52:00 +0200</date>
+            <delta_ts>2010-08-04 09:52:11 +0200</delta_ts>
+            <desc>Application to reproduce issue.</desc>
+            <filename>Application.js</filename>
+            <type>application/x-download</type>
+            <size>1653</size>
+            <attacher>christian.hagendorn</attacher>
+            
+              <data encoding="base64">LyogKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqDQoNCiAgIENvcHlyaWdodDoNCg0KICAgTGljZW5zZToNCg0KICAg
+QXV0aG9yczoNCg0KKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqICovDQoNCi8qICoqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKg0KDQoj
+YXNzZXQodGVzdG1sLyopDQoNCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiAqLw0KDQovKioNCiAqIFRoaXMgaXMg
+dGhlIG1haW4gYXBwbGljYXRpb24gY2xhc3Mgb2YgeW91ciBjdXN0b20gYXBwbGljYXRpb24gInRl
+c3RNTCINCiAqLw0KcXguQ2xhc3MuZGVmaW5lKCJ0ZXN0bWwuQXBwbGljYXRpb24iLA0Kew0KICBl
+eHRlbmQgOiBxeC5hcHBsaWNhdGlvbi5TdGFuZGFsb25lLA0KDQogIG1lbWJlcnMgOg0KICB7DQog
+ICAgbWFpbiA6IGZ1bmN0aW9uKCkNCiAgICB7DQogICAgICB0aGlzLmJhc2UoYXJndW1lbnRzKTsN
+Cg0KICAgICAgaWYgKHF4LmNvcmUuVmFyaWFudC5pc1NldCgicXguZGVidWciLCAib24iKSkNCiAg
+ICAgIHsNCiAgICAgICAgcXgubG9nLmFwcGVuZGVyLk5hdGl2ZTsNCiAgICAgICAgcXgubG9nLmFw
+cGVuZGVyLkNvbnNvbGU7DQogICAgICB9DQoNCiAgICAgIHZhciBjb250YWluZXIgPSBuZXcgcXgu
+dWkuY29udGFpbmVyLlNjcm9sbCgpOw0KDQogICAgICB2YXIgY29tcG9zVGVzdCA9IG5ldyBxeC51
+aS5jb250YWluZXIuQ29tcG9zaXRlKG5ldyBxeC51aS5sYXlvdXQuSEJveCgzKSk7DQogICAgICAg
+ICAgDQogICAgICB2YXIgY29tcG9zID0gbmV3IHF4LnVpLmNvbnRhaW5lci5Db21wb3NpdGUobmV3
+IHF4LnVpLmxheW91dC5WQm94KDApKTsNCiAgICAgIGNvbXBvcy5hZGQobmV3IHF4LnVpLmJhc2lj
+LkF0b20oKS5zZXQoe2hlaWdodDo3MDB9KSk7DQogICAgICBjb21wb3MuYWRkKG5ldyBxeC51aS5i
+YXNpYy5MYWJlbCgiSGVsbG8iKS5zZXQoe2hlaWdodDozMDB9KSk7DQoNCiAgICAgIHZhciBmaWVs
+ZCA9IG5ldyBxeC51aS5mb3JtLlNlbGVjdEJveCgpOw0KICAgICAgdmFyIHR5cGUgPSBuZXcgcXgu
+dWkuZm9ybS5MaXN0SXRlbSgiQSIpOw0KICAgICAgZmllbGQuYWRkKHR5cGUpOw0KDQogICAgICB0
+eXBlID0gbmV3IHF4LnVpLmZvcm0uTGlzdEl0ZW0oIkIiKTsNCiAgICAgIGZpZWxkLmFkZCh0eXBl
+KTsNCg0KICAgICAgdHlwZSA9IG5ldyBxeC51aS5mb3JtLkxpc3RJdGVtKCJDIik7DQogICAgICBm
+aWVsZC5hZGQodHlwZSk7ICANCg0KICAgICAgdHlwZSA9IG5ldyBxeC51aS5mb3JtLkxpc3RJdGVt
+KCJEIik7DQogICAgICBmaWVsZC5hZGQodHlwZSk7DQoNCiAgICAgIGNvbXBvcy5hZGQoZmllbGQp
+Ow0KICAgICAgY29tcG9zLmFkZChuZXcgcXgudWkuYmFzaWMuQXRvbSgpLnNldCh7aGVpZ2h0OjMw
+MH0pKTsNCiAgICAgICAgICANCiAgICAgIGNvbnRhaW5lci5hZGQoY29tcG9zKTsNCiAgICAgIHRo
+aXMuZ2V0Um9vdCgpLmFkZChjb250YWluZXIsIHtlZGdlOjB9KTsNCiAgICB9DQogIH0NCn0pOw0K
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>883</attachid>
+            <date>2011-02-14 14:57:00 +0100</date>
+            <delta_ts>2011-02-14 14:57:34 +0100</delta_ts>
+            <desc>selectbox_patch</desc>
+            <filename>SelectBox.diff</filename>
+            <type>text/plain</type>
+            <size>711</size>
+            <attacher>jajalinux</attacher>
+            
+              <data encoding="base64">SW5kZXg6IFNlbGVjdEJveC5qcwo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Ci0tLSBTZWxlY3RCb3guanMJKHJldmlzaW9u
+IDI1MDA3KQorKysgU2VsZWN0Qm94LmpzCSh3b3JraW5nIGNvcHkpCkBAIC0zODksMTEgKzM4OSwx
+MSBAQAogICAgICAgewogICAgICAgICAvLyBJZ25vcmUgcXVpY2sgY29udGV4dCAoZS5nLiBtb3Vz
+ZW92ZXIpCiAgICAgICAgIC8vIGFuZCBjb25maWd1cmUgdGhlIG5ldyB2YWx1ZSB3aGVuIGNsb3Np
+bmcgdGhlIHBvcHVwIGFmdGVyd2FyZHMKLSAgICAgICAgdmFyIHBvcHVwID0gdGhpcy5nZXRDaGls
+ZENvbnRyb2woInBvcHVwIik7CisgICAgICAgIHBvcHVwID0gdGhpcy5nZXRDaGlsZENvbnRyb2wo
+InBvcHVwIik7CiAgICAgICAgIHZhciBsaXN0ID0gdGhpcy5nZXRDaGlsZENvbnRyb2woImxpc3Qi
+KTsKICAgICAgICAgdmFyIGNvbnRleHQgPSBsaXN0LmdldFNlbGVjdGlvbkNvbnRleHQoKTsKIAot
+ICAgICAgICBpZiAocG9wdXAuaXNWaXNpYmxlKCkgJiYgKGNvbnRleHQgPT0gInF1aWNrIiB8fCBj
+b250ZXh0ID09ICJrZXkiKSkKKyAgICAgICAgaWYgKGNvbnRleHQgPT0gInF1aWNrIiB8fCBjb250
+ZXh0ID09ICJrZXkiKQogICAgICAgICB7CiAgICAgICAgICAgdGhpcy5fX3ByZVNlbGVjdGVkSXRl
+bSA9IGN1cnJlbnRbMF07CiAgICAgICAgIH0K
+</data>
+
+          </attachment>
+      
+
+    </bug>

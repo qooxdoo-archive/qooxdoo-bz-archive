@@ -1,0 +1,243 @@
+<bug>
+          <bug_id>6473</bug_id>
+          
+          <creation_ts>2012-06-01 09:25:00 +0200</creation_ts>
+          <short_desc>Memory leaks in core code around TreeVirtual</short_desc>
+          <delta_ts>2014-03-03 08:46:23 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.treevirtual</component>
+          <version>1.4.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Jeroen">Jeroen.Smit</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>Jeroen.Smit</cc>
+          <qa_contact name="Derrell Lipman">derrell.lipman</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>29638</commentid>
+              <attachid>1164</attachid>
+            <who name="Jeroen">Jeroen.Smit</who>
+            <bug_when>2012-06-01 09:25:38 +0200</bug_when>
+            <thetext>Created attachment 1164
+Zipfile with adjusted Resize.js and TreeVirtual.js
+
+Using the source version with disposerDebugLevel set to 3 I found some leaks around the TreeVirtual control.
+
+1. Column model:
+Because I configured nothing specific qx.ui.table.columnmodel.Resize is used as the column model. By default no behaviour is set, so in the init() method the following is executed:
+
+this.setBehavior(new qx.ui.table.columnmodel.resizebehavior.Default());
+
+This behaviour is however never freed. In my local copy I introduced a member “__privBehaviour” to store the result of “qx.ui.table.columnmodel.resizebehavior.Default()” to dispose it in the destructor.
+
+2. TreeVirtual.js
+In the constructor several objects are created when no “custom” data is provided (which I don’t). They are used a little further along the way. The following things are leaked using this mechanism:
+- The table model, which I fixed by introducing a destructor and calling this.getTableModel().dispose();
+- The data row renderer which I fixed by storing the current model before call “this.setDataRowRenderer” and disposing the stored current model after the call
+- The data cell renderers which I fixed by iterating the currently set renderers (tcm.getDataCellRenderer(i)) and disposing them before the loop with statement “tcm.setDataCellRenderer(i, i == treeCol ? stdcr : ddcr);”
+- The defaultDataCellRenderer because I only have one column which becomes the “treeCol” so only the treeDataCellRenderer is used. I added a detection for this and when defaultDataCellRenderer or treeDataCellRenderer is not set to any of the columns I dispose this object as well.
+
+I added both the Resize.js an TreeVirtual.js sources based on V1.4.1 with the adjustments described above.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35513</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:23 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1164</attachid>
+            <date>2012-06-01 09:25:00 +0200</date>
+            <delta_ts>2012-06-01 09:25:38 +0200</delta_ts>
+            <desc>Zipfile with adjusted Resize.js and TreeVirtual.js</desc>
+            <filename>TreeVirtualMemoryLeaks.zip</filename>
+            <type>application/x-zip-compressed</type>
+            <size>8626</size>
+            <attacher>Jeroen.Smit</attacher>
+            
+              <data encoding="base64">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
+BgAAAAACAAIAcwAAACkhAAAAAA==
+</data>
+
+          </attachment>
+      
+
+    </bug>

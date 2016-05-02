@@ -1,0 +1,105 @@
+<bug>
+          <bug_id>7493</bug_id>
+          
+          <creation_ts>2013-06-28 13:47:00 +0200</creation_ts>
+          <short_desc>Incorrect alignment of additional widgets added to Atom</short_desc>
+          <delta_ts>2013-10-07 08:13:36 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.layout</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>3.0.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Will Pritchard">Will_Pritchard</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>33142</commentid>
+            <who name="Will Pritchard">Will_Pritchard</who>
+            <bug_when>2013-06-28 13:47:19 +0200</bug_when>
+            <thetext>If extra widgets are added as children to an Atom (or derivative) they can be wrongly aligned if the parent Atom has an explicit height.
+
+The error is caused by an incorrect argument passed to qx.ui.layout.Util.computeVerticalAlignOffset from the renderLayout method of qx.ui.layout.Atom.
+
+Here&#39;s the bottom section of the qx.ui.layout.Atom.renderLayout method
+
+        for (var i=start; i!=end; i+=increment)
+        {
+          child = children[i];
+
+          hint = child.getSizeHint();
+          height = Math.min(hint.maxHeight, Math.max(availHeight, hint.minHeight));
+
+          if (child === shrinkTarget) {
+            width = shrinkTargetWidth;
+          } else {
+            width = hint.width;
+          }
+
+          var align = &quot;middle&quot;;
+          if(iconPosition == &quot;top-left&quot;){
+            align = &quot;top&quot;;
+          } else if (iconPosition == &quot;bottom-left&quot;) {
+            align = &quot;bottom&quot;;
+          }
+          top = Util.computeVerticalAlignOffset(align, hint.height, availHeight); // &lt;-- hint.height is wrong argument
+          child.renderLayout(left, top, width, height);
+
+          // Ignore pseudo invisible childs for gap e.g.
+          // empty text or unavailable images
+          if (width &gt; 0) {
+            left += width + gap;
+          }
+        }
+      }
+    },
+
+Instead of
+
+          top = Util.computeVerticalAlignOffset(align, hint.height, availHeight);
+
+the line should be 
+
+          top = Util.computeVerticalAlignOffset(align, height, availHeight);
+
+The equivalent code (further up the method) called when the Atom&#39;s children are arranged vertically is correct.
+
+Here&#39;s a playground demo of the problem: http://tinyurl.com/ntvp2u4</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33795</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-08-30 13:41:35 +0200</bug_when>
+            <thetext>Thanks for the report and the good sample. Unfortunately, I have to close the bug as wontfix because the atom layout and with that, the atom itself and all its descendant, are only planed and build to handle exactly two items, the icon and the label. If you need something like you did in your playground sample, you have to build that yourself with either a composite or a custom widget.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,206 @@
+<bug>
+          <bug_id>847</bug_id>
+          
+          <creation_ts>2008-04-24 15:31:00 +0200</creation_ts>
+          <short_desc>Can not call callback functions of flash object in IE7</short_desc>
+          <delta_ts>2011-04-19 13:25:53 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tino Butz">tinobutz</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          <cc>christian.hagendorn</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2989</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2008-04-24 15:31:53 +0200</bug_when>
+            <thetext>The problem: can not call callback functions of flash object (e.g. flashObject.callbackFunctionXY) in IE7, when a flash widget has been created with qx.ui.embed.Flash. 
+
+The solution: Seems like IE doesn&#39;t allow to access callback functions of a flash object, when the flash object markup is added per el.innerHtml = &quot;&lt;object...&gt;&quot; to an element that is not added to the dom yet. If you add the element to the dom first and add the &lt;object..&gt; tag per innerHtml afterwards, the callback functions can be accessed. (don&#39;t aks me why, but it seems to work for us).
+So instead of adding the object tag in the class qx.ui.embed.Flash in the _applyElementData function, this should be done, when the element of the super class is added to the dom.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3306</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-06-12 17:00:56 +0200</bug_when>
+            <thetext>I have coded the described solution from Tino Butz. But the &quot;id&quot; value in the &quot;&lt;object ...&quot; must be added too.
+Then the External Interface in Flash coud be called in IE7.
+
+See the SVN patch:
+
+Index: Flash.js
+===================================================================
+--- Flash.js	(revision 13939)
++++ Flash.js	(working copy)
+@@ -99,6 +99,8 @@
+     }
+ 
+     this.setVersion(vVersion != null ? vVersion : qx.ui.embed.Flash.MINREQUIRED);
++    
++    this.addEventListener(&quot;appear&quot;, this._onAppear, this);
+   },
+ 
+ 
+@@ -290,7 +292,28 @@
+     _version : null,
+     _source : &quot;&quot;,
+ 
++	/**
++     * TODOC
++     *
++     * @type member
++     * @return {void}
++     */
++	_onAppear : function() {
++		var myElem = this.getElement();
++		this._oldApplyElementData(myElem);
++	},
+ 
++	/**
++     * TODOC
++     *
++     * @type member
++     * @param el {Element} TODOC
++     * @return {void}
++     */
++	_applyElementData : function(el) {
++    	//no opp see Bug: http://bugzilla.qooxdoo.org/show_bug.cgi?id=847
++    },
++
+     /**
+      * TODOC
+      *
+@@ -298,9 +321,9 @@
+      * @param el {Element} TODOC
+      * @return {void}
+      */
+-    _applyElementData : function(el)
++    _oldApplyElementData : function(el)
+     {
+-      this.base(arguments, el);
++      //this.base(arguments, el);
+ 
+       // Check for ExpressInstall
+       this._expressInstall = false;
+@@ -408,7 +431,7 @@
+           this.addVariable(&quot;MMplayerType&quot;, &quot;ActiveX&quot;);
+         }
+ 
+-        html.push(&quot;&lt;object classid=&#39;clsid:D27CDB6E-AE6D-11cf-96B8-444553540000&#39; width=&#39;100%&#39; height=&#39;100%&#39;&gt;&quot;);
++        html.push(&quot;&lt;object classid=&#39;clsid:D27CDB6E-AE6D-11cf-96B8-444553540000&#39; width=&#39;100%&#39; height=&#39;100%&#39; id=&quot; + this._hashCode + &quot;&gt;&quot;);
+         html.push(&quot;&lt;param name=&#39;movie&#39; value=&#39;&quot;);
+         html.push(this._source);
+         html.push(&quot;&#39;/&gt;&quot;);
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3870</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-07-11 18:41:34 +0200</bug_when>
+            <thetext>The coded solution has a little bug. Some older Flash Player Versions (&lt; 9.0.115.0) coudn&#39;t connect the callback funtion when the ID in the object tag doesn&#39;t start with a character string. 
+
+So the code line:
+classid=&#39;clsid:D27CDB6E-AE6D-11cf-96B8-444553540000&#39; width=&#39;100%&#39; height=&#39;100%&#39;
+id=&quot; + this._hashCode + &quot;&gt;&quot;
+
+Has to changed in: 
+classid=&#39;clsid:D27CDB6E-AE6D-11cf-96B8-444553540000&#39; width=&#39;100%&#39; height=&#39;100%&#39;
+id=Flash&quot; + this._hashCode + &quot;&gt;&quot;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3872</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-07-14 10:00:44 +0200</bug_when>
+            <thetext>reopen bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3873</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-07-14 10:11:29 +0200</bug_when>
+            <thetext>We need to check, whether the 0.8 code has these issues as well and whether it is fixed in 0.7</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4397</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-08-14 17:21:15 +0200</bug_when>
+            <thetext>The flash widget and all further flash support improvements will be moved to 
+0.8.1 for scheduling reasons.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4948</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-02 10:02:20 +0200</bug_when>
+            <thetext>Verify that this works for qx.bom.Flash.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4954</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-02 10:19:03 +0200</bug_when>
+            <thetext>A bit up in priority.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5332</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-06 15:41:05 +0200</bug_when>
+            <thetext>@Johnny: Can you have a look at this?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5467</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2008-09-10 13:58:26 +0200</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5560</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2008-09-17 14:58:35 +0200</bug_when>
+            <thetext>-&gt; Christian</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5844</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-10-15 12:23:08 +0200</bug_when>
+            <thetext>Fixed problem in qooxdoo 0.7 (r16490).
+
+The problem still exists in qooxdoo 0.8. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5949</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-10-22 15:27:04 +0200</bug_when>
+            <thetext>fixed in r16523</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

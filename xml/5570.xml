@@ -1,0 +1,117 @@
+<bug>
+          <bug_id>5570</bug_id>
+          
+          <creation_ts>2011-08-31 10:34:00 +0200</creation_ts>
+          <short_desc>qx.io.request.Xhr: Setting of Content-Typ Header &quot;x-www-form-urlencoded&quot; - difference between old and new implementation</short_desc>
+          <delta_ts>2012-01-02 07:34:57 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.6</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tino Butz">tinobutz</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26634</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-08-31 10:34:51 +0200</bug_when>
+            <thetext>In the qx.io.request.Xhr class we set in the method &quot;_setRequestHeaders&quot; function, depending on the used HTTP method &quot;POST&quot;, the &quot;Content-Type&quot;, &quot;application/x-www-form-urlencoded&quot; header.
+
+_setRequestHeaders: function() {
+...
+ // By default, set content-type urlencoded for POST requests.
+      // A user-defined content-type takes precedence.
+      if (this.getMethod() === &quot;POST&quot; &amp;&amp; !requestHeaders || (requestHeaders &amp;&amp;
+        !requestHeaders[&quot;Content-Type&quot;])) {
+        transport.setRequestHeader(&quot;Content-Type&quot;, &quot;application/x-www-form-urlencoded&quot;);
+      }
+...
+}
+
+In the old qx.io.remote.Request class we did the same in the &quot;_applyMethod&quot; method. The difference is, that we set the header whenever the http method is POST or PUT. 
+
+_applyMethod : function(value, old)
+    {
+      if (qx.io.remote.Request.methodAllowsRequestBody(value)) { // PUT or POST
+        this.setRequestHeader(&quot;Content-Type&quot;, &quot;application/x-www-form-urlencoded&quot;);
+      } else {
+        this.removeRequestHeader(&quot;Content-Type&quot;);
+      }
+
+So what is right? Is there any documentation available, describing the right use of the header, that we could add as a documentation of code?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26637</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-08-31 11:40:50 +0200</bug_when>
+            <thetext>See the first answer:
+
+http://stackoverflow.com/questions/165779/are-the-put-delete-head-etc-methods-available-in-most-web-browsers
+
+Seems (not verified) that new standards allow even PUT in HTML Forms. Might be an explanation for the PUT in the old implementation.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26638</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-08-31 11:42:41 +0200</bug_when>
+            <thetext>As an comment of the first answer, someone wrote: &quot;HTML5 added them, and then removed them. Currently only GET and POST are allowed.&quot;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26650</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-01 13:32:41 +0200</bug_when>
+            <thetext>I believe the question is what is expected on the server side. A quick search revealed a couple of posts pointing out that popular server-side frameworks expect the body of PUT requests to be x-www-form-urlencoded (found Django, Rails). Also, both jQuery and Mootools and probably other JavaScript frameworks mark the body urlencoded by default. To be on the safe side, I suggest to add the header for PUT requests as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26652</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-01 14:01:48 +0200</bug_when>
+            <thetext>Turns out it is the other way round. XHR is pretty clear about it:
+
+&quot;The argument [send(data)] is ignored if request method is GET or HEAD&quot;
+http://www.w3.org/TR/XMLHttpRequest2/#the-send-method
+
+In other words, every request except GET or HEAD may contain a request body (in HTTP terms, an entity body). Also, it seems likely that servers expect the body to be encoded the same way as with POST.
+
+More background:
+http://stackoverflow.com/questions/299628/is-an-entity-body-allowed-for-an-http-delete-request</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26654</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-01 14:37:59 +0200</bug_when>
+            <thetext>With r28585 on trunk.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

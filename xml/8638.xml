@@ -1,0 +1,140 @@
+<bug>
+          <bug_id>8638</bug_id>
+          
+          <creation_ts>2014-10-17 18:38:00 +0200</creation_ts>
+          <short_desc>qx.ui.table.pane.Pane#_updateAllRows adds a repaint listener every time when not visible</short_desc>
+          <delta_ts>2014-12-18 04:21:16 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>4.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>NEW</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Aaron Opfer">aaron.opfer</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>catesandrew</cc>
+    
+    <cc>dietrich.streifert</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>41402</commentid>
+            <who name="Aaron Opfer">aaron.opfer</who>
+            <bug_when>2014-10-17 18:38:29 +0200</bug_when>
+            <thetext>See the following code:
+
+https://github.com/qooxdoo/qooxdoo/blob/release_4_0_1/framework/source/class/qx/ui/table/pane/Pane.js#L698-L705
+
+If the table has been hidden (say, in another tab of a tabview, or during a long init phase), and that table requests to be re-rendered, the pane code will use addListenerOnce(&quot;appear&quot;, ... ) on itself so that the table will get rerendered once it is on the page.
+
+However, there is no check whether or not the table has already scheduled this rerender already, and addListenerOnce will not prevent duplicate listeners. As a result, when the table does finally appear, it will be rerendered once for every table update that occurred while it wasn&#39;t visible!
+
+This is a HUGE performance issue in some instances. I have initialization code in my table that occurs while it is not visible (such as setting header renderers, column widths, etc) that causes lots of rerenders, and then the table is made visible finally once the data is loaded. This means that, instead of rendering a 0 row table 40 times (virtually no cost), I rerender my ~40 visible rows almost 44 times when the table finally appears!
+
+This should be fixed by storing a flag that specifies whether or not a listener has already been added or not, and preventing it from being added again if it has. This flag should be unset in the normal body.
+
+I was thinking something like this...
+
+    _updateAllRows : function()
+    {
+      var elem = this.getContentElement().getDomElement();
+      if (!elem) {
+        // pane has not yet been rendered
+        if (!this.__updateScheduled) {
+          this.addListenerOnce(&quot;appear&quot;, arguments.callee, this);
+          this.__updateScheduled = true;
+        }
+        return;
+      }
+      this.__updateScheduled = false;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41404</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-10-20 08:30:12 +0200</bug_when>
+            <thetext>Sounds all reasonable. But you would not need to have a dedicated flag for that as we should have a method to check if this element already has such a listener. How about setting up a pull request for that?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41414</commentid>
+            <who name="Aaron Opfer">aaron.opfer</who>
+            <bug_when>2014-10-20 15:42:49 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Sounds all reasonable. But you would not need to have a dedicated flag for that
+&gt; as we should have a method to check if this element already has such a
+&gt; listener. How about setting up a pull request for that?
+
+That _could_ work as you described for addListener, but addListenerOnce mitigates the ability to detect any listener, though, because it uses a closure instead of the actual method you want to call. You might be able to hack it to work by making addListenerOnce file the original callback somewhere in the event stuff if you really wanted though.
+
+However, a much simpler fix would just be to addListener(&quot;appear&quot;, ...) in the class constructor, and then just remove the addListenerOnce() call from _updateAllRows entirely. Unless you&#39;re toggling the table on every other animation frame, it shouldn&#39;t have any performance impact. Shouldn&#39;t tables have to rerender when they lose/gain visibility anyway?
+
+btw: Is there a reason why the tables don&#39;t wait in the widget render queue to render their contents like everything else? Doing that would prevent this problem by batching updates naturally.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41426</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-10-21 08:18:29 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; However, a much simpler fix would just be to addListener(&quot;appear&quot;, ...) in the
+&gt; class constructor, and then just remove the addListenerOnce() call from
+&gt; _updateAllRows entirely. Unless you&#39;re toggling the table on every other
+&gt; animation frame, it shouldn&#39;t have any performance impact. Shouldn&#39;t tables
+&gt; have to rerender when they lose/gain visibility anyway?
+Sounds ok to me as well.
+
+&gt; btw: Is there a reason why the tables don&#39;t wait in the widget render queue to
+&gt; render their contents like everything else? Doing that would prevent this
+&gt; problem by batching updates naturally.
+No technical, more a historical reason. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41866</commentid>
+            <who name="Aaron Opfer">aaron.opfer</who>
+            <bug_when>2014-12-09 00:14:07 +0100</bug_when>
+            <thetext>&gt; However, a much simpler fix would just be to addListener(&quot;appear&quot;, ...) in the
+class constructor, and then just remove the addListenerOnce() call from
+_updateAllRows entirely.
+
+Could we have this fix in qooxdoo 4.0.2?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41870</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-12-09 08:24:54 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; &gt; However, a much simpler fix would just be to addListener(&quot;appear&quot;, ...) in the
+&gt; class constructor, and then just remove the addListenerOnce() call from
+&gt; _updateAllRows entirely.
+&gt; 
+&gt; Could we have this fix in qooxdoo 4.0.2?
+
+We are already in the release rampdown and final testing phase. So no, we won&#39;t include any more fixes unless its critical.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

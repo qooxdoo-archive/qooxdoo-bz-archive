@@ -1,0 +1,95 @@
+<bug>
+          <bug_id>6886</bug_id>
+          
+          <creation_ts>2012-10-10 11:50:00 +0200</creation_ts>
+          <short_desc>Error from class qx.bom.element.Animation.js: TypeError: invalid &#39;in&#39; operand el</short_desc>
+          <delta_ts>2012-11-19 09:25:35 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>website.bom</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30910</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2012-10-10 11:50:00 +0200</bug_when>
+            <thetext>We have encountered a NullPointerException in the class qx.bom.element.Animation.
+The error message is:
+  TypeError: invalid &#39;in&#39; operand el
+
+The corresponding stack trace is:
+- effect.stop (effect is a local variable of class qx.bom.element.AnimationHandle)
+- qx.bom.element.AnimationHandle.stop (this.el is null)
+- qx.bom.element.AnimationJs.stop (el is null)
+- qx.bom.element.AnimationJs.__applyStyles (el is null)
+
+This problem probably only occurs when we try to stop an animation which was shortly started before.
+
+The code in class qx.bom.element.AnimationHandle looks like this:
+stop : function() {
+  if (this.el &amp;&amp; qx.core.Environment.get(&quot;css.animation&quot;) &amp;&amp; !this.animationId) {
+    this.el.style[this.__playState] = &quot;&quot;;
+    this.el.style[qx.core.Environment.get(&quot;css.animation&quot;).name] = &quot;&quot;;
+    this.el.$$animation.__playing = false;
+    this.el.$$animation.__ended = true;
+  }
+  // in case the animation is based on JS
+  if (qx.bom.element.AnimationJs) {
+    qx.bom.element.AnimationJs.stop(this);
+  }
+} 
+
+The first part of the code checks whether this.el is not null. But the second part of this function does not check this.el, and then runs into an error because this.el is null. This issue probably can be fixed easily be adding another check for this.el.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30919</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-10-11 08:29:13 +0200</bug_when>
+            <thetext>Hm, just checked the code and can&#39;t agree. Sure, the second method is called without the check but the method itself contains the check for a element which means, it can not be the root of that error:
+
+https://github.com/qooxdoo/qooxdoo/blob/master/framework/source/class/qx/bom/element/AnimationJs.js#L338
+
+Could you maybe supply a sample of at least a stack trace of the error?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30944</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-10-12 13:21:24 +0200</bug_when>
+            <thetext>Ah, seems like you are using an older version. This has already been fixed a month ago:
+https://github.com/qooxdoo/qooxdoo/commit/838d1185</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

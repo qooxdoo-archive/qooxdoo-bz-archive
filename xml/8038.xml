@@ -1,0 +1,113 @@
+<bug>
+          <bug_id>8038</bug_id>
+          
+          <creation_ts>2014-01-16 14:36:00 +0100</creation_ts>
+          <short_desc>addListenerOnce doesn&#39;t remove an event listener</short_desc>
+          <delta_ts>2014-12-05 10:01:25 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>3.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>3.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Alex Gölkel">goelkel.a</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>Will_Pritchard</cc>
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>34793</commentid>
+            <who name="Alex Gölkel">goelkel.a</who>
+            <bug_when>2014-01-16 14:36:51 +0100</bug_when>
+            <thetext>Situation:
+A widget has a listener added to two different events.
+
+Expected behavior:
+The listener is called maximum two times (one time for each event type).
+
+Observed behavior:
+The listener is called every time, the event occurs.
+
+
+Example:
+http://tinyurl.com/oa47uan
+Click the button. Every time you click it, the alert box opens, but the execute listener was added as &quot;once&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34800</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-01-17 07:59:01 +0100</bug_when>
+            <thetext>Strange... Thanks for the report!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34875</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-01-28 15:56:17 +0100</bug_when>
+            <thetext>This was a good one. The reason was quite obvious. Adding a listener once results in a wrapping of the original handler. We store the wrapped callback in a property of the original callback which has been replaced by the second &#39;addListenerOnce&#39; call which is why it could not been removed after the first execution. Storing the wrapped callback for each type separately fixed the issue.
+
+master: becc8f21339f56b807c98ad4fb02374fe87c42ad
+3.5.x: 3d146aca2423c2bea7f9327489b182ea721c214b</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41845</commentid>
+            <who name="Will Pritchard">Will_Pritchard</who>
+            <bug_when>2014-12-05 10:01:25 +0100</bug_when>
+            <thetext>Just found this problem myself while using v2.1.
+
+After identifying the problem and fixing it locally I looked to see if there is a fix in the latest version and found the bug reference.
+
+There is a simpler way to fix it:
+
+Just use arguments.callee to remove the wrapped callback:
+
+    addListenerOnce : function(type, listener, self, capture)
+    {
+      var callback = function(e)
+      {
+        this.removeListener(type, arguments.callee, this, capture);
+        listener.call(self||this, e);
+      };
+
+      return this.addListener(type, callback, this, capture);
+    },
+
+And then removeListener needs no special handling code at all:
+
+    removeListener : function(type, listener, self, capture)
+    {
+      if (!this.$$disposed) {
+        return this.__Registration.removeListener(this, type, listener, self, capture);
+      }
+
+      return false;
+    },</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,338 @@
+<bug>
+          <bug_id>7238</bug_id>
+          
+          <creation_ts>2013-02-17 23:06:00 +0100</creation_ts>
+          <short_desc>Refactor generator.py script into the generator module</short_desc>
+          <delta_ts>2013-12-16 12:45:58 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Michael Elsdoerfer">michael</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>32269</commentid>
+            <who name="Michael Elsdoerfer">michael</who>
+            <bug_when>2013-02-17 23:06:22 +0100</bug_when>
+            <thetext>Without this, it is not really possible to re-use the code from generator.py, because of the namespace clash.
+
+I have a pull request here:
+
+https://github.com/qooxdoo/qooxdoo/pull/49
+
+thron7 voiced some concerns: &quot;Turning a frontend program into a module looks like bad design to me. I&#39;m not clear about how you are using an imported generator.py in your own code. It would be helpful to see your use case of this (Should be added to the bugzilla bug).
+Rather than importing generator.py, you should write a dedicated frontend that replaces it in your environment. generator.py is rather short and easy to replace.&quot;
+
+Here is my argument:
+
+I would suggest that this is a common pattern in Python. Libraries as popular as Django use this approach. A huge number of libraries use setuptools&#39; console_scripts functionality to install scripts, which does exactly this: it creates a wrapper that calls into the package.
+
+Once your front-end program becomes complex enough to require splitting into multiple modules, it can&#39;t remain in a single script file anyway. I would further argue that this is already the case: the pylib/generator package and the generator.py script are already interrelated, sharing the same Console object for output. The command line arguments are defined and parsing is done in the package, not in the script etc.
+
+I don&#39;t think that generator.py is easy to replace at all. The amounted logic in that file with respect to how the configuration file is put together and resolved is considerable. I&#39;m bound to deviate from further changes on part of Qooxdoo here, and I would not be surprised if things would break at some point.
+
+The thing is that we really don&#39;t want our own frontend. We would must like to pass a configuration file to the generator through memory.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32279</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-18 13:12:41 +0100</bug_when>
+            <thetext>&gt; Without this, it is not really possible to re-use the code from generator.py,
+&gt; because of the namespace clash.
+
+Which namespace clash are you referring to?
+
+&gt; I would suggest that this is a common pattern in Python. Libraries as popular
+&gt; as Django use this approach. A huge number of libraries use setuptools&#39;
+&gt; console_scripts functionality to install scripts, which does exactly this: it
+&gt; creates a wrapper that calls into the package.
+
+I think if you look hard enough you probably find enough counter arguments. The
+fact that a few projects are doing this is not indicative for me that it is a
+best practice everybody should adopt. There might have been very specific
+reasons for these two projects to take that road. (And I personally still think
+it&#39;s a kludge). At least you should design for such a use case, which we
+haven&#39;t.
+
+&gt; Once your front-end program becomes complex enough to require splitting into
+&gt; multiple modules, it can&#39;t remain in a single script file anyway. I would
+&gt; further argue that this is already the case: the pylib/generator package and
+&gt; the generator.py script are already interrelated, sharing the same Console
+&gt; object for output. The command line arguments are defined and parsing is done
+&gt; in the package, not in the script etc.
+
+Very true. And we would extract even more functionality from generator.py into
+library modules if we find the need for it. Hence all (or at least most)
+functionality is in the library modules. Hence you should be importing the
+library modules directly, not the frontend script. Your argument actually
+supports our approach where you would define an alternative frontend *aside* to
+generator.py, not on top of it.
+
+&gt; I don&#39;t think that generator.py is easy to replace at all. The amounted logic
+&gt; in that file with respect to how the configuration file is put together and
+&gt; resolved is considerable. 
+
+Actually, it&#39;s not. If you look at the configuration object, it has a small
+protocol of actions which are easy to pick up from generator.py:
+
+  config = Config(...)
+  config.resolveIncludes()
+  config.resolveExtendsAndRuns(...)
+  config.includeSystemDefaults(...)
+  config.resolveLibs(...)
+  config.cleanUpJobs(...)
+
+That&#39;s it. You can also look at other frontends in tool/bin like compile.py or
+ecmalint.py, which also make use of library modules (compile.py has also
+recently gotten Config handling).
+
+&gt; I&#39;m bound to deviate from further changes on part of
+&gt; Qooxdoo here, and I would not be surprised if things would break at some
+&gt; point.
+
+But that&#39;s your risk anyway! The published API for the tool chain are the
+command-line options and the configuration file syntax, not the module innnards.
+They may change without notice at any time.
+
+That being said, the module APIs of e.g. the Config.py or Generator.py module
+have been *very* stable for the last couple of years. I&#39;d say this is as much
+stability as you can get. Don&#39;t forget that you are doing things which are way
+outside normal usage.
+
+&gt; The thing is that we really don&#39;t want our own frontend. We would just like to
+&gt; pass a configuration file to the generator through memory.
+
+But if you import generator.py as a module you already have your own frontend:
+Your users are calling *your* program, rather than generator.py. So why not base
+it on the proper API, the module library?! I think passing a config file through
+memory is enough of a use case to justify that. 
+
+As I said, I&#39;d rather extract more from generator.py into a library module than
+making generator.py itself a module. Take a look at compile.py, it is
+really not that difficult to create an alternate frontend. The familiarity you
+have gained working with the Generator so far has given you way enough insight
+to accomplish that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32338</commentid>
+            <who name="Michael Elsdoerfer">michael</who>
+            <bug_when>2013-02-22 02:52:10 +0100</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; &gt; Without this, it is not really possible to re-use the code from generator.py,
+&gt; &gt; because of the namespace clash.
+&gt; 
+&gt; Which namespace clash are you referring to?
+
+For my program to import generator.py, I have to place the pylib/bin directory on the Python path. Once I do this, I can no longer import the proper &quot;generator&quot; package.
+
+Now I wouldn&#39;t be surprised that it might be possible to hack this together somehow with enough path manipulation and/or manual __import__ calls to get both those modules loaded, and in fact that would be something I&#39;d consider, but it sure would be terribly hacky.
+
+&gt; There might have been very specific reasons for these two projects to take that road. 
+
+With respect, setuptools is not &quot;a project&quot;. It&#39;s a cornerstone of the Python ecosystem. Though in fairness, Qooxdoo is not primarily a Python project, and it&#39;s not like you follow PEP8 and things. 
+
+&gt; But that&#39;s your risk anyway! The published API for the tool chain are the
+&gt; command-line options and the configuration file syntax, not the module
+&gt; innnards.
+&gt; They may change without notice at any time.
+
+I guess what I am asking is that you provide an API where one can do this (idealized version):
+
+    from qooxdoo.generator import cli
+    cli.run({&#39;jobs&#39;: []})
+
+&gt; But if you import generator.py as a module you already have your own frontend:
+&gt; Your users are calling *your* program, rather than generator.py. So why not
+&gt; base
+&gt; it on the proper API, the module library?! I think passing a config file
+&gt; through
+&gt; memory is enough of a use case to justify that.
+
+But I won&#39;t have my own frontend. I&#39;ll absolutely be re-implementing the code from generator.py 1:1. And I&#39;ll be telling my users and co-workers, go checkout the Qooxdoo documentation to learn how to use it. Except in a couple months the first idiosyncrasies will have creeped in.
+
+I don&#39;t see how my frontend could even be different from the standard one; and since your objection is one of code-design, my arguments are on that level.
+
+- The list of commands (&quot;jobs&quot;) is part of the JSON config structure. At best, my frontend could artificially be restricted to expose only some commands.
+
+- It&#39;s not like I have control over what is written to stdout; the library will do that on it&#39;s own, so basically I&#39;m forced to mimick the standard interface in my output as well (indent/config method/outdent working in concert etc).
+
+- There&#39;s all that stuff about interrupts, which I might leave out simply because I don&#39;t understand what it does, but if it is important, that&#39;s another thing I have to copy.
+
+- The global Context object that glues everything together.
+
+You are suggesting that there is some sort of API that is separate from the frontend, but I don&#39;t see how that is the case. I think it is more appropriate to say that the script in bin/generator.py, the generator package and the JSON config format are one thing, and especially the former two are arbitrarily interconnected at every turn.
+
+It&#39;s not clear to me why those half a dozen methods of the Config class need to be called manually in generator.py. That seems very manual. Is there are feasible scenario where I would want to run a job without resolving includes? Since any config file designed to need includes likely won&#39;t work without them, I don&#39;t see that as being the case.
+
+So the summarize this, I don&#39;t see why you would object to this on cleanliness grounds. On the contrary, the two things belong together in my mind.
+
+FWIW, in bin/generator.py there is some code that is executed in a module-level, and I agree that when moving this to a module, this becomes bad. It&#39;s not ok that importing a library module would change the global recursion limit as a side-effect. But these things can a) be moved to the main() method, or b) could possibly even remain in the bin/generator.py script file.
+
+My use case may be rare, but I don&#39;t see how providing a ``cli.run()`` like API could be objected to on being kludgy.
+
+Anyway, that&#39;s all I have.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32346</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-02-22 11:32:27 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; &gt; There might have been very specific reasons for these two projects
+&gt; &gt; to take that road. 
+&gt; 
+&gt; With respect, setuptools is not &quot;a project&quot;. It&#39;s a cornerstone of
+&gt; the Python ecosystem.
+
+Whatever. This doesn&#39;t invalidate my argument.
+
+&gt; Though in fairness, Qooxdoo is not primarily a
+&gt; Python project, and it&#39;s not like you follow PEP8 and things. 
+
+PEP8 says nothing about the importability of command-line scripts,
+IIRC.
+
+&gt; &gt; But if you import generator.py as a module you already have your
+&gt; &gt; own frontend: Your users are calling *your* program, rather than
+&gt; &gt; generator.py. So why not base it on the proper API, the module
+&gt; &gt; library?! I think passing a config file through memory is enough
+&gt; &gt; of a use case to justify that.
+&gt; 
+&gt; But I won&#39;t have my own frontend.
+
+Ok, as you are importing things, you create in effect a frontend to their
+functionality.
+
+&gt; I&#39;ll absolutely be re-implementing
+&gt; the code from generator.py 1:1.
+
+That&#39;s a common trait of using the same library modules. And as it is
+so limited, I don&#39;t see a problem with it.
+
+&gt; And I&#39;ll be telling my users and
+&gt; co-workers, go checkout the Qooxdoo documentation to learn how to
+&gt; use it. Except in a couple months the first idiosyncrasies will have
+&gt; creeped in.
+&gt; 
+&gt; I don&#39;t see how my frontend could even be different from the
+&gt; standard one; and since your objection is one of code-design, my
+&gt; arguments are on that level.
+
+Even if it just tweaked on thing, it would see it justified. And as I
+said I&#39;m willing to consider suggestions of pulling more functionality
+from generator.py into the libraries. But you seem to ignore this.
+
+&gt; 
+&gt; - The list of commands (&quot;jobs&quot;) is part of the JSON config
+&gt; structure. At best, my frontend could artificially be restricted to
+&gt; expose only some commands.
+&gt; 
+&gt; - It&#39;s not like I have control over what is written to stdout; the
+&gt; library will do that on it&#39;s own, so basically I&#39;m forced to mimick
+&gt; the standard interface in my output as well (indent/config
+&gt; method/outdent working in concert etc).
+
+How would that be different when you import generator.py as a whole?
+
+&gt; 
+&gt; - There&#39;s all that stuff about interrupts, which I might leave out
+&gt; simply because I don&#39;t understand what it does, but if it is
+&gt; important, that&#39;s another thing I have to copy.
+
+That&#39;s no big deal. You can easily pick that up from generator.py.
+
+&gt; 
+&gt; - The global Context object that glues everything together.
+
+No big deal either. With regard to Config handling, I already showed
+you how to do that.
+
+&gt; 
+&gt; You are suggesting that there is some sort of API that is separate
+&gt; from the frontend, but I don&#39;t see how that is the case.
+
+I can hardly belief you. generator.py is mostly using library modules.
+Look at it, and you see the APIs right in front of you.
+
+&gt; I think it
+&gt; is more appropriate to say that the script in bin/generator.py, the
+&gt; generator package and the JSON config format are one thing, and
+&gt; especially the former two are arbitrarily interconnected at every
+&gt; turn.
+
+I don&#39;t think this is appropriate. Alternate frontends like compile.py
+or ecmalint.py talk to the contrary. But you seem to ignore these, too.
+
+&gt; 
+&gt; It&#39;s not clear to me why those half a dozen methods of the Config
+&gt; class need to be called manually in generator.py. That seems very
+&gt; manual. Is there are feasible scenario where I would want to run a
+&gt; job without resolving includes? Since any config file designed to
+&gt; need includes likely won&#39;t work without them, I don&#39;t see that as
+&gt; being the case.
+
+It&#39;s not the point that you need to capture the rational behind it;
+you can just use it.
+
+&gt; 
+&gt; So the summarize this, I don&#39;t see why you would object to this on
+&gt; cleanliness grounds. On the contrary, the two things belong together
+&gt; in my mind.
+
+Well, we on the team see a few reasons. Seems we have different minds,
+then :-).
+
+&gt; 
+&gt; FWIW, in bin/generator.py there is some code that is executed in a
+&gt; module-level, and I agree that when moving this to a module, this
+&gt; becomes bad. It&#39;s not ok that importing a library module would
+&gt; change the global recursion limit as a side-effect. But these things
+&gt; can a) be moved to the main() method, or b) could possibly even
+&gt; remain in the bin/generator.py script file.
+&gt; 
+&gt; My use case may be rare, but I don&#39;t see how providing a
+&gt; ``cli.run()`` like API could be objected to on being kludgy.
+
+That was not the point.
+
+&gt; 
+&gt; Anyway, that&#39;s all I have.
+
+I&#39;m surprised to see how little consideration you give to what
+I proposed. - Anyway, having already spent too much time on this.
+
+Closing this on irreconcilable architectural differences.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

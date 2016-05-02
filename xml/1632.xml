@@ -1,0 +1,150 @@
+<bug>
+          <bug_id>1632</bug_id>
+          
+          <creation_ts>2008-11-24 20:35:00 +0100</creation_ts>
+          <short_desc>MULTIPLE_INTERVAL_SELECTION_TOGGLE fails on single item</short_desc>
+          <delta_ts>2010-11-08 09:01:30 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>0.8</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.2.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Kenny Tilton">kentilton</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>6456</commentid>
+            <who name="Kenny Tilton">kentilton</who>
+            <bug_when>2008-11-24 20:35:17 +0100</bug_when>
+            <thetext>Scenario with MULTIPLE_INTERVAL_SELECTION_TOGGLE mode on a selection model:
+
+select one item
+click again
+
+Problem: item not toggled to unselected state.
+
+select a second item, and now one can unselect each of the two items without a problem. However:
+
+select two items, click either to unselect. now click again to re-select the same item and nothing happens.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10633</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-06-29 15:07:40 +0200</bug_when>
+            <thetext>@Fabian, this report hasn&#39;t been addressed so far. What&#39;s the expected behavior, and can it be determined by a single mode (i.e. without add&#39;tl settings)?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10651</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-06-29 16:12:29 +0200</bug_when>
+            <thetext>This looks like a bug in the MULTIPLE_INTERVAL_SELECTION_TOGGLE selection mode.
+We should fix it in 0.9</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14728</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:25:52 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0 (for issues with status &quot;NEW&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16453</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-27 16:30:22 +0100</bug_when>
+            <thetext>moved to target 1.0.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17319</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-17 13:38:28 +0100</bug_when>
+            <thetext>to Jonny</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18828</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2010-06-21 14:45:18 +0200</bug_when>
+            <thetext>Assigning all table bugs to Martin.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20261</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-09-20 16:02:50 +0200</bug_when>
+            <thetext>I can reproduce the error:
+
+* Open editor on left cell
+* close editor
+* Select one item
+* Select a second item
+* try to click the same cell again (should deselect the item)
+
+But this only happens if at least one row is editable and you have been once in the edit mode!
+
+
+Here is some code to reproduce:
+
+var tableModel = new qx.ui.table.model.Simple();
+tableModel.setColumns([ &quot;Location&quot;, &quot;Team&quot; ]);
+var table = new qx.ui.table.Table(tableModel);
+
+var doc = this.getRoot();
+
+doc.add(table, {left:  20, top: 20});
+table.getTableColumnModel().setDataCellRenderer(0,new  qx.ui.table.cellrenderer.Number);
+var data = [ [1, &#39;team1&#39;],
+             [2, &#39;team2&#39;],
+             [3, &#39;team3&#39;]
+           ];
+
+tableModel.setData(data);
+tableModel.setColumnEditable(0,true);
+
+table.getSelectionModel().setSelectionMode(
+  qx.ui.table.selection.Model.MULTIPLE_INTERVAL_SELECTION_TOGGLE
+);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20262</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-09-20 17:13:58 +0200</bug_when>
+            <thetext>We only react on mouseup on the focus indicator. On the pane, we react on mouseup, mousedown and click which caused the problem due to different code parts executed. In common scenarios that all works as expected because a cell click event is fired by the mouseup handler of the focus indicator. But if that cell click handler is not fired due to not firing the event twice, the selection wont be updated. In that case, i just invoke the handler of the pane which takes care of that in the case of a pane mouse down.
+
+trunk: r23343
+1.2.x: r23344</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20646</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-13 07:54:15 +0200</bug_when>
+            <thetext>mass retargeting to 1.2.2 due to intermediate 1.2.1 release</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

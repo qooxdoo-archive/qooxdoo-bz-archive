@@ -1,0 +1,780 @@
+<bug>
+          <bug_id>4343</bug_id>
+          
+          <creation_ts>2010-11-18 14:18:00 +0100</creation_ts>
+          <short_desc>ListItem memory management</short_desc>
+          <delta_ts>2010-12-13 08:37:15 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>1.2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>trivial</bug_severity>
+          <target_milestone>1.2.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Erol Demircan">edemircan</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21399</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2010-11-18 14:18:46 +0100</bug_when>
+            <thetext>Hello,
+
+While I was debugging my application for possible memory leaks I saw the next warning : 
+
+Missing destruct definition for &#39;$$user_model&#39; in qx.ui.form.ListItem[undefined]: com.technocon.os4.domain.ui.ObjectList
+
+I don&#39;t know if it was meant so but there was no destruct function in it!!
+After implementing the destruct function where I am setting the model to null the warning was gone.
+
+  destruct : function(){
+    this.setModel(null)
+  }
+
+The list was also a target of a qx.data.controller.List.
+
+Regards,
+Erol</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21414</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-19 08:25:27 +0100</bug_when>
+            <thetext>Thanks for the report. Yes, that should be removed because the model can still be in use even if the list item is already gone.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21416</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2010-11-19 08:28:09 +0100</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Thanks for the report. Yes, that should be removed because the model can still
+&gt; be in use even if the list item is already gone.
+
+I&#39;m glad that I&#39;m helping qooxdoo to get better.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21417</commentid>
+              <attachid>841</attachid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2010-11-19 08:58:09 +0100</bug_when>
+            <thetext>Created attachment 841
+Warnings with possible memory leaks of qooxdoo components</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21419</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2010-11-19 09:11:36 +0100</bug_when>
+            <thetext>By the way I saw more of the same warnings but for other components of qooxdoo.
+I have attached a text file containing the warnings I would be glad if you
+could look at it.
+
+I&#39;m also seeing errors when the application is destructing.
+qx.core.ObjectRegistry: Could not dispose object
+qx.data.controller.Object[834]: TypeError: this.__dayLabelArr is null
+[Break on this error] var dayLabel = this.__dayLabelArr[i];
+
+The error comes from qx.ui.control.DateChooser line 392.
+
+It is a datechooser in a form which is binded with a controller to a model
+which contains epoch for date. For that we are using a converter.
+
+var controller = new qx.data.controller.Form(null, form);
+controller.addBindingOptions(&quot;contractor.contactInfo.birthday&quot;, 
+{
+    converter:
+    function(data, model) {
+        return (data==null) ? null : new Date(data*1000);
+    }
+},
+{
+    converter:
+    function(data, model) {
+        return (data==null) ? null : (data.getTime()/1000);
+    }
+});
+controller.setTarget(account);
+
+
+Thanks in advance for your help,
+Erol</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21449</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-22 09:56:41 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; By the way I saw more of the same warnings but for other components of qooxdoo.
+&gt; I have attached a text file containing the warnings I would be glad if you
+&gt; could look at it.
+&gt; 
+&gt; I&#39;m also seeing errors when the application is destructing.
+&gt; qx.core.ObjectRegistry: Could not dispose object
+&gt; qx.data.controller.Object[834]: TypeError: this.__dayLabelArr is null
+&gt; [Break on this error] var dayLabel = this.__dayLabelArr[i];
+&gt; 
+&gt; The error comes from qx.ui.control.DateChooser line 392.
+&gt; 
+&gt; It is a datechooser in a form which is binded with a controller to a model
+&gt; which contains epoch for date. For that we are using a converter.
+&gt; 
+&gt; var controller = new qx.data.controller.Form(null, form);
+&gt; controller.addBindingOptions(&quot;contractor.contactInfo.birthday&quot;, 
+&gt; {
+&gt;     converter:
+&gt;     function(data, model) {
+&gt;         return (data==null) ? null : new Date(data*1000);
+&gt;     }
+&gt; },
+&gt; {
+&gt;     converter:
+&gt;     function(data, model) {
+&gt;         return (data==null) ? null : (data.getTime()/1000);
+&gt;     }
+&gt; });
+&gt; controller.setTarget(account);
+&gt; 
+&gt; 
+&gt; Thanks in advance for your help,
+&gt; Erol
+
+Sounds like you have to disconnect the widget before disposing. Seems like the binding executes a set on dispose on the already disposed data chooser which then, cant handle that property. Have you tried that already?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21450</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-22 10:00:30 +0100</bug_when>
+            <thetext>For the other memory leaks, I added some code which should fix the one really necessary. Not every warning needs to be away to be sure that its memory leak free.
+
+trunk: r23896
+1.2.x: r23897</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21454</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2010-11-22 11:13:47 +0100</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; For the other memory leaks, I added some code which should fix the one really
+&gt; necessary. Not every warning needs to be away to be sure that its memory leak
+&gt; free.
+&gt; 
+&gt; trunk: r23896
+&gt; 1.2.x: r23897
+
+Thanks for the info and the fixes!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21457</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2010-11-22 12:21:25 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; (In reply to comment #4)
+&gt; &gt; By the way I saw more of the same warnings but for other components of qooxdoo.
+&gt; &gt; I have attached a text file containing the warnings I would be glad if you
+&gt; &gt; could look at it.
+&gt; &gt; 
+&gt; &gt; I&#39;m also seeing errors when the application is destructing.
+&gt; &gt; qx.core.ObjectRegistry: Could not dispose object
+&gt; &gt; qx.data.controller.Object[834]: TypeError: this.__dayLabelArr is null
+&gt; &gt; [Break on this error] var dayLabel = this.__dayLabelArr[i];
+&gt; &gt; 
+&gt; &gt; The error comes from qx.ui.control.DateChooser line 392.
+&gt; &gt; 
+&gt; &gt; It is a datechooser in a form which is binded with a controller to a model
+&gt; &gt; which contains epoch for date. For that we are using a converter.
+&gt; &gt; 
+&gt; &gt; var controller = new qx.data.controller.Form(null, form);
+&gt; &gt; controller.addBindingOptions(&quot;contractor.contactInfo.birthday&quot;, 
+&gt; &gt; {
+&gt; &gt;     converter:
+&gt; &gt;     function(data, model) {
+&gt; &gt;         return (data==null) ? null : new Date(data*1000);
+&gt; &gt;     }
+&gt; &gt; },
+&gt; &gt; {
+&gt; &gt;     converter:
+&gt; &gt;     function(data, model) {
+&gt; &gt;         return (data==null) ? null : (data.getTime()/1000);
+&gt; &gt;     }
+&gt; &gt; });
+&gt; &gt; controller.setTarget(account);
+&gt; &gt; 
+&gt; &gt; 
+&gt; &gt; Thanks in advance for your help,
+&gt; &gt; Erol
+&gt; 
+&gt; Sounds like you have to disconnect the widget before disposing. Seems like the
+&gt; binding executes a set on dispose on the already disposed data chooser which
+&gt; then, cant handle that property. Have you tried that already?
+
+You are really really right!! :) I don&#39;t think that you guessed this!
+The destruct triggers the controller -&gt; in the destruct function the model is setted to null -&gt; which triggers _applyModel -&gt; which then calls the resetValue function of datefield -&gt; which is trying to set the value of an DateChooser which is disposed!!
+
+That&#39;s exactly the problem, but I don&#39;t think that&#39;s right to handle this in my own code. And I can&#39;t disconnect it because the destruct of the controller happens before the destruct of my widget and that I can&#39;t control myself. The destruct sequence is handled by a iterator who is iterating over hashes that exist in registry.
+
+I think that this is a bug shall I open a new bug report??
+
+Thanks for the quick repsonses and many thanks in advance Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21484</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-23 09:04:20 +0100</bug_when>
+            <thetext>(In reply to comment #8)
+
+&gt; You are really really right!! :) I don&#39;t think that you guessed this!
+I have wrote the data binding so I know whats happening inside. ;)
+
+&gt; The destruct triggers the controller -&gt; in the destruct function the model is
+&gt; setted to null -&gt; which triggers _applyModel -&gt; which then calls the resetValue
+&gt; function of datefield -&gt; which is trying to set the value of an DateChooser
+&gt; which is disposed!!
+&gt; 
+&gt; That&#39;s exactly the problem, but I don&#39;t think that&#39;s right to handle this in my
+&gt; own code. And I can&#39;t disconnect it because the destruct of the controller
+&gt; happens before the destruct of my widget and that I can&#39;t control myself. 
+Can&#39;t you just set the model to null before you dispose it? Or do i get it right that its happening during shutdown?
+
+&gt; I think that this is a bug shall I open a new bug report??
+If its happening during shutdown, yes. It would be really good if you could attach an playground example to reproduce.
+
+&gt; Thanks for the quick repsonses and many thanks in advance Martin
+Your welcome. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21492</commentid>
+              <attachid>844</attachid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2010-11-23 10:16:28 +0100</bug_when>
+            <thetext>Created attachment 844
+playground example to reprodeuce the bug</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21495</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2010-11-23 10:27:43 +0100</bug_when>
+            <thetext>Hey Martin, I just made a simple example for you to reproduce the problem just as you asked. Yes it&#39;s happening during a shutdown.
+
+I hope that this is enough for you to reproduce the bug.
+
+Binding works great by the way you are getting my credits for it :). It&#39;s well thought how it works with models an other components.
+
+Vielen dank :) from the Netherlands/Niederlande</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21513</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-23 17:58:21 +0100</bug_when>
+            <thetext>Thanks for the example and credits. Will take care of that soon.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21556</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-25 13:37:23 +0100</bug_when>
+            <thetext>The object controller had some code to reset the target if the model is set to null. During the shutdown, this reset is quite useless (object is / will be disposed anyway). So i just skipped that step which fixed the problem.
+
+trunk: r23984
+1.2.x: r23983</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21580</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2010-11-26 10:01:30 +0100</bug_when>
+            <thetext>(In reply to comment #13)
+&gt; The object controller had some code to reset the target if the model is set to
+&gt; null. During the shutdown, this reset is quite useless (object is / will be
+&gt; disposed anyway). So i just skipped that step which fixed the problem.
+&gt; 
+&gt; trunk: r23984
+&gt; 1.2.x: r23983
+
+:) Yeay Thnx Martin, The fix by the way logical.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>841</attachid>
+            <date>2010-11-19 08:58:00 +0100</date>
+            <delta_ts>2010-11-19 08:58:09 +0100</delta_ts>
+            <desc>Warnings with possible memory leaks of qooxdoo components</desc>
+            <filename>destruct warings.txt</filename>
+            <type>text/plain</type>
+            <size>24130</size>
+            <attacher>edemircan</attacher>
+            
+              <data encoding="base64">Pj4+IHF4LmNvcmUuT2JqZWN0UmVnaXN0cnkuc2h1dGRvd24oKTsNCiogJyQkdXNlcl9xdWV1ZScg
+aW4gcXguZnguZWZmZWN0LmNvcmUuRmFkZVt1bmRlZmluZWRdOiBxeC5meC5xdWV1ZS5RdWV1ZVsy
+MjNdDQoNCiogJyQkdXNlcl9xdWV1ZScgaW4gcXguZnguZWZmZWN0LmNvcmUuRmFkZVt1bmRlZmlu
+ZWRdOiBxeC5meC5xdWV1ZS5RdWV1ZVsyMjNdDQoNCiogJyQkdXNlcl9xdWV1ZScgaW4gcXguZngu
+ZWZmZWN0LmNvcmUuRmFkZVt1bmRlZmluZWRdOiBxeC5meC5xdWV1ZS5RdWV1ZVsyMjNdDQoNCiog
+JyQkdXNlcl9xdWV1ZScgaW4gcXguZnguZWZmZWN0LmNvcmUuRmFkZVt1bmRlZmluZWRdOiBxeC5m
+eC5xdWV1ZS5RdWV1ZVsyMjNdDQoNCiogJyQkdXNlcl9xdWV1ZScgaW4gcXguZnguZWZmZWN0LmNv
+cmUuRmFkZVt1bmRlZmluZWRdOiBxeC5meC5xdWV1ZS5RdWV1ZVsyMjNdDQoNCiogJyQkdXNlcl9x
+dWV1ZScgaW4gcXguZnguZWZmZWN0LmNvcmUuRmFkZVt1bmRlZmluZWRdOiBxeC5meC5xdWV1ZS5R
+dWV1ZVsyMjNdDQoNCiogJyQkdXNlcl9xdWV1ZScgaW4gcXguZnguZWZmZWN0LmNvbWJpbmF0aW9u
+LlB1bHNhdGVbdW5kZWZpbmVkXTogcXguZngucXVldWUuUXVldWVbMjIzXQ0KDQoqICckJHVzZXJf
+b3BlbmVyJyBpbiBxeC51aS5tZW51Lk1lbnVbdW5kZWZpbmVkXTogY29tLnRlY2hub2Nvbi5vczQu
+Z2FkZ2V0cy5DbG9ja0dhZGdldFs1ODk3XQ0KDQoqICckJHVzZXJfZmFtaWx5JyBpbiBxeC5ib20u
+Rm9udFt1bmRlZmluZWRdOiBDb3VyaWVyDQoNCiogJyQkdXNlcl9vcGVuZXInIGluIHF4LnVpLm1l
+bnUuTWVudVt1bmRlZmluZWRdOiBjb20udGVjaG5vY29uLm9zNC5jb21wb25lbnRzLkdhZGdldEJh
+cls1ODY0XQ0KDQoqICdfX2FzeW5jUmVzdWx0cycgaW4gcXgudWkuZm9ybS52YWxpZGF0aW9uLk1h
+bmFnZXJbdW5kZWZpbmVkXTogW29iamVjdCBPYmplY3RdDQoNCiogJ19fYXN5bmNSZXN1bHRzJyBp
+biBxeC51aS5mb3JtLnZhbGlkYXRpb24uTWFuYWdlclt1bmRlZmluZWRdOiBbb2JqZWN0IE9iamVj
+dF0NCg0KKiAnJCR1c2VyX21lbnUnIGluIHF4LnVpLmZvcm0uTWVudUJ1dHRvblt1bmRlZmluZWRd
+OiBxeC51aS5tZW51Lk1lbnVbNTQxMV0NCg0KKiAnJCR1c2VyX21lbnUnIGluIHF4LnVpLm1lbnUu
+QnV0dG9uW3VuZGVmaW5lZF06IHF4LnVpLm1lbnUuTWVudVs1NDMxXQ0KDQoqICckJHVzZXJfbWVu
+dScgaW4gcXgudWkubWVudS5CdXR0b25bdW5kZWZpbmVkXTogcXgudWkubWVudS5NZW51WzU0MTZd
+DQoNCiogJyQkdXNlcl9vcGVuZXInIGluIHF4LnVpLm1lbnUuTWVudVt1bmRlZmluZWRdOiBxeC51
+aS5tZW51LkJ1dHRvblt1bmRlZmluZWRdDQoNCiogJyQkdXNlcl9vcGVuZXInIGluIHF4LnVpLm1l
+bnUuTWVudVt1bmRlZmluZWRdOiBxeC51aS5tZW51LkJ1dHRvblt1bmRlZmluZWRdDQoNCiogJyQk
+dXNlcl9vcGVuZXInIGluIHF4LnVpLm1lbnUuTWVudVt1bmRlZmluZWRdOiBxeC51aS5mb3JtLk1l
+bnVCdXR0b25bdW5kZWZpbmVkXQ0KDQoqICdfX2JpbmRpbmdzJyBpbiBxeC5kYXRhLmNvbnRyb2xs
+ZXIuT2JqZWN0W3VuZGVmaW5lZF06IFtvYmplY3QgT2JqZWN0XQ0KDQoqICdfX3RhcmdldHMnIGlu
+IHF4LmRhdGEuY29udHJvbGxlci5PYmplY3RbdW5kZWZpbmVkXTogY29tLnRlY2hub2Nvbi5vczQu
+ZG9tYWluLnVpLkRlc2t0b3BXaWRnZXRbNTUzXSxoZWlnaHQscmVzaXplLGZhbHNlLFtvYmplY3Qg
+T2JqZWN0XSwsY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLkRlc2t0b3BXaWRnZXRbNTUzXSx3
+aWR0aCxyZXNpemUsZmFsc2UsW29iamVjdCBPYmplY3RdLCxjb20udGVjaG5vY29uLm9zNC5kb21h
+aW4udWkuRGVza3RvcFdpZGdldFs1NTNdLHBvc1gsbW92ZSxmYWxzZSxbb2JqZWN0IE9iamVjdF0s
+LGNvbS50ZWNobm9jb24ub3M0LmRvbWFpbi51aS5EZXNrdG9wV2lkZ2V0WzU1M10scG9zWSxtb3Zl
+LGZhbHNlLFtvYmplY3QgT2JqZWN0XSwNCg0KKiAnJCR1c2VyX2RlY29yYXRvcicgaW4gcXgudWku
+Y29udGFpbmVyLkNvbXBvc2l0ZVt1bmRlZmluZWRdOiBxeC51aS5kZWNvcmF0aW9uLlNpbmdsZVt1
+bmRlZmluZWRdDQoNCiogJyQkdXNlcl9kZWNvcmF0b3InIGluIHF4LnVpLmNvbnRhaW5lci5Db21w
+b3NpdGVbdW5kZWZpbmVkXTogcXgudWkuZGVjb3JhdGlvbi5TaW5nbGVbdW5kZWZpbmVkXQ0KDQoq
+ICckJHVzZXJfZGVjb3JhdG9yJyBpbiBxeC51aS5jb250YWluZXIuQ29tcG9zaXRlW3VuZGVmaW5l
+ZF06IHF4LnVpLmRlY29yYXRpb24uU2luZ2xlW3VuZGVmaW5lZF0NCg0KKiAnJCR1c2VyX2RlY29y
+YXRvcicgaW4gcXgudWkuY29udGFpbmVyLkNvbXBvc2l0ZVt1bmRlZmluZWRdOiBxeC51aS5kZWNv
+cmF0aW9uLlNpbmdsZVt1bmRlZmluZWRdDQoNCiogJyQkdXNlcl9kZWNvcmF0b3InIGluIHF4LnVp
+LmNvbnRhaW5lci5Db21wb3NpdGVbdW5kZWZpbmVkXTogcXgudWkuZGVjb3JhdGlvbi5TaW5nbGVb
+dW5kZWZpbmVkXQ0KDQoqICckJHVzZXJfZGVjb3JhdG9yJyBpbiBxeC51aS5jb250YWluZXIuQ29t
+cG9zaXRlW3VuZGVmaW5lZF06IHF4LnVpLmRlY29yYXRpb24uU2luZ2xlW3VuZGVmaW5lZF0NCg0K
+KiAnJCR1c2VyX2RlY29yYXRvcicgaW4gcXgudWkuY29udGFpbmVyLkNvbXBvc2l0ZVt1bmRlZmlu
+ZWRdOiBxeC51aS5kZWNvcmF0aW9uLlNpbmdsZVt1bmRlZmluZWRdDQoNCiogJ192aXNpYmlsaXR5
+QmluZGluZ0lkcycgaW4gcXgudWkuZm9ybS5yZW5kZXJlci5TaW5nbGVbdW5kZWZpbmVkXTogW29i
+amVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0XSxbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmpl
+Y3RdLFtvYmplY3QgT2JqZWN0XSxbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmplY3RdLFtvYmpl
+Y3QgT2JqZWN0XSxbb2JqZWN0IE9iamVjdF0NCg0KKiAnX19pdGVtcycgaW4gcXgudWkuZm9ybS5S
+ZXNldHRlclt1bmRlZmluZWRdOiBbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmplY3RdLFtvYmpl
+Y3QgT2JqZWN0XSxbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0
+XSxbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0XQ0KDQoqICdf
+X2FzeW5jUmVzdWx0cycgaW4gcXgudWkuZm9ybS52YWxpZGF0aW9uLk1hbmFnZXJbdW5kZWZpbmVk
+XTogW29iamVjdCBPYmplY3RdDQoNCiogJ19fZ3JvdXBzJyBpbiBxeC51aS5mb3JtLkZvcm1bdW5k
+ZWZpbmVkXTogW29iamVjdCBPYmplY3RdDQoNCiogJ19fYnV0dG9ucycgaW4gcXgudWkuZm9ybS5G
+b3JtW3VuZGVmaW5lZF06DQoNCiogJ192YWxpZGF0aW9uTWFuYWdlcicgaW4gcXgudWkuZm9ybS5G
+b3JtW3VuZGVmaW5lZF06IHF4LnVpLmZvcm0udmFsaWRhdGlvbi5NYW5hZ2VyW3VuZGVmaW5lZF0N
+Cg0KKiAnX3Jlc2V0dGVyJyBpbiBxeC51aS5mb3JtLkZvcm1bdW5kZWZpbmVkXTogcXgudWkuZm9y
+bS5SZXNldHRlclt1bmRlZmluZWRdDQoNCiogJ192aXNpYmlsaXR5QmluZGluZ0lkcycgaW4gcXgu
+dWkuZm9ybS5yZW5kZXJlci5TaW5nbGVbdW5kZWZpbmVkXTogW29iamVjdCBPYmplY3RdLFtvYmpl
+Y3QgT2JqZWN0XSxbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0
+XSxbb2JqZWN0IE9iamVjdF0NCg0KKiAnX19pdGVtcycgaW4gcXgudWkuZm9ybS5SZXNldHRlclt1
+bmRlZmluZWRdOiBbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0
+XSxbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0XQ0KDQoqICdf
+X2FzeW5jUmVzdWx0cycgaW4gcXgudWkuZm9ybS52YWxpZGF0aW9uLk1hbmFnZXJbdW5kZWZpbmVk
+XTogW29iamVjdCBPYmplY3RdDQoNCiogJ19fZ3JvdXBzJyBpbiBxeC51aS5mb3JtLkZvcm1bdW5k
+ZWZpbmVkXTogW29iamVjdCBPYmplY3RdDQoNCiogJ19fYnV0dG9ucycgaW4gcXgudWkuZm9ybS5G
+b3JtW3VuZGVmaW5lZF06DQoNCiogJ192YWxpZGF0aW9uTWFuYWdlcicgaW4gcXgudWkuZm9ybS5G
+b3JtW3VuZGVmaW5lZF06IHF4LnVpLmZvcm0udmFsaWRhdGlvbi5NYW5hZ2VyW3VuZGVmaW5lZF0N
+Cg0KKiAnX3Jlc2V0dGVyJyBpbiBxeC51aS5mb3JtLkZvcm1bdW5kZWZpbmVkXTogcXgudWkuZm9y
+bS5SZXNldHRlclt1bmRlZmluZWRdDQoNCiogJ192aXNpYmlsaXR5QmluZGluZ0lkcycgaW4gcXgu
+dWkuZm9ybS5yZW5kZXJlci5TaW5nbGVbdW5kZWZpbmVkXTogW29iamVjdCBPYmplY3RdLFtvYmpl
+Y3QgT2JqZWN0XSxbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0
+XSxbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0XSxbb2JqZWN0
+IE9iamVjdF0sW29iamVjdCBPYmplY3RdDQoNCiogJ19faXRlbXMnIGluIHF4LnVpLmZvcm0uUmVz
+ZXR0ZXJbdW5kZWZpbmVkXTogW29iamVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0XSxbb2JqZWN0
+IE9iamVjdF0sW29iamVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0XSxbb2JqZWN0IE9iamVjdF0s
+W29iamVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0XSxbb2JqZWN0IE9iamVjdF0sW29iamVjdCBP
+YmplY3RdDQoNCiogJ19fYXN5bmNSZXN1bHRzJyBpbiBxeC51aS5mb3JtLnZhbGlkYXRpb24uTWFu
+YWdlclt1bmRlZmluZWRdOiBbb2JqZWN0IE9iamVjdF0NCg0KKiAnX19ncm91cHMnIGluIHF4LnVp
+LmZvcm0uRm9ybVt1bmRlZmluZWRdOiBbb2JqZWN0IE9iamVjdF0NCg0KKiAnX19idXR0b25zJyBp
+biBxeC51aS5mb3JtLkZvcm1bdW5kZWZpbmVkXToNCg0KMTkxMDAyMCBxeC5jb3JlLk9iamVjdFJl
+Z2lzdHJ5OiBDb3VsZCBub3QgZGlzcG9zZSBvYmplY3QgcXguZGF0YS5jb250cm9sbGVyLk9iamVj
+dFsyNjE2XTogVHlwZUVycm9yOiB0aGlzLl9fZGF5TGFiZWxBcnIgaXMgbnVsbA0KW0JyZWFrIG9u
+IHRoaXMgZXJyb3JdIHZhciBkYXlMYWJlbCA9IHRoaXMuX19kYXlMYWJlbEFycltpXTtcbg0KRGF0
+ZUNoLi4uOTQyODA2NCAobGluZSAzOTIpDQoxOTEwMjgzIHF4LmNvcmUuT2JqZWN0UmVnaXN0cnk6
+IENvdWxkIG5vdCBkaXNwb3NlIG9iamVjdCBxeC5kYXRhLmNvbnRyb2xsZXIuT2JqZWN0WzgzNF06
+IFR5cGVFcnJvcjogdGhpcy5fX2RheUxhYmVsQXJyIGlzIG51bGwNCltCcmVhayBvbiB0aGlzIGVy
+cm9yXSB2YXIgZGF5TGFiZWwgPSB0aGlzLl9fZGF5TGFiZWxBcnJbaV07XG4NCkRhdGVDaC4uLjk0
+MjgwNjQgKGxpbmUgMzkyKQ0KKiAnX3ZhbGlkYXRpb25NYW5hZ2VyJyBpbiBxeC51aS5mb3JtLkZv
+cm1bdW5kZWZpbmVkXTogcXgudWkuZm9ybS52YWxpZGF0aW9uLk1hbmFnZXJbdW5kZWZpbmVkXQ0K
+DQoqICdfcmVzZXR0ZXInIGluIHF4LnVpLmZvcm0uRm9ybVt1bmRlZmluZWRdOiBxeC51aS5mb3Jt
+LlJlc2V0dGVyW3VuZGVmaW5lZF0NCg0KKiAnX19iaW5kaW5ncycgaW4gcXguZGF0YS5jb250cm9s
+bGVyLk9iamVjdFt1bmRlZmluZWRdOiBbb2JqZWN0IE9iamVjdF0NCg0KKiAnX190YXJnZXRzJyBp
+biBxeC5kYXRhLmNvbnRyb2xsZXIuT2JqZWN0W3VuZGVmaW5lZF06IGNvbS50ZWNobm9jb24ub3M0
+LmRvbWFpbi51aS5EZXNrdG9wV2lkZ2V0WzU1MV0saGVpZ2h0LHJlc2l6ZSxmYWxzZSxbb2JqZWN0
+IE9iamVjdF0sLGNvbS50ZWNobm9jb24ub3M0LmRvbWFpbi51aS5EZXNrdG9wV2lkZ2V0WzU1MV0s
+d2lkdGgscmVzaXplLGZhbHNlLFtvYmplY3QgT2JqZWN0XSwsY29tLnRlY2hub2Nvbi5vczQuZG9t
+YWluLnVpLkRlc2t0b3BXaWRnZXRbNTUxXSxwb3NYLG1vdmUsZmFsc2UsW29iamVjdCBPYmplY3Rd
+LCxjb20udGVjaG5vY29uLm9zNC5kb21haW4udWkuRGVza3RvcFdpZGdldFs1NTFdLHBvc1ksbW92
+ZSxmYWxzZSxbb2JqZWN0IE9iamVjdF0sDQoNCiogJyQkdXNlcl9ncm91cCcgaW4gcXgudWkudGFi
+dmlldy5UYWJCdXR0b25bdW5kZWZpbmVkXTogcXgudWkuZm9ybS5SYWRpb0dyb3VwWzUzMl0NCg0K
+KiAnX19iaW5kaW5ncycgaW4gcXguZGF0YS5jb250cm9sbGVyLk9iamVjdFt1bmRlZmluZWRdOiBb
+b2JqZWN0IE9iamVjdF0NCg0KKiAnX190YXJnZXRzJyBpbiBxeC5kYXRhLmNvbnRyb2xsZXIuT2Jq
+ZWN0W3VuZGVmaW5lZF06IGNvbS50ZWNobm9jb24ub3M0LmRvbWFpbi51aS5EZXNrdG9wV2lkZ2V0
+WzU0OF0saGVpZ2h0LHJlc2l6ZSxmYWxzZSxbb2JqZWN0IE9iamVjdF0sLGNvbS50ZWNobm9jb24u
+b3M0LmRvbWFpbi51aS5EZXNrdG9wV2lkZ2V0WzU0OF0sd2lkdGgscmVzaXplLGZhbHNlLFtvYmpl
+Y3QgT2JqZWN0XSwsY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLkRlc2t0b3BXaWRnZXRbNTQ4
+XSxwb3NYLG1vdmUsZmFsc2UsW29iamVjdCBPYmplY3RdLCxjb20udGVjaG5vY29uLm9zNC5kb21h
+aW4udWkuRGVza3RvcFdpZGdldFs1NDhdLHBvc1ksbW92ZSxmYWxzZSxbb2JqZWN0IE9iamVjdF0s
+DQoNCiogJyQkdXNlcl9zZWxlY3Rpb24nIGluIHF4LmRhdGEuY29udHJvbGxlci5MaXN0W3VuZGVm
+aW5lZF06DQoNCiogJyQkdXNlcl9kZWxlZ2F0ZScgaW4gcXguZGF0YS5jb250cm9sbGVyLkxpc3Rb
+dW5kZWZpbmVkXTogW29iamVjdCBPYmplY3RdDQoNCiogJyQkdXNlcl90YXJnZXQnIGluIHF4LmRh
+dGEuY29udHJvbGxlci5MaXN0W3VuZGVmaW5lZF06IGNvbS50ZWNobm9jb24ub3M0LmNvbXBvbmVu
+dHMuVExpc3RbNDM5Ml0NCg0KKiAnJCR1c2VyX3NlbGVjdGlvbicgaW4gcXguZGF0YS5jb250cm9s
+bGVyLkxpc3RbdW5kZWZpbmVkXToNCg0KKiAnJCR1c2VyX2RlbGVnYXRlJyBpbiBxeC5kYXRhLmNv
+bnRyb2xsZXIuTGlzdFt1bmRlZmluZWRdOiBbb2JqZWN0IE9iamVjdF0NCg0KKiAnJCR1c2VyX3Rh
+cmdldCcgaW4gcXguZGF0YS5jb250cm9sbGVyLkxpc3RbdW5kZWZpbmVkXTogY29tLnRlY2hub2Nv
+bi5vczQuY29tcG9uZW50cy5UTGlzdFs0MzE1XQ0KDQoqICckJHVzZXJfc2VsZWN0aW9uJyBpbiBx
+eC5kYXRhLmNvbnRyb2xsZXIuTGlzdFt1bmRlZmluZWRdOg0KDQoqICckJHVzZXJfbW9kZWwnIGlu
+IHF4LmRhdGEuY29udHJvbGxlci5MaXN0W3VuZGVmaW5lZF06DQoNCiogJyQkdXNlcl9kZWxlZ2F0
+ZScgaW4gcXguZGF0YS5jb250cm9sbGVyLkxpc3RbdW5kZWZpbmVkXTogW29iamVjdCBPYmplY3Rd
+DQoNCiogJyQkdXNlcl90YXJnZXQnIGluIHF4LmRhdGEuY29udHJvbGxlci5MaXN0W3VuZGVmaW5l
+ZF06IGNvbS50ZWNobm9jb24ub3M0LmNvbXBvbmVudHMuVExpc3RbNDE3NF0NCg0KKiAnX19iaW5k
+aW5ncycgaW4gcXguZGF0YS5jb250cm9sbGVyLk9iamVjdFt1bmRlZmluZWRdOiBbb2JqZWN0IE9i
+amVjdF0NCg0KKiAnX190YXJnZXRzJyBpbiBxeC5kYXRhLmNvbnRyb2xsZXIuT2JqZWN0W3VuZGVm
+aW5lZF06IGNvbS50ZWNobm9jb24ub3M0LmRvbWFpbi51aS5EZXNrdG9wV2lkZ2V0WzU0Nl0saGVp
+Z2h0LHJlc2l6ZSxmYWxzZSxbb2JqZWN0IE9iamVjdF0sLGNvbS50ZWNobm9jb24ub3M0LmRvbWFp
+bi51aS5EZXNrdG9wV2lkZ2V0WzU0Nl0sd2lkdGgscmVzaXplLGZhbHNlLFtvYmplY3QgT2JqZWN0
+XSwsY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLkRlc2t0b3BXaWRnZXRbNTQ2XSxwb3NYLG1v
+dmUsZmFsc2UsW29iamVjdCBPYmplY3RdLCxjb20udGVjaG5vY29uLm9zNC5kb21haW4udWkuRGVz
+a3RvcFdpZGdldFs1NDZdLHBvc1ksbW92ZSxmYWxzZSxbb2JqZWN0IE9iamVjdF0sDQoNCiogJyQk
+dXNlcl9zZWxlY3Rpb24nIGluIHF4LmRhdGEuY29udHJvbGxlci5MaXN0W3VuZGVmaW5lZF06DQoN
+CiogJyQkdXNlcl9tb2RlbCcgaW4gcXguZGF0YS5jb250cm9sbGVyLkxpc3RbdW5kZWZpbmVkXToN
+Cg0KKiAnJCR1c2VyX2ljb25PcHRpb25zJyBpbiBxeC5kYXRhLmNvbnRyb2xsZXIuTGlzdFt1bmRl
+ZmluZWRdOiBbb2JqZWN0IE9iamVjdF0NCg0KKiAnJCR1c2VyX2RlbGVnYXRlJyBpbiBxeC5kYXRh
+LmNvbnRyb2xsZXIuTGlzdFt1bmRlZmluZWRdOiBbb2JqZWN0IE9iamVjdF0NCg0KKiAnJCR1c2Vy
+X3RhcmdldCcgaW4gcXguZGF0YS5jb250cm9sbGVyLkxpc3RbdW5kZWZpbmVkXTogY29tLnRlY2hu
+b2Nvbi5vczQuY29tcG9uZW50cy5UTGlzdFs0MDU3XQ0KDQoqICckJHVzZXJfc2VsZWN0aW9uJyBp
+biBxeC5kYXRhLmNvbnRyb2xsZXIuTGlzdFt1bmRlZmluZWRdOg0KDQoqICckJHVzZXJfbW9kZWwn
+IGluIHF4LmRhdGEuY29udHJvbGxlci5MaXN0W3VuZGVmaW5lZF06IHF4LmRhdGEubW9kZWwuaWNv
+biJsYWJlbCJ0Y25QYWNrYWdlWzM5NDRdLHF4LmRhdGEubW9kZWwuaWNvbiJsYWJlbCJ0Y25QYWNr
+YWdlWzM5NDVdDQoNCiogJyQkdXNlcl9pY29uT3B0aW9ucycgaW4gcXguZGF0YS5jb250cm9sbGVy
+Lkxpc3RbdW5kZWZpbmVkXTogW29iamVjdCBPYmplY3RdDQoNCiogJyQkdXNlcl9kZWxlZ2F0ZScg
+aW4gcXguZGF0YS5jb250cm9sbGVyLkxpc3RbdW5kZWZpbmVkXTogW29iamVjdCBPYmplY3RdDQoN
+CiogJyQkdXNlcl90YXJnZXQnIGluIHF4LmRhdGEuY29udHJvbGxlci5MaXN0W3VuZGVmaW5lZF06
+IGNvbS50ZWNobm9jb24ub3M0LmNvbXBvbmVudHMuVExpc3RbMzk0Nl0NCg0KKiAnJCR1c2VyX2dy
+b3VwJyBpbiBxeC51aS5mb3JtLlJhZGlvQnV0dG9uW3VuZGVmaW5lZF06IHF4LnVpLmZvcm0uUmFk
+aW9Hcm91cFt1bmRlZmluZWRdDQoNCiogJyQkdXNlcl9ncm91cCcgaW4gcXgudWkuZm9ybS5SYWRp
+b0J1dHRvblt1bmRlZmluZWRdOiBxeC51aS5mb3JtLlJhZGlvR3JvdXBbdW5kZWZpbmVkXQ0KDQoq
+ICckJHVzZXJfYWN0aXZlV2luZG93JyBpbiBxeC51aS53aW5kb3cuRGVza3RvcFt1bmRlZmluZWRd
+OiBjb20udGVjaG5vY29uLm9zNC53aWRnZXRzLlVzZXJSaWdodHNXaWRnZXRbdW5kZWZpbmVkXQ0K
+DQoqICckJHVzZXJfZ3JvdXAnIGluIHF4LnVpLnRhYnZpZXcuVGFiQnV0dG9uW3VuZGVmaW5lZF06
+IHF4LnVpLmZvcm0uUmFkaW9Hcm91cFs1MzJdDQoNCiogJ19fYmluZGluZ3MnIGluIHF4LmRhdGEu
+Y29udHJvbGxlci5PYmplY3RbdW5kZWZpbmVkXTogW29iamVjdCBPYmplY3RdDQoNCiogJ19fdGFy
+Z2V0cycgaW4gcXguZGF0YS5jb250cm9sbGVyLk9iamVjdFt1bmRlZmluZWRdOiBjb20udGVjaG5v
+Y29uLm9zNC5kb21haW4udWkuRGVza3RvcFdpZGdldFs1NDNdLGhlaWdodCxyZXNpemUsZmFsc2Us
+W29iamVjdCBPYmplY3RdLCxjb20udGVjaG5vY29uLm9zNC5kb21haW4udWkuRGVza3RvcFdpZGdl
+dFs1NDNdLHdpZHRoLHJlc2l6ZSxmYWxzZSxbb2JqZWN0IE9iamVjdF0sLGNvbS50ZWNobm9jb24u
+b3M0LmRvbWFpbi51aS5EZXNrdG9wV2lkZ2V0WzU0M10scG9zWCxtb3ZlLGZhbHNlLFtvYmplY3Qg
+T2JqZWN0XSwsY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLkRlc2t0b3BXaWRnZXRbNTQzXSxw
+b3NZLG1vdmUsZmFsc2UsW29iamVjdCBPYmplY3RdLA0KDQoqICckJHVzZXJfbWVudScgaW4gcXgu
+dWkuZm9ybS5NZW51QnV0dG9uW3VuZGVmaW5lZF06IHF4LnVpLm1lbnUuTWVudVszNzg0XQ0KDQoq
+ICckJHVzZXJfb3BlbmVyJyBpbiBxeC51aS5tZW51Lk1lbnVbdW5kZWZpbmVkXTogcXgudWkuZm9y
+bS5NZW51QnV0dG9uW3VuZGVmaW5lZF0NCg0KKiAnX3Zpc2liaWxpdHlCaW5kaW5nSWRzJyBpbiBx
+eC51aS5mb3JtLnJlbmRlcmVyLkRvdWJsZVt1bmRlZmluZWRdOiBbb2JqZWN0IE9iamVjdF0sW29i
+amVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0XQ0KDQoqICckJHVzZXJfdG9vbFRpcCcgaW4gcXgu
+dWkudGFibGUuaGVhZGVycmVuZGVyZXIuSGVhZGVyQ2VsbFt1bmRlZmluZWRdOiBxeC51aS50b29s
+dGlwLlRvb2xUaXBbdW5kZWZpbmVkXQ0KDQoqICckJHVzZXJfc2VsZWN0aW9uJyBpbiBxeC5kYXRh
+LmNvbnRyb2xsZXIuTGlzdFt1bmRlZmluZWRdOg0KDQoqICckJHVzZXJfbW9kZWwnIGluIHF4LmRh
+dGEuY29udHJvbGxlci5MaXN0W3VuZGVmaW5lZF06DQoNCiogJyQkdXNlcl9kZWxlZ2F0ZScgaW4g
+cXguZGF0YS5jb250cm9sbGVyLkxpc3RbdW5kZWZpbmVkXTogW29iamVjdCBPYmplY3RdDQoNCiog
+JyQkdXNlcl90YXJnZXQnIGluIHF4LmRhdGEuY29udHJvbGxlci5MaXN0W3VuZGVmaW5lZF06IGNv
+bS50ZWNobm9jb24ub3M0LmNvbXBvbmVudHMuVExpc3RbdW5kZWZpbmVkXQ0KDQoqICckJHVzZXJf
+Z3JvdXAnIGluIHF4LnVpLnRhYnZpZXcuVGFiQnV0dG9uW3VuZGVmaW5lZF06IHF4LnVpLmZvcm0u
+UmFkaW9Hcm91cFs2ODhdDQoNCiogJyQkdXNlcl9udW1iZXJGb3JtYXQnIGluIHF4LnVpLnRhYmxl
+LmNlbGxyZW5kZXJlci5OdW1iZXJbdW5kZWZpbmVkXTogcXgudXRpbC5mb3JtYXQuTnVtYmVyRm9y
+bWF0W3VuZGVmaW5lZF0NCg0KKiAnJCR1c2VyX251bWJlckZvcm1hdCcgaW4gcXgudWkudGFibGUu
+Y2VsbHJlbmRlcmVyLk51bWJlclt1bmRlZmluZWRdOiBxeC51dGlsLmZvcm1hdC5OdW1iZXJGb3Jt
+YXRbdW5kZWZpbmVkXQ0KDQoqICckJHVzZXJfZGF0ZUZvcm1hdCcgaW4gcXgudWkudGFibGUuY2Vs
+bHJlbmRlcmVyLkRhdGVbdW5kZWZpbmVkXTogcXgudXRpbC5mb3JtYXQuRGF0ZUZvcm1hdFsxMV0N
+Cg0KKiAnJCR1c2VyX3JlcGxhY2VNYXAnIGluIHF4LnVpLnRhYmxlLmNlbGxyZW5kZXJlci5SZXBs
+YWNlW3VuZGVmaW5lZF06IFtvYmplY3QgT2JqZWN0XQ0KDQoqICckJHVzZXJfbWVudScgaW4gcXgu
+dWkubWVudS5CdXR0b25bdW5kZWZpbmVkXTogcXgudWkubWVudS5NZW51WzMyOTNdDQoNCiogJyQk
+dXNlcl9vcGVuZXInIGluIHF4LnVpLm1lbnUuTWVudVt1bmRlZmluZWRdOiBxeC51aS5tZW51LkJ1
+dHRvblt1bmRlZmluZWRdDQoNCiogJyQkdXNlcl9vcGVuZXInIGluIHF4LnVpLm1lbnUuTWVudVt1
+bmRlZmluZWRdOiBxeC51aS50YWJsZS5UYWJsZVszMTU4XQ0KDQoqICckJHVzZXJfb3BlbmVyJyBp
+biBxeC51aS5tZW51Lk1lbnVbdW5kZWZpbmVkXTogcXgudWkudGFibGUuY29sdW1ubWVudS5CdXR0
+b25bMzI3Ml0NCg0KKiAnX19ibG9ja2VyJyBpbiBxeC51aS50YWJsZS5jb2x1bW5tZW51LkJ1dHRv
+blt1bmRlZmluZWRdOiBxeC51aS5jb3JlLkJsb2NrZXJbdW5kZWZpbmVkXQ0KDQoqICckJHVzZXJf
+bWVudScgaW4gcXgudWkudGFibGUuY29sdW1ubWVudS5CdXR0b25bdW5kZWZpbmVkXTogcXgudWku
+bWVudS5NZW51W3VuZGVmaW5lZF0NCg0KKiAnX19ibG9ja2VyJyBpbiBxeC51aS50YWJsZS5wYW5l
+LkhlYWRlclt1bmRlZmluZWRdOiBxeC51aS5jb3JlLkJsb2NrZXJbdW5kZWZpbmVkXQ0KDQoqICck
+JHVzZXJfdGFibGVQYW5lTW9kZWwnIGluIHF4LnVpLnRhYmxlLnBhbmUuU2Nyb2xsZXJbdW5kZWZp
+bmVkXTogcXgudWkudGFibGUucGFuZS5Nb2RlbFt1bmRlZmluZWRdDQoNCiogJyQkdXNlcl90YWJs
+ZUNvbHVtbk1vZGVsJyBpbiBxeC51aS50YWJsZS5jb2x1bW5tb2RlbC5yZXNpemViZWhhdmlvci5E
+ZWZhdWx0W3VuZGVmaW5lZF06IHF4LnVpLnRhYmxlLmNvbHVtbm1vZGVsLlJlc2l6ZVszMTY5XQ0K
+DQoqICckJHVzZXJfYmVoYXZpb3InIGluIHF4LnVpLnRhYmxlLmNvbHVtbm1vZGVsLlJlc2l6ZVt1
+bmRlZmluZWRdOiBxeC51aS50YWJsZS5jb2x1bW5tb2RlbC5yZXNpemViZWhhdmlvci5EZWZhdWx0
+W3VuZGVmaW5lZF0NCg0KKiAnJCR1c2VyX3NlbGVjdGlvbk1vZGVsJyBpbiBxeC51aS50YWJsZS5z
+ZWxlY3Rpb24uTWFuYWdlclt1bmRlZmluZWRdOiBxeC51aS50YWJsZS5zZWxlY3Rpb24uTW9kZWxb
+dW5kZWZpbmVkXQ0KDQoqICckJHVzZXJfZGF0YVJvd1JlbmRlcmVyJyBpbiBxeC51aS50YWJsZS5U
+YWJsZVt1bmRlZmluZWRdOiBxeC51aS50YWJsZS5yb3dyZW5kZXJlci5EZWZhdWx0W3VuZGVmaW5l
+ZF0NCg0KKiAnJCR1c2VyX3NlbGVjdGlvbk1vZGVsJyBpbiBxeC51aS50YWJsZS5UYWJsZVt1bmRl
+ZmluZWRdOiBxeC51aS50YWJsZS5zZWxlY3Rpb24uTW9kZWxbdW5kZWZpbmVkXQ0KDQoqICckJHVz
+ZXJfdGFibGVNb2RlbCcgaW4gcXgudWkudGFibGUuVGFibGVbdW5kZWZpbmVkXTogY29tLnRlY2hu
+b2Nvbi5vczQuY29tcG9uZW50cy53aWRnZXRzLnJvdXRlbGlzdC5Sb3V0ZUxpc3RSZW1vdGVUYWJs
+ZU1vZGVsWzMxNTddDQoNCiogJyQkdXNlcl9tZXRhQ29sdW1uQ291bnRzJyBpbiBxeC51aS50YWJs
+ZS5UYWJsZVt1bmRlZmluZWRdOiAtMQ0KDQoqICckJHVzZXJfY29udGV4dE1lbnUnIGluIHF4LnVp
+LnRhYmxlLlRhYmxlW3VuZGVmaW5lZF06IHF4LnVpLm1lbnUuTWVudVt1bmRlZmluZWRdDQoNCiog
+J19fYmluZGluZ3MnIGluIHF4LmRhdGEuY29udHJvbGxlci5PYmplY3RbdW5kZWZpbmVkXTogW29i
+amVjdCBPYmplY3RdDQoNCiogJ19fdGFyZ2V0cycgaW4gcXguZGF0YS5jb250cm9sbGVyLk9iamVj
+dFt1bmRlZmluZWRdOiBxeC51aS5mb3JtLkNoZWNrQm94WzMxMjRdLHZhbHVlLFJvdXRlVHlwZVVu
+a25vd24sdHJ1ZSwsLHF4LnVpLmZvcm0uQ2hlY2tCb3hbMzEzMV0sdmFsdWUsUm91dGVUeXBlUHJp
+dmF0ZSx0cnVlLCwscXgudWkuZm9ybS5DaGVja0JveFszMTM4XSx2YWx1ZSxSb3V0ZVR5cGVCdXNp
+bmVzcyx0cnVlLCwscXgudWkuZm9ybS5DaGVja0JveFszMTQ1XSx2YWx1ZSxSb3V0ZVR5cGVDb21t
+dXRpbmcsdHJ1ZSwsDQoNCiogJ19fYmluZGluZ09wdGlvbnMnIGluIHF4LmRhdGEuY29udHJvbGxl
+ci5Gb3JtW3VuZGVmaW5lZF06IFtvYmplY3QgT2JqZWN0XQ0KDQoqICckJHVzZXJfdGFyZ2V0JyBp
+biBxeC5kYXRhLmNvbnRyb2xsZXIuRm9ybVt1bmRlZmluZWRdOiBxeC51aS5mb3JtLkZvcm1bMzEw
+Nl0NCg0KKiAnJCR1c2VyX21vZGVsJyBpbiBxeC5kYXRhLmNvbnRyb2xsZXIuRm9ybVt1bmRlZmlu
+ZWRdOiBxeC5kYXRhLm1vZGVsLlJvdXRlVHlwZUJ1c2luZXNzIlJvdXRlVHlwZUNvbW11dGluZyJS
+b3V0ZVR5cGVQcml2YXRlIlJvdXRlVHlwZVVua25vd25bdW5kZWZpbmVkXQ0KDQoqICdfX29iamVj
+dENvbnRyb2xsZXInIGluIHF4LmRhdGEuY29udHJvbGxlci5Gb3JtW3VuZGVmaW5lZF06IHF4LmRh
+dGEuY29udHJvbGxlci5PYmplY3RbdW5kZWZpbmVkXQ0KDQoqICdfX2dyb3VwcycgaW4gcXgudWku
+Zm9ybS5Gb3JtW3VuZGVmaW5lZF06IFtvYmplY3QgT2JqZWN0XQ0KDQoqICdfX2J1dHRvbnMnIGlu
+IHF4LnVpLmZvcm0uRm9ybVt1bmRlZmluZWRdOg0KDQoqICdfdmFsaWRhdGlvbk1hbmFnZXInIGlu
+IHF4LnVpLmZvcm0uRm9ybVt1bmRlZmluZWRdOiBxeC51aS5mb3JtLnZhbGlkYXRpb24uTWFuYWdl
+clszMTA1XQ0KDQoqICdfcmVzZXR0ZXInIGluIHF4LnVpLmZvcm0uRm9ybVt1bmRlZmluZWRdOiBx
+eC51aS5mb3JtLlJlc2V0dGVyWzMxMDRdDQoNCiogJ19fYXN5bmNSZXN1bHRzJyBpbiBxeC51aS5m
+b3JtLnZhbGlkYXRpb24uTWFuYWdlclt1bmRlZmluZWRdOiBbb2JqZWN0IE9iamVjdF0NCg0KKiAn
+X19pdGVtcycgaW4gcXgudWkuZm9ybS5SZXNldHRlclt1bmRlZmluZWRdOiBbb2JqZWN0IE9iamVj
+dF0sW29iamVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0XSxbb2JqZWN0IE9iamVjdF0NCg0KKiAn
+JCR1c2VyX3Rvb2xUaXAnIGluIHF4LnVpLnRvb2xiYXIuQnV0dG9uW3VuZGVmaW5lZF06IHF4LnVp
+LnRvb2x0aXAuVG9vbFRpcFt1bmRlZmluZWRdDQoNCiogJyQkdXNlcl90b29sVGlwJyBpbiBxeC51
+aS50b29sYmFyLkJ1dHRvblt1bmRlZmluZWRdOiBxeC51aS50b29sdGlwLlRvb2xUaXBbdW5kZWZp
+bmVkXQ0KDQoqICckJHVzZXJfdG9vbFRpcCcgaW4gcXgudWkudG9vbGJhci5CdXR0b25bdW5kZWZp
+bmVkXTogcXgudWkudG9vbHRpcC5Ub29sVGlwW3VuZGVmaW5lZF0NCg0KKiAnJCR1c2VyX3Rvb2xU
+aXAnIGluIHF4LnVpLmZvcm0uQnV0dG9uW3VuZGVmaW5lZF06IHF4LnVpLnRvb2x0aXAuVG9vbFRp
+cFt1bmRlZmluZWRdDQoNCiogJyQkdXNlcl92YWx1ZScgaW4gcXgudWkuY29udHJvbC5EYXRlQ2hv
+b3Nlclt1bmRlZmluZWRdOiBGcmkgTm92IDE5IDIwMTAgMDc6NTc6NTggR01UKzAxMDANCg0KKiAn
+JCR1c2VyX3Rvb2xUaXAnIGluIHF4LnVpLnRvb2xiYXIuQnV0dG9uW3VuZGVmaW5lZF06IHF4LnVp
+LnRvb2x0aXAuVG9vbFRpcFt1bmRlZmluZWRdDQoNCiogJyQkdXNlcl90b29sVGlwJyBpbiBxeC51
+aS50b29sYmFyLkJ1dHRvblt1bmRlZmluZWRdOiBxeC51aS50b29sdGlwLlRvb2xUaXBbdW5kZWZp
+bmVkXQ0KDQoqICckJHVzZXJfdG9vbFRpcCcgaW4gcXgudWkudG9vbGJhci5CdXR0b25bdW5kZWZp
+bmVkXTogcXgudWkudG9vbHRpcC5Ub29sVGlwW3VuZGVmaW5lZF0NCg0KKiAnJCR1c2VyX3Rvb2xU
+aXAnIGluIHF4LnVpLmZvcm0uQnV0dG9uW3VuZGVmaW5lZF06IHF4LnVpLnRvb2x0aXAuVG9vbFRp
+cFt1bmRlZmluZWRdDQoNCiogJyQkdXNlcl92YWx1ZScgaW4gcXgudWkuY29udHJvbC5EYXRlQ2hv
+b3Nlclt1bmRlZmluZWRdOiBGcmkgTm92IDEyIDIwMTAgMDc6NTc6NTggR01UKzAxMDANCg0KKiAn
+X19iaW5kaW5nT3B0aW9ucycgaW4gcXguZGF0YS5jb250cm9sbGVyLkZvcm1bdW5kZWZpbmVkXTog
+W29iamVjdCBPYmplY3RdDQoNCiogJyQkdXNlcl9tb2RlbCcgaW4gcXguZGF0YS5jb250cm9sbGVy
+LkZvcm1bdW5kZWZpbmVkXTogY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLlJvdXRlTGlzdFBh
+cmFtZXRlcnNbMjg2Ml0NCg0KKiAnJCR1c2VyX3RhcmdldCcgaW4gcXguZGF0YS5jb250cm9sbGVy
+LkZvcm1bdW5kZWZpbmVkXTogcXgudWkuZm9ybS5Gb3JtWzI1MTldDQoNCiogJ19fb2JqZWN0Q29u
+dHJvbGxlcicgaW4gcXguZGF0YS5jb250cm9sbGVyLkZvcm1bdW5kZWZpbmVkXTogcXguZGF0YS5j
+b250cm9sbGVyLk9iamVjdFsyNjE2XQ0KDQoqICdfX2FzeW5jUmVzdWx0cycgaW4gcXgudWkuZm9y
+bS52YWxpZGF0aW9uLk1hbmFnZXJbdW5kZWZpbmVkXTogW29iamVjdCBPYmplY3RdDQoNCiogJyQk
+dXNlcl9kYXRlRm9ybWF0JyBpbiBxeC51aS5mb3JtLkRhdGVGaWVsZFt1bmRlZmluZWRdOiBxeC51
+dGlsLmZvcm1hdC5EYXRlRm9ybWF0WzEwXQ0KDQoqICckJHVzZXJfZGF0ZUZvcm1hdCcgaW4gcXgu
+dWkuZm9ybS5EYXRlRmllbGRbdW5kZWZpbmVkXTogcXgudXRpbC5mb3JtYXQuRGF0ZUZvcm1hdFsx
+MF0NCg0KKiAnX19pdGVtcycgaW4gcXgudWkuZm9ybS5SZXNldHRlclt1bmRlZmluZWRdOiBbb2Jq
+ZWN0IE9iamVjdF0sW29iamVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0XQ0KDQoqICdfX2FzeW5j
+UmVzdWx0cycgaW4gcXgudWkuZm9ybS52YWxpZGF0aW9uLk1hbmFnZXJbdW5kZWZpbmVkXTogW29i
+amVjdCBPYmplY3RdDQoNCiogJ19fZ3JvdXBzJyBpbiBxeC51aS5mb3JtLkZvcm1bdW5kZWZpbmVk
+XTogW29iamVjdCBPYmplY3RdDQoNCiogJ19fYnV0dG9ucycgaW4gcXgudWkuZm9ybS5Gb3JtW3Vu
+ZGVmaW5lZF06DQoNCiogJ192YWxpZGF0aW9uTWFuYWdlcicgaW4gcXgudWkuZm9ybS5Gb3JtW3Vu
+ZGVmaW5lZF06IHF4LnVpLmZvcm0udmFsaWRhdGlvbi5NYW5hZ2VyW3VuZGVmaW5lZF0NCg0KKiAn
+X3Jlc2V0dGVyJyBpbiBxeC51aS5mb3JtLkZvcm1bdW5kZWZpbmVkXTogcXgudWkuZm9ybS5SZXNl
+dHRlclt1bmRlZmluZWRdDQoNCiogJyQkdXNlcl9tb2RlbCcgaW4gcXguZGF0YS5jb250cm9sbGVy
+Lkxpc3RbdW5kZWZpbmVkXTogY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLk9iamVjdExpc3Rb
+MjI5Nl0sY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLk9iamVjdExpc3RbMjI5NF0sY29tLnRl
+Y2hub2Nvbi5vczQuZG9tYWluLnVpLk9iamVjdExpc3RbMjI4Nl0sY29tLnRlY2hub2Nvbi5vczQu
+ZG9tYWluLnVpLk9iamVjdExpc3RbMjMwMl0sY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLk9i
+amVjdExpc3RbMjMwNV0sY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLk9iamVjdExpc3RbMjI5
+NV0sY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLk9iamVjdExpc3RbMjMwM10sY29tLnRlY2hu
+b2Nvbi5vczQuZG9tYWluLnVpLk9iamVjdExpc3RbMjMwNF0sY29tLnRlY2hub2Nvbi5vczQuZG9t
+YWluLnVpLk9iamVjdExpc3RbMjI5Ml0sY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLk9iamVj
+dExpc3RbMjI4OF0sY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLk9iamVjdExpc3RbMjMwMV0s
+Y29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLk9iamVjdExpc3RbMjI5OF0sY29tLnRlY2hub2Nv
+bi5vczQuZG9tYWluLnVpLk9iamVjdExpc3RbMjI5MF0sY29tLnRlY2hub2Nvbi5vczQuZG9tYWlu
+LnVpLk9iamVjdExpc3RbMjI4N10sY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLk9iamVjdExp
+c3RbMjI5N10sY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLk9iamVjdExpc3RbMjI4OV0sY29t
+LnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLk9iamVjdExpc3RbMjI5MV0sY29tLnRlY2hub2Nvbi5v
+czQuZG9tYWluLnVpLk9iamVjdExpc3RbMjI5M10sY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVp
+Lk9iamVjdExpc3RbMjMwMF0sY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLk9iamVjdExpc3Rb
+MjI5OV0NCg0KKiAnJCR1c2VyX3RhcmdldCcgaW4gcXguZGF0YS5jb250cm9sbGVyLkxpc3RbdW5k
+ZWZpbmVkXTogcXgudWkuZm9ybS5MaXN0WzE2NDFdDQoNCiogJyQkdXNlcl9zZWxlY3Rpb24nIGlu
+IHF4LmRhdGEuY29udHJvbGxlci5MaXN0W3VuZGVmaW5lZF06DQoNCiogJyQkdXNlcl9pY29uT3B0
+aW9ucycgaW4gcXguZGF0YS5jb250cm9sbGVyLkxpc3RbdW5kZWZpbmVkXTogW29iamVjdCBPYmpl
+Y3RdDQoNCiogJyQkdXNlcl9hY3RpdmVXaW5kb3cnIGluIHF4LnVpLndpbmRvdy5EZXNrdG9wW3Vu
+ZGVmaW5lZF06IGNvbS50ZWNobm9jb24ub3M0LndpZGdldHMuUm91dGVMaXN0V2lkZ2V0W3VuZGVm
+aW5lZF0NCg0KKiAnJCR1c2VyX2dyb3VwJyBpbiBxeC51aS50YWJ2aWV3LlRhYkJ1dHRvblt1bmRl
+ZmluZWRdOiBxeC51aS5mb3JtLlJhZGlvR3JvdXBbNTMyXQ0KDQoqICdfX2JpbmRpbmdzJyBpbiBx
+eC5kYXRhLmNvbnRyb2xsZXIuT2JqZWN0W3VuZGVmaW5lZF06IFtvYmplY3QgT2JqZWN0XQ0KDQoq
+ICdfX3RhcmdldHMnIGluIHF4LmRhdGEuY29udHJvbGxlci5PYmplY3RbdW5kZWZpbmVkXTogY29t
+LnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLkRlc2t0b3BXaWRnZXRbNTQwXSxoZWlnaHQscmVzaXpl
+LGZhbHNlLFtvYmplY3QgT2JqZWN0XSwsY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLkRlc2t0
+b3BXaWRnZXRbNTQwXSx3aWR0aCxyZXNpemUsZmFsc2UsW29iamVjdCBPYmplY3RdLCxjb20udGVj
+aG5vY29uLm9zNC5kb21haW4udWkuRGVza3RvcFdpZGdldFs1NDBdLHBvc1gsbW92ZSxmYWxzZSxb
+b2JqZWN0IE9iamVjdF0sLGNvbS50ZWNobm9jb24ub3M0LmRvbWFpbi51aS5EZXNrdG9wV2lkZ2V0
+WzU0MF0scG9zWSxtb3ZlLGZhbHNlLFtvYmplY3QgT2JqZWN0XSwNCg0KKiAnJCR1c2VyX2FjdGl2
+ZVdpbmRvdycgaW4gcXgudWkud2luZG93LkRlc2t0b3BbdW5kZWZpbmVkXTogY29tLnRlY2hub2Nv
+bi5vczQud2lkZ2V0cy5SZWFsdGltZVdpZGdldFt1bmRlZmluZWRdDQoNCiogJyQkdXNlcl9ncm91
+cCcgaW4gcXgudWkudGFidmlldy5UYWJCdXR0b25bdW5kZWZpbmVkXTogcXgudWkuZm9ybS5SYWRp
+b0dyb3VwWzUzMl0NCg0KKiAnX19iaW5kaW5ncycgaW4gcXguZGF0YS5jb250cm9sbGVyLk9iamVj
+dFt1bmRlZmluZWRdOiBbb2JqZWN0IE9iamVjdF0NCg0KKiAnX190YXJnZXRzJyBpbiBxeC5kYXRh
+LmNvbnRyb2xsZXIuT2JqZWN0W3VuZGVmaW5lZF06IGNvbS50ZWNobm9jb24ub3M0LmRvbWFpbi51
+aS5EZXNrdG9wV2lkZ2V0WzUzN10saGVpZ2h0LHJlc2l6ZSxmYWxzZSxbb2JqZWN0IE9iamVjdF0s
+LGNvbS50ZWNobm9jb24ub3M0LmRvbWFpbi51aS5EZXNrdG9wV2lkZ2V0WzUzN10sd2lkdGgscmVz
+aXplLGZhbHNlLFtvYmplY3QgT2JqZWN0XSwsY29tLnRlY2hub2Nvbi5vczQuZG9tYWluLnVpLkRl
+c2t0b3BXaWRnZXRbNTM3XSxwb3NYLG1vdmUsZmFsc2UsW29iamVjdCBPYmplY3RdLCxjb20udGVj
+aG5vY29uLm9zNC5kb21haW4udWkuRGVza3RvcFdpZGdldFs1MzddLHBvc1ksbW92ZSxmYWxzZSxb
+b2JqZWN0IE9iamVjdF0sDQoNCiogJyQkdXNlcl9zZWxlY3Rpb24nIGluIHF4LmRhdGEuY29udHJv
+bGxlci5MaXN0W3VuZGVmaW5lZF06DQoNCiogJyQkdXNlcl9tb2RlbCcgaW4gcXguZGF0YS5jb250
+cm9sbGVyLkxpc3RbdW5kZWZpbmVkXToNCg0KKiAnJCR1c2VyX2RlbGVnYXRlJyBpbiBxeC5kYXRh
+LmNvbnRyb2xsZXIuTGlzdFt1bmRlZmluZWRdOiBbb2JqZWN0IE9iamVjdF0NCg0KKiAnJCR1c2Vy
+X3RhcmdldCcgaW4gcXguZGF0YS5jb250cm9sbGVyLkxpc3RbdW5kZWZpbmVkXTogY29tLnRlY2hu
+b2Nvbi5vczQuY29tcG9uZW50cy5UTGlzdFsxMjgxXQ0KDQoqICckJHVzZXJfYmluZGluZ3MnIGlu
+IGNvbS50ZWNobm9jb24ub3M0LmNvbXBvbmVudHMuVExpc3RbdW5kZWZpbmVkXTogW29iamVjdCBP
+YmplY3RdLFtvYmplY3QgT2JqZWN0XSxbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmplY3RdLFtv
+YmplY3QgT2JqZWN0XQ0KDQoqICckJHVzZXJfaXRlbUNvbmZpZ3VyYXRpb24nIGluIGNvbS50ZWNo
+bm9jb24ub3M0LmNvbXBvbmVudHMuVExpc3RbdW5kZWZpbmVkXTogW29iamVjdCBPYmplY3RdDQoN
+CiogJyQkdXNlcl9zZWxlY3Rpb24nIGluIHF4LmRhdGEuY29udHJvbGxlci5MaXN0W3VuZGVmaW5l
+ZF06DQoNCiogJyQkdXNlcl9tb2RlbCcgaW4gcXguZGF0YS5jb250cm9sbGVyLkxpc3RbdW5kZWZp
+bmVkXToNCg0KKiAnJCR1c2VyX2ljb25PcHRpb25zJyBpbiBxeC5kYXRhLmNvbnRyb2xsZXIuTGlz
+dFt1bmRlZmluZWRdOiBbb2JqZWN0IE9iamVjdF0NCg0KKiAnJCR1c2VyX2RlbGVnYXRlJyBpbiBx
+eC5kYXRhLmNvbnRyb2xsZXIuTGlzdFt1bmRlZmluZWRdOiBbb2JqZWN0IE9iamVjdF0NCg0KKiAn
+JCR1c2VyX3RhcmdldCcgaW4gcXguZGF0YS5jb250cm9sbGVyLkxpc3RbdW5kZWZpbmVkXTogY29t
+LnRlY2hub2Nvbi5vczQuY29tcG9uZW50cy5UTGlzdFsxMTg0XQ0KDQoqICckJHVzZXJfYmluZGlu
+Z3MnIGluIGNvbS50ZWNobm9jb24ub3M0LmNvbXBvbmVudHMuVExpc3RbdW5kZWZpbmVkXTogW29i
+amVjdCBPYmplY3RdDQoNCiogJyQkdXNlcl90b29sVGlwJyBpbiBxeC51aS50b29sYmFyLkJ1dHRv
+blt1bmRlZmluZWRdOiBxeC51aS50b29sdGlwLlRvb2xUaXBbdW5kZWZpbmVkXQ0KDQoqICckJHVz
+ZXJfdG9vbFRpcCcgaW4gcXgudWkudG9vbGJhci5CdXR0b25bdW5kZWZpbmVkXTogcXgudWkudG9v
+bHRpcC5Ub29sVGlwW3VuZGVmaW5lZF0NCg0KKiAnJCR1c2VyX3Rvb2xUaXAnIGluIHF4LnVpLnRv
+b2xiYXIuQnV0dG9uW3VuZGVmaW5lZF06IHF4LnVpLnRvb2x0aXAuVG9vbFRpcFt1bmRlZmluZWRd
+DQoNCiogJyQkdXNlcl90b29sVGlwJyBpbiBxeC51aS5mb3JtLkJ1dHRvblt1bmRlZmluZWRdOiBx
+eC51aS50b29sdGlwLlRvb2xUaXBbdW5kZWZpbmVkXQ0KDQoqICckJHVzZXJfdmFsdWUnIGluIHF4
+LnVpLmNvbnRyb2wuRGF0ZUNob29zZXJbdW5kZWZpbmVkXTogVHVlIEF1ZyAyOSAxOTM5IDAwOjAw
+OjAwIEdNVCswMjAwDQoNCiogJ19fYmluZGluZ09wdGlvbnMnIGluIHF4LmRhdGEuY29udHJvbGxl
+ci5Gb3JtW3VuZGVmaW5lZF06IFtvYmplY3QgT2JqZWN0XQ0KDQoqICckJHVzZXJfdGFyZ2V0JyBp
+biBxeC5kYXRhLmNvbnRyb2xsZXIuRm9ybVt1bmRlZmluZWRdOiBxeC51aS5mb3JtLkZvcm1bNzI5
+XQ0KDQoqICckJHVzZXJfbW9kZWwnIGluIHF4LmRhdGEuY29udHJvbGxlci5Gb3JtW3VuZGVmaW5l
+ZF06IGNvbS50ZWNobm9jb24ub3M0LmRvbWFpbi50Y24uQ29udHJhY3Rvcls4MjVdDQoNCiogJ19f
+b2JqZWN0Q29udHJvbGxlcicgaW4gcXguZGF0YS5jb250cm9sbGVyLkZvcm1bdW5kZWZpbmVkXTog
+cXguZGF0YS5jb250cm9sbGVyLk9iamVjdFs4MzRdDQoNCiogJ192aXNpYmlsaXR5QmluZGluZ0lk
+cycgaW4gcXgudWkuZm9ybS5yZW5kZXJlci5TaW5nbGVbdW5kZWZpbmVkXTogW29iamVjdCBPYmpl
+Y3RdLFtvYmplY3QgT2JqZWN0XSxbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmplY3RdLFtvYmpl
+Y3QgT2JqZWN0XSxbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0
+XSxbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmplY3RdDQoNCiogJyQkdXNlcl9kYXRlRm9ybWF0
+JyBpbiBxeC51aS5mb3JtLkRhdGVGaWVsZFt1bmRlZmluZWRdOiBxeC51dGlsLmZvcm1hdC5EYXRl
+Rm9ybWF0W3VuZGVmaW5lZF0NCg0KKiAnJCR1c2VyX2dyb3VwJyBpbiBxeC51aS5mb3JtLlJhZGlv
+QnV0dG9uW3VuZGVmaW5lZF06IHF4LnVpLmZvcm0uUmFkaW9Hcm91cFt1bmRlZmluZWRdDQoNCiog
+JyQkdXNlcl9ncm91cCcgaW4gcXgudWkuZm9ybS5SYWRpb0J1dHRvblt1bmRlZmluZWRdOiBxeC51
+aS5mb3JtLlJhZGlvR3JvdXBbdW5kZWZpbmVkXQ0KDQoqICdfX2l0ZW1zJyBpbiBxeC51aS5mb3Jt
+LlJlc2V0dGVyW3VuZGVmaW5lZF06IFtvYmplY3QgT2JqZWN0XSxbb2JqZWN0IE9iamVjdF0sW29i
+amVjdCBPYmplY3RdLFtvYmplY3QgT2JqZWN0XSxbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmpl
+Y3RdLFtvYmplY3QgT2JqZWN0XSxbb2JqZWN0IE9iamVjdF0sW29iamVjdCBPYmplY3RdLFtvYmpl
+Y3QgT2JqZWN0XQ0KDQoqICdfX2FzeW5jUmVzdWx0cycgaW4gcXgudWkuZm9ybS52YWxpZGF0aW9u
+Lk1hbmFnZXJbdW5kZWZpbmVkXTogW29iamVjdCBPYmplY3RdDQoNCiogJ19fZ3JvdXBzJyBpbiBx
+eC51aS5mb3JtLkZvcm1bdW5kZWZpbmVkXTogW29iamVjdCBPYmplY3RdDQoNCiogJ19fYnV0dG9u
+cycgaW4gcXgudWkuZm9ybS5Gb3JtW3VuZGVmaW5lZF06DQoNCiogJ192YWxpZGF0aW9uTWFuYWdl
+cicgaW4gcXgudWkuZm9ybS5Gb3JtW3VuZGVmaW5lZF06IHF4LnVpLmZvcm0udmFsaWRhdGlvbi5N
+YW5hZ2VyW3VuZGVmaW5lZF0NCg0KKiAnX3Jlc2V0dGVyJyBpbiBxeC51aS5mb3JtLkZvcm1bdW5k
+ZWZpbmVkXTogcXgudWkuZm9ybS5SZXNldHRlclt1bmRlZmluZWRdDQoNCiogJyQkdXNlcl9hY3Rp
+dmVXaW5kb3cnIGluIHF4LnVpLndpbmRvdy5EZXNrdG9wW3VuZGVmaW5lZF06IGNvbS50ZWNobm9j
+b24ub3M0LndpZGdldHMuV2ViU2hvcFdpZGdldFt1bmRlZmluZWRdDQoNCiogJyQkdXNlcl9ncm91
+cCcgaW4gcXgudWkudGFidmlldy5UYWJCdXR0b25bdW5kZWZpbmVkXTogcXgudWkuZm9ybS5SYWRp
+b0dyb3VwWzUzMl0NCg0KKiAnJCR1c2VyX2FjdGl2ZVdpbmRvdycgaW4gcXgudWkucm9vdC5BcHBs
+aWNhdGlvblt1bmRlZmluZWRdOiBjb20udGVjaG5vY29uLm9zNC53aWRnZXRzLlNob3BwaW5nQ2Fy
+dFdpZGdldFt1bmRlZmluZWRdDQoNCiogJyQkdXNlcl9xdWV1ZScgaW4gcXguZnguZWZmZWN0LmNv
+cmUuUGFyYWxsZWxbdW5kZWZpbmVkXTogcXguZngucXVldWUuUXVldWVbMjIzXQ0KDQoqICckJHVz
+ZXJfcXVldWUnIGluIHF4LmZ4LmVmZmVjdC5jb3JlLkZhZGVbdW5kZWZpbmVkXTogcXguZngucXVl
+dWUuUXVldWVbMjIzXQ0KDQoqICckJHVzZXJfcXVldWUnIGluIHF4LmZ4LmVmZmVjdC5jb3JlLk1v
+dmVbdW5kZWZpbmVkXTogcXguZngucXVldWUuUXVldWVbMjIzXQ0KDQoqICckJHVzZXJfcXVldWUn
+IGluIHF4LmZ4LmVmZmVjdC5jb21iaW5hdGlvbi5Ecm9wW3VuZGVmaW5lZF06IHF4LmZ4LnF1ZXVl
+LlF1ZXVlWzIyM10NCg0KKiAnJCR1c2VyX3F1ZXVlJyBpbiBxeC5meC5lZmZlY3QuY29yZS5Nb3Zl
+W3VuZGVmaW5lZF06IHF4LmZ4LnF1ZXVlLlF1ZXVlWzIyM10NCg0KKiAnJCR1c2VyX3F1ZXVlJyBp
+biBxeC5meC5lZmZlY3QuY29yZS5Nb3ZlW3VuZGVmaW5lZF06IHF4LmZ4LnF1ZXVlLlF1ZXVlWzIy
+M10NCg0KKiAnJCR1c2VyX3F1ZXVlJyBpbiBxeC5meC5lZmZlY3QuY29yZS5Nb3ZlW3VuZGVmaW5l
+ZF06IHF4LmZ4LnF1ZXVlLlF1ZXVlWzIyM10NCg0KKiAnJCR1c2VyX3F1ZXVlJyBpbiBxeC5meC5l
+ZmZlY3QuY29yZS5Nb3ZlW3VuZGVmaW5lZF06IHF4LmZ4LnF1ZXVlLlF1ZXVlWzIyM10NCg0KKiAn
+JCR1c2VyX3F1ZXVlJyBpbiBxeC5meC5lZmZlY3QuY29yZS5Nb3ZlW3VuZGVmaW5lZF06IHF4LmZ4
+LnF1ZXVlLlF1ZXVlWzIyM10NCg0KKiAnJCR1c2VyX3F1ZXVlJyBpbiBxeC5meC5lZmZlY3QuY29y
+ZS5Nb3ZlW3VuZGVmaW5lZF06IHF4LmZ4LnF1ZXVlLlF1ZXVlWzIyM10NCg0KKiAnJCR1c2VyX3F1
+ZXVlJyBpbiBxeC5meC5lZmZlY3QuY29tYmluYXRpb24uU2hha2VbdW5kZWZpbmVkXTogcXguZngu
+cXVldWUuUXVldWVbMjIzXQ0KDQoqICckJHVzZXJfcXVldWUnIGluIHF4LmZ4LmVmZmVjdC5jb3Jl
+LlBhcmFsbGVsW3VuZGVmaW5lZF06IHF4LmZ4LnF1ZXVlLlF1ZXVlWzIyM10NCg0KKiAnJCR1c2Vy
+X3F1ZXVlJyBpbiBxeC5meC5lZmZlY3QuY29yZS5GYWRlW3VuZGVmaW5lZF06IHF4LmZ4LnF1ZXVl
+LlF1ZXVlWzIyM10NCg0KKiAnJCR1c2VyX3F1ZXVlJyBpbiBxeC5meC5lZmZlY3QuY29yZS5Nb3Zl
+W3VuZGVmaW5lZF06IHF4LmZ4LnF1ZXVlLlF1ZXVlWzIyM10NCg0KKiAnJCR1c2VyX3F1ZXVlJyBp
+biBxeC5meC5lZmZlY3QuY29tYmluYXRpb24uRHJvcFt1bmRlZmluZWRdOiBxeC5meC5xdWV1ZS5R
+dWV1ZVsyMjNdDQoNCiogJyQkdXNlcl9xdWV1ZScgaW4gcXguZnguZWZmZWN0LmNvcmUuUGFyYWxs
+ZWxbdW5kZWZpbmVkXTogcXguZngucXVldWUuUXVldWVbMjIzXQ0KDQoqICckJHVzZXJfcXVldWUn
+IGluIHF4LmZ4LmVmZmVjdC5jb3JlLkZhZGVbdW5kZWZpbmVkXTogcXguZngucXVldWUuUXVldWVb
+MjIzXQ0KDQoqICckJHVzZXJfcXVldWUnIGluIHF4LmZ4LmVmZmVjdC5jb3JlLk1vdmVbdW5kZWZp
+bmVkXTogcXguZngucXVldWUuUXVldWVbMjIzXQ0KDQoqICckJHVzZXJfcXVldWUnIGluIHF4LmZ4
+LmVmZmVjdC5jb21iaW5hdGlvbi5Ecm9wW3VuZGVmaW5lZF06IHF4LmZ4LnF1ZXVlLlF1ZXVlW3Vu
+ZGVmaW5lZF0NCg0KKiAnX19hc3luY1Jlc3VsdHMnIGluIHF4LnVpLmZvcm0udmFsaWRhdGlvbi5N
+YW5hZ2VyW3VuZGVmaW5lZF06IFtvYmplY3QgT2JqZWN0XQ0KDQoqICckJHVzZXJfY29udGVudCcg
+aW4gcXguaW8ucmVtb3RlLlJlc3BvbnNlW3VuZGVmaW5lZF06IFtvYmplY3QgT2JqZWN0XQ0KDQoq
+ICckJHVzZXJfcmVzcG9uc2VIZWFkZXJzJyBpbiBxeC5pby5yZW1vdGUuUmVzcG9uc2VbdW5kZWZp
+bmVkXTogW29iamVjdCBPYmplY3RdDQoNCiogJyQkdXNlcl9jb250ZW50JyBpbiBxeC5pby5yZW1v
+dGUuUmVzcG9uc2VbdW5kZWZpbmVkXTogW29iamVjdCBPYmplY3RdDQoNCiogJyQkdXNlcl9yZXNw
+b25zZUhlYWRlcnMnIGluIHF4LmlvLnJlbW90ZS5SZXNwb25zZVt1bmRlZmluZWRdOiBbb2JqZWN0
+IE9iamVjdF0NCg0KKiAnJCR1c2VyX2FjdGl2ZVdpbmRvdycgaW4gcXgudWkucm9vdC5BcHBsaWNh
+dGlvblt1bmRlZmluZWRdOiBjb20udGVjaG5vY29uLm9zNC53aWRnZXRzLkxvZ2luV2lkZ2V0W3Vu
+ZGVmaW5lZF0NCg0KKiAnJCR1c2VyX2ZhbWlseScgaW4gcXguYm9tLkZvbnRbdW5kZWZpbmVkXTog
+Q29uc29sYXMNCg0KKiAnJCR1c2VyX2ZhbWlseScgaW4gcXguYm9tLkZvbnRbdW5kZWZpbmVkXTog
+U2Vnb2UgVUksQ2FuZGFyYQ0KDQoqICckJHVzZXJfZmFtaWx5JyBpbiBxeC5ib20uRm9udFt1bmRl
+ZmluZWRdOiBTZWdvZSBVSSxDYW5kYXJhDQoNCiogJyQkdXNlcl9mYW1pbHknIGluIHF4LmJvbS5G
+b250W3VuZGVmaW5lZF06IFNlZ29lIFVJLENhbmRhcmENCg0KKiAnJCR1c2VyX3RoZW1lJyBpbiBx
+eC50aGVtZS5tYW5hZ2VyLkFwcGVhcmFuY2VbdW5kZWZpbmVkXTogW1RoZW1lIGNvbS50ZWNobm9j
+b24ub3M0LnRoZW1lLmN1c3RvbS5BcHBlYXJhbmNlXQ0KDQoqICckJHVzZXJfdGhlbWUnIGluIHF4
+LnRoZW1lLm1hbmFnZXIuSWNvblt1bmRlZmluZWRdOiBbVGhlbWUgcXgudGhlbWUuaWNvbi5UYW5n
+b10NCg0KKiAnJCR1c2VyX3RoZW1lJyBpbiBxeC50aGVtZS5tYW5hZ2VyLkZvbnRbdW5kZWZpbmVk
+XTogW1RoZW1lIGNvbS50ZWNobm9jb24ub3M0LnRoZW1lLmN1c3RvbS5Gb250XQ0KDQoqICckJHVz
+ZXJfdGhlbWUnIGluIHF4LnRoZW1lLm1hbmFnZXIuRGVjb3JhdGlvblt1bmRlZmluZWRdOiBbVGhl
+bWUgY29tLnRlY2hub2Nvbi5vczQudGhlbWUuY3VzdG9tLkRlY29yYXRpb25dDQoNCiogJyQkdXNl
+cl90aGVtZScgaW4gcXgudGhlbWUubWFuYWdlci5Db2xvclt1bmRlZmluZWRdOiBbVGhlbWUgY29t
+LnRlY2hub2Nvbi5vczQudGhlbWUuY3VzdG9tLkNvbG9yXQ0KDQoqICckJHVzZXJfdGhlbWUnIGlu
+IHF4LnRoZW1lLm1hbmFnZXIuTWV0YVt1bmRlZmluZWRdOiBbVGhlbWUgY29tLnRlY2hub2Nvbi5v
+czQudGhlbWUuVGhlbWVdDQoNCjE5MTA0MjIgcXguY29yZS5PYmplY3RSZWdpc3RyeTogRGlzcG9z
+ZWQgNTM5NSBvYmplY3RzDQoNCg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>844</attachid>
+            <date>2010-11-23 10:16:00 +0100</date>
+            <delta_ts>2010-11-23 10:16:28 +0100</delta_ts>
+            <desc>playground example to reprodeuce the bug</desc>
+            <filename>playgroundexample.txt</filename>
+            <type>text/plain</type>
+            <size>500</size>
+            <attacher>edemircan</attacher>
+            
+              <data encoding="base64">dmFyIGRhdGEgPSB7DQogIHN0YXJ0ZGF0ZSA6IG5ldyBEYXRlKDApDQp9DQogICAgDQp2YXIgZm9y
+bSA9IG5ldyBxeC51aS5mb3JtLkZvcm0oKTsNCnZhciBzdGFydGRhdGVGaWVsZCA9IG5ldyBxeC51
+aS5mb3JtLkRhdGVGaWVsZCgpOw0KdmFyIGRhdGVGb3JtYXQgPSBuZXcgcXgudXRpbC5mb3JtYXQu
+RGF0ZUZvcm1hdCgiZGQtTU0teXl5eSIpOw0KZm9ybS5hZGQoc3RhcnRkYXRlRmllbGQsICJTdGFy
+dCBkYXRlIiwgbnVsbCwgInN0YXJ0ZGF0ZSIpOw0KDQp2YXIgZm9ybU1vZGVsID0gcXguZGF0YS5t
+YXJzaGFsLkpzb24uY3JlYXRlTW9kZWwoZGF0YSk7DQoNCnZhciBjb250cm9sbGVyID0gIG5ldyBx
+eC5kYXRhLmNvbnRyb2xsZXIuRm9ybShmb3JtTW9kZWwsIGZvcm0pOw0KdGhpcy5nZXRSb290KCku
+YWRkKG5ldyBxeC51aS5mb3JtLnJlbmRlcmVyLlNpbmdsZShmb3JtKSwge2xlZnQ6IDEwLCB0b3A6
+IDUwfSk7DQoNCmZvcm1Nb2RlbC5zZXRTdGFydGRhdGUobmV3IERhdGUoKSk=
+</data>
+
+          </attachment>
+      
+
+    </bug>

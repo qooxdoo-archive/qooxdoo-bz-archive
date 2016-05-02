@@ -1,0 +1,210 @@
+<bug>
+          <bug_id>2600</bug_id>
+          
+          <creation_ts>2009-07-17 02:46:00 +0200</creation_ts>
+          <short_desc>Unable to do SelectAll on focus of text field</short_desc>
+          <delta_ts>2009-09-09 08:23:28 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Raymond Cote">rgacote</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          <cc>alexander.steitz</cc>
+    
+    <cc>fabian.jakobs</cc>
+    
+    <cc>rgacote</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10944</commentid>
+            <who name="Raymond Cote">rgacote</who>
+            <bug_when>2009-07-17 02:46:09 +0200</bug_when>
+            <thetext>This is with 0.8.2 trunk:
+
+Create a text field:
+      this.quantifyText = new qx.ui.form.TextField();
+
+Add a listener that selects all text in the text field when the field gets focus:
+      this.quantifyText.addListener(&quot;focus&quot;, function(e)
+      {
+          this.quantifyText.selectAll();
+      }, this);
+
+Above code works fine on FireFox 3.5, Chrome, Opera 9.2, Safari 4.
+Does not work on IE8 (was unable to test on IE7). 
+
+On IE8, when you click the mouse in the text field, you see the text highlighted. 
+When you release the mouse button, the highlight goes away. 
+
+Tried setting the above listender to focusin and focus. 
+Same behavior in both cases.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10959</commentid>
+            <who name="Raymond Cote">rgacote</who>
+            <bug_when>2009-07-17 16:41:10 +0200</bug_when>
+            <thetext>Change the addListener as follows:
+      this.quantifyText.addListener(&quot;focus&quot;, function(e)
+      { 
+          //this.quantifyText.selectAll();
+          this.quantifyText.clearSelection();
+          this.quantifyText.setSelection(0, 1);
+      }, this);
+
+Now put four characters in the text field and focus somewhere else.
+Very carefully, click and hold the mouse at an insertion point right after the first character. 
+You will see the first character be highlighted until you let go of the mouse. 
+
+Now repeat, but before the first character -- also see the highlight until you let go of the mouse. 
+
+Now click after the second, third, or fourth character. The first character is _not_ highlighted while the mouse is down. 
+
+On FireFox 3.5, for example, you see the first digit highlighted soon as the mouse is clicked -- regardless of where in the box you click. 
+
+Not sure this is relevant to the overall selectAll problem, but thought I&#39;d log it since it was anomalous action.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10962</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-07-20 09:55:45 +0200</bug_when>
+            <thetext>to Chris (CC&#39;ing Fabian and Alex, who might be interested as well and/or have ideas).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11738</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-01 11:23:57 +0200</bug_when>
+            <thetext>Oops, this still was unassigned? Corrected now.
+
+Chris, also talk to Martin, who has worked on Textfield/Focus/Selection recently.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11816</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-02 17:24:38 +0200</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11986</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-08 10:33:30 +0200</bug_when>
+            <thetext>I tested the example code (see below) with the reversion 20017 and it seems to me that this is a browser behavior. The text selection works fine, when the button is used, but if I click into the TextField, then it seems to me, that the text selection is lost due to the mouse click.
+
+These browser dosen&#39;t select the text on mouse click: IE6, IE7, IE8, Opera 9.64, Opera 10.00 and Safari 4.0.2
+Only FF 3.5.2 and FF 3.0.13 select the text on mouse click. (I have only tested these browsers)
+
+*** example code ***
+var textField = new qx.ui.form.TextField();
+textField.setValue(&quot;abcde&quot;);
+      
+textField.addListener(&quot;focus&quot;, function(e) {
+  textField.selectAllText();
+}, this);
+      
+      
+var button = new qx.ui.form.Button(&quot;focus()&quot;);
+button.addListener(&quot;execute&quot;, function() {
+  textField.focus();
+}, this);
+      
+var doc = this.getRoot();
+doc.add(textField, {left: 100, top: 50});
+doc.add(button, {left: 100, top: 150});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11988</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-08 10:58:13 +0200</bug_when>
+            <thetext> Raymond Cote, please use the &quot;mouseup&quot; instead of &quot;focus&quot; event to select the text. This workaround should temporary fix your issue. Isn&#39;t it?
+ 
+ this.quantifyText.addListener(&quot;mouseup&quot;, function(e)
+{
+	 this.quantifyText.selectAll();
+}, this);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11996</commentid>
+              <attachid>584</attachid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-08 14:13:02 +0200</bug_when>
+            <thetext>Created attachment 584
+selection on focus (native implementation)
+
+I tested these native implementation on IE6, IE7, IE8, Opera 9.64, Opera 10.00, Safari 3.2.3, Safari 4.0.2, FF 3.0.13 and FF 3.5.2.
+
+The test shows, that a selection on focus is in principle possible, but I have no success with Safari 3.2.3 and Safari 4.0.3. The selection is with these browsers only on tab but not on mouse click possible.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12004</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-08 15:39:35 +0200</bug_when>
+            <thetext>I talked with Fabian and we think that it isn&#39;t possible to achieve a solution on &quot;focus&quot; event, because a native implementation for Safari doesn&#39;t work. The best way to achieve the selection is to use the &quot;mouseup&quot; event instead of the &quot;focus&quot; event.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12010</commentid>
+            <who name="Raymond Cote">rgacote</who>
+            <bug_when>2009-09-08 15:59:42 +0200</bug_when>
+            <thetext>(As the originator of this issue, I&#39;ll state that) using the mouseup event is an acceptable solution.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12037</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-09 08:23:28 +0200</bug_when>
+            <thetext>Closed.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>584</attachid>
+            <date>2009-09-08 14:13:00 +0200</date>
+            <delta_ts>2009-09-08 14:13:02 +0200</delta_ts>
+            <desc>selection on focus (native implementation)</desc>
+            <filename>testFocus.html</filename>
+            <type>text/html</type>
+            <size>606</size>
+            <attacher>christian.hagendorn</attacher>
+            
+              <data encoding="base64">PCFET0NUWVBFIGh0bWwgUFVCTElDICItLy9XM0MvL0RURCBYSFRNTCAxLjEvL0VOIiAiaHR0cDov
+L3d3dy53My5vcmcvVFIveGh0bWwxMS9EVEQveGh0bWwxMS5kdGQiPg0KPGh0bWw+DQoJPGhlYWQ+
+DQoJCTx0aXRsZT5Gb2N1czwvdGl0bGU+DQoJCTxzY3JpcHQgdHlwZT0idGV4dC9qYXZhc2NyaXB0
+Ij4NCgkJCWZ1bmN0aW9uIG15QWN0aW9uKGVsZW1lbnQpIHsNCgkJCQlpZihlbGVtZW50LmNyZWF0
+ZVRleHRSYW5nZSkgew0KCQkJCQl2YXIgcmFuZ2UgPSBlbGVtZW50LmNyZWF0ZVRleHRSYW5nZSgp
+Ow0KCQkJCQlyYW5nZS5tb3ZlU3RhcnQoImNoYXJhY3RlciIsIDApOw0KCQkJCQlyYW5nZS5tb3Zl
+RW5kKCJjaGFyYWN0ZXIiLCAzKTsNCgkJCQkJcmFuZ2Uuc2VsZWN0KCk7DQoJCQkJfSBlbHNlIHsN
+CgkJCQkJZWxlbWVudC5zZWxlY3QoKTsNCgkJCQkJZWxlbWVudC5zZXRTZWxlY3Rpb25SYW5nZSgw
+LCA0KTsNCgkJCQl9DQoJCQl9DQoJCTwvc2NyaXB0Pg0KCTwvaGVhZD4NCgk8Ym9keT4NCgkJPGlu
+cHV0IHR5cGU9InRleHQiIG5hbWU9Im5hbWUiIG9uZm9jdXM9Im15QWN0aW9uKHRoaXMpIiB2YWx1
+ZT0iYWJjZCI+PC9sYWJlbD4NCgk8L2JvZHk+DQo8L2h0bWw+
+</data>
+
+          </attachment>
+      
+
+    </bug>

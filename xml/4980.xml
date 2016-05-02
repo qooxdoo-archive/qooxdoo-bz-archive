@@ -1,0 +1,138 @@
+<bug>
+          <bug_id>4980</bug_id>
+          
+          <creation_ts>2011-04-09 19:06:00 +0200</creation_ts>
+          <short_desc>Not all combination animation effects honor duration</short_desc>
+          <delta_ts>2014-03-03 15:25:06 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>website.animation</component>
+          <version>1.4</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.4.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Murphy">murphy.mccauley</reporter>
+          <assigned_to name="Gabriel Munteanu">jajalinux</assigned_to>
+          <cc>murphy.mccauley</cc>
+          <qa_contact name="Gabriel Munteanu">jajalinux</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>23934</commentid>
+              <attachid>962</attachid>
+            <who name="Murphy">murphy.mccauley</who>
+            <bug_when>2011-04-09 19:06:18 +0200</bug_when>
+            <thetext>Created attachment 962
+Untested patch
+
+It seems like the Grow, Shrink and Puff animations all *could* support a specific duration, but instead they ignore it.
+
+Additionally, I think the fix may be as simple as modifying their .start() methods to set the duration of their internal Parallel effect (__mainEffect) to their own duration before starting it:
+
+    ...
+    this.__mainEffect.setDuration(this.getDuration());
+    this.__mainEffect.start();
+  }
+
+I&#39;m not sure if there are other properties of the &quot;outer&quot; effect that should also be set on __mainEffect, but it might be something to check for.
+
+
+The Drop effect shares this problem with a slight twist -- one of its constituent effects has a hard-coded duration.  It seems like the proper fix (in addition to the above) may be to set this duration to the minimum of what it is hard coded as now and the duration of the effect as a whole.
+
+
+Attached is an untested patch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23935</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-04-11 08:51:28 +0200</bug_when>
+            <thetext>Thanks for the report.
+
+Gabriel, please have a loog.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23980</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-04-12 11:22:07 +0200</bug_when>
+            <thetext>fixed on trunk with rev. 26706.
+fixed on branch 1_4_x with rev. 26707.
+
+&quot;I&#39;m not sure if there are other properties of the &quot;outer&quot; effect that should
+also be set on __mainEffect, but it might be something to check for.&quot;
+
+The right fix would be that Grow, Shrink, ... should extend Parallel effect and not the base. Right now, these combination effects are just a container where composition of different objects take place. This is part of a larger task though that I will start soon, and it will be addressed there. [check bugs: 4705,4706 if interested].</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38629</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:06 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>962</attachid>
+            <date>2011-04-09 19:06:00 +0200</date>
+            <delta_ts>2011-04-09 19:06:18 +0200</delta_ts>
+            <desc>Untested patch</desc>
+            <filename>effects_duration.patch</filename>
+            <type>text/plain</type>
+            <size>1573</size>
+            <attacher>murphy.mccauley</attacher>
+            
+              <data encoding="base64">SW5kZXg6IERyb3AuanMKPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PQotLS0gRHJvcC5qcwkocmV2aXNpb24gNTgpCisrKyBE
+cm9wLmpzCSh3b3JraW5nIGNvcHkpCkBAIC0yMTcsMTMgKzIxNywxNCBAQAogICAgICAgfTsKIAog
+ICAgICAgdGhpcy5fX2ZhZGVFZmZlY3Quc2V0KHsKLSAgICAgICAgZHVyYXRpb24gICAgICA6IDAu
+NSwKKyAgICAgICAgZHVyYXRpb24gICAgICA6IE1hdGgubWluKDAuNSwgdGhpcy5nZXREdXJhdGlv
+bigpKSwKICAgICAgICAgc3luYyAgICAgICAgICA6IHRydWUsCiAgICAgICAgIGZyb20gICAgICAg
+ICAgOiAodGhpcy5nZXRNb2RlKCkgPT0gIm91dCIpID8gMSA6IDAsCiAgICAgICAgIHRvICAgICAg
+ICAgICAgOiAodGhpcy5nZXRNb2RlKCkgPT0gIm91dCIpID8gMCA6IDEsCiAgICAgICAgIG1vZGlm
+eURpc3BsYXkgOiB0cnVlCiAgICAgICB9KTsKIAorICAgICAgdGhpcy5fX21haW5FZmZlY3Quc2V0
+RHVyYXRpb24odGhpcy5nZXREdXJhdGlvbigpKTsKICAgICAgIHRoaXMuX19tYWluRWZmZWN0LnN0
+YXJ0KCk7CiAKICAgICB9CkluZGV4OiBHcm93LmpzCj09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KLS0tIEdyb3cuanMJKHJl
+dmlzaW9uIDU4KQorKysgR3Jvdy5qcwkod29ya2luZyBjb3B5KQpAQCAtMjE5LDYgKzIxOSw3IEBA
+CiAgICAgICBxeC5ib20uZWxlbWVudC5TdHlsZS5zZXQoZWxlbWVudCwgImhlaWdodCIsICIwcHgi
+KTsKICAgICAgIHF4LmJvbS5lbGVtZW50LlN0eWxlLnNldChlbGVtZW50LCAid2lkdGgiLCAiMHB4
+Iik7CiAKKyAgICAgIHRoaXMuX19tYWluRWZmZWN0LnNldER1cmF0aW9uKHRoaXMuZ2V0RHVyYXRp
+b24oKSk7CiAgICAgICB0aGlzLl9fbWFpbkVmZmVjdC5zdGFydCgpOwogICAgIH0KIApJbmRleDog
+U2hyaW5rLmpzCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT0KLS0tIFNocmluay5qcwkocmV2aXNpb24gNTgpCisrKyBTaHJp
+bmsuanMJKHdvcmtpbmcgY29weSkKQEAgLTIyMCw2ICsyMjAsNyBAQAogICAgICAgICByZXN0b3Jl
+QWZ0ZXJGaW5pc2g6IHRydWUKICAgICAgIH0pOwogCisgICAgICB0aGlzLl9fbWFpbkVmZmVjdC5z
+ZXREdXJhdGlvbih0aGlzLmdldER1cmF0aW9uKCkpOwogICAgICAgdGhpcy5fX21haW5FZmZlY3Qu
+c3RhcnQoKTsKIAogICAgIH0KSW5kZXg6IFB1ZmYuanMKPT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQotLS0gUHVmZi5qcwko
+cmV2aXNpb24gNTgpCisrKyBQdWZmLmpzCSh3b3JraW5nIGNvcHkpCkBAIC0xNDEsNiArMTQxLDcg
+QEAKICAgICAgICAgbW9kaWZ5RGlzcGxheSA6IGZhbHNlCiAgICAgICB9KTsKIAorICAgICAgdGhp
+cy5fX21haW5FZmZlY3Quc2V0RHVyYXRpb24odGhpcy5nZXREdXJhdGlvbigpKTsKICAgICAgIHRo
+aXMuX19tYWluRWZmZWN0LnN0YXJ0KCk7CiAgICAgfQogCg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

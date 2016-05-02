@@ -1,0 +1,159 @@
+<bug>
+          <bug_id>2660</bug_id>
+          
+          <creation_ts>2009-08-06 18:35:00 +0200</creation_ts>
+          <short_desc>Hidden pitfall when compiling on Linux or Windows</short_desc>
+          <delta_ts>2014-03-03 15:27:46 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Minh Ngo">mngo</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>11218</commentid>
+            <who name="Minh Ngo">mngo</who>
+            <bug_when>2009-08-06 18:35:42 +0200</bug_when>
+            <thetext>We extended generator.py by a procedure that does some merging. In this procedure there is a statement &quot;if &lt;string&gt; in argList ...&quot;. When running this on Windows the if-block is executed, not so on Linux.
+
+The reason is that on Linux the elements in argList have additional quotation marks. E.g. &quot;args1&quot; is not in [&#39;&quot;args1&quot;&#39;]. The if-block is not executed and so the resulting artifacts were not the same.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11247</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-08-10 11:26:32 +0200</bug_when>
+            <thetext>@Thomas, could you recommend (and document) any best practices to workaround such platform-dependent issues, please?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11293</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-08-11 19:17:22 +0200</bug_when>
+            <thetext>Where does this argList come from, since it is not in the original code? Is it 
+supposed to hold command line arguments? Is it derived from sys.argv, or from 
+the return value (&quot;args) of the optparse.OptionParser? We only use optparse 
+return values and never had such issues.
+
+And if you need to run some custom job on your project, why don&#39;t you write a 
+separate script and run it through a &quot;shell&quot; job key from the config?! There is 
+usually no need to modify the generator.py directly.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11297</commentid>
+            <who name="Minh Ngo">mngo</who>
+            <bug_when>2009-08-12 10:05:31 +0200</bug_when>
+            <thetext>Hi Thomas,
+
+it seems that argList has been there for a while in generator.py.
+We needed to modify generator.py in order to merge 2 Javascript files for our various builds that depend on an argument in the argList. The reason for modifying generator.py was that we thought merging files was not possible with config.json.
+
+Nevertheless it is just a remark that we encountered while extending generator.py. Maybe it&#39;s not really a bug. However, if someone else extended generator.py he/she could have the same problem if he/she depends on argList.
+
+Cheers,
+Minh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11301</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-08-12 11:01:10 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; it seems that argList has been there for a while in generator.py.
+
+Now I&#39;m getting to it: You&#39;re not referring to generator.py, but to generate.py 
+(&quot;e&quot; instead &quot;or&quot;), which is quite a different script! And yes, this has indeed 
+an argList variable.
+
+So make sure you are quoting the right file name/path, and always include a 
+revision number, because it&#39;s then easy to see which version of the file you&#39;re 
+referring to.
+
+&gt; We needed to modify generator.py in order to merge 2 Javascript files for our 
+various builds that depend on an argument in the argList. The reason for 
+modifying generator.py was that we thought merging files was not possible with 
+config.json.
+
+Well, as I said, it is possible, and would be much cleaner. I suggest you take 
+a look at that. Demobrowser is using this technique to generate data and config 
+files, if you want to look at an example.
+
+&gt; Nevertheless it is just a remark that we encountered while extending 
+generator.py. Maybe it&#39;s not really a bug. 
+
+I don&#39;t think so.
+
+&gt; However, if someone else extended generator.py he/she could have the same 
+problem if he/she depends on argList.
+
+Well, generate.py is not meant to be extended by people. It&#39;s a dedicated 
+script that has a specific purpose, i.e. calling the &quot;real&quot; generator.py (now 
+with &quot;or&quot;). The argList is not meant as a general arguments vector, but is 
+constructed specifically so it will run with the various shells across 
+platforms. The different quotings are there for a reason (and after much 
+debugging). If this doesn&#39;t fit with somebody else&#39;s programming concepts, than 
+so be it. You&#39;re messing with internals.
+
+Cheers,
+Thomas</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11303</commentid>
+            <who name="Minh Ngo">mngo</who>
+            <bug_when>2009-08-12 11:16:06 +0200</bug_when>
+            <thetext>I see. If it is possible to use config.json for merging files and if generate.py (sorry for the typo) is only for internal purposes then we used Qooxdoo in a wrong way in this case.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11306</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-08-12 12:14:53 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; ...If it is possible to use config.json for merging files ...
+
+You  cannot use config.json for merging files directly, but you can write your 
+own script that does whatever you want, and then *call* this script from the 
+config.json via the &quot;shell&quot; config key.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11307</commentid>
+            <who name="Minh Ngo">mngo</who>
+            <bug_when>2009-08-12 12:15:52 +0200</bug_when>
+            <thetext>Alright :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39584</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:46 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

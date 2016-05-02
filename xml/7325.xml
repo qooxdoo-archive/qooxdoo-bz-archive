@@ -1,0 +1,171 @@
+<bug>
+          <bug_id>7325</bug_id>
+          
+          <creation_ts>2013-04-03 10:23:00 +0200</creation_ts>
+          <short_desc>Livereload the browser after changes to the app sources</short_desc>
+          <delta_ts>2014-03-03 15:22:35 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Andreas Ecker">qooxdoo</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>richard.sternagel</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>32535</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2013-04-03 10:23:29 +0200</bug_when>
+            <thetext>In order to improve the typical developer&#39;s workflow significantly, a mechanism ought to be provided by the framework to auto-reload the browser window of an opened app after (successful) changes to the app source files.
+
+This might be realized as an extension to the recently introduced file watching feature of the generator, e.g. by a &quot;livereload&quot; property (or section) in the watch section of the config.json ?
+
+A working solution that comes close to the proposed feature, but has its limitations (e.g. it always reloads independent of a successful compile job), is described below. Many practical features could further extend such a solution (like a tiny status display in the browser), but those should be handled as separate enhancement tasks.
+
+
+* Get the free tool python-livereload, e.g. install via command &quot;easy_install livereload&quot;
+https://github.com/lepture/python-livereload
+
+* Add a file &quot;Guardfile&quot; with the following content to your project (suppose it&#39;s a skeleton-based project named &quot;custom&quot;):
+#!/usr/bin/env python
+from livereload.task import Task
+Task.add(&#39;source/script/custom.js&#39;)
+
+* Add the following to the end of the head section of your source/index.html file:
+  &lt;script src=&quot;http://localhost:35729/livereload.js&quot;&gt;&lt;/script&gt;
+
+* In the config.json add &quot;watch-source&quot; to the exports, at the beginning of the file
+
+* Then add the following to the job list, at the end of the file:
+    &quot;watch-source&quot; :
+    {
+      &quot;desc&quot;   : &quot;Watch&quot;,
+      &quot;extend&quot; : [&quot;cache&quot;],
+      &quot;watch-files&quot; :
+      {
+        &quot;paths&quot;    : [&quot;source/class&quot;],  // paths to watch
+        &quot;command&quot; :
+        {
+          &quot;line&quot;  : &quot;${PYTHON_CMD} ./generate.py -I -q source-hybrid&quot;,
+          &quot;per-file&quot; : false
+        },
+        &quot;check-interval&quot;  : 1,  // time interval in seconds
+      }
+    }
+
+* Execute in a shell: ./generate.py  -q watch-source
+
+* Execute in another shell: livereload
+
+* Open source/index.html in your browser - from now on it will get reloaded automatically after source changes</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32567</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-04-11 15:42:44 +0200</bug_when>
+            <thetext>There is a new Generator job, &#39;source-server-reload&#39;, that carries the 
+necessary information to start a source web server that also supports live 
+reload of the app. The web server monitors the source script file for changes 
+and notifies the client about the change. The client then reloads itself.
+Best used with a normal &#39;watch&#39; job that re-builds the app on source changes.
+
+master: ce7a7ac</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32574</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-04-15 11:18:48 +0200</bug_when>
+            <thetext>I&#39;ve made a couple more enhancements:
+
+- Checking for updates from the browser is now done via &lt;script&gt; transport, so 
+it works cross-domain. This is interesting when running the main application 
+through a standard server like Apache, but still monitoring updates over the 
+mini server.
+
+- When checking clients now supply a time stamp that is used to decide when 
+something is considered new. This improves concurrent access of multiple 
+clients to the same app.
+
+- The provided time stamp is that of the client&#39;s load time. This fixes 
+recurring issues when an update was missed due to time mismatches between check 
+time and update time of the script file.
+
+- The client script checks against multiple inclusion so only a single timer is 
+started even if the check script was loaded multiple times on the same page.
+
+- Reduced global name space pollution in the client script.
+
+- Fixing a port number for the mini server was always possible through the 
+&#39;web-server/server-port&#39; configuration key. This key is now exposed through the 
+SOURCE_SERVER_PORT macro, so it&#39;s easier to override, also on the command line:
+  generate.py source-server-reload -m SOURCE_SERVER_PORT:44161</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33400</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-07-17 10:00:37 +0200</bug_when>
+            <thetext>A few remarks re. lepture/python-livereload:
+
+- is rather heavy, as it relies on Tornado, a Python web server framework [1], 
+which needs an own install and is only released for Unix-like platforms (OSX 
+only for development), using system calls like epoll and kqueue (though the 
+core functionality relies only on the Python standard lib).
+
+- is a clone of a commercial app for OSX [2], and refers to their LiveReload2 
+product for Mac platforms (they also have an alpha version for Windows)
+
+- there is also a Ruby clone, guard-livereload [3]
+
+- all three products make use of browser extensions from livereload.com which 
+are MIT [4]
+
+- py-reload starts its own mini server
+- the client JS script must be added explicitly to index.html
+- configuration and Less compilation is done through Python &quot;guardfiles&quot;
+
+
+
+[1] http://www.tornadoweb.org/en/stable/
+[2] http://livereload.com/
+[3] https://github.com/guard/guard-livereload
+[4] 
+http://feedback.livereload.com/knowledgebase/articles/86242-how-do-i-install-and-use-the-browser-extensions-</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37731</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:35 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

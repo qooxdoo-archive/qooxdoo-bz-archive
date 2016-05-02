@@ -1,0 +1,267 @@
+<bug>
+          <bug_id>3298</bug_id>
+          
+          <creation_ts>2010-01-04 19:30:00 +0100</creation_ts>
+          <short_desc>qx.event.Manager.dispatchEvent is losing target after drag&amp;drop event model is completed</short_desc>
+          <delta_ts>2014-03-03 15:21:40 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>0.8.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>DUPLICATE</resolution>
+          <dup_id>3472</dup_id>
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0.2</target_milestone>
+          <dependson>3297</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Lukas Pilny">lp1051</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          <cc>fabian.jakobs</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>16025</commentid>
+            <who name="Lukas Pilny">lp1051</who>
+            <bug_when>2010-01-04 19:30:43 +0100</bug_when>
+            <thetext>Steps to repro:
+1. Create new project &quot;dragdrop&quot; and place the code below into Application.js
+2. generate source and open in browser
+3. play with the drag&amp;drop for a while with open console (F7)
+4. after few attempts (although valid ones - the drag&amp;drop is still working) you will see in console error: qx.event.Registration.getManager(null) was called! or target is null. Firebug is showing that the actuall problem lies in qx.event.Manager.dispatchEvent() method. After everything connected to drag&amp;drop event model is completed the dispatcher is somehow losing the target parameter.
+
+This problem is not critical, because it doesn&#39;t affect the behavior of drag&amp;drop.
+
+
+qx.Class.define(&quot;dragdrop.Application&quot;,
+{
+  extend : qx.application.Standalone,
+
+  members :
+  {
+    tree : null,
+
+    indicator : null,
+
+    main : function()
+    {
+      this.base(arguments);
+
+      if (qx.core.Variant.isSet(&quot;qx.debug&quot;, &quot;on&quot;))
+      {
+        qx.log.appender.Native;
+        qx.log.appender.Console;
+      }
+
+      this.createTree();
+      this.createIndicator();
+      this.initializeDragAndDrop();
+    },
+
+    /* ************************************************************************
+
+      Methods for creating tree example
+
+    ************************************************************************ */
+
+    createTree : function()
+    {
+      this.tree = new qx.ui.tree.Tree().set({width : 200, height : 400});
+      this.getRoot().add(this.tree, {left : 20, top : 20});
+
+      var root = new qx.ui.tree.TreeFolder(&quot;root&quot;);
+      root.setOpen(true);
+      this.tree.setRoot(root);
+
+      this.createSubfoldersForTreeRoot(&quot;Desktop&quot;);
+      this.createSubfoldersForTreeRoot(&quot;Remote Desktop&quot;);
+    },
+
+    createSubfoldersForTreeRoot : function(name)
+    {
+      var subChildren = [&quot;Files&quot;, &quot;Workspace&quot;, &quot;Network&quot;, &quot;Trash&quot;];
+
+      var parentFolder = new qx.ui.tree.TreeFolder(name)
+      parentFolder.setOpen(true);
+      this.tree.getRoot().add(parentFolder);
+
+      var length = subChildren.length;
+      for (var i = 0; i &lt; length; i++)
+      {
+        var folder = new qx.ui.tree.TreeFolder(subChildren[i])
+        parentFolder.add(folder);
+      } 
+    },
+
+    createIndicator : function()
+    {
+      this.indicator = new qx.ui.core.Widget;
+      this.indicator.setDecorator(new qx.ui.decoration.Single().set({
+        top : [ 1, &quot;solid&quot;, &quot;#33508D&quot; ]}));
+
+      this.indicator.setHeight(0);
+      this.indicator.setOpacity(0.5);
+      this.indicator.setLayoutProperties({left: -1000, top: -1000});
+      this.getRoot().add(this.indicator);
+    },
+
+    /* ************************************************************************
+
+       Methods for Drag &amp; Drop
+
+    ************************************************************************ */
+
+    initializeDragAndDrop : function()
+    {
+      this.tree.setDraggable(true);
+      this.tree.setDroppable(true);
+
+      this.tree.addListener(&quot;dragstart&quot;, function(e) {
+        e.addAction(&quot;move&quot;);
+
+        e.addType(&quot;qx/tree-items&quot;);
+      });
+
+      this.tree.addListener(&quot;droprequest&quot;, function(e)
+      {
+        var type = e.getCurrentType();
+        var treeFolder = this.getSelection();
+
+        e.addData(type, treeFolder);
+      });
+
+      this.tree.addListener(&quot;dragend&quot;, function(e)
+      {
+        this.setDomPosition(-1000, -1000);
+      }, this.indicator);
+
+      this.tree.addListener(&quot;drag&quot;, function(e)
+      {
+        var orig = e.getOriginalTarget();
+
+        if (!qx.ui.core.Widget.contains(this.tree, orig)) {
+          return;
+        }
+
+        var treeFolder = this.getTreeFolder(orig);
+        if (!treeFolder) {
+          return;
+        }
+
+        var origCoords = treeFolder.getContainerLocation();
+        this.indicator.setWidth(treeFolder.getBounds().width);
+        this.indicator.setDomPosition(origCoords.left, origCoords.top);
+      }, this);
+
+      this.tree.addListener(&quot;dragover&quot;, function(e)
+      {
+        if (e.getRelatedTarget()) {
+          e.preventDefault();
+        }
+      });
+
+      this.tree.addListener(&quot;drop&quot;, function(e)
+      {
+        var orig = e.getOriginalTarget();
+
+        var treeFolderTarget = this.getTreeFolder(orig);
+        var treeFolderSource = e.getData(&quot;qx/tree-items&quot;)[0];
+
+        if (!treeFolderTarget || treeFolderTarget === treeFolderSource) {
+//prevents inserting into itself
+          return;
+        }
+
+                                //allow drag&amp;drop only under same parent
+        if (treeFolderSource !== treeFolderTarget.getParent() &amp;&amp;
+treeFolderTarget.getParent() === treeFolderSource.getParent()) {
+                                        var targetChildren =
+treeFolderTarget.getParent().getChildren();
+                                        var targetIndex =
+targetChildren.indexOf(treeFolderTarget);
+
+                                        //if the target is lastChild of parent
+folder =&gt; addAfter() else addBefore()
+                                        if( targetIndex ==
+(targetChildren.length - 1) ) {
+                                               
+treeFolderTarget.getParent().addAfter(treeFolderSource, treeFolderTarget);
+                                        } else {
+                                                //bug?? addAfter() is adding
+after nexSibling of treeFolderTarget; uncomment to test
+                                               
+//treeFolderTarget.getParent().addAfter(treeFolderSource, treeFolderTarget);
+
+                                                //bug?? addBefore() inserts
+after the treeFolderTarget, which I expect to be behavior of addAfter()
+                                               
+treeFolderTarget.getParent().addBefore(treeFolderSource, treeFolderTarget);
+                                        }
+        }
+      }, this);
+    },
+
+    getTreeFolder : function (instance) {
+      if (instance == null) {
+        return null;
+      }
+
+      if (instance.classname === &quot;qx.ui.tree.TreeFolder&quot;) {
+        return instance;
+      } else {
+        return this.getTreeFolder(instance.getLayoutParent());
+      }
+    }
+  }
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16156</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-13 15:38:00 +0100</bug_when>
+            <thetext>to Chris</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17898</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2010-04-21 14:36:13 +0200</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17900</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2010-04-21 15:35:48 +0200</bug_when>
+            <thetext>
+
+*** This bug has been marked as a duplicate of bug 3472 ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37380</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:40 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

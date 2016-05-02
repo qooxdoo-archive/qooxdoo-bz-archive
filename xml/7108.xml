@@ -1,0 +1,168 @@
+<bug>
+          <bug_id>7108</bug_id>
+          
+          <creation_ts>2012-12-21 10:52:00 +0100</creation_ts>
+          <short_desc>qx.ui.mobile.page.NavigationPage._getScrollContainer overloading did not work</short_desc>
+          <delta_ts>2013-01-10 14:31:06 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>mobile</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Alexander Voronin">alexander.voronin</reporter>
+          <assigned_to name="Christopher Zuendorf">christopher.zuendorf</assigned_to>
+          
+          <qa_contact name="Christopher Zuendorf">christopher.zuendorf</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>31789</commentid>
+            <who name="Alexander Voronin">alexander.voronin</who>
+            <bug_when>2012-12-21 10:52:37 +0100</bug_when>
+            <thetext>I got hint how to overload scrolling container in this topic http://qooxdoo.678.n2.nabble.com/PDF-viewver-using-Qooxdoo-Mobile-tp7582262.html but following sample in playground shows that overloading did not called in any way:
+
+qx.Class.define(&quot;MyPage&quot;,
+{
+  extend: qx.ui.mobile.page.NavigationPage,
+
+  construct: function() {
+    this.base(arguments);
+    console.log(&quot;CTOR&quot;);
+  },
+  
+  members: 
+  {
+    _getScrollContainer: function() {
+      console.log(&quot;_getScrollContainer&quot;);
+      return null;
+    }
+  }
+});
+
+var page = new MyPage();
+page.setTitle(&quot;TEST&quot;);
+this.getManager().addDetail(page);
+page.show();</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31866</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-01-10 11:10:45 +0100</bug_when>
+            <thetext>My fault.
+
+You should override the method &quot;_createScrollContainer&quot;.
+
+Just like in this example...
+https://github.com/qooxdoo/qooxdoo/blob/master/application/mobileshowcase/source/class/mobileshowcase/page/Maps.js</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31867</commentid>
+            <who name="Alexander Voronin">alexander.voronin</who>
+            <bug_when>2013-01-10 11:51:18 +0100</bug_when>
+            <thetext>Did Yoy commited changes to current 2.2?
+
+(In reply to comment #1)
+&gt; My fault.
+&gt; 
+&gt; You should override the method &quot;_createScrollContainer&quot;.
+&gt; 
+&gt; Just like in this example...
+&gt; https://github.com/qooxdoo/qooxdoo/blob/master/application/mobileshowcase/source/class/mobileshowcase/page/Maps.js</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31868</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-01-10 11:57:59 +0100</bug_when>
+            <thetext>No it was not necessary. I just told you the wrong name of the method which should be overridden.
+
+There is no &quot;_getScrollContainer&quot; method at all... at that is why overriding do not work.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31869</commentid>
+            <who name="Alexander Voronin">alexander.voronin</who>
+            <bug_when>2013-01-10 12:21:37 +0100</bug_when>
+            <thetext>Oh, ic. Thanx!
+
+(In reply to comment #3)
+&gt; No it was not necessary. I just told you the wrong name of the method which
+&gt; should be overridden.
+&gt; 
+&gt; There is no &quot;_getScrollContainer&quot; method at all... at that is why overriding do
+&gt; not work.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31870</commentid>
+            <who name="Alexander Voronin">alexander.voronin</who>
+            <bug_when>2013-01-10 14:00:57 +0100</bug_when>
+            <thetext>Perhaps this is not intended to this issue but.. There is well known annoying issue with iframes and pdf content on mobile devices. I&#39;m trying to solve this with new css styles but it looks like qooxdoo do not pass some events into iframe container. Here is code fragment:
+
+	_getIframeHtml: function() {
+		var html = &#39;&lt;div style=&quot;background: teal; width: 10000; height: 10000; overflow: scroll; -webkit-overflow-scrolling: touch;&quot;&gt;&#39;;
+		html += &#39;&lt;iframe width=&quot;100%&quot; height=&quot;100%&quot; src=&quot;files/&#39; + MobilePortal.Data.State.currentFile.name + &#39;&quot;/&gt;&#39;;
+		html += &#39;&lt;/div&gt;&#39;;
+		return html;
+	},
+
+	_createScrollContainer: function() {
+		if (this._scrollComposite == null) {
+			this._scrollComposite = new qx.ui.mobile.container.ScrollComposite();
+			this._scrollComposite.add(new qx.ui.mobile.embed.Html(this._getIframeHtml()));
+		}
+		return this._scrollComposite;
+	}
+
+On desctop in chrome browser it looks nice and scrolls with mouse wheel, but any click inside viewing pdf (such as clicks on plugin zoom or print buttons) does not have any feedback. On iPad this also looks nice but proposed fix with &quot;-webkit-overflow-scrolling: touch&quot; css also do not work - any one or two-fingers scroll attempt leads to whole screen but not iframe container scroll. 
+
+Do you have comments or advices on this? Will appreciate any help.
+
+(In reply to comment #3)
+&gt; No it was not necessary. I just told you the wrong name of the method which
+&gt; should be overridden.
+&gt; 
+&gt; There is no &quot;_getScrollContainer&quot; method at all... at that is why overriding do
+&gt; not work.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31871</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-01-10 14:28:55 +0100</bug_when>
+            <thetext>I would assume, that &quot;&quot;-webkit-overflow-scrolling: touch&quot; should be assigned the webpage inside the iframe, and not to the iFrames container itself.
+
+Maybe you should search about a pdf viewer JavaScript for mobile environment usage. Or just provide a download of the PDF, and the target devices will manage to display the PDF right.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31872</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-01-10 14:31:06 +0100</bug_when>
+            <thetext>Have a look at this:
+https://github.com/mozilla/pdf.js</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

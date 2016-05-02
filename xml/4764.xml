@@ -1,0 +1,185 @@
+<bug>
+          <bug_id>4764</bug_id>
+          
+          <creation_ts>2011-03-13 14:30:00 +0100</creation_ts>
+          <short_desc>Maven integration</short_desc>
+          <delta_ts>2014-03-03 15:27:03 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>website</product>
+          <component>documentation</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Benjamin Dreux">dreux.benjamin</reporter>
+          <assigned_to name="Benjamin Dreux">dreux.benjamin</assigned_to>
+          <cc>qooxdoo</cc>
+    
+    <cc>salmon.charles</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>23236</commentid>
+            <who name="Benjamin Dreux">dreux.benjamin</who>
+            <bug_when>2011-03-13 14:30:20 +0100</bug_when>
+            <thetext>The following text should be included in a wiki page(mediawiki markup)
+=Introduction=
+Qooxdoo is great to build webapp front-end. And it is back-end agnostic. But what if you want to build java webapp. You will surely use an ant task or maven as build tool to contruct your jar/war/ear files.
+If you decided use maven this page will give a way to achive a first level of integration.
+
+=Dependency=
+First of all you use declare in your pom file, a dependency to the qooxdoo-sdk. But you need to grabe this artifact from somewehre. Etherway you add it to you personal artifact server, or the jspresso project deploy a copy on there infracstructure. Here is what i use:
+&lt;code&gt;
+  &lt;dependecies&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.qooxdoo&lt;/groupId&gt;
+      &lt;artifactId&gt;qooxdoo-sdk&lt;/artifactId&gt;
+      &lt;version&gt;1.3&lt;/version&gt;
+      &lt;type&gt;zip&lt;/type&gt;
+    &lt;/dependency&gt;
+  &lt;/dependencies&gt;
+&lt;/code&gt;
+Of cours you will need to add a repository if you decided to use the jspresso repositry.
+
+=Unpack dependency=
+Once the sdk is copied, you&#39;ll need to unpack it (unzip it). Of course you don&#39;t want to do so, each time you run a build. So we will use some trick to don&#39;t unpack if some specific folder already exist. We will unpack the sdk in the target folder. This way the qooxdoo-sdk folder will be removed when you run a &lt;code&gt;mvn clean&lt;/code&gt;. Here is the way we can do so:
+&lt;code&gt;
+  &lt;profiles&gt;
+        &lt;profile&gt;
+            &lt;id&gt;qooxdoo-unpacking&lt;/id&gt;
+            &lt;activation&gt;
+                &lt;file&gt;
+                    &lt;missing&gt;${project.build.directory}/qooxdoo-sdk&lt;/missing&gt;
+                &lt;/file&gt;
+            &lt;/activation&gt;
+            &lt;build&gt;
+                &lt;plugins&gt;
+                    &lt;plugin&gt;
+                        &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+                        &lt;artifactId&gt;maven-dependency-plugin&lt;/artifactId&gt;
+                        &lt;version&gt;2.2&lt;/version&gt;
+                        &lt;executions&gt;
+                            &lt;!--Import qooxdoo sdk and add it to target directory--&gt;
+                            &lt;execution&gt;
+                                &lt;id&gt;extract-qooxdoo-sdk&lt;/id&gt;
+                                &lt;phase&gt;process-resources&lt;/phase&gt;
+                                &lt;goals&gt;
+                                    &lt;goal&gt;unpack-dependencies&lt;/goal&gt;
+                                &lt;/goals&gt;
+                                &lt;configuration&gt;
+                                    &lt;includeArtifactIds&gt;qooxdoo-sdk&lt;/includeArtifactIds&gt;
+                                    &lt;outputDirectory&gt;${project.build.directory}/qooxdoo-sdk&lt;/outputDirectory&gt;
+                                &lt;/configuration&gt;
+                            &lt;/execution&gt;
+                        &lt;/executions&gt;
+                    &lt;/plugin&gt;
+                &lt;/plugins&gt;
+            &lt;/build&gt;
+        &lt;/profile&gt;
+    &lt;/profiles&gt;
+&lt;/code&gt;
+
+=Run build=
+Now there is every thng that is required, we are all most done. We need the run the build. But generator is a python script. Lucckely there is a plugin to run script with any language. Here is how:
+&lt;code&gt;
+&lt;build&gt;
+        &lt;plugins&gt;
+            &lt;plugin&gt;
+                &lt;groupId&gt;org.codehaus.mojo&lt;/groupId&gt;
+                &lt;artifactId&gt;exec-maven-plugin&lt;/artifactId&gt;
+                &lt;version&gt;1.2&lt;/version&gt;
+                &lt;executions&gt;
+                    &lt;!--Compile qooxdoo code --&gt;
+                    &lt;execution&gt;
+                        &lt;id&gt;compile-js&lt;/id&gt;
+                        &lt;goals&gt;
+                            &lt;goal&gt;exec&lt;/goal&gt;
+                        &lt;/goals&gt;
+                        &lt;phase&gt;compile&lt;/phase&gt;
+                    &lt;/execution&gt;
+                &lt;/executions&gt;
+                &lt;configuration&gt;
+                    &lt;executable&gt;python&lt;/executable&gt;
+                    &lt;workingDirectory&gt;${project.basedir}&lt;/workingDirectory&gt;
+                    &lt;arguments&gt;
+                        &lt;argument&gt;${project.build.directory}/qooxdoo-sdk/tool/bin/generator.py&lt;/argument&gt;
+                        &lt;argument&gt;build&lt;/argument&gt;
+                        &lt;argument&gt;--macro=QOOXDOO_PATH:${project.build.directory}/qooxdoo-sdk&lt;/argument&gt;
+                        &lt;argument&gt;--config=${project.basedir}/src/main/js/config.json&lt;/argument&gt;
+                    &lt;/arguments&gt;
+                &lt;/configuration&gt;
+            &lt;/plugin&gt;
+  &lt;build&gt;
+&lt;/code&gt;
+
+=More todo=
+*Find a way to do incremetal compilation. This will skip building js if there is no need. This way mvn test will be quicker, if we just want to run unit test.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23239</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-14 09:12:39 +0100</bug_when>
+            <thetext>Thank you very much for your input.
+@Andreas, could you maybe review the page and add it to the manual?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23427</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2011-03-21 10:41:48 +0100</bug_when>
+            <thetext>Thanks, Benjamin! I created a wiki page on your behalf, sent you the credentials by email asking you to login and review the document, and keep updating it as a maintainer:
+http://qooxdoo.org/documentation/general/maven_integration
+
+Resolve the bug once you think the docs are complete.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23438</commentid>
+            <who name="Benjamin Dreux">dreux.benjamin</who>
+            <bug_when>2011-03-21 14:00:03 +0100</bug_when>
+            <thetext>I&#39;ve donne the review, and added some lines that where missing.
+I&#39;m glad to be part of this project, even if it&#39;s a small contribution it&#39;s a contrib.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23443</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-22 08:08:25 +0100</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; I&#39;ve donne the review, and added some lines that where missing.
+&gt; I&#39;m glad to be part of this project, even if it&#39;s a small contribution it&#39;s a
+&gt; contrib.
+
+And we thanks you very much for it. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39325</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:03 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

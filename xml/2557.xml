@@ -1,0 +1,165 @@
+<bug>
+          <bug_id>2557</bug_id>
+          
+          <creation_ts>2009-07-08 12:52:00 +0200</creation_ts>
+          <short_desc>keyboard events are not fired after a call to textfield.focus()</short_desc>
+          <delta_ts>2012-05-16 09:36:34 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>master</version>
+          <rep_platform>IE 7</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Matthew">matthew+qooxdoo</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          <cc>fabian.jakobs</cc>
+    
+    <cc>w.si</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          <cf_browser_version>7</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10801</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-07-08 12:52:59 +0200</bug_when>
+            <thetext>Create a textfield with some listeners to keyup, keydown and keypress and immediately set the focus to it progmatically. Now start typing, the textfield correctly responds to the keystrokes but none of the events are fired!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11037</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-07-23 15:23:33 +0200</bug_when>
+            <thetext>to Chris</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11815</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-02 17:00:39 +0200</bug_when>
+            <thetext>Matthew, I tested it with the reversion 19982 and it seems to me that it is working. I know that Martin has done some work on the TextfField last week, perhaps he has fixed this issue. Could you please check it again with your code? Thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11920</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-07 14:09:06 +0200</bug_when>
+            <thetext>I tested this issue again with the current trunk (r20005) and all IE8 modes. It seems to me, that this issue was fixed with a commit before.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12009</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-09-08 15:57:32 +0200</bug_when>
+            <thetext>I still get this error, try the following in the playground.
+Click the button and start typing as soon as you see the text box. The text is entered but no event is fired, not leave the text box and enter it again, the events are now fired
+
+// Create a button
+var button1 = new qx.ui.form.Button(&quot;First Button&quot;, &quot;icon/22/apps/internet-web-browser.png&quot;);
+
+// Document is the application root
+var doc = this.getRoot();
+
+// Add button to document at fixed coordinates
+doc.add(button1,
+{
+  left : 100,
+  top  : 50
+});
+
+// Add an event listener
+button1.addListener(&quot;execute&quot;, function(e) {
+  var txt = new qx.ui.form.TextField();
+  doc.add(txt, { left:0, top: 0});
+  txt.addListener(&quot;keypress&quot;, function() {alert(&quot;hi&quot;)});
+  txt.focus();
+});
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12021</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-08 17:13:10 +0200</bug_when>
+            <thetext>Matthew, thanks for your example! I can confirm that no event appears on both playgrounds (0.8.2 [1] and 0.8.3-pre [2]). I tried your code with the current trunk (rev. 20031) and the event is fired there. Could you please use the current trunk and verify this? Thanks!
+
+[1] http://demo.qooxdoo.org/current/playground/
+[2] http://demo.qooxdoo.org/devel/playground/</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12024</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-09-08 17:45:10 +0200</bug_when>
+            <thetext>It seems this is more complicated than first thought. Using the same code as the playground I cannot reproduce this in the trunk but it still happens in my application.
+
+The actual event I am listening for is setup by:
+qx.event.Registration.addListener(window, &quot;useraction&quot;, this.run, this);
+
+This event is correctly fired during key presses but textField.getValue() returns NULL. If I do textField.setValue(&quot;&quot;) before displayed the box, it works fine!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12036</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-09 08:22:32 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; It seems this is more complicated than first thought. Using the same code as
+&gt; the playground I cannot reproduce this in the trunk but it still happens in my
+&gt; application.
+Oh, this sounds not good. Would it be possible to isolate it?
+
+&gt; This event is correctly fired during key presses but textField.getValue()
+&gt; returns NULL. If I do textField.setValue(&quot;&quot;) before displayed the box, it works
+&gt; fine!
+I talked with Martin about it and getting null values is a new feature to differentiate between reset or not inputted TextField and empty strings inputted from the user. 
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12045</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-09-09 09:52:56 +0200</bug_when>
+            <thetext>&gt; Oh, this sounds not good. Would it be possible to isolate it?
+I&#39;ll try today and get back to you
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12049</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-09-09 11:00:47 +0200</bug_when>
+            <thetext>Ah ha! The initial problem that I reported has indeed been fixed in the framework, I am actually seeing a seperate problem all together now. I realised the place in my application that was failing was a PasswordField not a TextField, changing it to a text field worked!
+
+Found out the cause of my &quot;second&quot; problem is the PasswordField never fires the input event in IE, without the input event being fired the __nullValue flag is never cleared so getValue() will always return null until the changeValue event is fired.
+
+I&#39;ve created another bug report for this and uploaded a patch
+See #2761</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12050</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-09 11:03:41 +0200</bug_when>
+            <thetext>Thank you very much!
+
+I close this bug.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

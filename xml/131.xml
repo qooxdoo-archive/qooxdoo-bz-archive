@@ -1,0 +1,128 @@
+<bug>
+          <bug_id>131</bug_id>
+          
+          <creation_ts>2006-08-17 10:41:00 +0200</creation_ts>
+          <short_desc>table cell rendering</short_desc>
+          <delta_ts>2012-05-16 09:41:57 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>master</version>
+          <rep_platform>Firefox 1.5</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Ulrich Schreiner">usc</reporter>
+          <assigned_to name="Til Schneider">tilman.schneider</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>1.5</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>285</commentid>
+            <who name="Ulrich Schreiner">usc</who>
+            <bug_when>2006-08-17 10:41:15 +0200</bug_when>
+            <thetext>i use the method
+
+tableModel.setDataAsMapArray
+
+to set the data which should be displayed in a table. if the value of a cell is empty (&quot;&quot; -&gt; empty string), i get exceptions when rendering, much more exceptions when scrolling and as a result of this corrupted data on the screen after scrolling.
+
+012815 ERROR: qx.ui.table.TablePane(621): Modification of property &quot;visibleRowCount&quot; failed with exception: TypeError - cellElement.firstChild has no properties
+  at http://localhost/class/qx/ui/table/DefaultDataCellRenderer.js:67
+  at http://localhost/class/qx/ui/table/TablePane.js:455
+  at http://localhost/class/qx/ui/table/TablePane.js:247
+  at http://localhost/class/qx/ui/table/TablePane.js:73
+  at http://localhost/class/qx/OO.js:700
+  at http://localhost/class/qx/ui/table/TablePaneScroller.js:1099
+  at http://localhost/class/qx/ui/table/TablePaneScroller.js:1074
+
+it seems that there is no &quot;firstChild&quot; if the value of a cell is an empty string. 
+
+i changed the method &quot;DefaultDataCellRenderer.updateDataCellElement&quot; to the following (added the if-statement):
+
+qx.Proto.updateDataCellElement = function(cellInfo, cellElement) {
+  if (cellElement.firstChild != null)
+  	cellElement.firstChild.nodeValue = this._formatValue(cellInfo.value);
+}
+
+and now everythin works.
+
+a testcase: change the &quot;Table_1.html&quot; in the &quot;html\test&quot; directory of qooxdoo to the following:
+
+  qx.core.Init.getInstance().defineMain(function()
+  {
+    var d = qx.ui.core.ClientDocument.getInstance();
+
+    // table model
+    var tableModel = new qx.ui.table.SimpleTableModel();
+    tableModel.setColumns([ &quot;ID&quot;, &quot;A number&quot;, &quot;A date&quot;, &quot;Boolean test&quot; ],[&quot;col0&quot;,&quot;col1&quot;,&quot;col2&quot;,&quot;col3&quot;]);
+    var rowData = [];
+    var now = new Date().getTime();
+    var dateRange = 400 * 24 * 60 * 60 * 1000; // 400 days
+    for (var row = 0; row &lt; 100; row++) {
+      var dt = new Date(now + Math.random() * dateRange - dateRange / 2);
+      rowData.push({col0:&quot;&quot;,col1:Math.random() * 10000,col2:dt,col3:(Math.random() &gt; 0.5)});
+    }
+    tableModel.setDataAsMapArray(rowData);
+    tableModel.setColumnEditable(1, true);
+    tableModel.setColumnEditable(2, true);
+
+    // table
+    var table = new qx.ui.table.Table(tableModel);
+    with (table) {
+      set({ left:10, top:30, right:300, bottom:30 });
+      setMetaColumnCounts([1, -1]);
+      getSelectionModel().setSelectionMode(qx.ui.table.SelectionModel.MULTIPLE_INTERVAL_SELECTION);
+      getTableColumnModel().setDataCellRenderer(3, new qx.ui.table.BooleanDataCellRenderer());
+    };
+
+    d.add(table);
+  });
+
+start this demo and scroll the table. you will see many exceptions</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>288</commentid>
+            <who name="Til Schneider">tilman.schneider</who>
+            <bug_when>2006-08-18 15:34:58 +0200</bug_when>
+            <thetext>.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>289</commentid>
+            <who name="Til Schneider">tilman.schneider</who>
+            <bug_when>2006-08-18 15:36:21 +0200</bug_when>
+            <thetext>.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>290</commentid>
+            <who name="Til Schneider">tilman.schneider</who>
+            <bug_when>2006-08-18 15:36:57 +0200</bug_when>
+            <thetext>Fixed in revision 3932</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,428 @@
+<bug>
+          <bug_id>5632</bug_id>
+          
+          <creation_ts>2011-09-23 11:00:00 +0200</creation_ts>
+          <short_desc>Add possibility to reference environment variables in config</short_desc>
+          <delta_ts>2014-03-03 15:20:55 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.config</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.6</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tristan Koch">tristan.koch</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>derrell.lipman</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26891</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-23 11:00:30 +0200</bug_when>
+            <thetext>For example, a configuration file could look like this:
+
+&quot;let&quot; :
+{
+  &quot;FOO&quot;: &quot;$${FOO}&quot;
+}
+
+(Note the double $).
+
+Provided &#39;echo $FOO&#39; returns &#39;foo&#39;, the macro should evaluate to &#39;foo&#39;.
+
+One use case I see for this enhancement is to define the (full qualified) path to qooxdoo system-wide. This would allow to move qooxdoo projects without the need to adjust the configuration or overwrite the macro on invocation.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27403</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-04 15:27:19 +0100</bug_when>
+            <thetext>I&#39;ve made a first implementation, adding the OS enviroment keys to the default 
+macros. This doesn&#39;t yet fix the QOOXDOO_PATH use case, as currently this macro 
+is needed to include other configs, and this is earlier than the default macros 
+are evaluated.
+
+With 101a31c .</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27404</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-11-04 15:34:27 +0100</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; I&#39;ve made a first implementation, adding the OS enviroment keys to the default 
+&gt; macros. This doesn&#39;t yet fix the QOOXDOO_PATH use case, as currently this macro 
+&gt; is needed to include other configs, and this is earlier than the default macros 
+&gt; are evaluated.
+
+Cool! Can&#39;t wait! So glad you&#39;re working on this! Not being able to define QOOXDOO_PATH on a per-user basis has been a huge headache, with multiple people working on the same project.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27405</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-04 16:23:52 +0100</bug_when>
+            <thetext>I moved the OS environment settings from the Default to the Config class. This 
+way, they&#39;re available earlier, esp. for expansion of the top-level &quot;include&quot; 
+keys (which allows you to specify QOOXDOO_PATH in the OS environ). They are 
+included into the config global &quot;let&quot; section of the config, and take 
+precedence over keys already found there (which I think is intuitive). Also, it 
+seems like a better
+precedence that jobs will first include those before including macros from 
+parent jobs, so environment can override keys in config files.
+
+Having QOOXDOO_PATH in the environment now seems to work, as well as more 
+job-specific macros.
+
+With bcf93aef54.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27406</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-04 16:31:18 +0100</bug_when>
+            <thetext>NB: The implementation does not exactly match the bug description. Environment 
+keys are &quot;transparent&quot; and appear just like any other macros. So there is no 
+special syntax to refer to them (Which I think is better, as you wouldn&#39;t want 
+to commit to *how* a value is provided when you are writing a reference to it 
+in a config file). Environment settings have high priority. They take 
+precedence over all keys of like names that are written down in config files, 
+and should (not tested!) have lower precedence than macros passed on the 
+command line (with -m/--macro).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27408</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-11-04 19:29:22 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; Environment settings have high priority. They take 
+&gt; precedence over all keys of like names that are written down in config files, 
+
+I believe this implementation differs from what is typically expected and found. Most typically, in my experience, the environment variable is a default which can be overridden by a configuration file, which can be overridden by a command line option.
+
+Here are some examples of documentation for popular projects which do it the way I just described, rather than the way it was just implemented here:
+
+http://httpd.apache.org/docs/2.3/configuring.html
+http://gcc.gnu.org/onlinedocs/gcc/Environment-Variables.html
+
+I don&#39;t actually know of any examples where the environment takes precedence over a configuration file.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27409</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-11-04 19:30:05 +0100</bug_when>
+            <thetext>Reopened due to comment 5</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27410</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-04 20:05:34 +0100</bug_when>
+            <thetext>Hi Derrell,
+
+(In reply to comment #5)
+&gt; (In reply to comment #4)
+&gt; &gt; Environment settings have high priority. They take 
+&gt; &gt; precedence over all keys of like names that are written down in config 
+files, 
+&gt; 
+&gt; I believe this implementation differs from what is typically expected and 
+found. Most typically, in my experience, the environment variable is a default 
+which can be overridden by a configuration file, which can be overridden by a 
+command line option.
+&gt; 
+&gt; Here are some examples of documentation for popular projects which do it the 
+way I just described, rather than the way it was just implemented here:
+&gt; 
+&gt; http://httpd.apache.org/docs/2.3/configuring.html
+&gt; http://gcc.gnu.org/onlinedocs/gcc/Environment-Variables.html
+&gt; 
+&gt; I don&#39;t actually know of any examples where the environment takes precedence 
+over a configuration file.
+
+good point (although I think there might be valid examples where it is not like 
+that). In the case of qooxdoo I feel things are different. In the examples you 
+gave, the configuration file is *all user-driven*. The user owns it, writes it, 
+maintains it, etc. Those apps typically can do well without a config file, and 
+deliver just a sparse template configuration when unpacked. All configuration 
+files are exposed (not withstanding user access permissions and such).
+
+In qooxdoo the difference is that a user interacts with, like, 7 config files 
+when just using a gui skeleton, most of them hidden from him as they are part 
+of the framework, and not meant to be directly exposed. Following your logic he 
+would have no chance of overriding any of the macros that come with them, 
+except for sitting down and writing the corresponding stuff in his own 
+config.json. I feel this wouldn&#39;t do justice to the user. I think the goal is 
+always to give higher precedence the closer a setting is to immediate user 
+control. And in the case of qooxdoo I think environment settings are &quot;closer&quot; 
+to the user than config files. You have to think of all of them.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27411</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-11-04 20:12:05 +0100</bug_when>
+            <thetext>Understood. But if I understand what you&#39;ve implemented correctly, that means that if you want to override the environment&#39;s QOOOXDOO_PATH for one of his projects, for example, it can&#39;t be done. One would expect that putting a QOOXDOO_PATH setting in the &quot;let&quot; section would override what came from the environment, for that project. In the format for which I provided the references, it&#39;s always possible to override a &quot;more broad&quot; definition (&quot;broadest&quot; being environment, then config file, then command line option) with a &quot;more concise&quot; (less broad) one. Is it possible, as you&#39;ve implemented it, to override an environment variable in the config file without the fairly significant work of rewriting a bunch of sub-jobs?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27412</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-04 20:49:00 +0100</bug_when>
+            <thetext>(In reply to comment #8)
+&gt; Understood. But if I understand what you&#39;ve implemented correctly, that means
+&gt; that if you want to override the environment&#39;s QOOOXDOO_PATH for one of his
+&gt; projects, for example, it can&#39;t be done.
+
+Why not?! Many teams I know maintain multiple bash profiles for different projects, and do a &quot;. ~/.projectA&quot;, &quot;. ~/.projectB&quot;, etc. to switch between them.
+
+&gt; One would expect that putting a
+&gt; QOOXDOO_PATH setting in the &quot;let&quot; section would override what came from the
+&gt; environment, for that project.
+
+But I thought that was exactly what you were trying to avoid: Changing a config file to customize it for a local environment, as the config file might be in version control!?
+
+&gt; In the format for which I provided the
+&gt; references, it&#39;s always possible to override a &quot;more broad&quot; definition
+&gt; (&quot;broadest&quot; being environment, then config file, then command line option) with
+&gt; a &quot;more concise&quot; (less broad) one.
+
+Yes, only that the ordering from &quot;broad&quot; to &quot;less broad&quot; sorts the same items differently for qooxdoo IMO: config file, environment, command line.
+
+&gt; Is it possible, as you&#39;ve implemented it, to
+&gt; override an environment variable in the config file without the fairly
+&gt; significant work of rewriting a bunch of sub-jobs?
+
+As I&#39;ve implemented it, an environment-based key takes precedence over a file-based key. So, no, you cannot override an environment key in a config file, no matter how far you go. (You can of course re-write existing jobs to not use the key at all, if that is what you are hinting at, but that would be a drag). If you don&#39;t like the environment value, you can always unset it, or pass the macro on the command line.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27413</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-11-04 21:01:51 +0100</bug_when>
+            <thetext>(In reply to comment #9)
+&gt; Why not?! Many teams I know maintain multiple bash profiles for different
+&gt; projects, and do a &quot;. ~/.projectA&quot;, &quot;. ~/.projectB&quot;, etc. to switch between
+&gt; them.
+
+Granted. That&#39;s a reasonable solution.
+
+&gt; 
+&gt; &gt; One would expect that putting a
+&gt; &gt; QOOXDOO_PATH setting in the &quot;let&quot; section would override what came from the
+&gt; &gt; environment, for that project.
+&gt; 
+&gt; But I thought that was exactly what you were trying to avoid: Changing a config
+&gt; file to customize it for a local environment, as the config file might be in
+&gt; version control!?
+
+Yes that is exactly what I&#39;m trying to avoid, in the general case. My arguments here are for an interface that I would find intuitive because it is the way other programs tend to work. You have already succeeded in accomplishing my overall goal (thank you!), and before this gets too widely used, I wanted to bring up what feels to me quite unintuitive.
+
+
+&gt; Yes, only that the ordering from &quot;broad&quot; to &quot;less broad&quot; sorts the same items
+&gt; differently for qooxdoo IMO: config file, environment, command line.
+
+Your brain works differently than mine does. :-) 
+
+If you&#39;re settled on your solution, and I haven&#39;t yet swayed your thinking, I won&#39;t try further to convince you. I&#39;m happy to have a general solution to the problem.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27415</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-04 22:03:38 +0100</bug_when>
+            <thetext>(In reply to comment #10)
+&gt; If you&#39;re settled on your solution, and I haven&#39;t yet swayed your thinking, I
+&gt; won&#39;t try further to convince you. I&#39;m happy to have a general solution to the
+&gt; problem.
+
+I&#39;m not settled, and willing to re-consider in better times. Just now, I guess this is as much as I can muster. The bug was not scheduled at all, and it was only a by-product of working on something else that I saw an opportunity to integrate the os environment. I did it on-the-fly, so to speak. I don&#39;t mind keeping it open, but it will hardly see any updates anytime soon, and will be un-targeted from 1.6 again. If we don&#39;t come across severe show-stoppers I guess we could have it in the release in the current form nevertheless, as experimental. Otherwise, I will have to remove it again.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27433</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-11-07 13:38:38 +0100</bug_when>
+            <thetext>Just to give my two cents… I like the feature, but I have my doubts that allowing the environment to overwrite the configuration is a good idea. First, I agree with Derrell that the implementation differs from what is typically expected.
+
+To add another example, git (to my knowledge) reads in the order 
+1) environment
+2) global (/etc)
+3) user (~/.git)
+4) project (PROJECT/.git)
+
+Also…,
+
+1) it may break existing setups.
+
+Wrong environment variables (e.g. QOOXDOO_PATH) break all qooxdoo projects.
+
+I added a QOOXDOO_PATH to my environment a while ago (thought it would work). The path changed in the meantime, but with the update it was read and therefore prevented the generator to find qooxdoo. It took me some time to connect the dots, because I was not thinking about the recent changes to the generator at first.
+
+2) its inflexible.
+
+What if you want to define a global default, but want to override it in certain projects? Say, you want to be on &#39;branch&#39; most of the time, but for one project, try &#39;master&#39;. Sure, you could prefix the generator with QOOXDOO_PATH but thats cumbersome.
+
+3) no namespaces.
+
+I can only guess know how many macros we have (documented and undocumented), but I would assume more than 10 at least? Some have a rather general name (ROOT, APPLICATION). Now, I could imagine some environments to have variables predefined that are macros in our context.
+
+With the two-dollar convention, you could opt-in to read environment variables. It does not break existing setups, because it requires action from the user who wants to take advantage of the new feature. If you want to read the path from the environment, you map $QOOXDOO_PATH to $$QOOXDOO_PATH. 
+
+Maybe a compromise is to &quot;whitelist&quot; some environment variables?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27444</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-07 23:09:32 +0100</bug_when>
+            <thetext>(In reply to comment #12)
+&gt; 1) it may break existing setups.
+&gt; 
+&gt; Wrong environment variables (e.g. QOOXDOO_PATH) break all qooxdoo projects.
+
+Well, if you can influence generator macros through environment variables, you can also shoot yourself in the foot. As always.
+
+&gt; 2) its inflexible.
+&gt; 
+&gt; What if you want to define a global default, but want to override it in certain
+&gt; projects? Say, you want to be on &#39;branch&#39; most of the time, but for one
+&gt; project, try &#39;master&#39;. Sure, you could prefix the generator with QOOXDOO_PATH
+&gt; but thats cumbersome.
+
+We had this argument before. You can edit your config.json&#39;s right away, without using environment variables at all. Or you can use different bash profiles for different projects.
+
+&gt; 3) no namespaces.
+&gt; 
+&gt; I can only guess know how many macros we have (documented and undocumented),
+&gt; but I would assume more than 10 at least? Some have a rather general name
+&gt; (ROOT, APPLICATION). Now, I could imagine some environments to have variables
+&gt; predefined that are macros in our context.
+
+This is indeed an issue. 
+
+&gt; 
+&gt; With the two-dollar convention, you could opt-in to read environment variables.
+&gt; It does not break existing setups, because it requires action from the user who
+&gt; wants to take advantage of the new feature. If you want to read the path from
+&gt; the environment, you map $QOOXDOO_PATH to $$QOOXDOO_PATH. 
+
+Yes, but as I perceived it the most pressing issue (mostly voiced outside this bug) is being able to override QOOXDOO_PATH without modifying config.json. And as I wrote elsewhere, using a special convention for environment variables forces the programmer to commit to where a value will come from, rather than leaving it open for later. All your suggestions assume that it is easier to edit config.json then to modify the shell environment. But this is the exact opposite to how I e.g. understand Derrell.
+
+&gt; 
+&gt; Maybe a compromise is to &quot;whitelist&quot; some environment variables?
+
+The minimal solution would probably be to restrict environment variable recognition to just QOOXDOO_PATH.
+
+I will remove the current implementation until there is more clarity about the general direction this should take.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27445</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-11-07 23:18:25 +0100</bug_when>
+            <thetext>(In reply to comment #13)
+&gt; Yes, but as I perceived it the most pressing issue (mostly voiced outside this
+&gt; bug) is being able to override QOOXDOO_PATH without modifying config.json. And
+&gt; as I wrote elsewhere, using a special convention for environment variables
+&gt; forces the programmer to commit to where a value will come from, rather than
+&gt; leaving it open for later. All your suggestions assume that it is easier to
+&gt; edit config.json then to modify the shell environment. But this is the exact
+&gt; opposite to how I e.g. understand Derrell.
+
+Just to clarify, my preferred implementation would have a variable that is specified in config.json override what is in the environment. To accomplish my goal, using that implementation, I would expect that QOOXDOO_PATH would be removed entirely from config.json, so the the value in from the environment would be used. It certainly seems easier to tell everyone to set QOOXDOO_PATH in their environment, once, than to ask them to modify the config.json file of every application and contribution they ever use to match where they keep their framework.
+
+Then, in those rare cases when I want to be able to use some different QOOXDOO_
+PATH, I can either use your suggestion of an alias or shell command to specify a new location, or I could add, in that one app&#39;s config.json, an explicit QOOXDOO_PATH entry.
+
+Derrell
+
+ps. Actually, my statement about &quot;preferred implementation&quot; isn&#39;t quite true. My preferred implementation is one that actually exists, not one that gets remove now that it&#39;s finally here. :-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27452</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-08 11:01:03 +0100</bug_when>
+            <thetext>I removed os.environ except for QOOXDOO_PATH if it is set. Then the override 
+semantics kick in. At least this is a focussed approach we can experiment with.
+
+With 6306aee.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27454</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-08 12:53:58 +0100</bug_when>
+            <thetext>(In reply to comment #14)
+&gt; Just to clarify, my preferred implementation would have a variable that is 
+specified in config.json override what is in the environment. To accomplish my 
+goal, using that implementation, I would expect that QOOXDOO_PATH would be 
+removed entirely from config.json, so the the value in from the environment 
+would be used. It certainly seems easier to tell everyone to set QOOXDOO_PATH 
+in their environment, once, than to ask them to modify the config.json file of 
+every application and contribution they ever use to match where they keep their 
+framework.
+&gt; 
+&gt; Then, in those rare cases when I want to be able to use some different 
+QOOXDOO_
+&gt; PATH, I can either use your suggestion of an alias or shell command to 
+specify a new location, or I could add, in that one app&#39;s config.json, an 
+explicit QOOXDOO_PATH entry.
+&gt; 
+
+I&#39;m not so sure. What you say makes perfect sense in an &quot;established&quot; qooxdoo 
+environment. One or a few apps, maybe some self-written libs, maybe some 
+contribs. And then you upgrade your existing qooxdoo installation in a 
+side-by-side fashion, so you&#39;re able to easily switch between the two. Then 
+your approach is perfect.
+
+I&#39;m not sure, though, I want to impose on a casual or first-time user the force 
+to set a mandatory environment key, before even a gui skeleton can be built. 
+Think of the guys working on Windows. It&#39;s a journey even to get to the 
+dialogue where you can set environment variables, and then you have to restart 
+Cmd for it to take effect. It&#39;s clumsy. I would want to keep our zero-effort 
+install as long as possible. But that means providing sensible defaults for all 
+necessary generator macros, including QOOXDOO_PATH.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30123</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-07-13 11:46:46 +0200</bug_when>
+            <thetext>The main use case, taking QOOXDOO_PATH from OS environment, is implemented. If 
+we need support for more OS env vars this should be covered by fresh bugs, 
+specific to the given env var. A general import of OS vars into the config name 
+space seems questionable as this makes plenty of room for unintended name 
+clashes and captures.
+
+As I&#39;ve written before I&#39;m skeptical towards extra syntax for OS env vars in 
+config.json (&quot;$${FOO}&quot; in Tristan&#39;s description), as it forces the presence of 
+env vars and doesn&#39;t allow for in-file provision of the values.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30125</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-07-13 11:51:29 +0200</bug_when>
+            <thetext>*** Bug 3764 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37082</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:55 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

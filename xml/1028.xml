@@ -1,0 +1,164 @@
+<bug>
+          <bug_id>1028</bug_id>
+          
+          <creation_ts>2008-07-03 16:45:00 +0200</creation_ts>
+          <short_desc>Security: Json.js: parseQx() is without checking</short_desc>
+          <delta_ts>2010-03-11 09:58:38 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>3641</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-07-03 16:45:21 +0200</bug_when>
+            <thetext>The parseQx() method of Json.js does not checking on the passed argument. This should be amended.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3817</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-07-11 14:56:29 +0200</bug_when>
+            <thetext>Maybe a security issue. Someone should have a look at this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3844</commentid>
+            <who name="Andreas Junghans">andreas.junghans</who>
+            <bug_when>2008-07-11 15:53:03 +0200</bug_when>
+            <thetext>In theory, this can be a security problem. In practice, it doesn&#39;t matter much: The only real threat that strict validation would protect us against is code injection by a malicious server. However, the current qx.io.remote implementation (and the technical reasons behind it) requires us to fully trust the servers we talk to anyway:
+
+1.) If XmlHttpRequest is used, we can only talk to the domain where the whole webapp came from. This server can of course send arbitrary script code as part of the original HTML page, so we don&#39;t gain much by validating its JSON strings.
+
+2.) Using iframes limits us to read responses from the webapp domain, so point 1 applies here too.
+
+3.) Using script tags (like the script transport does) means that JavaScript sent by the server gets executed long before we can perform any validation. So again, we have to trust this server.
+
+Of course, there are also reasons why validation would make sense:
+
+- The JSON string may have been put together by the application, including values entered by users. If there are bugs in this process, code injection could be possible (cf. well-known XSS problems).
+
+- If there&#39;s a bug on the server side (incorrect JSON generation where user-supplied values are not escaped correctly), we may have the same problem.
+
+Finally, we have to take into account the performance impact of validation. For example, I often have to deal with large JSON responses, and using a RegExp to validate them can be painfully slow. On the other hand, these responses don&#39;t contain user-supplied values in my case.
+
+All in all, I would suggest keeping the current approach: You can call Json.parse() to validate the string before its eval()-ed, or you can call Json.parseQx() to blindly have it evaluated. The naming of these methods should be improved, and maybe there should only be one method with a boolean parameter to turn validation on and off.
+
+There should also be a validation option for the qx.io.remote classes (in the cases where these deal with JSON stuff). Currently, no validation is performed. It should be possible to change this via an additional option. I don&#39;t have a strong preference regarding the default, as long as an application developer can easily choose whether to validate or not.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3850</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-07-11 16:04:40 +0200</bug_when>
+            <thetext>You are absolutely right about the naming of those methods. Neither the method name nor the API doc indicates, how they are different. I think it is a good idea to combine both methods and use an additional parameter to toggle validation.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3936</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-07-17 13:52:49 +0200</bug_when>
+            <thetext>Out of 0.8 time frame.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5017</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-02 23:22:55 +0200</bug_when>
+            <thetext>Security bug. Should be fixed!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5254</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-04 22:48:59 +0200</bug_when>
+            <thetext>@Thomas: Can you keep this issue on your radar?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5384</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-07 00:48:51 +0200</bug_when>
+            <thetext>Alex, can you fix this?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5491</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-09-11 14:47:14 +0200</bug_when>
+            <thetext>back to Thomas</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5660</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-09-29 10:12:53 +0200</bug_when>
+            <thetext>to Christian. 
+
+As suggested:
+  * the two methods should be consolidated into one with an optional validation flag
+  * there should be an additional flag in the io.remote classes to toggle default behavior
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11997</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-08 14:44:15 +0200</bug_when>
+            <thetext>Out of 0.8.3 timeframe.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12218</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-14 09:12:56 +0200</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12251</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-09-14 11:39:27 +0200</bug_when>
+            <thetext>- merged &quot;parse&quot; and &quot;parseQx&quot;
+- added parameter for validation
+- deprecated &quot;parseQx&quot;
+- transport classes Iframe and XmlHttp use the &quot;parse&quot; instead of the deprecated &quot;parseQx&quot;
+
+Done with rev. 20104 on trunk.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13688</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-10-29 12:12:38 +0100</bug_when>
+            <thetext>CLOSED.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14434</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:14:31 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

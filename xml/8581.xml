@@ -1,0 +1,106 @@
+<bug>
+          <bug_id>8581</bug_id>
+          
+          <creation_ts>2014-09-08 09:19:00 +0200</creation_ts>
+          <short_desc>Enable dynamic part loading through generator config</short_desc>
+          <delta_ts>2014-09-11 10:31:16 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io.part</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>NEW</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christian Boulanger">info</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>mustafa.sak</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>41142</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2014-09-08 09:19:26 +0200</bug_when>
+            <thetext>Currently, it seems impossible to load parts dynamically, i.e. to specify the part to be loaded at runtime. According to Mustafa, the generator picks up all parts that are to be loaded at compile time by looking up in the code which parts are actually mentioned in qx.io.PartLoader.require(). This makes it necessary to mention parts and the classes loaded by the parts in the code explicitly, like so:
+
+    /**
+     * Load the plugin as a qooxdoo part
+     * @param data {Object} plugin data
+     * @param next {Function} callback
+     */
+    _loadPart : function( data, next, self )
+    {
+      var self = this;
+      qx.io.PartLoader.require(data.part, function() {
+        var plugins= {
+          &quot;plugin_csl&quot;          : window.csl ? csl.Plugin : null,
+          &quot;plugin_z3950&quot;        : window.z3950 ? z3950.Plugin : null,
+          &quot;plugin_isbnscanner&quot;  : window.isbnscanner ? isbnscanner.Plugin : null
+        };
+        try
+        {
+          plugins[data.part].getInstance().init();
+        }
+        catch(e)
+        {
+          self.warn(&quot;Plugin &#39;&quot; + data.name + &quot;&#39;: Error initializing: &quot; + e);
+        }
+        next();
+      });
+    }
+  }
+});
+
+If the part names and classes are left out of the code, the parts are not included in the build, because the generator has no way of knowing that they are used. 
+
+In my app, I want to use part loading as a way to load plugins. However, which plugins are loaded is determined at runtime, not at compile time, because this information is stored by the backend and transmitted to the frontend after start-up. 
+
+It would be good if one could specify runtime dependencies in config.json and force the generator use use the parts identified by their name regardless of whether they are part of the computed dependencies. This would allow to compile the app with all plugins, but then only load those which are specified by the backend, without having to touch the source code each time.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41162</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-09-11 09:35:10 +0200</bug_when>
+            <thetext>To me, this sounds somehow trying to bend a system towards something it was never meant to do and I don&#39;t think that this use case is a generic scenario the framework needs to implement. Nevertheless, it could be possible if desired like in your case. Add the reqire statements to a piece of code which never gets executed like in a always falsy condition? This way, the generator could be &quot;fooled&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41163</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2014-09-11 10:31:16 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; To me, this sounds somehow trying to bend a system towards something it was
+&gt; never meant to do and I don&#39;t think that this use case is a generic scenario
+&gt; the framework needs to implement. Nevertheless, it could be possible if desired
+&gt; like in your case. Add the reqire statements to a piece of code which never
+&gt; gets executed like in a always falsy condition? This way, the generator could
+&gt; be &quot;fooled&quot;.
+
+Thanks, I&#39;ll try that!</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

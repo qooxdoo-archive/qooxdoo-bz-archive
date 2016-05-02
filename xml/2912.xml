@@ -1,0 +1,331 @@
+<bug>
+          <bug_id>2912</bug_id>
+          
+          <creation_ts>2009-10-12 12:00:00 +0200</creation_ts>
+          <short_desc>Window restore method and events</short_desc>
+          <delta_ts>2010-03-11 09:11:30 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.popups</component>
+          <version>0.8.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Dominik Horb">dominik.horb</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>13072</commentid>
+            <who name="Dominik Horb">dominik.horb</who>
+            <bug_when>2009-10-12 12:00:43 +0200</bug_when>
+            <thetext>Hi,
+I&#39;m currently struggling with the events of qx.ui.window.Window a bit, as I&#39;m trying to build a taskbar.
+There seem to be some more issues, which I don&#39;t really understand yet and they are possibly problems in my code, but what I noticed are some inconsistencies in the documentation and the way the events work, which I would like to notice while I&#39;m on it...
+
+These are the docs of the restore events:
+
+restore
+
+Fired if the window is restored from a minimized or maximized state
+
+beforeRestore
+
+Fired before the window is restored from a minimized or maximized state.
+
+
+But what restore actually does is only restore from maximized state, which is correct in the doc of the method, but should in my opinion really do both.
+
+restore()
+
+Restore the window, if it is maximized.
+
+restore : function()
+    {
+      if (!this.isMaximized() || !this.isMinimized()) {
+        return;
+      }
+
+      if (this.fireNonBubblingEvent(&quot;beforeRestore&quot;, qx.event.type.Event, [false, true]))
+      {
+        // Restore old properties
+        var left = this.__restoredLeft;
+        var top = this.__restoredTop;
+
+        this.setLayoutProperties({
+          edge : null,
+          left : left,
+          top : top
+        });
+
+        // Remove maximized state
+        this.removeState(&quot;maximized&quot;);
+
+        // Update captionbar
+        this._updateCaptionBar();
+
+        // Fire user event
+        this.fireEvent(&quot;restore&quot;);
+      }
+    }
+
+Best Regards
+
+Dominik</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13075</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-12 12:07:28 +0200</bug_when>
+            <thetext>to Chris</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13121</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-10-12 17:30:50 +0200</bug_when>
+            <thetext>Increase priority.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13122</commentid>
+            <who name="Dominik Horb">dominik.horb</who>
+            <bug_when>2009-10-12 17:49:14 +0200</bug_when>
+            <thetext>Decrease I would call this ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13142</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-10-13 09:47:55 +0200</bug_when>
+            <thetext>D&#39;oh! Sorry, P2 not P5.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13247</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-10-16 16:18:49 +0200</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13277</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-10-19 12:28:51 +0200</bug_when>
+            <thetext>Fixed in trunk with rev. 20408.
+
+Dominik, could you please verify that the fix is also working for you. Thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13426</commentid>
+            <who name="Dominik Horb">dominik.horb</who>
+            <bug_when>2009-10-22 11:38:03 +0200</bug_when>
+            <thetext>Heyho,
+sorry, took me some time to get around to this, it&#39;s a little better now. The problem is, that the positions can change after 
+
+maximize-&gt;restore-&gt;&quot;move window around&quot;-&gt;minimize-&gt;restore 
+
+because restore always takes the __restored positions, which are only set in maximize. 
+
+And if you do this: maximize-&gt;minimize-&gt;restore, the window should perhaps be back in a maximized state, by now it&#39;s normal.
+
+Here&#39;s the taskbar widget I used to test these things, perhaps this could be useful for you as well:
+
+/**
+ * This class provides some well known operating system like taskbar 
+ * behaviours. To every added window a toggle button is attached, that
+ * can switch the window between maximized and minimized state.
+ *
+ * *Example*
+ *
+ * Here is a little example of how to use the widget.
+ *
+ * &lt;pre class=&#39;javascript&#39;&gt;
+ * var win = new qx.ui.window.Window(&quot;A window&quot;);
+ * var taskbar = new addressbook.widgets.Taskbar();
+ * taskbar.attachWindow(win);
+ * &lt;/pre&gt;
+ *
+ *
+ */
+qx.Class.define(&quot;addressbook.widgets.TaskBar&quot;,
+{
+  extend : qx.ui.core.Widget,
+
+  /*
+  *****************************************************************************
+     CONSTRUCTOR
+  *****************************************************************************
+  */
+
+  construct : function()
+  {
+    this.base(arguments);
+    
+    //the menu to which all the windows are added
+    var taskbar = new qx.ui.toolbar.ToolBar();
+    //taskbar.setSpacing(0);
+    //taskbar.setAppearance(
+    this.setMaxWidth(this.getWidth());
+    
+    //TODO stop the bar from stretching if too many windows are added
+    this._setLayout(new qx.ui.layout.VBox());
+    this._add(taskbar);
+    this.__taskbar = taskbar;
+  },
+  
+  /*
+  *****************************************************************************
+     PROPERTIES
+  *****************************************************************************
+  */
+
+  properties :
+  {
+    /** Appearance of the widget */
+    appearance :
+    {
+      refine : true,
+      init : &quot;taskbar&quot;
+    }    
+  },
+  
+  /*
+  *****************************************************************************
+     MEMBERS
+  *****************************************************************************
+  */
+  members : {
+    __taskbar : null,
+    
+    /**
+     * Every window that is added gets an associated taskbar button which can toggle 
+     * it between minimized and maximized.
+     */
+    attachWindow : function(window) { 
+      var button = this.__newTaskbarItem(window);
+      window.addListener(&quot;close&quot;, this.__close, this);
+      this.__taskbar.add(button);
+    },
+    
+    /*
+    ---------------------------------------------------------------------------
+      LISTENERS
+    ---------------------------------------------------------------------------
+    */
+    
+    /**
+     * Listens to added windows and removes their taskbar button if they are closed.
+     */
+    __close : function(e) {
+      var button = e.getTarget().getUserData(&quot;taskbarButton&quot;); 
+      if(button !==null){
+        button.destroy();
+      }
+    },
+    
+    /**
+     * Switches the window between shown and hidden
+     */
+    __toggleMinMax : function(e){
+      this.debug(e.getTarget());
+      var window = e.getTarget().getUserData(&quot;window&quot;);
+      this.debug(e.getTarget().getValue());
+      if(window.get(&quot;active&quot;)){ 
+        window.minimize();
+      } else{
+        window.restore();
+        this.debug(&#39;Minimized: &#39; + window.hasState(&#39;minimized&#39;));
+      }
+    },
+        
+    /**
+     * Creates a taskbar button that represents the given window.
+     */
+    __newTaskbarItem : function(window){
+      var button = new qx.ui.form.ToggleButton(window.get(&quot;caption&quot;), window.get(&quot;icon&quot;));
+      
+      //attach the window to this button, so it can be shown again if the button is clicked
+      button.setUserData(&quot;window&quot;, window);
+      //attach the button to the window, so it can be removed, if the window is closed
+      window.setUserData(&quot;taskbarButton&quot;, button);
+      
+      //bind the active state of the window to the button value
+      window.bind(&quot;active&quot;, button, &quot;value&quot;);
+      //button.bind(&quot;value&quot;, window, &quot;active&quot;);
+      //initalize the button with the state of the window, because, binding seems to only listen on valueChange
+      button.setValue(window.get(&quot;active&quot;));
+      
+      //if the button is clicked switch the state of the window
+      button.addListener(&quot;click&quot;, this.__toggleMinMax, this);
+      return button;
+    }
+  }
+});
+
+Best Regards 
+
+Dominik Horb</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13428</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-10-22 11:49:34 +0200</bug_when>
+            <thetext>Thanks, I will have a look. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13527</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-10-26 16:16:26 +0100</bug_when>
+            <thetext>Dominik, I fixed the position problem with rev. 20483. Could you please verify this and set the state to verified if this also works for you.
+
+The restore method is only to restore the window from maximized/minimized to normal state. I improved the API doc to make this clear. Could you please open a separate bug report (as enhancement), if you think that the restore method should always restore the window to his old state. Thanks Chris  </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13659</commentid>
+            <who name="Dominik Horb">dominik.horb</who>
+            <bug_when>2009-10-29 09:43:14 +0100</bug_when>
+            <thetext>Verified!
+
+Here&#39;s the enhancement request:
+
+http://bugzilla.qooxdoo.org/show_bug.cgi?id=3006</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13660</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-10-29 10:30:42 +0100</bug_when>
+            <thetext>Thanks.
+
+Close.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14629</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:16:10 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

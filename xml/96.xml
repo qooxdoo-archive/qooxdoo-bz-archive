@@ -1,0 +1,371 @@
+<bug>
+          <bug_id>96</bug_id>
+          
+          <creation_ts>2006-07-07 10:25:00 +0200</creation_ts>
+          <short_desc>Show events in API documentation</short_desc>
+          <delta_ts>2008-06-05 14:27:11 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.apidata</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Til Schneider">tilman.schneider</reporter>
+          <assigned_to name="Til Schneider">tilman.schneider</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>184</commentid>
+            <who name="Til Schneider">tilman.schneider</who>
+            <bug_when>2006-07-07 10:25:59 +0200</bug_when>
+            <thetext>It would be nice if the API documentation would show the events that are fired by a class.
+
+
+The problem:
+------------
+
+The doc generator works as follows: It doesn&#39;t scan for doc comments, it scans for structures that need documentation. So each class, method and parameter is detected - whether or not documented. When the @param attribute in the doc comment is missing, a warning is shown in the documentation. But the parameter is still shown.
+
+This approach should also be followed for events, because this is the only way to ensure that the documentation is matching to the implementation. Otherwise there would be sooner or later documentation for non-existing events or undocumented events, which would make the documentation useless.
+
+The problem is: There is no real code pattern, that defines what events are fired.
+
+For a method the doc generator can look for the pattern:
+   qx.Proto.methodName = function(param1, param2) { ...
+
+And the doc comment can be placed right before it:
+   /** Does something really cracy. */
+   qx.Proto.methodName = function(param1, param2) { ...
+
+
+Possible solutions:
+-------------------
+
+This was already discussed on the mailing list starting with this mail: http://www.nabble.com/Re%3A-Experiences-with-webapp-frameworks-integration-p4981204.html .
+
+The discussion about how this problem should be solved is not yet finished. So I&#39;ll try to summarize the ideas we had so far, so the discussion could continue in this bug report.
+
+In the discussion we found two possible solutions:
+1. Change qx.core.Target, so events have to be declared before they may be
+   fired.
+2. Scan for calls that actually fire the event.
+
+
+Solution 1:
+-----------
+
+In this solution there would be a call like qx.core.Target.defineEvent(...), which would define an event for the current qx.Proto (similar to qx.OO.addProperty).
+
+Advantages:
+[A1-1]: This would give us a code structure where a doc comment could be
+  placed right before.
+
+Problems:
+[P1-1]: For all fired events qx.core.Target has to check whether they are
+  defined (Otherwise the definition would be meaningless). This would cost
+  runtime performance.
+
+Problem solutions:
+[S1-1-1]: [P1-1] can be solved by replacing the dispatchEvent by methods that
+  are generated when an event is defined. So there would be a fire method for
+  defined events and nothing for undefined events.
+  Example:
+    Instead of:
+      this.dispatchEvent(new qx.event.type.Event(&quot;finished&quot;));
+    We would use:
+      this.dispatchFinished(new qx.event.type.Event());
+  Causes problem:
+    [P1-2]: The presence of many methods slows down the application in IE
+
+
+Solution 2:
+-----------
+
+In this solution the code is scanned for calls of dispatchEvent.
+
+Advantages:
+[A2-1]: No extra overhead at runtime for event checking or extra fire methods.
+
+Problems:
+[P2-1]: Where should the doc comment be placed?
+[P2-2]: How is the name of the event extracted? In most places, constants are
+  used.
+  Example:
+    This.dispatchEvent(new qx.event.type.Event(qx.constant.Event.INTERVAL));
+[P2-3]: What happens, when the event is defined somewhere before the call?
+  Example:
+    var evt = new qx.event.type.Event(qx.constant.Event.INTERVAL);
+    this.dispatchEvent(evt);
+
+Problem solutions:
+[S2-1-1]: The doc comment could be placed right before the call.
+  Example:
+    if (this.hasEventListeners(&quot;bla&quot;)) {
+      /** Fired when the data was successfully checked. */
+      this.dispatchEvent(new qx.event.type.Event(&quot;bla&quot;));
+    };
+  Causes problems:
+    [P2-4]: Where should the doc comment be placed when the same event is fired
+      at multiple places?
+    [P2-5]: It is not very elegant to have doc comment in the middle of the
+      code.
+[S2-1-2]: The event is documented as extra doc attribute in the constructor.
+  Example:
+    /**
+     * This class is super!
+     *
+     * @param bla {int} twetjwtjgy
+     *
+     * @event stopped Thrown when the call was stopped.
+     */
+  Causes problems:
+    [P2-6]: How should attributes of the event be documented? E.g. the
+      specialties of the fired event? An extra doc comment for the event would
+      be nicer.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>185</commentid>
+            <who name="Til Schneider">tilman.schneider</who>
+            <bug_when>2006-07-07 10:30:48 +0200</bug_when>
+            <thetext>A solution for [P2-2] (and [P2-3]):
+[S2-2-1]: A code template could be defined that describes how events have to be
+  fired. This template ensures that the event name could be extracted. The doc
+  generator shows an error if the template is violated.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>186</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2006-07-07 10:45:42 +0200</bug_when>
+            <thetext>Just my thoughts:
+
+Solution #2 is IMHO the easier and this way better one.
+
+It shouldn&#39;t be that complicated to scan for all stuff which matches dispatchEvent or createDispatchEvent.
+
+However we need to have both in my opinion:
+* The class of the event object: could be complicated in some cases, because the event object could be created many lines before the real dispatch.
+* The name of the event: maybe not that easy because we use constants all the way.
+
+A solution for the event contants would be to remove the constants and use normal strings here. Shouldn&#39;t have a performance impact. Even in IE, because we always create a String instance here, also with constants.
+
+For the first problem we could maybe only use the documentation comment.
+
+Just for the moment.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>190</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2006-07-07 19:37:31 +0200</bug_when>
+            <thetext>It&#39;s going to be necessary, I think, to just believe the programmer in some
+cases, and not require a completely automated mechanism for validating that
+the event thrown matches the comment.  Consider this example:
+
+    /**
+     * Display an information message and dispatch an event.
+     *
+     * @event various
+     *  This message expects to be passed an event type, and it will dispatch
+     *  an event of that type.
+     */
+    qx.Proto.messageAndDispatch = function(eventType)
+    {
+      this.info(&quot;Throwing event &quot; + eventType);
+      this.dispatchEvent(new qx.event.type.event(eventType));
+    };
+
+    qx.Proto.doStuff = function(something, somethingElse)
+    {
+      var valid = false;
+
+      switch(something)
+      {
+        case &#39;a&#39;:
+          /**
+           * @event foo
+           *  Thrown when &#39;something&#39; is &#39;a&#39;.
+           */
+          this.messageAndDispatch(&quot;foo&quot;);
+          falid = true;
+          break;
+
+        case &#39;b&#39;:
+          /**
+           * @event bar
+           *  Thrown when &#39;something&#39; is &#39;b&#39;.
+           */
+          this.messageAndDispatch(&quot;bar&quot;);
+          valid = true;
+          break;
+
+        default:
+          break;
+      }
+
+      if (something == somethingElse)
+      {
+        /**
+         * @event foo
+         *  Thrown when &#39;something&#39; is the same as &#39;somethingElse&#39;, as long
+         *  as &#39;something&#39; contains a valid value.
+         */
+        this.messageAndDispatch(&quot;foo&quot;);
+      }
+      else
+      {
+        /**
+         * @event bar
+         *  Thrown when &#39;something&#39; is different than &#39;somethingElse&#39;,
+         *  regardless of whether &#39;something&#39; contained a valid value.
+         */
+        this.messageAndDispatch(&quot;bar&quot;);
+      }
+    };
+
+The eventType will or may be different each time messageAndDispatch() is
+called.  Granted this is a contrived example, but the concept is valid.  The
+programmer should be able to insert @event log documentation where required.
+
+I know this is difficult given the current design where you don&#39;t look for
+documentation blocks but rather for things that require documenting.  I&#39;m
+still thinking about where/how this @event documentation block should go in
+this case.  One possibility is that a function&#39;s documentation  provides a
+&quot;method requires documentation&quot; flag.  For example, the doStuff() method above
+might be documented as follows, to indicate that documentation comments should
+be located whenever messageAndDispatch() is called:
+
+  /**
+   * Do a bunch of stuff like displaying informational messages and
+   * throwing events.
+   *
+   * @docmethod messageAndDispatch
+   */
+   qx.Proto.doStuff = function(something, somethingElse)
+   {
+     ...
+   }
+
+&gt; [P2-5]: It is not very elegant to have doc comment in the middle of the code.
+
+I pretty strongly disagree with this statement.  I find it much cleaner to
+have documentation throughout the code, and immediately next to the block of
+code that it actually applies to, as shown above.  Within the code, the
+documentation is there solely for those actually viewing the source code, and
+thus _should_ be included with the code it&#39;s documenting.  The documentation
+viewer will show the code *user&#39;s* perspective, with all documentation for a
+particular method shown together.  The *user* doesn&#39;t care where in the code
+the event is thrown; only that it might be thrown, and for what reasons.  The
+programmer looking at the source code want to know what event is being thrown
+where, and why it&#39;s being done there.
+
+&gt; However we need to have both in my opinion:
+&gt; * The class of the event object: could be complicated in some cases, because
+&gt; the event object could be created many lines before the real dispatch.
+
+Many lines before, or not even in the same function.
+
+&gt; A solution for the event contants would be to remove the constants and use
+&gt; normal strings here. Shouldn&#39;t have a performance impact. Even in IE, because
+&gt; we always create a String instance here, also with constants.
+
+The constants, however, have a more important role than just performance.  The
+constants themselves should be documented, and by using them exclusively, the
+possibilities of typos are greatly reduced since an error will occur if
+they&#39;re not typed correctly.  From a user perspective, the range of possible
+event types for any particular class can be found the documentation, and if it
+turns out in the future that the constant should be a different string or a
+number or some class, the ability to change it remains.  By using plain text
+strings instead constants, typos will increase without being caught, and the
+ability to enhance the code later is reduced.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>531</commentid>
+            <who name="Andreas Junghans">andreas.junghans</who>
+            <bug_when>2006-10-10 14:10:18 +0200</bug_when>
+            <thetext>I&#39;ve discussed this a little more with Til (since we are at a point where it would be _really_ useful to have documented events). To move this whole thing forward, here is our suggestion of a simple mechanism for event documentation (the same as already mentioned in a previous comment):
+
+/**
+ * This is a qooxdoo class.
+ *
+ * @event  click  thrown when the user clicks on the foo widget.
+ * @event  dblclick  thrown when the user double-click on the foo widget.
+ */
+
+In the first implementation stage, there would be no checks for dispatchEvent calls, and the doc comment would simply be trusted. The main reason is that it&#39;s quite complicated to scan for and correctly interpret dispatchEvent calls:
+
+1.) What if constants are used instead of plain strings for the event name?
+2.) What if a variable is used for the event name?
+3.) What if the event is dispatched inside a method in an internal helper class?
+
+These points also make it impossible to always place the doc comment before the dispatchEvent call. It may work in the most general case, but there are always going to be problems with certain code patterns (and what about dispatching the same event multiple times with possibly different comments in the code?).
+
+Scanning for dispatchEvent calls could be implemented as a second step (together with the possibility to place the doc comments there) - but as documented above, this can never be the only solution since it&#39;s just too fragile. It would just be an addition to the simple way of documenting events in the class comment.
+
+If there are no objections, we&#39;d like to move forward and implement the simple solution (class comments without validity check) as a first step. Anything else can follow later as a convenience.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>552</commentid>
+            <who name="Til Schneider">tilman.schneider</who>
+            <bug_when>2006-10-16 10:51:38 +0200</bug_when>
+            <thetext>OK, no objections so far for Andreas&#39; proposal. So I would start now to integrate this first step.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>566</commentid>
+            <who name="Til Schneider">tilman.schneider</who>
+            <bug_when>2006-10-17 13:05:06 +0200</bug_when>
+            <thetext>The first step is implemented. See revision 4538 and 4539.
+
+The implementation showed that it would be really hard to auto-detect the events. Since some classes fire events for other classes (e.g. qx.event.handler.EventHandler or q.ui.form.List) or they throw events that have been created somewhere else (e.g. qx.lang.MshtmlEmu) not to mention the plenty places where events are thrown which have a name coming from a variable or similar.
+
+So I think, it would be really hard or just impossible to implement a mechanism that automatically detects events.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>567</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2006-10-17 13:09:02 +0200</bug_when>
+            <thetext>Yes, after this great explanation it really sounds that this is impossible. I share your belief in this area, now. Thank you for this work.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>568</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2006-10-17 17:44:04 +0200</bug_when>
+            <thetext>It seems you have forgotten to include the icons in your SVN commit...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>569</commentid>
+            <who name="Til Schneider">tilman.schneider</who>
+            <bug_when>2006-10-18 09:19:07 +0200</bug_when>
+            <thetext>Yes, you&#39;re right: I forgot the icon. It&#39;s now in SVN, revision 4558.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,162 @@
+<bug>
+          <bug_id>1662</bug_id>
+          
+          <creation_ts>2008-12-03 14:12:00 +0100</creation_ts>
+          <short_desc>Default jobs: &#39;fix&#39;: add removal of utf-8 BOM from source files</short_desc>
+          <delta_ts>2014-03-03 15:25:34 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>0.8</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>6617</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-12-03 14:12:08 +0100</bug_when>
+            <thetext>Currently, Chrome has issues with BOM in utf-8 source files (see bug#1389). The 
+default job &#39;fix&#39; could remove the BOM from source files, as a further feature.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8090</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-02-26 18:32:38 +0100</bug_when>
+            <thetext>In bug#1389 (which holds this issue for 0.7.x) I maintain the view that our 
+build process *doesn&#39;t* insert BOM into output files. This seems not to be true 
+for build versions. In some build scripts spurious &lt;feff&gt; BOMs are appearing 
+throughout the code, like in this generated code snippet:
+
+  qx.event.Pool.getInstance().poolObject(event);
+  return !preventDefault;
+  }}});
+﻿  &lt;feff&gt;;
+  qx.Bootstrap.define(&quot;qx.lang.Object&quot;,{statics:{empty:function(map){for(var 
+key in map){if(map
+
+They always seem to be between semi-colons.
+
+Although obviously not disturbing in most contexts, this is non-sensical: BOM 
+should be the first character in the file, if at all, and there is no need for 
+multiple BOMs.
+
+So, some part of generating the build version inserts spurious BOMs. My first 
+guess was that this was in place where pruned code was in the AST, but that 
+doesn&#39;t seem to hold.
+
+NB: find ~/workspace/qooxdoo.trunk/framework/source/class/qx -name &quot;*.js&quot; \( 
+-exec sed -n -e &#39;/\xef\xbb\xbf/q1&#39; {} \; -o -print \)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8091</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-02-26 19:01:53 +0100</bug_when>
+            <thetext>I have a fix *iff* the problem is due to parsing a source file that contains a 
+BOM.
+
+If a source file contains a BOM the BOM is read in straight away (no BOM 
+stripping by the codecs module!). The parser parses this as an identifier which 
+becomes then part of the AST. Through AST shuffling this might get swapped to 
+the end of the class code on output generation.
+
+The fix treats the BOM as white space in the tokenizer. (BOM is not white space 
+in Unicode, but of category &#39;other, format&#39;).
+
+Since I currently don&#39;t have a test case so I could reproduce the problem and 
+then test that the fix solves it, this fix is sort of arbitrary but seems to 
+make sense anyway. Let&#39;s see if the problem re-appears!
+
+With r18174.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8101</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-02-27 11:17:25 +0100</bug_when>
+            <thetext>Other shell command to find BOM in .js files:
+
+find ~/workspace/qooxdoo.trunk/framework/source/class/qx -name &quot;*.js&quot; \( -exec 
+perl -ne &#39;/\xef\xbb\xbf/ and exit(1);&#39; {} \; -o -print \)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9512</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-23 10:50:00 +0200</bug_when>
+            <thetext>to Thomas</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10065</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-05-20 16:50:25 +0200</bug_when>
+            <thetext>I observed this behaviour on Windows:
+
+* Reading a file with a BOM at its beginning, the BOM is stipped by the reading 
+(codecs) module, so the generator code doesn&#39;t see it. (This contradicts my 
+earlier assumption that the reading module doesn&#39;t touch the BOM; but in the 
+cases I looked at back then the BOM sequence was *within* the file, not at the 
+beginning!).
+
+* Therefore, it cannot strip it with &#39;fix&#39;!
+
+* At least on Windows the BOM is again prepended when the buffer is written to 
+a file, *without* explictly doing so. (This contradicts my assumption that you 
+have to explicitly write the BOM, in order to have it in the file). Maybe this 
+is a platform-specific behaviour, since I read that particularly Microsoft used 
+the BOM in Utf-8 to signify this encoding.
+
+So at least on Windows, a leading BOM is silently stripped on reads, and 
+silently prepended on writes, so there is no immediate way for the &#39;fix&#39; job to 
+remove it. It could re-read the file as binary, though, and then edit it. But 
+maybe this should be done platform-dependent anyway (The described behaviour 
+might be perfect for Windows, where the BOM should be left in).
+
+This should be re-tested on other platforms.
+
+This is all in the context of Utf-8 encoding.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17670</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-04-09 11:38:29 +0200</bug_when>
+            <thetext>&#39;fix&#39; job now also removes a leading BOM (EF BB BF) from files, if it finds one.
+
+With r21865</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38798</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:34 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

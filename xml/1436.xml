@@ -1,0 +1,238 @@
+<bug>
+          <bug_id>1436</bug_id>
+          
+          <creation_ts>2008-09-29 13:56:00 +0200</creation_ts>
+          <short_desc>Scroll container won&#39;t programatically scroll back to top</short_desc>
+          <delta_ts>2014-03-03 15:18:56 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.popups</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          <cc>christian.hagendorn</cc>
+    
+    <cc>fabian.jakobs</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>5666</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-09-29 13:56:30 +0200</bug_when>
+            <thetext>Given this small program, the scroll container won&#39;t scroll back to the top.  Setting a selected radio button after the window has appeared switches the focus (and scrolls) to the selected button, but setting focus to a text field at the top does not have a similar effect nor does explicitly setting the scroll location. 
+
+/*
+#require(qx.log.appender.Native)
+#require(qx.log.appender.Console)
+*/
+
+qx.Class.define(&quot;custom.Application&quot;,
+{
+  extend : qx.application.Standalone,
+  members :
+  {
+    main: function()
+    {
+      this.base(arguments);
+
+      var container = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+      this.getRoot().add(container);
+
+      win = new qx.ui.window.Window(&quot;Test of embedded Scroll container&quot;);
+      win.setLayout(new qx.ui.layout.VBox());
+      win.set(
+        {
+          width: 600,
+          height: 400,
+          modal: true,
+          showClose: false,
+          showMaximize: false,
+          showMinimize: false
+        });
+
+      var scrollContainer = new qx.ui.container.Scroll();
+      scrollContainer.setMaxHeight(400);
+      win.add(scrollContainer, { flex : 1 });
+
+      var scroller = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+      scrollContainer.add(scroller);
+
+      var o;
+      var hBox = new qx.ui.container.Composite(new qx.ui.layout.HBox(4));
+      scroller.add(hBox);
+
+      o = new qx.ui.basic.Label(&quot;hello world&quot;);
+      o.setHeight(50);
+      hBox.add(o);
+
+      var textField = new qx.ui.form.TextField();
+      hBox.add(textField);
+
+      win.open();
+
+      qx.event.Timer.once(
+        function()
+        {
+          var group = new qx.ui.form.RadioGroup();
+
+          for (var i = 1; i &lt; 100; i++)
+          {
+            o = new qx.ui.form.RadioButton(&quot;Option &quot; + i);
+            scroller.add(o);
+           
+          if (i == 70)
+            {
+              group.setSelected(o);
+            }
+          }
+
+          textField.focus();                    // SHOULD SCROLL BACK TO TOP, BUT DOESN&#39;T
+          scrollContainer.scrollToY(0);         // SHOULD SCROLL BACK TO TOP, BUT DOESN&#39;T
+        },
+        this,
+        20);
+    }
+  }
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5669</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-09-29 15:26:10 +0200</bug_when>
+            <thetext>Hi Derrell, those are 2 issues: 
+1. auto-scrolling when focusing a widget: This is supposed to work fine in 0.8, you won&#39;t need a timer for deferred execution, it&#39;s managed/synchronized internally. In your example, just remove the timer, and focus() on a widget should do what you expect.
+2. explicit scroll of a scroll container: something seems indeed to be broken there. Christian is already looking at the issue, and will file a separate bug report soon.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5670</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-09-29 15:32:42 +0200</bug_when>
+            <thetext>Thanks, Andreas.  I don&#39;t actually have the timer in there specifically for deferred action.  I have the timer there because in my application, I want the window to appear initially with a &quot;working...&quot; label while I populate the remainder of the window.  I therefore need to release control briefly so that the window will be rendered; thus the timer.  Sorry I didn&#39;t make the example application for this bug quite as simple as it could have been.
+
+I&#39;ll eagerly await Christian&#39;s fix for the scroll problem.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5671</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-09-29 15:35:47 +0200</bug_when>
+            <thetext>BTW, you wrote: &quot;auto-scrolling when focusing a widget: This is supposed to work fine in 0.8,
+you won&#39;t need a timer for deferred execution, it&#39;s managed/synchronized
+internally. In your example, just remove the timer, and focus() on a widget
+should do what you expect.&quot;
+
+Setting the focus should scroll the scroll container to make the focused widget visible even if the action *is* deferred, right?
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5675</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-09-30 09:45:04 +0200</bug_when>
+            <thetext>Here the bug for the explicit scrolling problem: http://bugzilla.qooxdoo.org/show_bug.cgi?id=1439</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6533</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-11-27 16:48:36 +0100</bug_when>
+            <thetext>to Chris. The scrolling issue should be resolved now, right? Please also check, if there is still a focus issue (that can be solved).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6538</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-11-28 10:22:09 +0100</bug_when>
+            <thetext>Accepted.
+
+I don&#39;t know why, but the fix in the bug 1439 has no effect for this issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6542</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-11-28 13:26:09 +0100</bug_when>
+            <thetext>There is a problem with timing. The added widgets in the timer are not rendered, when calling the scrolltoY() method.
+
+We have to fix the timing problem. The code below has a modification, this modification scrolls the bar to the top.
+
+***** code snippet ******
+qx.event.Timer.once(
+        function()
+        {
+          var group = new qx.ui.form.RadioGroup();
+
+          for (var i = 1; i &lt; 100; i++)
+          {
+            o = new qx.ui.form.RadioButton(&quot;Option &quot; + i);
+            scroller.add(o);
+           
+          if (i == 70)
+            {
+              group.setSelected(o);
+            }
+          }
+
+					// Modification
+          qx.event.Timer.once(
+          function()
+          {
+            textField.focus();  
+            scrollContainer.scrollToY(0);
+          }, this, 20);
+        },
+        this,
+        20);
+    }
+  }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6807</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-12-09 17:02:51 +0100</bug_when>
+            <thetext>The commit in trunk (r16912) fix only the issue with scrolling.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6815</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-12-10 11:51:24 +0100</bug_when>
+            <thetext>Issue with scrolling and focusing fixed in trunk (r16926).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36277</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:18:56 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

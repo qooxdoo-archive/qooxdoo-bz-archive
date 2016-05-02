@@ -1,0 +1,153 @@
+<bug>
+          <bug_id>209</bug_id>
+          
+          <creation_ts>2006-11-07 12:34:00 +0100</creation_ts>
+          <short_desc>If GET URL has parameters, additional parameters are ignored</short_desc>
+          <delta_ts>2006-11-21 15:14:22 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Hugh Gibson">hgibson</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>618</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2006-11-07 12:34:38 +0100</bug_when>
+            <thetext>Create a new qx.io.remote.RemoteRequest with the URL including parameters e.g.    
+
+/blink/?stage=submit
+
+Now add an additional parameter in the request object , e.g. setting by calling  setProhibitCaching(true);
+
+Now the request as sent out is
+
+/blink/?stage=submit&amp;
+
+If you omit the parameter in the instantiation of the remote request, and add it via request.setParameter, you get:
+
+/blink/?nocache=1162897985264&amp;stage=submit
+
+The problem is in XmlHTTPTransport.js, send function :
+
+  if (vParametersList.length &gt; 0) {
+    vUrl += (vUrl.indexOf(qx.constant.Core.QUESTIONMARK) &gt;= 0
+             ? qx.constant.Core.AMPERSAND
+             : (qx.constant.Core.QUESTIONMARK) +
+                vParametersList.join(qx.constant.Core.AMPERSAND));
+
+Clearly in the first case, where there is a question mark in the URL, the parameter list is omitted. The bracketing is wrong.
+
+iFrame and Script transport send() functions are correct.
+
+Workaround is to add the parameters manually rather than in the initial URL.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>619</commentid>
+              <attachid>69</attachid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2006-11-07 12:37:08 +0100</bug_when>
+            <thetext>Created attachment 69
+Patch to fix this problem.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>622</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2006-11-08 08:43:48 +0100</bug_when>
+            <thetext>The code tries to take account of existing parameters on the URL. If there are no existing ones, the separator for new parameters should be a &quot;?&quot;; if there *are* existing parameters the separator should be a &quot;#&quot;.
+
+You can see it if you grep the source for &quot;qx.constant.Core.AMPERSAND&quot;. The occurrences in .../io/remote/*.js are all code fragments to make this decision. Here&#39;s one from IFrameTransport.js, line 144 (reformatted):
+
+  if (vParametersList.length &gt; 0) 
+    {
+    vUrl += (vUrl.indexOf(qx.constant.Core.QUESTIONMARK) &gt;= 0 ?
+                 qx.constant.Core.AMPERSAND :
+                 qx.constant.Core.QUESTIONMARK) 
+             + vParametersList.join(qx.constant.Core.AMPERSAND);
+    }
+
+and the one that is wrong from XmlHttpTransport.js, line 251:
+
+  if (vParametersList.length &gt; 0) {
+    vUrl += (vUrl.indexOf(qx.constant.Core.QUESTIONMARK) &gt;= 0
+             ? qx.constant.Core.AMPERSAND
+             : (qx.constant.Core.QUESTIONMARK) +
+                vParametersList.join(qx.constant.Core.AMPERSAND));
+  }
+
+The bracketing of the conditional operator used to decide this is wrong. It has a lower operator precedence than + so the concatenation of &quot;?&quot; and the parameters is done first, then the decision is made to append &quot;&amp;&quot; or &quot;?&lt;params&gt;&quot;. So if you have a URL with existing parameters, and additional parameters are being appended (which can happen if cache is turned off when &quot;nocache&quot; is normally appended) then you just get &quot;&amp;&quot; at the end of the URL.
+
+The bug was introduced with SVN revision 4223 on 14 Sep 2006; the code was correct before then. It appears to have been introduced in some tidying up done by Derrell when applying the patch supplied by Antony Zanetti (you can see it here http://www.nabble.com/Basic-HTTP-authentication-fixes-t2269954.html ). The line of code which was changed is mentioned in the patch but isn&#39;t actually changed by it. However, in the SVN revision it *is* changed.
+
+Sorry for spelling it out so clearly - but it&#39;s a simple bug, easy to see, easy to fix, and it bit me - so I want it fixed before 0.7 comes out! 
+
+(this was originally posted on the mailing list).
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>666</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2006-11-21 15:14:22 +0100</bug_when>
+            <thetext>Seems to be already fixed in IframeTransport. I have just committed the fix for XmlHttpTransport.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>69</attachid>
+            <date>2006-11-07 12:37:00 +0100</date>
+            <delta_ts>2006-11-07 12:37:08 +0100</delta_ts>
+            <desc>Patch to fix this problem.</desc>
+            <filename>qxbug209.patch</filename>
+            <type>text/plain</type>
+            <size>589</size>
+            <attacher>hgibson</attacher>
+            
+              <data encoding="base64">SW5kZXg6IFhtbEh0dHBUcmFuc3BvcnQuanMNCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0NCi0tLSBYbWxIdHRwVHJhbnNw
+b3J0LmpzCShyZXZpc2lvbiA0NzIyKQ0KKysrIFhtbEh0dHBUcmFuc3BvcnQuanMJKHdvcmtpbmcg
+Y29weSkNCkBAIC0yNDksOSArMjQ5LDkgQEANCiAgIH0KIAogICBpZiAodlBhcmFtZXRlcnNMaXN0
+Lmxlbmd0aCA+IDApIHsKLSAgICB2VXJsICs9ICh2VXJsLmluZGV4T2YocXguY29uc3RhbnQuQ29y
+ZS5RVUVTVElPTk1BUkspID49IDAKKyAgICB2VXJsICs9ICgodlVybC5pbmRleE9mKHF4LmNvbnN0
+YW50LkNvcmUuUVVFU1RJT05NQVJLKSA+PSAwCiAgICAgICAgICAgICAgPyBxeC5jb25zdGFudC5D
+b3JlLkFNUEVSU0FORAotICAgICAgICAgICAgIDogKHF4LmNvbnN0YW50LkNvcmUuUVVFU1RJT05N
+QVJLKSArCisgICAgICAgICAgICAgOiAocXguY29uc3RhbnQuQ29yZS5RVUVTVElPTk1BUkspKSAr
+CiAgICAgICAgICAgICAgICAgdlBhcmFtZXRlcnNMaXN0LmpvaW4ocXguY29uc3RhbnQuQ29yZS5B
+TVBFUlNBTkQpKTsKICAgfQogCg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

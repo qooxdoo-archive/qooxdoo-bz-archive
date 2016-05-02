@@ -1,0 +1,203 @@
+<bug>
+          <bug_id>1150</bug_id>
+          
+          <creation_ts>2008-08-07 23:51:00 +0200</creation_ts>
+          <short_desc>Potentially dangerous member names in Widget (and possibly other core classes)</short_desc>
+          <delta_ts>2014-03-03 15:22:50 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Jonathan Weiß">qooxdoo-bugs</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>4229</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-08-07 23:51:02 +0200</bug_when>
+            <thetext>While working on the progress bar in Progressive, I&#39;ve been having trouble with how things get rendered, various errors, etc., so was reviewing Widget code.  I noticed this code in Widget.js:
+
+    // property apply
+    _applyBackgroundColor : function(value, old)
+    {
+      if (this._decorator)
+      {
+        if (!this.__styleDecorator)
+        {
+          var bounds = this.getBounds();
+
+          this._decorator.render(
+            this._decorationElement,
+            bounds.width, bounds.height,
+            value, {bgcolor:true}
+          );
+        }
+        else
+        {
+          this.__styleBackgroundColor = true;
+        }
+      }
+      else
+      {
+        this._containerElement.setStyle(&quot;backgroundColor&quot;, qx.theme.manager.Color.getInstance().resolve(value) || null);
+      }
+    },
+
+This caught my attention because I&#39;ve defined my own member called _decorator in my class (and an ancestor class of my class is Widget), and the behavior shown above is definitely not what I would expect or desire.
+
+Other than studying the source code of Widget, I&#39;d never have discovered this, but I think it could easily wreak havoc on the unsuspecting soul who happened to be working on a widget descended from Widget and decided to have a member called _decorator.  This is a difficult issue to deal with.  Most of the time, when one is extending a class, they&#39;d study the documentation and hopefully the source code for the super-class to know what they need to do to extend it.  Widget, though, is at a sufficiently low level, and is sufficiently complicated to study (particularly the source code), that it&#39;s unlikely to be studied in great detail by the majority of folks writing or extending widgets.  It would be very difficult to know what member names one would like to use in one&#39;s own class -- like _decorator -- conflict with member names in a super-class and so should be avoided in the sub-classes.  One possibility to solve this sort of problem is to name the member variables in the really low-level classes with some unique prefix to help avoid those names being reused by extending classes.  Maybe the prefix could include the class name.  In this case, maybe Widget&#39;s _decorator member would instead be named _$Widget$_decorator.  (That&#39;a bit silly of a naming scheme, but certainly does solve the problem.)
+
+In this case, it actually appears as if _decorator is not intended to be accessed by any sub-classes, and so it should be named __decorator.  This entire bug report would go away if the generator would obfuscate private member names on a per-class basis so that it wouldn&#39;t even be possible to access __decorator from a sub-class.  OTOH, _decorator would still be accessible and still cause this problem.
+
+So, two things to correct:
+
+1. Ensure that all members which are intended to be private are prefixed with two underscores
+2. Somehow prevent private members from being accessed in sub-classes, either by giving them strange names manually or by having the generator obfuscate the names.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4230</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-08-07 23:55:15 +0200</bug_when>
+            <thetext>&gt; 2. Somehow prevent private members from being accessed in sub-classes, either
+&gt; by giving them strange names manually or by having the generator obfuscate the
+&gt; names.
+
+Thinking a bit more about this, having the generator obfuscate the names isn&#39;t really adequate since that would affect only the build version, not the source version.  
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4231</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-08-08 00:10:08 +0200</bug_when>
+            <thetext>Related considerations:
+
+- In addition to ensuring that all privately-used members begin with two underscores, also ensure that all protected members are explicitly defined in the members: section, and include documentation.  This would allow someone looking to extend a class to know what protected members are available for their use (and also not to re-use those names).
+
+- A possibility for private member naming is to create a stack or array of objects during the construct process, so that each class in the hierarchy is given a this.__privates[CLASSNAME] object.  Private variables could then be accessed as, for example, this._privates[CLASSNAME].decorator.  The obvious disadvantages of this are that it&#39;s a bit more typing, and more importantly, could slow things down.  There may be ways of letting the generator flatten the array, however, to eliminate the latter issue.
+
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4233</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-08-08 10:01:33 +0200</bug_when>
+            <thetext>I think, what you describe reaylly is a problem. I don&#39;t think the idea with the __privates and _privates arrays is a too big burdon on the developer. Let me explain our solution:
+
+1. Avoid protected fields where possible. Subclasses should in my opinion only access methods from their parent classes and never data fields. There my be some rare cases where using fields is performance critical. In this case the protected fields should have a sufficiently unique name.
+
+2. List all private and protected fields in the members section. This makes it easy to find the used fields by looking at the code. In the case of private fields the class define already throws an error is a private filed is redefined in a sub class. These fields could be listed in the API viewer as well.
+
+3. To find implicit declarations of protected and private fields we could add a check to our lint program, so everybody can statically check his code.
+
+4. Use the private optimizer to enforce privateness. This is already part of the generator.
+
+
+What do you think?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4235</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-08-08 14:31:18 +0200</bug_when>
+            <thetext>Your solution sounds great.  Thanks!
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4264</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-08-08 19:21:18 +0200</bug_when>
+            <thetext>Mhh, it seems that this is fixed in SVN?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4274</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-08-11 08:48:36 +0200</bug_when>
+            <thetext>no not yet</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4286</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-08-11 15:10:32 +0200</bug_when>
+            <thetext>I did the proposed fix to large parts of the qx.ui namespace and the complete qx.core and qx.application namespace. Still some open places to fix.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4298</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-08-12 10:25:58 +0200</bug_when>
+            <thetext>@Fabian: What&#39;s about this bug. Do you think it&#39;s done now?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4314</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-08-12 14:37:23 +0200</bug_when>
+            <thetext>I did the proposed fix to large parts of the qx.ui namespace and the complete qx.core and qx.application namespace. Still some open places to fix.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4634</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-08-22 18:13:13 +0200</bug_when>
+            <thetext>Remaining things will be done later.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5361</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-07 00:16:16 +0200</bug_when>
+            <thetext>May break code. Maybe nothing for the next minor.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5743</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-10-07 16:27:09 +0200</bug_when>
+            <thetext>@Jonny, please continue adding private fields to the members section in the entire framework.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5851</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2008-10-15 16:37:18 +0200</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5921</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2008-10-21 14:08:59 +0200</bug_when>
+            <thetext>Fixed in trunk (r16518).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37822</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:50 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,187 @@
+<bug>
+          <bug_id>193</bug_id>
+          
+          <creation_ts>2006-10-16 18:31:00 +0200</creation_ts>
+          <short_desc>Label drops text in angle brackets</short_desc>
+          <delta_ts>2007-05-03 11:49:12 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Carsten Lergenmüller">carsten.lergenmueller</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>rherrmann</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>563</commentid>
+            <who name="Carsten Lergenmüller">carsten.lergenmueller</who>
+            <bug_when>2006-10-16 18:31:56 +0200</bug_when>
+            <thetext>If you set the text &quot;Name &lt;name@abc.xyz.de&gt;&quot; to a label / atom, only &quot;Name&quot; will be shown.
+
+See attached demo page to reproduce. The demo page requires qx.js to be available at ../../build/script/qx.js.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>564</commentid>
+              <attachid>59</attachid>
+            <who name="Carsten Lergenmüller">carsten.lergenmueller</who>
+            <bug_when>2006-10-16 18:32:52 +0200</bug_when>
+            <thetext>Created attachment 59
+Mini page to reproduce bug</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>586</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2006-10-23 13:40:55 +0200</bug_when>
+            <thetext>This is because of the HTML support inside qx.ui.basic.Label. Maybe you need to use &amp;gt; or some other encoded variant.
+
+Other ideas to differ this block from other HTML content?
+
+For pure text an alternative would be to use TextEmbed. But this doesn&#39;t support any type of auto-sizing.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>587</commentid>
+            <who name="Carsten Lergenmüller">carsten.lergenmueller</who>
+            <bug_when>2006-10-23 14:00:38 +0200</bug_when>
+            <thetext>Using &amp;gt; does not work because the ampersand is escaped to &amp;amp , so the label shows &amp;gt; it instead of evaluating it.
+
+About how to recognize non-HTML from HTML text: Label already has an internal property _htmlMode which is only true if the label text starts with &quot;&lt;&quot; and ends with &quot;&gt;&quot;. Although this property is false in my case, text in &lt;&gt; is removed anyway.
+
+Suggestions:
+
+1) You could make _htmlMode public, so the user can decide whether he wants HTML substitution or not. This could be a constructor param so we don&#39;t have to deal with some smart-ass switching it on and off again and complaining about this not working.
+
+2) You could leave the setting of _htmlMode as it is, but then a &lt; given to label should be escaped inside the label implementation.
+
+3) Otherwise, at the very least, ampersands should be left alone in the text so the user can do the escaping. I don&#39;t see it as the user&#39;s responsiblity though to bring the text in a form the widget can digest, this should be done by the widget.
+
+Reopening bug as there is currently no way to get a label to show 
+&quot;Jim Jones &lt;jones@gmail.com&gt;&quot;, which obviously should work.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>588</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2006-10-23 14:10:06 +0200</bug_when>
+            <thetext>Yes, the widget should definitely handle this. Sorry for the worksforme. Had first selected this and forgot to revert it before sending the message.
+
+_htmlMode should always be true if this is matched: /&lt;.*&gt;/.
+
+I don&#39;t think we should make this public. The detection itself should be private. Better would be IMHO a property like interpretHTML with a default value of True. If this is false the value will just be applied using nodeValue which should hopefully work correctly. We could store the thing in _htmlMode e.g. modify the manipulation of _htmlMode inside _modifyHtml.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>589</commentid>
+            <who name="Carsten Lergenmüller">carsten.lergenmueller</who>
+            <bug_when>2006-10-23 14:28:44 +0200</bug_when>
+            <thetext>My main objective is to get my Email addresses rendered, and if I have to set a interpretHTML property to false I&#39;m fine with that.
+
+I don&#39;t have full overview over where _htmlMode is used and for what, but I don&#39;t like the current regexp very much which is used to set it. As I undestand it, a simple trailing space could switch it from true to false, even when the rest is a complete (X)HTML page. I much prefer a public API where the user can specify his wishes over some heuristics which often work and then suddenly they don&#39;t. 
+
+But as I said, I&#39;m fine with anything that works for me :-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>918</commentid>
+            <who name="Rüdiger Herrmann">rherrmann</who>
+            <bug_when>2007-02-22 15:30:26 +0100</bug_when>
+            <thetext>I am curious about the status of this bug and would like put my two cents in
+
+I wouldn&#39;t expect a label to deal with HTML at all. As far as I read the documentation, there is an HtmlEmbed widget designated for that purpose. 
+But apart from that it should be possible to pass arbitrary text to a label that is shown as is.
+This could be done by providing a text property that switches off the html mode and let the existing html property turn on html mode or have a public interpretHTML
+as suggested earlier or ...
+Considered the complexity of deciding whether a given string should be treated as HTML or not, I would definitively opt to let the user decide this.
+
+Moreover, when a label is used indirectly (e.g. within a qx.ui.form.Button) the result is definitely not what one would expect.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1163</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2007-04-05 14:42:57 +0200</bug_when>
+            <thetext>Added textMode property to qx.ui.basic.Label.Label. This will allow the developer to decide whether the text
+should be interpreted as &quot;text&quot;, &quot;html&quot; or whether the old auto detection should be used.
+
+Autodetection is the default so the label is still 100% compatible with existing code. Since The value of the label
+is not always HTML. I have added an property named &quot;text&quot; which links to the property &quot;html&quot; and deprecated the
+property &quot;html&quot;.
+
+This is in the spirit of Sebastian&#39;s suggestion.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1164</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2007-04-05 14:47:27 +0200</bug_when>
+            <thetext>Just realized that the problem with indirect usage of label is still open. We will have to decide for each widget whether the labels should use text, HTML or autodetection or make it configurable.
+
+Suggestions how this should be handled?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1217</commentid>
+            <who name="Rüdiger Herrmann">rherrmann</who>
+            <bug_when>2007-05-03 11:49:12 +0200</bug_when>
+            <thetext>(In reply to comment #8)
+&gt; Just realized that the problem with indirect usage of label is still open. We
+&gt; will have to decide for each widget whether the labels should use text, HTML or
+&gt; autodetection or make it configurable.
+&gt; Suggestions how this should be handled?
+
+From what I know, the widgets that internally use Label are Button, MenuItem and the various TreeElements (did I forgot any?)
+From my point of view, none of them should interpret the text as HTML.
+</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>59</attachid>
+            <date>2006-10-16 18:32:00 +0200</date>
+            <delta_ts>2006-10-16 18:32:52 +0200</delta_ts>
+            <desc>Mini page to reproduce bug</desc>
+            <filename>LabelAngleBrackets.html</filename>
+            <type>text/html</type>
+            <size>754</size>
+            <attacher>carsten.lergenmueller</attacher>
+            
+              <data encoding="base64">PGh0bWw+DQo8aGVhZD4NCiAgPG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBjb250ZW50
+PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXRmLTgiIC8+DQogIDx0aXRsZT5xb294ZG9vICZyYXF1bzsg
+RGVtbzwvdGl0bGU+DQogIDxsaW5rIHR5cGU9InRleHQvY3NzIiByZWw9InN0eWxlc2hlZXQiIGhy
+ZWY9Ii4uLy4uL3Jlc291cmNlL2Nzcy9sYXlvdXQuY3NzIi8+DQogIDwhLS1baWYgSUVdPg0KICA8
+bGluayB0eXBlPSJ0ZXh0L2NzcyIgcmVsPSJzdHlsZXNoZWV0IiBocmVmPSIuLi8uLi9yZXNvdXJj
+ZS9jc3MvbGF5b3V0X2llLmNzcyIvPg0KICA8IVtlbmRpZl0tLT4NCiAgPHNjcmlwdCB0eXBlPSJ0
+ZXh0L2phdmFzY3JpcHQiIHNyYz0iLi4vLi4vYnVpbGQvc2NyaXB0L3F4LmpzIj48L3NjcmlwdD4N
+CjwvaGVhZD4NCjxib2R5Pg0KICA8c2NyaXB0IHR5cGU9InRleHQvamF2YXNjcmlwdCIgc3JjPSIu
+Li8uLi9zY3JpcHQvbGF5b3V0LmpzIj48L3NjcmlwdD4NCg0KICA8c2NyaXB0IHR5cGU9InRleHQv
+amF2YXNjcmlwdCI+DQogIHF4LmNvcmUuSW5pdC5nZXRJbnN0YW5jZSgpLmRlZmluZU1haW4oZnVu
+Y3Rpb24oKQ0KICB7DQogICAgdmFyIGQgPSBxeC51aS5jb3JlLkNsaWVudERvY3VtZW50LmdldElu
+c3RhbmNlKCk7DQoNCiAgICB2YXIgYXRvbSA9IG5ldyBxeC51aS5iYXNpYy5BdG9tKCJOYW1lIDxh
+YmNAeHl6LmNvbT4iKTsNCiAgICBkLmFkZChhdG9tKTsNCiAgfSk7DQogIDwvc2NyaXB0Pg0KPC9i
+b2R5Pg0KPC9odG1sPg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

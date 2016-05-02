@@ -1,0 +1,463 @@
+<bug>
+          <bug_id>800</bug_id>
+          
+          <creation_ts>2008-03-06 16:21:00 +0100</creation_ts>
+          <short_desc>Layout problem with resizable table / treevirtual</short_desc>
+          <delta_ts>2008-08-01 08:44:38 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.treevirtual</component>
+          <version>0.7.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          <blocked>868</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Bryan Coutch">bryan.coutch</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>bryan.coutch</cc>
+    
+    <cc>helder.magalhaes</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2883</commentid>
+            <who name="Bryan Coutch">bryan.coutch</who>
+            <bug_when>2008-03-06 16:21:01 +0100</bug_when>
+            <thetext>I have been working on a qooxdoo layout problem that I encountered, and quite frankly, it has me stumped.
+
+I have included a small(-ish) program that demonstrates some of the main problems I have been having.
+
+I have a qx.ui.window.Window presenting a wizard-like interface.  The left-hand navigation is a TreeVirtual (just a table in this example, has the same problem).  The problem here is that if I have more rows than can fit in the visible area, the window gets stretched until every row is visible, stuttering one row at a time.  If you have 100’s of nodes in the navigation tree, the bottom of the window will eventually disappear.  It’s impossible to shrink the window height smaller than the number of visible rows in the table.  The only way around this that I’ve found is to set an absolute table height, certainly not an ideal solution.
+
+The 2nd problem is similar, with the table on the right hand side.  That table prevents me from shrinking the window width.  If you expand the width of the window, the flex columns will take up more space, and you will not be able to shrink the window again.
+
+The 3rd problem is with the right hand table in IE6.  As soon the window is displayed, It will just keep expanding forever.  Setting an absolute width on the table fixes the expanding forever problem, but then what’s the point of having a resizable window?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2885</commentid>
+              <attachid>292</attachid>
+            <who name="Bryan Coutch">bryan.coutch</who>
+            <bug_when>2008-03-06 16:22:55 +0100</bug_when>
+            <thetext>Created attachment 292
+test case for strange resizing behaviour</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2886</commentid>
+              <attachid>293</attachid>
+            <who name="Bryan Coutch">bryan.coutch</who>
+            <bug_when>2008-03-06 16:23:11 +0100</bug_when>
+            <thetext>Created attachment 293
+test case for strange resizing behaviour</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2893</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-03-10 17:36:25 +0100</bug_when>
+            <thetext>*** Bug 801 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2894</commentid>
+              <attachid>292</attachid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-03-10 17:44:05 +0100</bug_when>
+            <thetext>Comment on attachment 292
+test case for strange resizing behaviour
+
+(marked as obsolete as it seems a duplicate of attachment 293)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2895</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-03-10 17:51:17 +0100</bug_when>
+            <thetext>1st issue - also experienced, although in horizontal direction.
+A workaround seems to be forcing a specific width/height. For height, I recommend:
+
+// header + 10 visible lines + status bar
+myTreeVirtual.setHeight(myTreeVirtual.getRowHeight() * 12);
+
+
+2nd issue - seen also. This is easy to trigger if &quot;auto&quot; width is use - will keep expanding forever!
+
+3rd issue - Seems an IE6-specific issue. Seems related to a resize behavior issue. A workaround seems to be hard coding table width and dropping resize behavior.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2896</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-03-10 18:31:12 +0100</bug_when>
+            <thetext>4th issue - Maybe this should go into a separate bug report but it seems related and may help spotting this issue.
+
+Reproduces:
+Always
+
+Steps to reproduce:
+1. Enable CSS error triggering:
+ 1.1. Open Firefox&#39;s &quot;Error Console&quot; and enable &quot;All&quot; (or, at least, &quot;Warnings&quot;;
+ OR
+ 1.2. Enable CSS errors in Firebug;
+2. Open &quot;TreeVirtual 3&quot; of DemoBrowser&#39;s examples;
+3. Mouse over the column visibility button;
+4. Hide &quot;Permissions&quot; and Last Accessed&quot; columns;
+5. Mouse over the column visibility button several times;
+6. Hide &quot;Tree&quot; column.
+
+Expected results:
+No errors output in 5 and 6.
+
+Actual results:
+In step 5, an &quot;Error in parsing value for property &#39;width&#39;.  Declaration dropped.&quot; is logged for each column visibility button state change (onmouseover/onmouseout). This points to a possible rendering issue (some internal incoherency in virtual pane).
+In step 6, an &quot;Error: this._columnDataArr[col] has no properties&quot; is shown while hiding the &quot;Tree&quot; column with no more columns visible. This shows a possible internal data model issue and/or missing safety checks.
+
+Additional notes:
+IMHO bug&#39;s severity could be lowered as there are proposed workarounds.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2928</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-04-08 22:01:37 +0200</bug_when>
+            <thetext>Ugghhhh.  Layouts affecting layouts affecting layouts with appear events affecting appear events.
+
+I&#39;m attaching a simpler example that exhibits this bug, but fixing it is going to require changes that aren&#39;t likely to happen in 0.7.  The problem is that the table (and thus treevirtual) resizing occurs upon appear event, but the qx.ui.window.Window also is affected by resize events.  I believe that this problem is actually in Window, in that it should never allow itself to grow unconstrained... particularly if setMaxHeight() has been called.
+
+I expect that 0.8 will not exhibit this problem since it will be possible to determine rendered size prior to rendering in 0.8.  My advice for the time being, though, is to either use a fixed height for the split pane, or don&#39;t use the qx.ui.window.Window in conjunction with a resizable table/treevirtual.
+
+Sorry.  I know that&#39;s not what you wanted to hear.  The problem likely could be fixed, but would require a LOT of work, and with 0.8 likely to obsolete bug this anyway, ...
+
+I&#39;ll leave this bug open in case anyone cares to delve into it.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2929</commentid>
+              <attachid>297</attachid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-04-08 22:04:13 +0200</bug_when>
+            <thetext>Created attachment 297
+Simpler example that exhibits the problem</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2930</commentid>
+            <who name="Bryan Coutch">bryan.coutch</who>
+            <bug_when>2008-04-08 22:06:15 +0200</bug_when>
+            <thetext>In the example I posted, adding the following lines appears to fix all of my
+problems:
+
+win.setMinHeight( null );
+win.setMinWidth( null ); </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2931</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-04-08 22:18:36 +0200</bug_when>
+            <thetext>WTF???????  What in the world does a null value for min/maxHeight mean?????  How does it differ from &quot;auto&quot;, and why does null work when an explicit pixel value does not?  Is there documentation someplace that describes this?  I can&#39;t even find anyplace in the code that deals with it...
+
+This requires one of the gods to respond.  It&#39;s apparently beyond this mere mortal to comprehend. :-(
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2932</commentid>
+            <who name="Bryan Coutch">bryan.coutch</who>
+            <bug_when>2008-04-08 22:24:13 +0200</bug_when>
+            <thetext>I was quite surprised by this behavior too.  I got the inspiration from the mailing list post &quot;Overflow inside a qx.ui.window.Window&quot;.  I went to add the lines to my code to try it out, and it turned out that another developer had already read something about the problem recently and added those two lines.
+
+Obviously someone knows something about this, but I too would like to know why it works.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4088</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-08-01 08:44:38 +0200</bug_when>
+            <thetext>Well these are exactly the reason we decided to reimplement the whole layout stuff :-) We wanted to get rid of all these non deterministic layout hacks. We don&#39;t have these issues in 0.8 anymore and we are not able to fix them in 0.7, so I&#39;ll close this bug.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="1" ispatch="0" isprivate="0" isurl="0">
+            <attachid>292</attachid>
+            <date>2008-03-06 16:22:00 +0100</date>
+            <delta_ts>2008-03-10 17:44:05 +0100</delta_ts>
+            <desc>test case for strange resizing behaviour</desc>
+            <filename>test2.html</filename>
+            <type>text/html</type>
+            <size>5014</size>
+            <attacher>bryan.coutch</attacher>
+            
+              <data encoding="base64">PGh0bWw+DQo8aGVhZD4NCiAgPG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBjb250ZW50
+PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXRmLTgiLz4NCiAgPHRpdGxlPlRhYmxlcywgYW5kIEZsZXgg
+RGltZW5zaW9ucywgYW5kIFVzYWJpbGl0eSwgT2ggTXkhPC90aXRsZT4NCiAgPHNjcmlwdCB0eXBl
+PSJ0ZXh0L2phdmFzY3JpcHQiIHNyYz0iaHR0cDovL2RlbW8ucW9veGRvby5vcmcvY3VycmVudC9k
+ZW1vYnJvd3Nlci9zY3JpcHQvZGVtby5qcyI+PC9zY3JpcHQ+DQo8L2hlYWQ+DQo8Ym9keT4gIA0K
+ICA8ZGl2IGlkPSJkZXNjcmlwdGlvbiI+DQogICAgPHA+PC9wPg0KICA8L2Rpdj4NCg0KICA8c2Ny
+aXB0IHR5cGU9InRleHQvamF2YXNjcmlwdCI+DQpxeC5DbGFzcy5kZWZpbmUoIkJhc2ljU2FtcGxl
+IiwgDQp7DQoJZXh0ZW5kIDogcXguYXBwbGljYXRpb24uR3VpLCANCgkNCgltZW1iZXJzIDogDQoJ
+eyANCgkJbWFpbiA6IGZ1bmN0aW9uKCkgDQoJCXsgDQoJCQl0aGlzLmJhc2UoYXJndW1lbnRzKTsN
+Cg0KCQkJLy8gQ3JlYXRlIGEgcG9wdXAgd2luZG93DQoJCQl2YXIgd2luID0gbmV3IHF4LnVpLndp
+bmRvdy5XaW5kb3coICJUZXN0aW5nIiApOw0KCQkJd2luLnNldE1vZGFsKCB0cnVlICk7DQoJCQl3
+aW4uc2V0UmVzaXphYmxlKCB0cnVlLCB0cnVlLCB0cnVlLCB0cnVlICk7DQoJCQl3aW4uc2V0TW92
+ZWFibGUoIHRydWUgKTsNCgkJCXdpbi5zZXRDZW50ZXJlZCh0cnVlKTsNCg0KCQkJd2luLnNldFdp
+ZHRoKCA2MDAgKTsNCgkJCXdpbi5zZXRIZWlnaHQoIDMwMCApOw0KDQoJCQlxeC51aS5jb3JlLkNs
+aWVudERvY3VtZW50LmdldEluc3RhbmNlKCkuYWRkKHdpbik7DQoNCg0KCQkJLy8gQ3JlYXRlIGEg
+c3BsaXRwYW5lDQoJCQl2YXIgc3BsaXRQYW5lID0gbmV3IHF4LnVpLnNwbGl0cGFuZS5TcGxpdFBh
+bmUoICJob3Jpem9udGFsIiwgMjAwLCAiMSoiICk7DQoJCQlzcGxpdFBhbmUuc2V0V2lkdGgoICIx
+MDAlIiApOw0KCQkJc3BsaXRQYW5lLnNldEhlaWdodCggIjEqIiApOw0KDQoNCgkJCS8vIFRhYmxl
+IGZvciB0aGUgbGVmdC1oYW5kIHNpZGUgb2YgdGhlIHNwbGl0IHBhbmUNCgkJCS8vICBUaGlzIHRh
+YmxlIHJlcHJlc2VudHMgdGhlIHByb2JsZW1zIEkgYW0gaGF2aW5nIHdpdGggdHJlZS12aXJ0dWFs
+DQoJCQl2YXIgbGVmdFRhYmxlTW9kZWwgPSBuZXcgcXgudWkudGFibGUubW9kZWwuU2ltcGxlKCk7
+DQoJCQlsZWZ0VGFibGVNb2RlbC5zZXRDb2x1bW5zKCBbIlRyZWUgQ29sdW1uIl0gKTsNCg0KCQkJ
+dmFyIGxlZnRDdXN0b20gPSB7DQoJCQkJdGFibGVDb2x1bW5Nb2RlbCA6IGZ1bmN0aW9uKG9iaikg
+ew0KCQkJCQlyZXR1cm4gbmV3IHF4LnVpLnRhYmxlLmNvbHVtbm1vZGVsLlJlc2l6ZShvYmopOw0K
+CQkJCX0NCgkJCX0NCg0KCQkJdmFyIGxlZnRUYWJsZSA9IG5ldyBxeC51aS50YWJsZS5UYWJsZShs
+ZWZ0VGFibGVNb2RlbCwgbGVmdEN1c3RvbSk7DQoJCQlsZWZ0VGFibGUuc2V0V2lkdGgoIjEwMCUi
+KTsNCgkJCWxlZnRUYWJsZS5zZXRIZWlnaHQoIjEwMCUiKTsNCgkJCWxlZnRUYWJsZS5zZXRCb3Jk
+ZXIoImluc2V0Iik7DQoJCQlsZWZ0VGFibGUuc2V0U3RhdHVzQmFyVmlzaWJsZSggZmFsc2UgKTsN
+Cg0KDQoJCQkvLyBUYWJsZSBmb3IgdGhlIHJpZ2h0LWhhbmQgc2lkZSBvZiB0aGUgc3BsaXQgcGFu
+ZQ0KCQkJLy8gIFRoaXMgdGFibGUgcmVwcmVzZW50cyB0aGUgcHJvYmxlbXMgSSBhbSBoYXZpbmcg
+d2l0aCByZXNpemluZw0KCQkJLy8gIHRhYmxlcyB3aXRoIGZsZXggY29sdW1uIHdpZHRocw0KCQkJ
+dmFyIHJpZ2h0VGFibGVNb2RlbCA9IG5ldyBxeC51aS50YWJsZS5tb2RlbC5TaW1wbGUoKTsNCgkJ
+CXJpZ2h0VGFibGVNb2RlbC5zZXRDb2x1bW5zKCBbIk9uZSIsICJUd28iLCAiVGhyZWUiXSApOw0K
+DQoJCQl2YXIgcmlnaHRDdXN0b20gPSB7DQoJCQkJdGFibGVDb2x1bW5Nb2RlbCA6IGZ1bmN0aW9u
+KG9iaikgew0KCQkJCQlyZXR1cm4gbmV3IHF4LnVpLnRhYmxlLmNvbHVtbm1vZGVsLlJlc2l6ZShv
+YmopOw0KCQkJCX0NCgkJCX0NCg0KCQkJdmFyIHJpZ2h0VGFibGUgPSBuZXcgcXgudWkudGFibGUu
+VGFibGUocmlnaHRUYWJsZU1vZGVsLCByaWdodEN1c3RvbSk7DQoJCQlyaWdodFRhYmxlLnNldFdp
+ZHRoKCIxKiIpOw0KCQkJcmlnaHRUYWJsZS5zZXRIZWlnaHQoIjEwMCUiKTsNCgkJCXJpZ2h0VGFi
+bGUuc2V0Qm9yZGVyKCJpbnNldCIpOw0KCQkJcmlnaHRUYWJsZS5zZXRTdGF0dXNCYXJWaXNpYmxl
+KCBmYWxzZSApOw0KDQoNCgkJCS8vIExheW91dCBvbiB0aGUgcmlnaHQgaGFuZCBzaWRlLCB3aXph
+cmQtbGlrZQ0KCQkJdmFyIHJpZ2h0TGF5b3V0ID0gbmV3IHF4LnVpLmxheW91dC5WZXJ0aWNhbEJv
+eExheW91dCgpOw0KCQkJcmlnaHRMYXlvdXQuc2V0V2lkdGgoIjEwMCUiKTsNCgkJCXJpZ2h0TGF5
+b3V0LnNldEhlaWdodCgiMTAwJSIpOw0KDQoJCQl2YXIgaGVhZGVyID0gbmV3IHF4LnVpLmxheW91
+dC5Ib3Jpem9udGFsQm94TGF5b3V0KCk7DQoJCQloZWFkZXIuc2V0V2lkdGgoIjEwMCUiKTsNCgkJ
+CWhlYWRlci5zZXRIZWlnaHQoNzUpOw0KCQkJaGVhZGVyLnNldEJvcmRlcigiaW5zZXQiKTsNCg0K
+CQkJLy8gQWN0aW9ucyB5b3UgY2FuIHBlcmZvcm0gb24gb2JqZWN0cyByZXByZXNlbnRlZCBieSBh
+IHRhYmxlIHJvdw0KCQkJdmFyIGFjdGlvbkJhciA9IG5ldyBxeC51aS5sYXlvdXQuVmVydGljYWxC
+b3hMYXlvdXQoKTsNCgkJCWFjdGlvbkJhci5zZXRXaWR0aCgyNCk7DQoJCQlhY3Rpb25CYXIuc2V0
+SGVpZ2h0KCIxMDAlIik7DQoNCgkJCXZhciBhY3Rpb25CdXR0b24xID0gbmV3IHF4LnVpLmZvcm0u
+QnV0dG9uKCAiIiApOw0KCQkJYWN0aW9uQnV0dG9uMS5zZXRXaWR0aCgiMTAwJSIpOw0KCQkJYWN0
+aW9uQnV0dG9uMS5zZXRIZWlnaHQoMjEpOw0KDQoJCQl2YXIgYWN0aW9uQnV0dG9uMiA9IG5ldyBx
+eC51aS5mb3JtLkJ1dHRvbiggIiIgKTsNCgkJCWFjdGlvbkJ1dHRvbjIuc2V0V2lkdGgoIjEwMCUi
+KTsNCgkJCWFjdGlvbkJ1dHRvbjIuc2V0SGVpZ2h0KDIxKTsNCg0KCQkJYWN0aW9uQmFyLmFkZCgg
+YWN0aW9uQnV0dG9uMSwgYWN0aW9uQnV0dG9uMiApOw0KDQoJCQkvLyBHcm91cCBib3ggdG8gdGlk
+eSBhcHBlYXJhbmNlIHVwIGEgYml0DQoJCQl2YXIgZ3JvdXBsYXlvdXQgPSBuZXcgcXgudWkubGF5
+b3V0Lkhvcml6b250YWxCb3hMYXlvdXQoKTsNCgkJCWdyb3VwbGF5b3V0LnNldFdpZHRoKCIxMDAl
+Iik7DQoJCQlncm91cGxheW91dC5zZXRIZWlnaHQoIjEwMCUiKTsNCgkJCWdyb3VwbGF5b3V0LmFk
+ZCggYWN0aW9uQmFyLCByaWdodFRhYmxlICk7DQoNCgkJCXZhciBncm91cGJveCA9IG5ldyBxeC51
+aS5ncm91cGJveC5Hcm91cEJveCggIk15IERhdGEiICk7DQoJCQlncm91cGJveC5zZXRXaWR0aCgi
+MTAwJSIpOw0KCQkJZ3JvdXBib3guc2V0SGVpZ2h0KCIxKiIpOw0KCQkJZ3JvdXBib3guYWRkKCBn
+cm91cGxheW91dCApOw0KDQoJCQlyaWdodExheW91dC5hZGQoIGhlYWRlciwgZ3JvdXBib3ggKTsN
+Cg0KCQkJc3BsaXRQYW5lLmFkZExlZnQobGVmdFRhYmxlKTsNCgkJCXNwbGl0UGFuZS5hZGRSaWdo
+dChyaWdodExheW91dCk7DQoNCgkJCS8vIFdpemFyZCBidXR0b24gYmFyLCBzYW1wbGUgYnV0dG9u
+cyBhY3Rpbmcgb24gbGVmdCB0cmVlDQoJCQl2YXIgYnV0dG9uQmFyID0gbmV3IHF4LnVpLmxheW91
+dC5Ib3Jpem9udGFsQm94TGF5b3V0KCk7DQoJCQlidXR0b25CYXIuc2V0V2lkdGgoIjEwMCUiKTsN
+CgkJCWJ1dHRvbkJhci5zZXRIZWlnaHQoImF1dG8iKTsNCg0KCQkJdmFyIGFkZEJ1dHRvbiA9IG5l
+dyBxeC51aS5mb3JtLkJ1dHRvbiggIkFkZCA1MCBOb2RlcyIgKTsNCgkJCWFkZEJ1dHRvbi5hZGRF
+dmVudExpc3RlbmVyKCAiZXhlY3V0ZSIsIGZ1bmN0aW9uKGV2dCkgew0KCQkJCXZhciB0YWJsZURh
+dGEgPSBbXTsNCgkJCQlmb3IgKCB2YXIgaSA9IDA7IGkgPCA1MDsgaSsrICkgew0KCQkJCQl0YWJs
+ZURhdGFbaV0gPSBbIk5vZGUiICsgaV07DQoJCQkJfQ0KCQkJCWxlZnRUYWJsZU1vZGVsLnNldERh
+dGEodGFibGVEYXRhKTsNCgkJCX0sIHRoaXMgKTsNCgkJCWJ1dHRvbkJhci5hZGQoYWRkQnV0dG9u
+KTsNCg0KCQkJdmFyIGFkZEJ1dHRvbjIgPSBuZXcgcXgudWkuZm9ybS5CdXR0b24oICJBZGQgMTAw
+IE5vZGVzIiApOw0KCQkJYWRkQnV0dG9uMi5hZGRFdmVudExpc3RlbmVyKCAiZXhlY3V0ZSIsIGZ1
+bmN0aW9uKGV2dCkgew0KCQkJCXZhciB0YWJsZURhdGEgPSBbXTsNCgkJCQlmb3IgKCB2YXIgaSA9
+IDA7IGkgPCAxMDA7IGkrKyApIHsNCgkJCQkJdGFibGVEYXRhW2ldID0gWyJOb2RlIiArIGldOw0K
+CQkJCX0NCgkJCQlsZWZ0VGFibGVNb2RlbC5zZXREYXRhKHRhYmxlRGF0YSk7DQoJCQl9LCB0aGlz
+ICk7DQoJCQlidXR0b25CYXIuYWRkKGFkZEJ1dHRvbjIpOw0KDQoJCQl2YXIgcmVtb3ZlQnV0dG9u
+ID0gbmV3IHF4LnVpLmZvcm0uQnV0dG9uKCAiUmVtb3ZlIEFsbCBOb2RlcyIgKTsNCgkJCXJlbW92
+ZUJ1dHRvbi5hZGRFdmVudExpc3RlbmVyKCAiZXhlY3V0ZSIsIGZ1bmN0aW9uKGV2dCkgew0KCQkJ
+CXZhciB0YWJsZURhdGEgPSBbXTsNCgkJCQlsZWZ0VGFibGVNb2RlbC5zZXREYXRhKHRhYmxlRGF0
+YSk7DQoJCQl9LCB0aGlzICk7DQoJCQlidXR0b25CYXIuYWRkKHJlbW92ZUJ1dHRvbik7DQoNCgkJ
+CS8vIFZlcnRpY2FsIGxheW91dCBmb3IgdGhlIHdpbmRvdw0KCQkJdmFyIGxheW91dCA9IG5ldyBx
+eC51aS5sYXlvdXQuVmVydGljYWxCb3hMYXlvdXQoKTsNCgkJCWxheW91dC5zZXRXaWR0aCgiMTAw
+JSIpOw0KCQkJbGF5b3V0LnNldEhlaWdodCgiMTAwJSIpOw0KCQkJbGF5b3V0LnNldFBhZGRpbmco
+IDQgKTsNCgkJCWxheW91dC5zZXRTcGFjaW5nKCA0ICk7DQoJCQlsYXlvdXQuYWRkKCBzcGxpdFBh
+bmUsIGJ1dHRvbkJhciApOw0KDQoJCQl3aW4uYWRkKCBsYXlvdXQgKTsNCg0KCQkJd2luLnNob3co
+KTsNCgkJfSANCgl9IA0KfSk7DQoNCnF4LmNvcmUuSW5pdC5nZXRJbnN0YW5jZSgpLnNldEFwcGxp
+Y2F0aW9uKG5ldyBCYXNpY1NhbXBsZSk7DQogIDwvc2NyaXB0Pg0KPC9ib2R5Pg0KPC9odG1sPg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>293</attachid>
+            <date>2008-03-06 16:23:00 +0100</date>
+            <delta_ts>2008-03-06 16:23:11 +0100</delta_ts>
+            <desc>test case for strange resizing behaviour</desc>
+            <filename>test2.html</filename>
+            <type>text/html</type>
+            <size>5014</size>
+            <attacher>bryan.coutch</attacher>
+            
+              <data encoding="base64">PGh0bWw+DQo8aGVhZD4NCiAgPG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBjb250ZW50
+PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXRmLTgiLz4NCiAgPHRpdGxlPlRhYmxlcywgYW5kIEZsZXgg
+RGltZW5zaW9ucywgYW5kIFVzYWJpbGl0eSwgT2ggTXkhPC90aXRsZT4NCiAgPHNjcmlwdCB0eXBl
+PSJ0ZXh0L2phdmFzY3JpcHQiIHNyYz0iaHR0cDovL2RlbW8ucW9veGRvby5vcmcvY3VycmVudC9k
+ZW1vYnJvd3Nlci9zY3JpcHQvZGVtby5qcyI+PC9zY3JpcHQ+DQo8L2hlYWQ+DQo8Ym9keT4gIA0K
+ICA8ZGl2IGlkPSJkZXNjcmlwdGlvbiI+DQogICAgPHA+PC9wPg0KICA8L2Rpdj4NCg0KICA8c2Ny
+aXB0IHR5cGU9InRleHQvamF2YXNjcmlwdCI+DQpxeC5DbGFzcy5kZWZpbmUoIkJhc2ljU2FtcGxl
+IiwgDQp7DQoJZXh0ZW5kIDogcXguYXBwbGljYXRpb24uR3VpLCANCgkNCgltZW1iZXJzIDogDQoJ
+eyANCgkJbWFpbiA6IGZ1bmN0aW9uKCkgDQoJCXsgDQoJCQl0aGlzLmJhc2UoYXJndW1lbnRzKTsN
+Cg0KCQkJLy8gQ3JlYXRlIGEgcG9wdXAgd2luZG93DQoJCQl2YXIgd2luID0gbmV3IHF4LnVpLndp
+bmRvdy5XaW5kb3coICJUZXN0aW5nIiApOw0KCQkJd2luLnNldE1vZGFsKCB0cnVlICk7DQoJCQl3
+aW4uc2V0UmVzaXphYmxlKCB0cnVlLCB0cnVlLCB0cnVlLCB0cnVlICk7DQoJCQl3aW4uc2V0TW92
+ZWFibGUoIHRydWUgKTsNCgkJCXdpbi5zZXRDZW50ZXJlZCh0cnVlKTsNCg0KCQkJd2luLnNldFdp
+ZHRoKCA2MDAgKTsNCgkJCXdpbi5zZXRIZWlnaHQoIDMwMCApOw0KDQoJCQlxeC51aS5jb3JlLkNs
+aWVudERvY3VtZW50LmdldEluc3RhbmNlKCkuYWRkKHdpbik7DQoNCg0KCQkJLy8gQ3JlYXRlIGEg
+c3BsaXRwYW5lDQoJCQl2YXIgc3BsaXRQYW5lID0gbmV3IHF4LnVpLnNwbGl0cGFuZS5TcGxpdFBh
+bmUoICJob3Jpem9udGFsIiwgMjAwLCAiMSoiICk7DQoJCQlzcGxpdFBhbmUuc2V0V2lkdGgoICIx
+MDAlIiApOw0KCQkJc3BsaXRQYW5lLnNldEhlaWdodCggIjEqIiApOw0KDQoNCgkJCS8vIFRhYmxl
+IGZvciB0aGUgbGVmdC1oYW5kIHNpZGUgb2YgdGhlIHNwbGl0IHBhbmUNCgkJCS8vICBUaGlzIHRh
+YmxlIHJlcHJlc2VudHMgdGhlIHByb2JsZW1zIEkgYW0gaGF2aW5nIHdpdGggdHJlZS12aXJ0dWFs
+DQoJCQl2YXIgbGVmdFRhYmxlTW9kZWwgPSBuZXcgcXgudWkudGFibGUubW9kZWwuU2ltcGxlKCk7
+DQoJCQlsZWZ0VGFibGVNb2RlbC5zZXRDb2x1bW5zKCBbIlRyZWUgQ29sdW1uIl0gKTsNCg0KCQkJ
+dmFyIGxlZnRDdXN0b20gPSB7DQoJCQkJdGFibGVDb2x1bW5Nb2RlbCA6IGZ1bmN0aW9uKG9iaikg
+ew0KCQkJCQlyZXR1cm4gbmV3IHF4LnVpLnRhYmxlLmNvbHVtbm1vZGVsLlJlc2l6ZShvYmopOw0K
+CQkJCX0NCgkJCX0NCg0KCQkJdmFyIGxlZnRUYWJsZSA9IG5ldyBxeC51aS50YWJsZS5UYWJsZShs
+ZWZ0VGFibGVNb2RlbCwgbGVmdEN1c3RvbSk7DQoJCQlsZWZ0VGFibGUuc2V0V2lkdGgoIjEwMCUi
+KTsNCgkJCWxlZnRUYWJsZS5zZXRIZWlnaHQoIjEwMCUiKTsNCgkJCWxlZnRUYWJsZS5zZXRCb3Jk
+ZXIoImluc2V0Iik7DQoJCQlsZWZ0VGFibGUuc2V0U3RhdHVzQmFyVmlzaWJsZSggZmFsc2UgKTsN
+Cg0KDQoJCQkvLyBUYWJsZSBmb3IgdGhlIHJpZ2h0LWhhbmQgc2lkZSBvZiB0aGUgc3BsaXQgcGFu
+ZQ0KCQkJLy8gIFRoaXMgdGFibGUgcmVwcmVzZW50cyB0aGUgcHJvYmxlbXMgSSBhbSBoYXZpbmcg
+d2l0aCByZXNpemluZw0KCQkJLy8gIHRhYmxlcyB3aXRoIGZsZXggY29sdW1uIHdpZHRocw0KCQkJ
+dmFyIHJpZ2h0VGFibGVNb2RlbCA9IG5ldyBxeC51aS50YWJsZS5tb2RlbC5TaW1wbGUoKTsNCgkJ
+CXJpZ2h0VGFibGVNb2RlbC5zZXRDb2x1bW5zKCBbIk9uZSIsICJUd28iLCAiVGhyZWUiXSApOw0K
+DQoJCQl2YXIgcmlnaHRDdXN0b20gPSB7DQoJCQkJdGFibGVDb2x1bW5Nb2RlbCA6IGZ1bmN0aW9u
+KG9iaikgew0KCQkJCQlyZXR1cm4gbmV3IHF4LnVpLnRhYmxlLmNvbHVtbm1vZGVsLlJlc2l6ZShv
+YmopOw0KCQkJCX0NCgkJCX0NCg0KCQkJdmFyIHJpZ2h0VGFibGUgPSBuZXcgcXgudWkudGFibGUu
+VGFibGUocmlnaHRUYWJsZU1vZGVsLCByaWdodEN1c3RvbSk7DQoJCQlyaWdodFRhYmxlLnNldFdp
+ZHRoKCIxKiIpOw0KCQkJcmlnaHRUYWJsZS5zZXRIZWlnaHQoIjEwMCUiKTsNCgkJCXJpZ2h0VGFi
+bGUuc2V0Qm9yZGVyKCJpbnNldCIpOw0KCQkJcmlnaHRUYWJsZS5zZXRTdGF0dXNCYXJWaXNpYmxl
+KCBmYWxzZSApOw0KDQoNCgkJCS8vIExheW91dCBvbiB0aGUgcmlnaHQgaGFuZCBzaWRlLCB3aXph
+cmQtbGlrZQ0KCQkJdmFyIHJpZ2h0TGF5b3V0ID0gbmV3IHF4LnVpLmxheW91dC5WZXJ0aWNhbEJv
+eExheW91dCgpOw0KCQkJcmlnaHRMYXlvdXQuc2V0V2lkdGgoIjEwMCUiKTsNCgkJCXJpZ2h0TGF5
+b3V0LnNldEhlaWdodCgiMTAwJSIpOw0KDQoJCQl2YXIgaGVhZGVyID0gbmV3IHF4LnVpLmxheW91
+dC5Ib3Jpem9udGFsQm94TGF5b3V0KCk7DQoJCQloZWFkZXIuc2V0V2lkdGgoIjEwMCUiKTsNCgkJ
+CWhlYWRlci5zZXRIZWlnaHQoNzUpOw0KCQkJaGVhZGVyLnNldEJvcmRlcigiaW5zZXQiKTsNCg0K
+CQkJLy8gQWN0aW9ucyB5b3UgY2FuIHBlcmZvcm0gb24gb2JqZWN0cyByZXByZXNlbnRlZCBieSBh
+IHRhYmxlIHJvdw0KCQkJdmFyIGFjdGlvbkJhciA9IG5ldyBxeC51aS5sYXlvdXQuVmVydGljYWxC
+b3hMYXlvdXQoKTsNCgkJCWFjdGlvbkJhci5zZXRXaWR0aCgyNCk7DQoJCQlhY3Rpb25CYXIuc2V0
+SGVpZ2h0KCIxMDAlIik7DQoNCgkJCXZhciBhY3Rpb25CdXR0b24xID0gbmV3IHF4LnVpLmZvcm0u
+QnV0dG9uKCAiIiApOw0KCQkJYWN0aW9uQnV0dG9uMS5zZXRXaWR0aCgiMTAwJSIpOw0KCQkJYWN0
+aW9uQnV0dG9uMS5zZXRIZWlnaHQoMjEpOw0KDQoJCQl2YXIgYWN0aW9uQnV0dG9uMiA9IG5ldyBx
+eC51aS5mb3JtLkJ1dHRvbiggIiIgKTsNCgkJCWFjdGlvbkJ1dHRvbjIuc2V0V2lkdGgoIjEwMCUi
+KTsNCgkJCWFjdGlvbkJ1dHRvbjIuc2V0SGVpZ2h0KDIxKTsNCg0KCQkJYWN0aW9uQmFyLmFkZCgg
+YWN0aW9uQnV0dG9uMSwgYWN0aW9uQnV0dG9uMiApOw0KDQoJCQkvLyBHcm91cCBib3ggdG8gdGlk
+eSBhcHBlYXJhbmNlIHVwIGEgYml0DQoJCQl2YXIgZ3JvdXBsYXlvdXQgPSBuZXcgcXgudWkubGF5
+b3V0Lkhvcml6b250YWxCb3hMYXlvdXQoKTsNCgkJCWdyb3VwbGF5b3V0LnNldFdpZHRoKCIxMDAl
+Iik7DQoJCQlncm91cGxheW91dC5zZXRIZWlnaHQoIjEwMCUiKTsNCgkJCWdyb3VwbGF5b3V0LmFk
+ZCggYWN0aW9uQmFyLCByaWdodFRhYmxlICk7DQoNCgkJCXZhciBncm91cGJveCA9IG5ldyBxeC51
+aS5ncm91cGJveC5Hcm91cEJveCggIk15IERhdGEiICk7DQoJCQlncm91cGJveC5zZXRXaWR0aCgi
+MTAwJSIpOw0KCQkJZ3JvdXBib3guc2V0SGVpZ2h0KCIxKiIpOw0KCQkJZ3JvdXBib3guYWRkKCBn
+cm91cGxheW91dCApOw0KDQoJCQlyaWdodExheW91dC5hZGQoIGhlYWRlciwgZ3JvdXBib3ggKTsN
+Cg0KCQkJc3BsaXRQYW5lLmFkZExlZnQobGVmdFRhYmxlKTsNCgkJCXNwbGl0UGFuZS5hZGRSaWdo
+dChyaWdodExheW91dCk7DQoNCgkJCS8vIFdpemFyZCBidXR0b24gYmFyLCBzYW1wbGUgYnV0dG9u
+cyBhY3Rpbmcgb24gbGVmdCB0cmVlDQoJCQl2YXIgYnV0dG9uQmFyID0gbmV3IHF4LnVpLmxheW91
+dC5Ib3Jpem9udGFsQm94TGF5b3V0KCk7DQoJCQlidXR0b25CYXIuc2V0V2lkdGgoIjEwMCUiKTsN
+CgkJCWJ1dHRvbkJhci5zZXRIZWlnaHQoImF1dG8iKTsNCg0KCQkJdmFyIGFkZEJ1dHRvbiA9IG5l
+dyBxeC51aS5mb3JtLkJ1dHRvbiggIkFkZCA1MCBOb2RlcyIgKTsNCgkJCWFkZEJ1dHRvbi5hZGRF
+dmVudExpc3RlbmVyKCAiZXhlY3V0ZSIsIGZ1bmN0aW9uKGV2dCkgew0KCQkJCXZhciB0YWJsZURh
+dGEgPSBbXTsNCgkJCQlmb3IgKCB2YXIgaSA9IDA7IGkgPCA1MDsgaSsrICkgew0KCQkJCQl0YWJs
+ZURhdGFbaV0gPSBbIk5vZGUiICsgaV07DQoJCQkJfQ0KCQkJCWxlZnRUYWJsZU1vZGVsLnNldERh
+dGEodGFibGVEYXRhKTsNCgkJCX0sIHRoaXMgKTsNCgkJCWJ1dHRvbkJhci5hZGQoYWRkQnV0dG9u
+KTsNCg0KCQkJdmFyIGFkZEJ1dHRvbjIgPSBuZXcgcXgudWkuZm9ybS5CdXR0b24oICJBZGQgMTAw
+IE5vZGVzIiApOw0KCQkJYWRkQnV0dG9uMi5hZGRFdmVudExpc3RlbmVyKCAiZXhlY3V0ZSIsIGZ1
+bmN0aW9uKGV2dCkgew0KCQkJCXZhciB0YWJsZURhdGEgPSBbXTsNCgkJCQlmb3IgKCB2YXIgaSA9
+IDA7IGkgPCAxMDA7IGkrKyApIHsNCgkJCQkJdGFibGVEYXRhW2ldID0gWyJOb2RlIiArIGldOw0K
+CQkJCX0NCgkJCQlsZWZ0VGFibGVNb2RlbC5zZXREYXRhKHRhYmxlRGF0YSk7DQoJCQl9LCB0aGlz
+ICk7DQoJCQlidXR0b25CYXIuYWRkKGFkZEJ1dHRvbjIpOw0KDQoJCQl2YXIgcmVtb3ZlQnV0dG9u
+ID0gbmV3IHF4LnVpLmZvcm0uQnV0dG9uKCAiUmVtb3ZlIEFsbCBOb2RlcyIgKTsNCgkJCXJlbW92
+ZUJ1dHRvbi5hZGRFdmVudExpc3RlbmVyKCAiZXhlY3V0ZSIsIGZ1bmN0aW9uKGV2dCkgew0KCQkJ
+CXZhciB0YWJsZURhdGEgPSBbXTsNCgkJCQlsZWZ0VGFibGVNb2RlbC5zZXREYXRhKHRhYmxlRGF0
+YSk7DQoJCQl9LCB0aGlzICk7DQoJCQlidXR0b25CYXIuYWRkKHJlbW92ZUJ1dHRvbik7DQoNCgkJ
+CS8vIFZlcnRpY2FsIGxheW91dCBmb3IgdGhlIHdpbmRvdw0KCQkJdmFyIGxheW91dCA9IG5ldyBx
+eC51aS5sYXlvdXQuVmVydGljYWxCb3hMYXlvdXQoKTsNCgkJCWxheW91dC5zZXRXaWR0aCgiMTAw
+JSIpOw0KCQkJbGF5b3V0LnNldEhlaWdodCgiMTAwJSIpOw0KCQkJbGF5b3V0LnNldFBhZGRpbmco
+IDQgKTsNCgkJCWxheW91dC5zZXRTcGFjaW5nKCA0ICk7DQoJCQlsYXlvdXQuYWRkKCBzcGxpdFBh
+bmUsIGJ1dHRvbkJhciApOw0KDQoJCQl3aW4uYWRkKCBsYXlvdXQgKTsNCg0KCQkJd2luLnNob3co
+KTsNCgkJfSANCgl9IA0KfSk7DQoNCnF4LmNvcmUuSW5pdC5nZXRJbnN0YW5jZSgpLnNldEFwcGxp
+Y2F0aW9uKG5ldyBCYXNpY1NhbXBsZSk7DQogIDwvc2NyaXB0Pg0KPC9ib2R5Pg0KPC9odG1sPg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>297</attachid>
+            <date>2008-04-08 22:04:00 +0200</date>
+            <delta_ts>2008-04-08 22:04:13 +0200</delta_ts>
+            <desc>Simpler example that exhibits the problem</desc>
+            <filename>Bug800.html</filename>
+            <type>text/plain</type>
+            <size>2887</size>
+            <attacher>derrell.lipman</attacher>
+            
+              <data encoding="base64">PGh0bWw+CjxoZWFkPgogIDxtZXRhIGh0dHAtZXF1aXY9IkNvbnRlbnQtVHlwZSIgY29udGVudD0i
+dGV4dC9odG1sOyBjaGFyc2V0PXV0Zi04Ii8+CiAgPHRpdGxlPlRhYmxlcywgYW5kIEZsZXggRGlt
+ZW5zaW9ucywgYW5kIFVzYWJpbGl0eSwgT2ggTXkhPC90aXRsZT4KICA8c2NyaXB0IHR5cGU9InRl
+eHQvamF2YXNjcmlwdCIgc3JjPSJodHRwOi8vZGVtby5xb294ZG9vLm9yZy9jdXJyZW50L2RlbW9i
+cm93c2VyL3NjcmlwdC9kZW1vLmpzIj48L3NjcmlwdD4KPC9oZWFkPgo8Ym9keT4gIAogIDxkaXYg
+aWQ9ImRlc2NyaXB0aW9uIj4KICAgIDxwPjwvcD4KICA8L2Rpdj4KCiAgPHNjcmlwdCB0eXBlPSJ0
+ZXh0L2phdmFzY3JpcHQiPgpxeC5DbGFzcy5kZWZpbmUoIkJhc2ljU2FtcGxlIiwgCnsKICBleHRl
+bmQgOiBxeC5hcHBsaWNhdGlvbi5HdWksIAoJCiAgbWVtYmVycyA6IAogIHsgCiAgICBtYWluIDog
+ZnVuY3Rpb24oKSAKICAgIHsgCiAgICAgIHRoaXMuYmFzZShhcmd1bWVudHMpOwoKICAgICAgLy8g
+Q3JlYXRlIGEgcG9wdXAgd2luZG93CiAgICAgIHZhciB3aW4gPSBuZXcgcXgudWkud2luZG93Lldp
+bmRvdyggIlRlc3RpbmciICk7CiAgICAgIHdpbi5zZXRNb2RhbCggdHJ1ZSApOwogICAgICB3aW4u
+c2V0UmVzaXphYmxlKCB0cnVlLCB0cnVlLCB0cnVlLCB0cnVlICk7CiAgICAgIHdpbi5zZXRNb3Zl
+YWJsZSggdHJ1ZSApOwogICAgICB3aW4uc2V0Q2VudGVyZWQodHJ1ZSk7CgogICAgICB3aW4uc2V0
+V2lkdGgoIDYwMCApOwogICAgICB3aW4uc2V0SGVpZ2h0KCAzMDAgKTsKCiAgICAgIHF4LnVpLmNv
+cmUuQ2xpZW50RG9jdW1lbnQuZ2V0SW5zdGFuY2UoKS5hZGQod2luKTsKCgogICAgICAvLyBDcmVh
+dGUgYSBzcGxpdHBhbmUKICAgICAgdmFyIGhCb3ggPSBuZXcgcXgudWkubGF5b3V0Lkhvcml6b250
+YWxCb3hMYXlvdXQoKTsKICAgICAgaEJveC5zZXQoCiAgICAgICAgewogICAgICAgICAgd2lkdGgg
+OiAiMTAwJSIsCiAgICAgICAgICBoZWlnaHQgOiAiMSoiCiAgICAgICAgfSk7ICAKCiAgICAgIC8v
+IFRhYmxlIGZvciB0aGUgbGVmdC1oYW5kIHNpZGUgb2YgdGhlIHNwbGl0IHBhbmUKICAgICAgLy8g
+IFRoaXMgdGFibGUgcmVwcmVzZW50cyB0aGUgcHJvYmxlbXMgSSBhbSBoYXZpbmcgd2l0aCB0cmVl
+LXZpcnR1YWwKICAgICAgdmFyIGxlZnRUYWJsZU1vZGVsID0gbmV3IHF4LnVpLnRhYmxlLm1vZGVs
+LlNpbXBsZSgpOwogICAgICBsZWZ0VGFibGVNb2RlbC5zZXRDb2x1bW5zKCBbIlRyZWUgQ29sdW1u
+Il0gKTsKCiAgICAgIHZhciBsZWZ0Q3VzdG9tID0gewogICAgICAgIHRhYmxlQ29sdW1uTW9kZWwg
+OiBmdW5jdGlvbihvYmopIHsKICAgICAgICAgIHJldHVybiBuZXcgcXgudWkudGFibGUuY29sdW1u
+bW9kZWwuUmVzaXplKG9iaik7CiAgICAgICAgfQogICAgICB9CgogICAgICB2YXIgbGVmdFRhYmxl
+ID0gbmV3IHF4LnVpLnRhYmxlLlRhYmxlKGxlZnRUYWJsZU1vZGVsLCBsZWZ0Q3VzdG9tKTsKICAg
+ICAgbGVmdFRhYmxlLnNldCgKICAgICAgICB7CiAgICAgICAgICB0b3AgICAgICAgICAgICAgIDog
+MCwKICAgICAgICAgIGJvdHRvbSAgICAgICAgICAgOiAwLAogICAgICAgICAgd2lkdGggICAgICAg
+ICAgICA6ICIxMDAlIiwKICAgICAgICAgIGJvcmRlciAgICAgICAgICAgOiAiaW5zZXQiLAogICAg
+ICAgICAgc3RhdHVzQmFyVmlzaWJsZSA6IGZhbHNlCiAgICAgICAgfSk7CgogICAgICBoQm94LmFk
+ZChsZWZ0VGFibGUpOwoKICAgICAgLy8gV2l6YXJkIGJ1dHRvbiBiYXIsIHNhbXBsZSBidXR0b25z
+IGFjdGluZyBvbiBsZWZ0IHRyZWUKICAgICAgdmFyIGJ1dHRvbkJhciA9IG5ldyBxeC51aS5sYXlv
+dXQuSG9yaXpvbnRhbEJveExheW91dCgpOwogICAgICBidXR0b25CYXIuc2V0KAogICAgICAgIHsK
+ICAgICAgICAgIGxlZnQgOiAwLAogICAgICAgICAgcmlnaHQgOiAwLAogICAgICAgICAgaGVpZ2h0
+IDogImF1dG8iCiAgICAgICAgfSk7CgogICAgICB2YXIgYWRkQnV0dG9uID0gbmV3IHF4LnVpLmZv
+cm0uQnV0dG9uKCAiQWRkIDUwIE5vZGVzIiApOwogICAgICBhZGRCdXR0b24uYWRkRXZlbnRMaXN0
+ZW5lciggImV4ZWN1dGUiLCBmdW5jdGlvbihldnQpIHsKICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgdmFyIHRhYmxlRGF0YSA9IFtdOwogICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICBmb3IgKCB2YXIgaSA9IDA7IGkgPCA1MDsgaSsrICkgewogICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgIHRhYmxlRGF0YVtpXSA9IFsiTm9kZSIgKyBpXTsKICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICBsZWZ0VGFibGVNb2RlbC5zZXREYXRhKHRhYmxlRGF0YSk7CiAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICB9LCB0aGlzICk7CiAgICAgIGJ1dHRvbkJhci5hZGQo
+YWRkQnV0dG9uKTsKCiAgICAgIC8vIFZlcnRpY2FsIGxheW91dCBmb3IgdGhlIHdpbmRvdwogICAg
+ICB2YXIgbGF5b3V0ID0gbmV3IHF4LnVpLmxheW91dC5WZXJ0aWNhbEJveExheW91dCgpOwogICAg
+ICBsYXlvdXQuc2V0KAogICAgICAgIHsKICAgICAgICAgIGhlaWdodCA6ICIxMDAlIiwKICAgICAg
+ICAgIHdpZHRoICA6ICIxMDAlIiwKICAgICAgICAgIHBhZGRpbmcgOiA0LAogICAgICAgICAgc3Bh
+Y2luZyA6IDQKICAgICAgICB9KTsKICAgICAgbGF5b3V0LmFkZCggaEJveCwgYnV0dG9uQmFyICk7
+CgogICAgICB3aW4uYWRkKCBsYXlvdXQgKTsKCiAgICAgIHdpbi5zaG93KCk7CiAgICB9IAogIH0g
+Cn0pOwoKcXguY29yZS5Jbml0LmdldEluc3RhbmNlKCkuc2V0QXBwbGljYXRpb24obmV3IEJhc2lj
+U2FtcGxlKTsKICA8L3NjcmlwdD4KPC9ib2R5Pgo8L2h0bWw+Cg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

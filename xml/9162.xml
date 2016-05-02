@@ -1,0 +1,106 @@
+<bug>
+          <bug_id>9162</bug_id>
+          
+          <creation_ts>2015-06-04 13:21:00 +0200</creation_ts>
+          <short_desc>ImageLoader.abort aborts a single source for all waiting contextes at once</short_desc>
+          <delta_ts>2015-06-05 08:08:58 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>4.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>NEW</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Alex Rempel">alexey.rempel</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>43367</commentid>
+            <who name="Alex Rempel">alexey.rempel</who>
+            <bug_when>2015-06-04 13:21:48 +0200</bug_when>
+            <thetext>qx.io.ImageLoader.abort(source) does abort the same single source for all callbacks waiting for it.
+
+The problem: qx.ui.basic.Image now does abort loading the old source upon setting the new source (in apply function). This means that if an image 1 is waiting for a source to load and another image 2 sets the same source and then immediately another source then the original source gets aborted - also for the image 1 which expects it to come in validly.
+
+Current workaround: hacked qooxdoo to use contextual abort in ImageLoader i.e. Image does &quot;abort(source, this)&quot; and ImageLoader only does abort for the single context given without touching the loading and callback process for other waiting contextes. If there is no context given or it was the last one then ImageLoader aborts completely.
+
+abort: function(source, optOnlyForThisContext)
+{
+        var entry = this.__data[source];
+        var bDel = true;
+
+        if (entry &amp;&amp; !entry.loaded)
+        {
+            var callbacks = entry.callbacks;
+            var element = entry.element;
+            if (!optOnlyForThisContext || callbacks.length &lt; 3)
+            {
+                entry.aborted = true;
+
+                // Cleanup listeners
+                element.onload = element.onerror = null;
+
+                // prevent further loading
+                element.src = &quot;&quot;;
+
+                // Cleanup entry
+                delete entry.callbacks;
+                delete entry.element;
+                delete entry.loading;
+
+                for (var i = 0, l = callbacks.length; i &lt; l; i += 2)
+                {
+                    callbacks[i].call(callbacks[i + 1], source, entry);
+                }
+            }
+            else
+            {
+                bDel = false;
+                for (var i = 0, l = callbacks.length; i &lt; l; i += 2)
+                {
+                    if (callbacks[i + 1] === optOnlyForThisContext)
+                    {
+                        var cbs = callbacks.splice(i, 2);
+                        entry.aborted = true;
+                        cbs[0].call(cbs[1], source, entry);
+                        entry.aborted = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (entry &amp;&amp; bDel)
+            this.__data[source] = null;
+    },</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

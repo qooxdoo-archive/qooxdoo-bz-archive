@@ -1,0 +1,136 @@
+<bug>
+          <bug_id>5262</bug_id>
+          
+          <creation_ts>2011-06-20 10:44:00 +0200</creation_ts>
+          <short_desc>Error on event.getViewportLeft(); for a curried event on IE (8)</short_desc>
+          <delta_ts>2014-03-03 15:20:02 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>1.4</version>
+          <rep_platform>IE</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Jean-Noel Rivasseau">elvanor</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>25168</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2011-06-20 10:44:39 +0200</bug_when>
+            <thetext>The following very simple application demonstrates the problem on the playground:
+
+http://tinyurl.com/3zlysz5
+
+On any other browser than IE, no problem. However on IE 8 you get an exception as soon as you click anywhere on the document. This is because of the curried event parameter, I guess.
+
+(I hope the tinyurl has a long livetime).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26905</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-09-23 15:20:26 +0200</bug_when>
+            <thetext>I don&#39;t know why this issue happens, but it occurs with IE6, IE7, and IE8. Only IE9 is not affected.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26906</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-09-23 15:51:00 +0200</bug_when>
+            <thetext>That&#39;s really crazy. The issue does only occur in combination with the qx.event.Timer.once call. When I call the created (from curry) method directly, it works:
+
+baba = function(event) {
+  qx.log.Logger.debug(event.getViewportLeft());
+};
+
+qx.bom.Element.addListener(document.body, &quot;click&quot;, function(event) {
+  var test = qx.lang.Function.curry(baba, event);
+  test();
+
+  //qx.event.Timer.once(test, this, 100);
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26907</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2011-09-23 15:56:15 +0200</bug_when>
+            <thetext>I know it is crazy. I was very surprised when I reported the bug too.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26908</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-09-23 16:13:48 +0200</bug_when>
+            <thetext>?? Also the native window.setTimeout doesn&#39;t work:
+
+baba = function(event) {
+  qx.log.Logger.debug(event.getViewportLeft());
+};
+
+qx.bom.Element.addListener(document.body, &quot;click&quot;, function(event) {
+  window.setTimeout(qx.lang.Function.curry(baba, event), 100);
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26912</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-09-23 16:36:38 +0200</bug_when>
+            <thetext>Ok, now I know why this doesn&#39;t work. The problem is the internal implementation form IE. IE uses a global event, which doesn&#39;t exist anymore when you try to access the event from a timer:
+http://stackoverflow.com/questions/3531751/member-not-found-ie-error-ie-6-7-8
+
+Creating a copy from the native event is a bit tricky and evil:
+baba = function(event) {
+  qx.log.Logger.debug(event.getViewportLeft());
+};
+
+qx.bom.Element.addListener(document.body, &quot;click&quot;, function(event) {
+  var eventCopy = {};
+  for (var i in event._native) {
+    eventCopy[i] = event._native[i];    
+  }
+  event._native = eventCopy;
+  qx.event.Timer.once(qx.lang.Function.curry(baba, event), this, 100);
+});
+
+I would avoid to use a event with a timeout.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26927</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2011-09-26 09:15:33 +0200</bug_when>
+            <thetext>I close the bug, because we can&#39;t fix this browser behavior. The best way to solve this issue is to read all the needed values and save it to a local object, before the asynchronous call is done.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36730</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:02 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

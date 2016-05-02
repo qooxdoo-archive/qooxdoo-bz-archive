@@ -1,0 +1,297 @@
+<bug>
+          <bug_id>6299</bug_id>
+          
+          <creation_ts>2012-04-10 23:42:00 +0200</creation_ts>
+          <short_desc>Form manager validator does not change red display tag messages</short_desc>
+          <delta_ts>2012-08-20 13:27:02 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>1.6</version>
+          <rep_platform>Chrome 15</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>2.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Scott Chapman">scott</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>scott</cc>
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>Chrome</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>29092</commentid>
+              <attachid>1144</attachid>
+            <who name="Scott Chapman">scott</who>
+            <bug_when>2012-04-10 23:42:47 +0200</bug_when>
+            <thetext>Created attachment 1144
+Picture of error condition
+
+The attached image shows an error that&#39;s occuring with my form
+validation.  
+
+When you tab out of the field the first time, it has &quot;0644&quot; in the
+text box, which matches the regular expression and everything looks
+good.
+
+Then you go back to the text box and change the contents to &quot;033&quot; and
+tab out of the field. Now the field is highlighted in red as it should
+be but the hover popup shows &quot;0644 doesn&#39;t fit....&quot;.
+
+The hover popup doesn&#39;t reflect the current value of the text field
+like it should.
+
+qx.Class.define(&quot;kiosk_portal.TabUploadFile&quot;,
+{
+ extend : qx.ui.tabview.Page,
+ members :
+ {
+   host_id : null,
+   __blur_handler: function() {
+       console.log(&quot;blur handler&quot;);
+       this.valid = this.__manager.validate();
+       console.log(this.valid);
+       if (this.valid) {
+           this.__uploadButton.setEnabled(true);
+       } else {
+           this.__uploadButton.setEnabled(false);
+       }
+   }
+ },
+ construct : function()
+   {
+     this.base(arguments, &#39;UPLOAD&#39;);
+     this.setLayout(new qx.ui.layout.VBox().set({spacing: 4}));
+
+     this.__uploadForm = new kiosk_portal.uploadwidget.UploadForm(&#39;uploadFrm&#39;,&#39;/file_upload&#39;);
+     this.__uploadForm.setPadding(8);
+
+     this.__uploadForm.setLayout(new qx.ui.layout.VBox(10));
+
+     this.__uploadButton = new qx.ui.form.Button(&quot;Upload&quot;);
+     this.__uploadButton.set({ marginTop : 10, allowGrowX : false, enabled: false });
+     this.__uploadForm.add(this.__uploadButton);
+
+     this.__uploadButton.addListener(&#39;execute&#39;, function(e) {
+       console.log(&quot;executing&quot;);
+     }, this);
+
+     this.__form = new qx.ui.form.Form();
+
+     this.__file_permissions = new qx.ui.form.TextField().set({width: 50, value: &#39;0644&#39;});
+     this.__file_permissions.setRequired(true);
+
+     this.__manager = new qx.ui.form.validation.Manager();
+     this.__manager.add(this.__file_permissions, qx.util.Validate.regExp(new RegExp(&quot;^\\d\\d\\d\\d$&quot;)));
+     this.__form.add(this.__file_permissions, &quot;Permission&quot;, null, &quot;permission&quot;);
+     this.__file_permissions.addListener( &quot;blur&quot;, this.__blur_handler, this);
+
+     this.__controller = new qx.data.controller.Form(null, this.__form);
+     this.__model = this.__controller.createModel();
+
+     this.__renderer = new qx.ui.form.renderer.Single(this.__form);
+     this.__renderer.setAllowGrowX(false);
+     this.add(this.__renderer);
+
+     this.add(this.__uploadForm);
+
+     this.setShowCloseButton(true);
+   }
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29093</commentid>
+            <who name="Scott Chapman">scott</who>
+            <bug_when>2012-04-11 00:56:33 +0200</bug_when>
+            <thetext>Here&#39;s a demo of the problem:
+
+http://tinyurl.com/7hndffw
+
+It starts with 0644 in the form field. 
+Change it to 064 and click on something else (blur the field).
+Hover over it. You will see &quot;064 does not fit....&quot;
+
+Change it to 06 and click on something else.
+Hover over it. You will still see &quot;064 does not fit....&quot;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29094</commentid>
+            <who name="Scott Chapman">scott</who>
+            <bug_when>2012-04-11 00:59:10 +0200</bug_when>
+            <thetext>Shorter demo:
+
+http://tinyurl.com/7xvkl47</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29097</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-04-11 09:10:52 +0200</bug_when>
+            <thetext>Thanks for the good report Scott.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30147</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-07-16 14:31:00 +0200</bug_when>
+            <thetext>This was due to a closure problem of the validator:
+
+    regExp : function(reg, errorMessage)
+    {
+      return function(value)
+      {
+        errorMessage = errorMessage ||
+          qx.locale.Manager.tr(&quot;%1 does not fit %2.&quot;, value, reg);
+
+        if (!reg.test(value)) {
+          throw new qx.core.ValidationError(&quot;Validation Error&quot;, errorMessage);
+        }
+      }
+    }
+
+As no error message is given in the initial call (which creates the validator), the first call was ok but stored the errorMessage in the closure for the second call. Not overriding the &#39;errorMessage&#39; variable fixed the issue.
+
+master: 8aa8b2993e60801fc7545167d34d9566a665671a
+2.0.x: 394f71d24f5ea00c6cd72c6fb8c5d6f52a89da36</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1144</attachid>
+            <date>2012-04-10 23:42:00 +0200</date>
+            <delta_ts>2012-04-10 23:42:47 +0200</delta_ts>
+            <desc>Picture of error condition</desc>
+            <filename>error_shot.jpg</filename>
+            <type>image/jpeg</type>
+            <size>5961</size>
+            <attacher>scott</attacher>
+            
+              <data encoding="base64">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
+</data>
+
+          </attachment>
+      
+
+    </bug>

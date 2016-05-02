@@ -1,0 +1,183 @@
+<bug>
+          <bug_id>5537</bug_id>
+          
+          <creation_ts>2011-08-19 12:15:00 +0200</creation_ts>
+          <short_desc>Applications Using qx.core.Environment._checks</short_desc>
+          <delta_ts>2014-03-03 15:24:10 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          <cc>daniel.wagner</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26537</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-19 12:15:48 +0200</bug_when>
+            <thetext>There are applications that directly access protected members of 
+qx.core.Environment, _checks and (pot.) _asynChecks. None of this is done by 
+classes derived from qx.core.Environment, so it&#39;s outside the inheritance 
+chain. Involved classes include
+
+- qx.dev.unit.MRequirements
+- demobrowser.demo.bom.Environment
+- fce.Environment
+
+It should be considered if these are cases of bad use, and if there are 
+alternatives to that. If the desire to inspect the registered checks proves 
+valid, a public API like &quot;.getAvailableChecks&quot;, &quot;.getAvailableAsyncChecks&quot; etc. 
+should be considered.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26980</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-09-27 10:42:57 +0200</bug_when>
+            <thetext>Is that bug still valid? I don&#39;t think so...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26990</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-09-27 15:26:40 +0200</bug_when>
+            <thetext>The situation hasn&#39;t changed at all. Here is a list of current places in trunk where q.c.Environment._(asyn)?[Cc]heck is used:
+
+./application/featureconfigeditor/source/class/fce
+    52:Environment.js
+./framework/source/class/qx/dev/unit
+    86:MRequirements.js
+./framework/source/class/qx/test/toolchain
+    50:VariantOptimization.js
+    70:VariantOptimization.js
+    81:VariantOptimization.js
+    91:VariantOptimization.js
+    101:VariantOptimization.js
+    108:VariantOptimization.js
+./framework/source/class/qx/test/core
+    39:Environment.js
+    44:Environment.js
+    70:Environment.js
+    80:Environment.js
+    86:Environment.js
+    96:Environment.js
+    114:Environment.js
+    127:Environment.js
+    132:Environment.js
+    141:Environment.js
+    149:Environment.js
+    155:Environment.js
+    168:Environment.js
+    179:Environment.js
+    206:Environment.js
+    209:Environment.js
+    212:Environment.js
+    227:Environment.js
+    228:Environment.js
+    229:Environment.js
+./application/demobrowser/source/class/demobrowser/demo/bom
+    44:Environment.js
+./framework/source/class/qx/test/dev/unit
+    77:Requirements.js
+    91:Requirements.js
+
+It all depends on whether you consider these fair uses of protected class members. For me, it looks like a code smell.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26992</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-09-27 16:35:35 +0200</bug_when>
+            <thetext>There are two different use cases to consider:
+* The unit tests bypass the public core.Environment API by manipulating the checks maps, e.g. to override existing checks.
+* The other classes are only interested in a list of all known sync/async environment key names.
+
+So in the interest of discouraging direct manipulation of the checks maps, it might make sense to add public methods as suggested by Thomas, but only have them return Arrays of key names.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27002</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-09-28 10:00:58 +0200</bug_when>
+            <thetext>Hm, we could make those methods internal for testing purposes only.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27007</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-09-28 12:33:49 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; Hm, we could make those methods internal for testing purposes only.
+
+What do you mean? Which methods are you speaking about? Do you mean methods to query available feature checks?
+
+Then FCE and the bom.Environment demo would use these internal methods, because they are *our* apps, right?! And MRequirements would rightfully use it, as its implementation is opaque for custom classes including it?!
+
+It would still be strange, when people look at the implementation of FCE or bom.Environment, which both are also demo apps where people could re-use the code, if they see an unpublished API being used there, right?!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27032</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-09-29 08:43:23 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; (In reply to comment #4)
+&gt; &gt; Hm, we could make those methods internal for testing purposes only.
+&gt; 
+&gt; What do you mean? Which methods are you speaking about? Do you mean methods to
+&gt; query available feature checks?
+&gt; 
+&gt; Then FCE and the bom.Environment demo would use these internal methods, because
+&gt; they are *our* apps, right?! And MRequirements would rightfully use it, as its
+&gt; implementation is opaque for custom classes including it?!
+&gt; 
+&gt; It would still be strange, when people look at the implementation of FCE or
+&gt; bom.Environment, which both are also demo apps where people could re-use the
+&gt; code, if they see an unpublished API being used there, right?!
+
+Well, internal means for internal usage only and we do not guarantee that the the API will not change without any deprecation. In that kind of sense, we could use it in our apps (internal) and only need to make sure we change those apps too if we change the API.
+Sure the app code is open for everyone and act as demo but thats highly domain specific code so I think thats ok for us to use.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27578</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2011-11-18 17:57:38 +0100</bug_when>
+            <thetext>Added internal methods qx.core.Environment.getChecks and getAsyncChecks and modified the affected application and unit test classes to use them.
+
+Fixed with:
+master 28514291382c554cbded12dffa92b895262524a0
+branch_1_5_x 5d7aba70df5593f57577b47315ccf1a69f1a4e95</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38291</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:10 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

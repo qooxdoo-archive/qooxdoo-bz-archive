@@ -1,0 +1,425 @@
+<bug>
+          <bug_id>4577</bug_id>
+          
+          <creation_ts>2011-01-26 10:56:00 +0100</creation_ts>
+          <short_desc>qx.util.format.DateFormat Format Inconsistencies</short_desc>
+          <delta_ts>2014-03-03 15:21:15 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.dev.util</component>
+          <version>1.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://demo.qooxdoo.org/1.3/apiviewer/#qx.util.format.DateFormat</bug_file_loc>
+          
+          
+          <priority>P4</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.3.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Gabriel Munteanu">jajalinux</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>22429</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-01-26 10:56:01 +0100</bug_when>
+            <thetext>There are various inconsistencies in handling formats in DateFormat:
+
+- For one thing, DateFormat utilizes *different* format specifications (s. URL 
+of this bug): According to the class API, the constructor follows the CLDR 
+format patterns [1], while the parse() method claims to follow the 
+SimpleDateFormat pattens of Java [2]. Although those specs largly overlap, they 
+have also notable differences (e.g. week of year is &quot;Y&quot; in CLDR, &quot;w&quot; in Java).
+
+- This is illogical, as internally the class uses a singel format for both date 
+formatting and parsing. There should be a decision for a single format, and the 
+API doc should be adapted accordingly.
+
+- The CLDR format is not completely or correctly implemented. E.g. the week of 
+year &quot;Y&quot; is not implemented (giving the same as &quot;y&quot;, year), nor the narrow 
+stand-alone from of month &quot;LLLLL&quot;, nor &quot;Q&quot; for quater of the year.
+
+
+[1] http://search.cpan.org/~drolsky/DateTime/lib/DateTime.pm#CLDR_Patterns
+[2] 
+http://download.oracle.com/javase/1.4.2/docs/api/java/text/SimpleDateFormat.html</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22445</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-01-27 08:12:37 +0100</bug_when>
+            <thetext>Agreed! This is a good reason to write an extensive set of unit test for the date formating and parsing.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22535</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2011-02-02 13:31:23 +0100</bug_when>
+            <thetext>What about using Steven Levithan&#39;s code http://blog.stevenlevithan.com/archives/date-time-format ?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22538</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-02-02 14:36:06 +0100</bug_when>
+            <thetext>At the moment I don&#39;t care about code, but all about APIs and interfaces.
+
+The current situation is inconsistent and needs to be rectified. The first 
+question that needs to be answered is which target situation do we want to 
+achieve. My suggestion is to abandon any language/vendor/product -specific 
+format spec, be it Perl, Java or ColdFusion/PHP (which Steven Levithan uses), 
+and focus soley on the CLDR format. I finally found an authoritative link for 
+that spec:
+
+   http://www.unicode.org/reports/tr35/#Date_Format_Patterns
+
+It is layed down in the Unicode Technical Standard report #35, which defines 
+LDML, which also defines the XML DTD for the CLDR data we use. I suggest we 
+should use this standard to base our date and time format implementation on.
+
+Martin, Andreas?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22540</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-02-02 14:53:32 +0100</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; At the moment I don&#39;t care about code, but all about APIs and interfaces.
+&gt; 
+&gt; The current situation is inconsistent and needs to be rectified. The first 
+&gt; question that needs to be answered is which target situation do we want to 
+&gt; achieve. My suggestion is to abandon any language/vendor/product -specific 
+&gt; format spec, be it Perl, Java or ColdFusion/PHP (which Steven Levithan uses), 
+&gt; and focus soley on the CLDR format. I finally found an authoritative link for 
+&gt; that spec:
+&gt; 
+&gt;    http://www.unicode.org/reports/tr35/#Date_Format_Patterns
+&gt; 
+&gt; It is layed down in the Unicode Technical Standard report #35, which defines 
+&gt; LDML, which also defines the XML DTD for the CLDR data we use. I suggest we 
+&gt; should use this standard to base our date and time format implementation on.
+&gt; 
+&gt; Martin, Andreas?
+
+Agree with you Thomas. Adrian, please check what unit tests we already have for the date format and extend / change the tests concerning the given spec. It would be a good idea to only write the unit tests to get an idea whats currently working and whats not working. Implementation changes could be done afterwards.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22541</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2011-02-02 15:12:41 +0100</bug_when>
+            <thetext>Also, we need to think of a way to make these changes work. We can&#39;t just update the DateFormat...this will brake a lot of code...maybe another class, and make this one obsolete?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22542</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2011-02-02 15:15:52 +0100</bug_when>
+            <thetext>Didn&#39;t see your reply, Martin.
+
+Yes, we should start with the unit tests and see what and how...if we don&#39;t already have this class unit tested.
+
+I will get back to you with unit test results.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22543</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-02-02 15:29:34 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Also, we need to think of a way to make these changes work. We can&#39;t just
+&gt; update the DateFormat...this will brake a lot of code...maybe another class,
+&gt; and make this one obsolete?
+
+I don&#39;t think so. If you look into the bug description carefully you will find that a major issue is the API doc for the class. Removing the reference to the Java class doc will not break any existing code. Adding a sentence saying that the same format will be used for both parsing and output formatting will neither. Changing the link from the Perl module to the UTS report will also not break any code. Also adding a short list of supported format identifiers, as a shortcut before surfing to the unicode.org page, will also not affect exising code. (Such a format list will be mandatory if we decide to only support a sub-set of possible CLDR formats).
+
+Adding lots of unit tests that test date/time parsing and formatting will not affect existing code. Adding support for new format identifiers will not affect existing code. ONLY when format identifiers are wrongly implemented (according to the CLDR spec) and we rectify this, THIS will affect existing code. But that is true for any bug fix where application code relies on the bug, and I don&#39;t expect this to be the case often with the DateFormat class.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22545</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2011-02-02 15:42:52 +0100</bug_when>
+            <thetext>Eventually to follow the CLDR path also seems to be a good idea to me. But please make sure we would end up with a consistent, future-proof solution without having spent reasonable efforts. If much is about correcting API (just noticed Thomas&#39; last comment due to mid-air collision), that&#39;d be fine.
+
+Establishing unit tests is key now anyway, please do so, Adi. And if it&#39;s just to detect and document existing inconsistencies. In case there is no effective solution to implement, I would rather point out the inconsistencies (even to my disliking) and spend time on more urgent framework topics.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22774</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-02-16 14:03:26 +0100</bug_when>
+            <thetext>I did the changes to the API doc which I mentioned earlier.
+
+With r25054.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22967</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-02-25 14:02:59 +0100</bug_when>
+            <thetext>As far as I can recall, we sad we go with 
+http://www.unicode.org/reports/tr35/#Date_Format_Patterns
+which is the same spec I mentioned in bug #4591. 
+
+As you see in the symbol table, the y symbol can occur 1..n times.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22968</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2011-02-25 14:11:58 +0100</bug_when>
+            <thetext>I was talking about this one, which is the first link Thomas talked about in comments:
+http://search.cpan.org/~drolsky/DateTime/lib/DateTime.pm#CLDR_Patterns
+
+Anyway, it seems that y can occur 1..n times.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22978</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-02-25 15:21:52 +0100</bug_when>
+            <thetext>(In reply to comment #11)
+&gt; I was talking about this one, which is the first link Thomas talked about in
+&gt; comments:
+&gt; http://search.cpan.org/~drolsky/DateTime/lib/DateTime.pm#CLDR_Patterns
+
+We have abandoned this already, as it is not authoritative, in favor of the unicode.org spec.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23289</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2011-03-15 15:05:50 +0100</bug_when>
+            <thetext>This class needs unit tests for every format it supports.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23326</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-03-16 15:21:27 +0100</bug_when>
+            <thetext>committed intermediate code with rev. 25723.
+
+documented in the class docs what we support and what we do not.
+
+removed support for capital Y pattern.
+Y pattern was used for the case: 4 digit year, and had the meaning of the calendar year in the date.
+in the spec, it can be 1..n Y&#39;s , and it means the year of the week when new year&#39;s eve happens. a date in that week can have year 2010, even if the date is 01 Jan 2011.
+
+added unit tests for format method for all supported patterns.
+
+we support patterns L, w, D, c when formatting, but do not support it when parsing.
+we miss support for G, u, Q, q, I, W, F, g, e, j, A, v, V patterns.
+
+most unit tests fail as of now, mostly due to misunderstanding of where padding is needed.
+
+I need feedback in order to prioritize things for the release.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23344</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-17 08:49:27 +0100</bug_when>
+            <thetext>I just checked out the unit test, great work! Thats a really good base to start fixing that. I think we do have time to get that into the release. So go ahead and fix that.
+
+I also gave you bug 4612 from adrian. Would be good to check out if your currently working on the date util anyway.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23348</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-17 13:22:12 +0100</bug_when>
+            <thetext>(In reply to comment #14)
+&gt; committed intermediate code with rev. 25723.
+
+Concerning the string entries in this commit: We should make our best effort to not hard-wire e.g. time zone names in this class. Rather, we should find a way to use the information from the CLDR data, which contains such names (at least the FULL_TIMEZONE_NAMES at first glance). I don&#39;t have a complete idea how to achieve that, but we should not duplicate those strings. Please get back if you find it difficult to achieve that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23349</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-03-17 13:44:47 +0100</bug_when>
+            <thetext>
+I added them because Opera does not provide the timezone name at all.
+what they do provide is the timezone offset only, and i am constructing a map for the offsets and the timezone names [full and abbrev.].
+
+Also, the browsers that do provide timezone name, they show the standard one [PST] instead of the local version that includes the DST [PT for PST] which is not good according to http://unicode.org/reports/tr35/#Time_Zone_Fallback - we need to show PT for the timezone name when we include the DST into account for the time.
+
+Also, there are cases of ambiguity that i have to deal with: PST with the same GMT offset stand for 2 different things - this would be easy for Windows machine as we get the full name there, but here on linux Date.toString() shows the abbreviated version.
+
+The path I am going now is to get the timezone offset and name [full or abbrev.] if possible from date.toString(), and from this info to get the timezone information [full and abbrev.].</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23351</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-17 14:15:46 +0100</bug_when>
+            <thetext>(In reply to comment #17)
+&gt; I added them because Opera does not provide the timezone name at all.
+&gt; what they do provide is the timezone offset only, and i am constructing a map
+&gt; for the offsets and the timezone names [full and abbrev.].
+&gt; 
+&gt; Also, the browsers that do provide timezone name, they show the standard one
+&gt; [PST] instead of the local version that includes the DST [PT for PST] which is
+&gt; not good according to http://unicode.org/reports/tr35/#Time_Zone_Fallback - we
+&gt; need to show PT for the timezone name when we include the DST into account for
+&gt; the time.
+&gt; 
+&gt; Also, there are cases of ambiguity that i have to deal with: PST with the same
+&gt; GMT offset stand for 2 different things - this would be easy for Windows
+&gt; machine as we get the full name there, but here on linux Date.toString() shows
+&gt; the abbreviated version.
+
+But what has this all to do with CLDR data?! Where is the connection?!
+
+&gt; 
+&gt; The path I am going now is to get the timezone offset and name [full or
+&gt; abbrev.] if possible from date.toString(), and from this info to get the
+&gt; timezone information [full and abbrev.].
+
+You should never use name information returned from browser objects.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23354</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-17 15:13:01 +0100</bug_when>
+            <thetext>(In reply to comment #14)
+&gt; committed intermediate code with rev. 25723.
+&gt; 
+&gt; documented in the class docs what we support and what we do not.
+
+Good.
+
+&gt; removed support for capital Y pattern.
+&gt; Y pattern was used for the case: 4 digit year, and had the meaning of the 
+calendar year in the date.
+&gt; in the spec, it can be 1..n Y&#39;s , and it means the year of the week when new 
+year&#39;s eve happens. a date in that week can have year 2010, even if the date is 
+01 Jan 2011.
+
+Ok, good research. I&#39;m not really concerned about it, but it doesn&#39;t sound as 
+if it would be hard to support.
+
+&gt; 
+&gt; added unit tests for format method for all supported patterns.
+
+Good.
+
+&gt; 
+&gt; we support patterns L, w, D, c when formatting, but do not support it when 
+parsing.
+
+That&#39;s exactly the kinds of inconsistencies we should get rid of.
+
+&gt; we miss support for G, u, Q, q, I, W, F, g, e, j, A, v, V patterns.
+
+G - should be easy; 
+u - I don&#39;t know what &quot;extended year&quot; stands for; 
+Q,q - it would be nice if we could support at least one quater format
+I - has very low prio
+W - medium prio
+F - what&#39;s that supposed to mean? &quot;3rd Wednesday in March&quot;!? - low prio
+g - no idea; could you read up on that, so we know what it means?!
+e - not sure what that means either
+j - very low prio
+A - low prio
+v,V - I&#39;m not getting the short descriptions of these formats, but from all 
+time zone formats (z,Z,v,V) we should try to support some standard three letter 
+time zone acronyms and long time zones, based on CLDR data (whatever format 
+character these are)
+
+
+
+&gt; 
+&gt; most unit tests fail as of now, mostly due to misunderstanding of where 
+padding is needed.
+
+Fair enough.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23363</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-17 16:09:07 +0100</bug_when>
+            <thetext>(In reply to comment #14)
+&gt; added unit tests for format method for all supported patterns.
+
+I&#39;ve looked at the unit tests, and I think they&#39;re a good first step. As a next 
+step, I think we should call those tests (like testPattern_y_) on *more* than 
+just one date. Maybe it would be a good idea to have a data structure 
+somewhere, where we can build a list of specific dates (like 
+[[2010,9,15,9,9,9],...]), which are then all passed to each individual format 
+test method (which takes the date info as a parameter) in a loop. E.g.
+
+   __dates : [
+     [2010,9,15,9,9,9],
+     ....
+   ]
+
+and later
+
+   for (var i=0, j=len(this.__dates); i&lt;j; i++) {
+     this.testPattern_y_(this.__dates[i]);
+  }
+
+  // same for testPattern_M_, ... asf.
+
+This would allow us to add corner cases, and test all cases with all formats.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23705</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-03-29 14:11:50 +0200</bug_when>
+            <thetext>
+we support now:
+y, Y, G, Q, q, D, d, w, W, E, e, c, M, L, a, H, h, K, k, m, s, S, z, Z
+
+issues:
+G - no locale, cldr
+Q,q - no locale, cldr
+z, Z - we support the fallback to GMT+02:00 , as timezone name is not well supported in browser environments.
+
+unit tests now have a customizable array of dates that are tested when the tests are run. so if you think of a weird date, place it there and it will be included in the unit tests.
+
+when parsing, there are a few more corner cases where you could get the date from littler data.
+
+example of corner case [this is covered]:
+--------------
+var d = new Date();
+var dateFmt = new qx.util.format.DateFormat(&quot;dd/MM/YYYY&quot;);
+var datestr = datefmt.format(d);
+and then when you want to get the date back, you do not have the year, but the weekYear.
+var parsedDate = dateFmt.parse(dateStr);
+--------------
+we cover 2 corner cases:
+ - getting the year from weekYear and month
+ - getting the day and month knowing the day of year
+
+there are more cases like that, there is 1 I have as next on my list:
+ - getting the day and month knowing the year, week of year and day of week.
+
+
+fixed on trung with rev. 26278.
+
+I will apply it on branch 1_3_x if no more problems appear on the nightly tests.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23731</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-03-31 12:43:58 +0200</bug_when>
+            <thetext>fixed on branch 1_3_x with rev. 26444.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37219</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:15 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

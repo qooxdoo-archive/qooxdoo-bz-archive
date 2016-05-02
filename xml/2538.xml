@@ -1,0 +1,190 @@
+<bug>
+          <bug_id>2538</bug_id>
+          
+          <creation_ts>2009-07-01 15:01:00 +0200</creation_ts>
+          <short_desc>Mouse wheel on Table scrolls too much</short_desc>
+          <delta_ts>2011-05-03 09:00:29 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Massimo Petrillo">mappopo</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10707</commentid>
+            <who name="Massimo Petrillo">mappopo</who>
+            <bug_when>2009-07-01 15:01:11 +0200</bug_when>
+            <thetext>In some case mouse wheel scrolls too much rows in tables.
+A simple test case is the code for playground:
+
+var tableModel = new qx.ui.table.model.Simple();
+tableModel.setColumns([&quot;ID&quot;, &quot;Number 1&quot;, &quot;Number 2&quot;, &quot;Image&quot;]);
+
+var image = [&quot;icon/16/actions/dialog-ok.png&quot;, &quot;icon/16/actions/dialog-cancel.png&quot;];
+
+var rowData = [];
+for (var row = 0; row &lt; 47; row++) {
+    var x = Math.random() * 1000;
+    rowData.push([row, x, x, image[Math.floor(x) % 2]]);
+}
+tableModel.setData(rowData);
+var table = new qx.ui.table.Table(tableModel);
+
+var win = new qx.ui.window.Window(&quot;First Window&quot;);
+win.setWidth(300);
+win.setHeight(200);
+win.setShowMinimize(false);
+
+this.getRoot().add(win, {
+    left: 20,
+    top: 20
+});
+win.open();
+
+var layout = new qx.ui.layout.Grid(9, 5);
+layout.setColumnWidth(0, 80);
+layout.setRowHeight(0, 80);
+layout.setColumnFlex(0, 80);
+layout.setRowFlex(0, 80);
+
+win.setLayout(layout);
+win.add(table, {
+    row: 0,
+    column: 0
+});
+
+
+If you try to scroll by means of mouse wheel the last rows (of 47) are displayed, if you resize the window you can get better behaviour but if the table is short it is quite un unacceptable.
+
+In my applications I patched qx.ui.table.pane.Scroller in this way
+
+      _onMousewheel: function(e) {
+          var delta = e.getWheelDelta();
+          if (delta &gt; 0)
+              delta = 1;
+          else
+              delta = -1;
+          var table = this.getTable();
+
+          if (!table.getEnabled()) {
+              return;
+          }
+
+          this.__verScrollBar.scrollTo(
+        this.__verScrollBar.getPosition() +
+        ((delta/*e.getWheelDelta() * 3*/) * table.getRowHeight())
+      );
+
+          // Update the focus
+          if (this.__lastMousePageX &amp;&amp; this.getFocusCellOnMouseMove()) {
+              this._focusCellAtPagePos(this.__lastMousePageX, this.__lastMousePageY);
+          }
+      },</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13456</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2009-10-23 15:02:45 +0200</bug_when>
+            <thetext>See bug #1739 for details.
+
+*** This bug has been marked as a duplicate of bug 1739 ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16072</commentid>
+            <who name="Massimo Petrillo">mappopo</who>
+            <bug_when>2010-01-08 11:09:58 +0100</bug_when>
+            <thetext>Hi, 
+I apologize if I am not allowed to reopen the bug. But I am not sure it is really a duplicate of bug #1739.
+
+The problem is not resolved in version 1.0.
+In Firefox mouse wheel scrolls 3 row, in Internet explorer 9 rows a time.
+
+You can see it at http://demo.qooxdoo.org/current/showcase/#table.
+Just resize the window until fewer rows are shown and try mouse wheel.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16073</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-08 11:35:04 +0100</bug_when>
+            <thetext>to Johnny for review</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16136</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2010-01-13 11:01:09 +0100</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16374</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2010-01-25 10:34:26 +0100</bug_when>
+            <thetext>I have tested several browsers and the scroll speed is different in each one 
+and sometimes it even depends on the operation system. Some browser also 
+accelerate the scroll speed.
+
+We have to discuss this problem and come to an agreement if and how we want to 
+influence the native scrolling speed.
+
+-&gt; Fabian</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16514</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-27 16:30:58 +0100</bug_when>
+            <thetext>moved to target 1.0.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17347</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-17 14:09:48 +0100</bug_when>
+            <thetext>to Jonny</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18823</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2010-06-21 14:44:17 +0200</bug_when>
+            <thetext>Enhancements back to the pool.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23662</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-28 13:22:38 +0200</bug_when>
+            <thetext>I tried to normalize the wheel speed as good as I could. I only added that for trunk because we have only for trunk the new mouse wheel behavior.
+
+
+trunk: r26186</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

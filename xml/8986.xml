@@ -1,0 +1,88 @@
+<bug>
+          <bug_id>8986</bug_id>
+          
+          <creation_ts>2015-03-05 09:00:00 +0100</creation_ts>
+          <short_desc>Animation stops on iOS 8 after tab switch</short_desc>
+          <delta_ts>2015-03-13 11:07:53 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>website.animation</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Alexander Steitz">alexander.steitz</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>42705</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2015-03-05 09:00:15 +0100</bug_when>
+            <thetext>If a animation is implemented at your page and you&#39;re switching to a tab / creating a new one the animation won&#39;t start anymore after switching back to your page.
+
+The issue is related to iOS new behavior to cleanup up dynamically created stylesheets.
+
+Since a caching mechanism is used within our animation layer this clashes with the current iOS implementation.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42795</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-03-10 17:38:54 +0100</bug_when>
+            <thetext>Just took some time to debug the issue using the following sample:
+
+      window.setInterval(function() {
+        q(&quot;#test&quot;).setStyles({
+          backgroundColor: &quot;red&quot;,
+          position: &quot;absolute&quot;,
+          fontSize: &quot;100px&quot;
+        }).animate({duration: 1000, keyFrames: {
+          0: {rotate: &quot;0deg&quot;},
+          100: {rotate: &quot;360deg&quot;}
+        }});
+      }, 3000);
+
+
+
+Unfortunately, the stylesheet is not the root of the issue as it is still in place and valid. But as soon as the tab is out of sight, the animationend event will not be fired and lost which leads to an unpredicted state. I still don&#39;t have an idea of how to fix this...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42797</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-03-11 09:27:15 +0100</bug_when>
+            <thetext>This was a tough one. The browser seems to prevent animations end events as soon as you set the page into the background (no matter if it is a tap switch or a browser close). But resetting the state of the animation class on every new animation does not fix the bug as the browser simply seems to not like the old stylesheet. I checked a lot of properties of the sheet but could not find an evidence that it could probably not work (parent node, rule length, ...). In the end, I came to the point that resetting the animations cache on a page switch is the best way to go so I added a listener using the page visibility API for iOS 8 which resets the cache as soon as the page get visible again.
+
+master: 12d0e7900086a6428056e794c6654d846f3bf03f
+4.1.x: 9ac461d97f51b47ae5a4a986e268327f61704672
+
+next: 1815f9d6b8510d2c49bde348a8da40788038a8f6</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

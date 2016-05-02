@@ -1,0 +1,100 @@
+<bug>
+          <bug_id>5000</bug_id>
+          
+          <creation_ts>2011-04-12 13:57:00 +0200</creation_ts>
+          <short_desc>Optimization of qx.core.Environment.get() Calls Depend on Parentheses to Work</short_desc>
+          <delta_ts>2014-03-03 15:18:53 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>1.4</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>2.0</target_milestone>
+          <dependson>5706</dependson>
+          <blocked>4856</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>23990</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-04-12 13:57:20 +0200</bug_when>
+            <thetext>This is a follow-up from bug#4734.
+
+Currently, the optimization for qx.core.Environment.get() works if the call is 
+an operand in an operation, like compares (equality, inequality, order 
+relation) , logical operations (and, or, not), or in the hook operator. This is 
+also true in nested operations of these kinds. 
+
+The caveat here is that the expressions need to be properly parenthesized, to 
+indicate the grouping of the operations. E.g. the expression
+
+  qx.core.Environment.get(&quot;foo&quot;) == 3 ? 1 : 2
+
+will not be optimized, but
+
+  (qx.core.Environment.get(&quot;foo&quot;) == 3) ? 1 : 2
+
+will.
+
+This is due to the current JS parser implementation in the generator that does 
+not honor operator precedence when constructing the AST. E.g. for the first 
+expression, it would generate an AST like this:
+
+  (== qx.core.Environment.get(&quot;foo&quot;) (? 3 1 2))
+
+instead of the correct
+
+  (? (== qx.core.Environment.get(&quot;foo&quot;) 3) 1 2)
+
+i.e. the parse result has the wrong &quot;head&quot; symbol.  (BTW, the same applies to 
+an arithmetic expression like &quot;3*4+2&quot;). Since the optimization relies on AST 
+patterns to apply optimizations, non-sematical syntax trees cannot be treated.
+
+To get this working without parentheses, a parser would be necessary that 
+produces semantically correct syntax trees, i.e. honors operator precedence.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29538</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-05-23 18:24:26 +0200</bug_when>
+            <thetext>The new parser in master produces correct precedences, so parentheses are no 
+longer necessary to enforce them.
+
+Solved with bug#5706.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36252</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:18:53 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

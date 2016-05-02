@@ -1,0 +1,186 @@
+<bug>
+          <bug_id>1852</bug_id>
+          
+          <creation_ts>2009-01-19 01:37:00 +0100</creation_ts>
+          <short_desc>Remove Array prototype modifications from framework</short_desc>
+          <delta_ts>2014-03-03 15:19:19 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>0.8.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>2.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>info</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>7391</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-01-19 01:37:37 +0100</bug_when>
+            <thetext>One of the key points advertised by qooxdoo is &quot;It is fully based on namespaces and does not extend native JavaScript types&quot; (from http://qooxdoo.org/about), yet qooxdoo does, in fact, extend the Array prototype, adding compatibility functions. This has, yet again, raised the question of why one can&#39;t iterate an array, which is legal according to Javascript, with a for/in loop, without retrieving items that the user didn&#39;t put there (in IE in particular). There&#39;s no particular reason that these functions must be available in the Array prototype, and in fact, could as easily be provided as static functions. If there were not downside to adding them to the prototype, having them there would be no problem. Since this item comes up each year, there is, clearly a downside. Removing these additions to the Array prototype would allow normal javascript use of for/in loops at no other particular expense.
+
+This change would be a backward-compatibility hit, but providing migration functions for those usages would be fairly easy. I propose that the Array prototype be made pure again for the 0.9 release, and the current extensions to the Array prototype be moved into static functions.
+
+Derrell (and Andreas J.)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7395</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-01-19 10:00:13 +0100</bug_when>
+            <thetext>I&#39;ll wrap up the current discussion and try to come up with the most reasonable solution.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7409</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-01-20 09:38:51 +0100</bug_when>
+            <thetext>.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9002</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-03-30 14:14:39 +0200</bug_when>
+            <thetext>I think we should put this on the 0.8.3 shedule</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9209</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-08 16:17:16 +0200</bug_when>
+            <thetext>The most problematic method is &quot;indexOf&quot; which is used quite often by the framework and the users as well I would say.
+
+With the newly available BaseArray class it is infact a question if we could omit the modification of the native Array. A general use of BaseArray is not a good solution though as it still produces a bit overhead - at least in IE.
+
+I also do not see an enourmous need here as normally it is easy to omit such cases when just using a map as a sparse array when really needed.
+
+We a so overcautious with compatibility nowadays that I think this is nothing for 0.8.3 but more for 0.9.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9219</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-09 09:55:41 +0200</bug_when>
+            <thetext>Even if the use of &quot;for in&quot; loops on arrays is almost always better written as &quot;for i=0; i&lt;arr.length; i++)&quot; and maps should be preferred over sparse arrays, JavaScript users constantly do it because it is legal. I can&#39;t remember how often I had to answer questions on the mailing list, which are caused by conflicts of our array extensions with such constructs. For this reason I support Derrell and Andreas J.
+
+It&#39;s on the 0.8.3 schedule because we have to decide how to remove these methods cleanly. We won&#39;t remove them entirely in 0.8.3 but rather add some deprecation warnings.
+
+It we remove them it will not be before 0.9.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9232</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-09 11:00:12 +0200</bug_when>
+            <thetext>The question always should be on top of our list is &quot;does this change make it better&quot;?
+
+I am not sure in this area, because of the major impact a not available &quot;indexOf&quot; or &quot;lastIndexOf&quot; may have. This is something which breaks qooxdoo&#39;s cross browser support on a elementary level as users are used to call this API and this is lists in most of the public reference guides. Still IE has no support for these functions. This is a major break to our &quot;JavaScript 1.6 is supported in every qooxdoo client&quot;-philosophy. Especially interesting is that there are *no* new facts in this dicussion. It&#39;s just the old one reopened again ;)
+
+Instead of discussing only about the problems with &quot;for... in&quot; loops - which is perfectly valid - it should not make us blind for the other issues users might have when we remove this kind of API.
+
+JavaScript users - at least the unexperienced - do use &quot;for...in&quot; for Arrays, but it&#39;s still true, that in most cases this is bad style - also regarding performance. So it&#39;s not that bad to answering their questions and helping them out to understand it. No problem here.
+
+Remember that both issues, missing &quot;indexOf&quot; and iterating via &quot;for...in&quot; are affecting the same people. In both cases the user mainly develops for Firefox (or other non IE) and then opens the application/page in IE and get errors in various places.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11833</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-03 09:55:10 +0200</bug_when>
+            <thetext>targeted as enhancement for 0.9</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12015</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-09-08 16:42:27 +0200</bug_when>
+            <thetext>I would more or less tend to increase the usage of addons further and not to remove them. I find the vice-versa project (http://code.google.com/p/vice-versa/) highly interesting here. IMHO it&#39;s a good way to support a base which is 90% accepted as a standard or useful. This makes developing JS applications more painless and this is what such a framework is for... right? </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12016</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-09-08 16:44:02 +0200</bug_when>
+            <thetext>If that&#39;s no way it might be also OK to reintroduce all native features under a special separated namespace e.g.
+
+qx.native.XMLHttpRequest
+qx.native.Array
+qx.native.String
+qx.native.Date
+qx.native.JSON
+
+There is some fundation in qooxdoo which would be a good start to add support for this. What do you think?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12017</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-09-08 17:00:41 +0200</bug_when>
+            <thetext>Regarding comment #9: sounds good! My only gripe is that we currently modify native prototypes when I don&#39;t believe we should, and we violate the claims of qooxdoo that we don&#39;t modify native prototypes. Removing the prototype modifications from Array (and XMLHttpRequest, String, and Date if there are modifications to their prototypes) and creating qx.native.&lt;native_class_name&gt; sounds like a fine solution.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12025</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-09-08 19:07:43 +0200</bug_when>
+            <thetext>The qx.native thing might work good work *new* classes but may not be good enough for primitive types. In fact I want to have Array.indexOf and Array.forEach and not want to call a separate method. I would highly prefer to rethink about that &quot;oes not extend native JavaScript types&quot; as this is not as convenient as it should be. Basically all these additions are standardized. It&#39;s much easier to learn this native API once instead of dealing with a new API. Especially because it&#39;s documented here and there.
+
+For me I would place new classes emulating native ones in qx.native.* (which are not fixable by a few prototype extensions) and would allow to extend the prototype of all primitive types and arrays. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12033</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-09-08 23:03:17 +0200</bug_when>
+            <thetext>Ok, Sebastian, then you and I just have diametrically opposing views. It&#39;ll just be up to Andreas and folks to select which one to use. One of the two of us will be unhappy with the result. :-)
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14735</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:25:56 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0 (for issues with status &quot;NEW&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16044</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-07 10:18:24 +0100</bug_when>
+            <thetext>The behavior that shipped in 1.0 is consistent to the previous qooxdoo versions. When reconsidering to change this behavior, it most likely would only work out in a major release, so moved this to 2.0 for now.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28115</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-12-23 08:35:19 +0100</bug_when>
+            <thetext>I don&#39;t think thats the way we should go. Honestly, I either think about extending the extension of native types.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36437</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:19 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

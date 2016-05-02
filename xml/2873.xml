@@ -1,0 +1,143 @@
+<bug>
+          <bug_id>2873</bug_id>
+          
+          <creation_ts>2009-09-30 17:08:00 +0200</creation_ts>
+          <short_desc>allow single selection without being passed in an array</short_desc>
+          <delta_ts>2009-11-24 20:15:56 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>christian.hagendorn</cc>
+    
+    <cc>qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>12763</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-09-30 17:08:50 +0200</bug_when>
+            <thetext>There have been a number of comments on the mailing list regarding troubles people have had with trying to make a selection containing only a single widget. The following patch should resolve the problem by allowing a single item to be converted internally to an array.
+
+Derrell
+
+diff --git a/qooxdoo/framework/source/class/qx/ui/core/MSingleSelectionHandling.js b/qooxdoo/framework/source/class/qx/ui/core/MSingleSelectionHandling.js
+index 83c48ee..7247a00 100644
+--- a/qooxdoo/framework/source/class/qx/ui/core/MSingleSelectionHandling.js
++++ b/qooxdoo/framework/source/class/qx/ui/core/MSingleSelectionHandling.js
+@@ -83,11 +83,22 @@ qx.Mixin.define(&quot;qx.ui.core.MSingleSelectionHandling&quot;,
+     /**
+      * Replaces current selection with the given items.
+      *
+-     * @param items {qx.ui.core.Widget[]} Items to select.
++     * @param items {qx.ui.core.Widget[]|qx.ui.core.Widget}
++     *   Items to select. If the selection is composed of more than one Widget,
++     *   items must be an array containing them. If the selection is composed
++     *   of only one Widget, it may be passed within, or not within, an array.
++     *
+      * @throws an exception if one of the items is not a child element and if
+      *    items contains more than one elements.
+      */
+-    setSelection : function(items) {
++    setSelection : function(items)
++    {
++      // For convenience, if we were passed a single item, convert it to
++      // an array.
++      if (! qx.lang.Type.isArray(items)) {
++        items = [ items ];
++      }
++      
+       switch(items.length)
+       {
+         case 0:</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12785</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-01 13:31:11 +0200</bug_when>
+            <thetext>To consistently use arrays (even for single selection) was introduced explicitly when consolidating the selection API. There are technical and non-technical reasons that I&#39;ll ask Martin to summarize here. 
+
+I do see a possible inconvenience when &quot;just&quot; needing single selections, but the benefits should outweigh this. Once you accept that a selection is always represented by an array, it all fits nicely (e.g. please note that the API is setSelection(), not setSelectedItem(), but lets possibly replace the parameter name &quot;items&quot; with &quot;selection&quot;).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12787</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-10-01 13:43:38 +0200</bug_when>
+            <thetext>As Andreas said, there are a few reasons why we decided to wrap all selections in arrays, even if its a single selection.
+The first reason for this was the removal of inconsistency. We wanted to have all selection APIs look and act alike. 
+What this patch would do is to allow different kinds of arguments, which is ok if its always the case. But we did not like the fact, that for example the list, changes the validity of the arguments with another property (selectionMode). 
+Another reason comes in play if you look at the getter of the selection. qooxdoo always returns exactly wat has been set. But the getSelection always returns an array, which is confusing for the user because he set a single element.
+So I think, especially because of the last reason, we should keep it the way it is.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12793</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-10-01 14:21:55 +0200</bug_when>
+            <thetext>I won&#39;t belabour the point, but I will make a recommendation on the parameter naming which will hopefully help prevent the user confusion that we&#39;ve seen. &quot;items&quot; is more clearly a plural, meaning a set of one or more, than is &quot;selection&quot; which depending on what you&#39;re working can easily appear as a singular. You might make it more explicit with (yuck) some type of pseudo Hungarian notation, e.g. itemsArr, selectionArr, selectionSet, etc.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12814</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-10-02 10:30:18 +0200</bug_when>
+            <thetext>Hm, renaming the parameter to prevent misunderstandings sounds like a very good idea! How about itemsArray? I don&#39;t like the abbreviations in code because it just makes the code unreadable. As long as the size of the source code (generator takes care of that) is not interesting, we should always use full names.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12824</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-02 13:41:24 +0200</bug_when>
+            <thetext>I personally would still prefer &quot;selection&quot;, also since we&#39;d have to make sure &quot;a qooxdoo selection is always an array of items&quot; sticks anyway. But I&#39;ll leave it up to you if the code base suggests another more meaningful name...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13579</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-10-27 14:51:52 +0100</bug_when>
+            <thetext>I just talked to Chris and Fabian and we all agree that items should stay because we don&#39;t use the Arr (or Array) postfix anymore in the framework.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13763</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-11-02 09:46:37 +0100</bug_when>
+            <thetext>CLOSED</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14609</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:15:56 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

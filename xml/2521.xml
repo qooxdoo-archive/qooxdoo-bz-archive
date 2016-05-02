@@ -1,0 +1,363 @@
+<bug>
+          <bug_id>2521</bug_id>
+          
+          <creation_ts>2009-06-26 18:03:00 +0200</creation_ts>
+          <short_desc>IE8: memory leak in image rendering</short_desc>
+          <delta_ts>2012-05-16 09:37:18 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>unspecified</version>
+          <rep_platform>IE 8</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          
+          
+          
+          <priority>P5</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Helder Magalhães">helder.magalhaes</reporter>
+          <assigned_to name="Helder Magalhães">helder.magalhaes</assigned_to>
+          <cc>info</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          <cf_browser_version>8</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10610</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-06-26 18:03:36 +0200</bug_when>
+            <thetext>I&#39;m starting to document what seems to be an IE8-specific memory in image rendering. Each time an image is disposed, a few KB of memory are never freed. This memory leak seems to be in-page, which means that (all?) memory seems to be reclaimed whenever the page is unloaded (close, refresh or navigation to another page).
+
+Although I&#39;m convinced that this is an IE8 memory leak and should be fixed by Microsoft developers (and marked &quot;invalid&quot; afterward), I&#39;m creating this issue so:
+ 1. The community can help reducing the issue;
+ 2. One can start researching on a possible way to workaround it (as I&#39;m guessing many users will upgrade IE8 and &quot;forget&quot; about updates afterward), if that&#39;s even possible (and marked &quot;fixed&quot;, in that case).
+
+What I&#39;ve discovered so far:
+ * Apparently all image formats are affected (PNG, GIF and BMP were tested);
+ * The leak is more serious when the DirectX alpha renderer (used for the PNG transparency trick) is used.
+
+I&#39;m creating this issue for the general image memory leak, and hope to later create a different issue to address the alpha transparency.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10611</commentid>
+              <attachid>538</attachid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-06-26 18:07:50 +0200</bug_when>
+            <thetext>Created attachment 538
+Test case (DemoBrowser-formatted) for the legacy branch (0.7.x)
+
+As stated in the description, «Hide the &quot;Images leak&quot; column or pause refresh in order to stop memory growing forever».</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10669</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-06-29 20:10:39 +0200</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; What I&#39;ve discovered so far:
+
+And a few more discoveries:
+ * Confirmed in two different machines: one running Windows XP SP3 and another Windows Vista SP1;
+ * Simply removing the image elements from the DOM (before replacing the innerHTML) doesn&#39;t seem to help;
+ * Using outerHTML instead doesn&#39;t seem to help either;
+ * Using DOM methods to insert/remove images triggers the leak also.
+
+I&#39;ve already reduced a test case (independent from the qooxdoo framework) but I need to improve it a bit as currently it doesn&#39;t make sure the image refresh intervals are the same: that is, when elements are removed using DOM methods, for example, that necessarily delays execution a bit and somehow interferes with memory usage analysis. The hunting continues... ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10717</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-07-01 18:18:12 +0200</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; This memory leak seems to be in-page, which means that (all?) memory seems to
+&gt; be reclaimed whenever the page is unloaded (close, refresh or navigation to
+&gt; another page).
+
+Further testing reveals that only part of the memory is reclaimed when leaving the page, so this appears to be a &quot;true&quot;/general memory leak... :-|
+
+
+&gt;  * The leak is more serious when the DirectX alpha renderer (used for the PNG
+&gt; transparency trick) is used.
+&gt; 
+&gt; I&#39;m creating this issue for the general image memory leak, and hope to later
+&gt; create a different issue to address the alpha transparency.
+
+I&#39;ve just created bug 2540 for that.
+
+
+(In reply to comment #2)
+&gt; And a few more discoveries:
+
+And one more:
+ * The issue reproduces using the file system also so this doesn&#39;t seem to be network-related.
+
+
+BTW: I don&#39;t have (easy, least) access to any of the other supported operating systems [1] (64 bit-based, etc.). Can anyone using these confirm the issue? Or would one prefer me setting up a completely independent (from qooxdoo) test case first?
+
+
+Some feedback (even if just a CC or vote for the issue) would be welcome... ;-)
+
+
+[1] http://www.microsoft.com/windows/internet-explorer/support/system-requirements.aspx</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10719</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-07-01 18:37:12 +0200</bug_when>
+            <thetext>Hi Helder, thanks for investigating. 
+
+I&#39;d indeed suggest to set up a test case, which nicely shows the issue (while being independent of qooxdoo). That might certainly help in other users running those tests on various OS&#39;es and determining if this is a real (and significant) memory leak, and not some internal IE memory management that is supposed to work like that during a regular browser instance session.
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10928</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-07-16 09:29:01 +0200</bug_when>
+            <thetext>Hi Helder, assigned it to you, as you might want to create a test case and/or investigate further?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10931</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-07-16 10:05:06 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Hi Helder, assigned it to you, as you might want to create a test case and/or
+&gt; investigate further?
+
+Seems far. As stated (in comment #2), I already created a reduced test case. :-)  Just not having enough time to keep up with my increasing TODO list... :-|
+
+As the testcase isn&#39;t self contained (it requires several files), I hope to improve it a bit and publish it somewhere (probably in my website). I&#39;m thinking about reworking it in the sense of a &quot;image redraw stress test&quot;, which can be used to benchmark and/or try to reproduce this kind of memory leak across browsers and platforms. I&#39;ll let you know whenever I&#39;m able to! ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10932</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-07-16 10:07:38 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; Seems far.
+
+Oops! &quot;Seems far&quot; should have been &quot;Seems fair&quot;, in the sense of bug accepted. :-D</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11383</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-08-18 16:15:51 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; As the testcase isn&#39;t self contained (it requires several files), I hope to
+&gt; improve it a bit and publish it somewhere (probably in my website).
+
+I haven&#39;t forgotten about this but, given the lag, I though like posting a quick update... :-)
+
+
+(In reply to comment #3)
+&gt; Further testing reveals that only part of the memory is reclaimed when leaving
+&gt; the page, so this appears to be a &quot;true&quot;/general memory leak... :-|
+
+I&#39;ve been doing a few experiments and I yet haven&#39;t got any clear conclusion about this: a reduced test case (simple HTML+images) seems to point towards an in-page memory leak (memory is freed when leaving the page), although I&#39;m sure I have seen persistent (&quot;real&quot;) memory leaks when running within a more rich environment (such as qooxdoo), so my current guess goes to a combination of images+JavaScript+DOM to trigger the leak. At least, this hypothesis would explain how something so simple (creating/destroying images) would slip through the IE test team.
+
+Also, even if this is an in-page memory leak, the fact that qooxdoo applications tend to keep open pages for long periods of time still deserves attention...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11564</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-08-26 14:18:40 +0200</bug_when>
+            <thetext>Hi Helder, thanks for the updates. 
+
+While reworking the bug handling process, I noticed you accepted this bug, but no target milestone is set. If you are actively working on this bug (or expect to do so within the next few days), we can keep it in the accepted state, but I&#39;d set it to 0.8.3. If instead you&#39;d like to have it assigned without currently working on it, please reassign it to you, so that the status changes from ASSIGNED to NEW, thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11573</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2009-08-26 16:11:15 +0200</bug_when>
+            <thetext>(In reply to comment #9)
+Hi Andreas,
+
+&gt; If you are actively working on this bug (or expect
+&gt; to do so within the next few days), we can keep it in the accepted state [...]
+
+Unfortunately, I&#39;m don&#39;t have a clue on when will I be able to get back at this... :-|
+
+
+&gt; If instead you&#39;d like to have it assigned without
+&gt; currently working on it, please reassign it to you, so that the status changes
+&gt; from ASSIGNED to NEW, thanks.
+
+I&#39;m not sure if I understand this, but I guess you meant that, if I&#39;m not able to work on this in the next few days, to reassign the bug to the default assignee? That&#39;s what I&#39;ve just done. ;-)
+
+
+I&#39;d _really_ like to have some more reports on this weird behavior. Specially if anyone can figure out if this is an in-page memory leak or a &quot;real&quot; one. Just confirming that the attached test case reproduces the issue and/or reproducing and creating a similar test case for the trunk (0.8.x) would help. :-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11739</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-01 11:25:43 +0200</bug_when>
+            <thetext>untarget. If you are able to work on or investigate this issue further, we could retarget and assign it gain.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12680</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-25 21:23:47 +0200</bug_when>
+            <thetext>Helder, this bug was in an inconsistent state, so I fixed it by re-targeting and assigning. Do you still think that is a defect that needs investigation? All real defects (as opposed to enhancements) are supposed to have an assignee and a target milestone ...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12912</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-07 13:11:05 +0200</bug_when>
+            <thetext>disconnected from meta bug #1434</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14797</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:26:39 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0 (for issues with status &quot;NEW&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15759</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-12-11 17:46:14 +0100</bug_when>
+            <thetext>Helder, I moved this out of the 1.0 time frame. Any new results and indications of a real problem that could be fixed?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16494</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-27 16:30:46 +0100</bug_when>
+            <thetext>moved to target 1.0.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17698</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2010-04-12 12:36:30 +0200</bug_when>
+            <thetext>(In reply to comment #15)
+&gt; Any new results and indications
+&gt; of a real problem that could be fixed?
+
+No, actually none of my attempts to workaround this issue worked. :-|  Fortunately, though, the issue was &quot;automagically&quot; solved by the Internet Explorer team. :-D
+
+Recently, I&#39;ve tried to further hunt down the issue but, at start, could no longer reproduce it. Through the use of an outdated virtual machine, by applying the security updates one by one, I was able to narrow the issue to KB 978207 [1] (an update marked critical and therefore distributed through Windows/Microsoft update).
+
+The &quot;magical&quot; part comes from the fact that this issue is not referenced in the knowledge base article [1] (I&#39;d expect it to be listed in the &quot;Non-security-related fixes that are included in this security update&quot; section) nor in the security bulletin [2]. ;-)
+
+Given that this can have an important impact on IE8 users for long running dynamic applications (the typical case for qooxdoo applications), specially ones which use image-based widgets (tables with boolean and other cell renderers, trees and such), I&#39;d recommend creating a special qooxdoo blog post and/or make reference on the weekly blog entry so that users and system administrators take appropriate measures. As I couldn&#39;t find a central place which lists this update&#39;s download location for all Windows versions, I&#39;ve made a custom query [3] which may be handy. Let me know if you need help in resuming this information. :-)
+
+Phew, this *was* a tricky one! :-D
+
+Cheers,
+ Helder
+
+
+[1] http://support.microsoft.com/?kbid=978207
+[2] http://www.microsoft.com/technet/security/bulletin/MS10-002.mspx
+[3] http://www.microsoft.com/downloads/en/results.aspx?freetext=Cumulative+Security+Update+for+Internet+Explorer+8+KB978207&amp;nr=20</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17699</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-12 12:42:37 +0200</bug_when>
+            <thetext>Sometimes, bugs fix themselves... you just have to wait. ;)
+--&gt; CLOSED</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>538</attachid>
+            <date>2009-06-26 18:07:00 +0200</date>
+            <delta_ts>2009-06-26 18:07:50 +0200</delta_ts>
+            <desc>Test case (DemoBrowser-formatted) for the legacy branch (0.7.x)</desc>
+            <filename>Table_IE8_Image_Leak.html</filename>
+            <type>text/html</type>
+            <size>4058</size>
+            <attacher>helder.magalhaes</attacher>
+            
+              <data encoding="base64">PGh0bWw+DQo8aGVhZD4NCiAgPG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBjb250ZW50
+PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXRmLTgiIC8+DQogIDx0aXRsZT5xb294ZG9vICZyYXF1bzsg
+RGVtbyBCcm93c2VyPC90aXRsZT4NCiAgPHNjcmlwdCB0eXBlPSJ0ZXh0L2phdmFzY3JpcHQiPg0K
+ICAgIHF4c2V0dGluZ3MgPQ0KICAgIHsNCiAgICAgICJxeC5kaXNwb3NlckRlYnVnTGV2ZWwiICAg
+ICA6IDANCiAgICB9Ow0KICAgIHF4dmFyaWFudHMgPQ0KICAgIHsNCiAgICAgICJxeC5kZWJ1ZyIg
+OiAib24iDQogICAgfTsNCiAgPC9zY3JpcHQ+DQogIDxzY3JpcHQgdHlwZT0idGV4dC9qYXZhc2Ny
+aXB0IiBzcmM9Ii4uLy4uL3NjcmlwdC9kZW1vLmpzIj48L3NjcmlwdD4NCiAgPHNjcmlwdCB0eXBl
+PSJ0ZXh0L2phdmFzY3JpcHQiIHNyYz0iLi4vdXRpbC5qcyI+PC9zY3JpcHQ+DQo8L2hlYWQ+DQo8
+Ym9keT4NCiAgPGRpdiBpZD0iZGVzY3JpcHRpb24iPg0KICAgIDxwPkRlbW9uc3RyYXRlcyBpbWFn
+ZXMgbGVha2luZyBpbiBJRTguIElFNiBhbmQgSUU3IGRvbid0IHNlZW0gdG8gYmUgYWZmZWN0ZWQg
+YnkgdGhpcyBtZW1vcnkgbGVhay4NCiAgICAgIEhpZGUgdGhlICJJbWFnZXMgbGVhayIgY29sdW1u
+IG9yIHBhdXNlIHJlZnJlc2ggaW4gb3JkZXIgdG8gc3RvcCBtZW1vcnkgZ3Jvd2luZyBmb3JldmVy
+Lg0KICAgICAgVGhlIGxlYWsgaXMgYXBwYXJlbnRseSBpbi1wYWdlLCB3aGljaCBtZWFucyBtZW1v
+cnkgaXMgcmVjbGFpbWVkIHdoZW5ldmVyIHRoZSBwYWdlIGlzIHVubG9hZGVkIChjbG9zZSwgcmVm
+cmVzaCBvciBuYXZpZ2F0aW9uIHRvIGFub3RoZXIgcGFnZSkuPC9wPg0KICA8L2Rpdj4NCg0KICA8
+c2NyaXB0IHR5cGU9InRleHQvamF2YXNjcmlwdCI+DQogIHF4LkNsYXNzLmRlZmluZSgiQmFzaWNT
+YW1wbGUiLA0KICB7DQogICAgZXh0ZW5kIDogcXguYXBwbGljYXRpb24uR3VpLA0KDQogICAgbWVt
+YmVycyA6DQogICAgew0KICAgICAgbWFpbiA6IGZ1bmN0aW9uKCkNCiAgICAgIHsNCiAgICAgICAg
+dGhpcy5iYXNlKGFyZ3VtZW50cyk7DQoNCiAgICAgICAgdmFyIGQgPSBxeC51aS5jb3JlLkNsaWVu
+dERvY3VtZW50LmdldEluc3RhbmNlKCk7DQoNCiAgICAgICAgdmFyIG1haW4gPSBuZXcgcXgudWku
+bGF5b3V0LlZlcnRpY2FsQm94TGF5b3V0KCk7DQogICAgICAgIG1haW4uc2V0KHsgbGVmdDoyMCwg
+dG9wOjIwLCByaWdodDoyMCwgYm90dG9tOjIwLCBzcGFjaW5nOjUgfSk7DQoNCiAgICAgICAgdmFy
+IG5leHRJZCA9IDA7DQogICAgICAgIHZhciBjcmVhdGVSYW5kb21Sb3dzID0gZnVuY3Rpb24ocm93
+Q291bnQpIHsNCiAgICAgICAgICB2YXIgcm93RGF0YSA9IFtdOw0KICAgICAgICAgIGZvciAodmFy
+IHJvdyA9IDA7IHJvdyA8IHJvd0NvdW50OyByb3crKykgew0KICAgICAgICAgICAgcm93RGF0YS5w
+dXNoKFsgbmV4dElkKyssIChNYXRoLnJhbmRvbSgpID4gMC41KSwgKE1hdGgucmFuZG9tKCkgPiAw
+LjUpID8gInNvbWUgc3RyaW5nIjogImFub3RoZXIgc3RyaW5nIl0pOw0KICAgICAgICAgIH0NCiAg
+ICAgICAgICByZXR1cm4gcm93RGF0YTsNCiAgICAgICAgfTsNCg0KICAgICAgICAvLyBDcmVhdGUg
+dGhlIGluaXRpYWwgZGF0YQ0KICAgICAgICB2YXIgcm93RGF0YSA9IGNyZWF0ZVJhbmRvbVJvd3Mo
+MTUwKTsNCg0KICAgICAgICAvLyB0YWJsZSBtb2RlbA0KICAgICAgICB2YXIgdGFibGVNb2RlbCA9
+IG5ldyBxeC51aS50YWJsZS5tb2RlbC5TaW1wbGUoKTsNCiAgICAgICAgdGFibGVNb2RlbC5zZXRD
+b2x1bW5zKFsgIklkZW50aWZpZXIiLCAiSW1hZ2VzIGxlYWsiLCAiU3RyaW5ncyBkb24ndCIgXSk7
+DQogICAgICAgIHRhYmxlTW9kZWwuc2V0RGF0YShyb3dEYXRhKTsNCg0KICAgICAgICAvLyBQZXJm
+b3JtIHF1aWNrIHRhYmxlIGRhdGEgcmVmcmVzaA0KICAgICAgICB2YXIgcmVmcmVzaFRpbWVyID0g
+bmV3IHF4LmNsaWVudC5UaW1lcig1MDApOw0KICAgICAgICByZWZyZXNoVGltZXIuYWRkRXZlbnRM
+aXN0ZW5lcigiaW50ZXJ2YWwiLCBmdW5jdGlvbigpew0KICAgICAgICAgIHRhYmxlTW9kZWwuc2V0
+RGF0YShjcmVhdGVSYW5kb21Sb3dzKDE1MCkpOw0KICAgICAgICB9LCB0aGlzKTsNCiAgICAgICAg
+cmVmcmVzaFRpbWVyLnN0YXJ0KCk7DQoNCiAgICAgICAgLy8gQ3VzdG9taXplIHRoZSB0YWJsZSBj
+b2x1bW4gbW9kZWwuICBXZSB3YW50IG9uZSB0aGF0IGF1dG9tYXRpY2FsbHkNCiAgICAgICAgLy8g
+cmVzaXplcyBjb2x1bW5zLg0KICAgICAgICB2YXIgY3VzdG9tID0NCiAgICAgICAgICB7DQogICAg
+ICAgICAgICB0YWJsZUNvbHVtbk1vZGVsIDoNCiAgICAgICAgICAgICAgZnVuY3Rpb24ob2JqKQ0K
+ICAgICAgICAgICAgICB7DQogICAgICAgICAgICAgICAgcmV0dXJuIG5ldyBxeC51aS50YWJsZS5j
+b2x1bW5tb2RlbC5SZXNpemUob2JqKTsNCiAgICAgICAgICAgICAgfQ0KICAgICAgICAgIH07DQoN
+CiAgICAgICAgLy8gdGFibGUNCiAgICAgICAgdmFyIHRhYmxlID0gbmV3IHF4LnVpLnRhYmxlLlRh
+YmxlKHRhYmxlTW9kZWwsIGN1c3RvbSk7DQogICAgICAgIHdpdGggKHRhYmxlKSB7DQogICAgICAg
+ICAgc2V0KHsgd2lkdGg6IjEwMCUiLCBoZWlnaHQ6IjEqIiwgYm9yZGVyOiJpbnNldC10aGluIiB9
+KTsNCiAgICAgICAgICBnZXRTZWxlY3Rpb25Nb2RlbCgpLnNldFNlbGVjdGlvbk1vZGUocXgudWku
+dGFibGUuc2VsZWN0aW9uLk1vZGVsLk1VTFRJUExFX0lOVEVSVkFMX1NFTEVDVElPTik7DQoNCiAg
+ICAgICAgICAvLw0KICAgICAgICAgIC8vIFNwZWNpZnkgdGhlIHJlc2l6ZSBiZWhhdmlvci4uLiAg
+Rmlyc3QsIGdldCB0aGUgdGFibGUgY29sdW1uIG1vZGVsLA0KICAgICAgICAgIC8vIHdoaWNoIHdl
+IHNwZWNpZmllZCB0byBiZSBhIFJlc2l6ZVRhYmxlQ29sdW1Nb2RlbCBvYmplY3QuDQogICAgICAg
+ICAgLy8NCiAgICAgICAgICB2YXIgdGNtID0gdGFibGUuZ2V0VGFibGVDb2x1bW5Nb2RlbCgpOw0K
+DQogICAgICAgICAgLy8gT2J0YWluIHRoZSBiZWhhdmlvciBvYmplY3QgdG8gbWFuaXB1bGF0ZQ0K
+ICAgICAgICAgIHZhciByZXNpemVCZWhhdmlvciA9IHRjbS5nZXRCZWhhdmlvcigpOw0KDQogICAg
+ICAgICAgLy8gRGlzcGxheSBjaGVja2JveGVzIGluIHNlY29uZCBjb2x1bW4NCiAgICAgICAgICB0
+Y20uc2V0RGF0YUNlbGxSZW5kZXJlcigxLCBuZXcgcXgudWkudGFibGUuY2VsbHJlbmRlcmVyLkJv
+b2xlYW4oKSk7DQogICAgICAgIH07DQoNCiAgICAgICAgbWFpbi5hZGQodGFibGUpOw0KDQogICAg
+ICAgIHZhciBidXR0b25CYXIgPSBuZXcgcXgudWkubGF5b3V0Lkhvcml6b250YWxCb3hMYXlvdXQo
+KTsNCiAgICAgICAgYnV0dG9uQmFyLnNldCh7IHdpZHRoOiIxMDAlIiwgaGVpZ2h0OiJhdXRvIiwg
+c3BhY2luZzo1IH0pOw0KICAgICAgICBtYWluLmFkZChidXR0b25CYXIpOw0KDQogICAgICAgIHZh
+ciBidXR0b24gPSBuZXcgcXgudWkuZm9ybS5CdXR0b24oIlBhdXNlIHJlZnJlc2giKTsNCiAgICAg
+ICAgYnV0dG9uLmFkZEV2ZW50TGlzdGVuZXIoImV4ZWN1dGUiLCBmdW5jdGlvbihldnQpIHsNCiAg
+ICAgICAgICByZWZyZXNoVGltZXIuc3RvcCgpOw0KICAgICAgICAgIHRoaXMuaW5mbygiQXV0b21h
+dGljIHJlZnJlc2ggcGF1c2VkIik7DQogICAgICAgIH0pOw0KICAgICAgICBidXR0b25CYXIuYWRk
+KGJ1dHRvbik7DQoNCiAgICAgICAgdmFyIGJ1dHRvbiA9IG5ldyBxeC51aS5mb3JtLkJ1dHRvbigi
+UmVzdW1lIHJlZnJlc2giKTsNCiAgICAgICAgYnV0dG9uLmFkZEV2ZW50TGlzdGVuZXIoImV4ZWN1
+dGUiLCBmdW5jdGlvbihldnQpIHsNCiAgICAgICAgICByZWZyZXNoVGltZXIuc3RhcnQoKTsNCiAg
+ICAgICAgICB0aGlzLmluZm8oIkF1dG9tYXRpYyByZWZyZXNoIHJlc3VtZWQiKTsNCiAgICAgICAg
+fSk7DQogICAgICAgIGJ1dHRvbkJhci5hZGQoYnV0dG9uKTsNCg0KICAgICAgICBkLmFkZChtYWlu
+KTsNCg0KICAgICAgfQ0KICAgIH0NCiAgfSk7DQoNCiAgcXguY29yZS5Jbml0LmdldEluc3RhbmNl
+KCkuc2V0QXBwbGljYXRpb24obmV3IEJhc2ljU2FtcGxlKTsNCiAgPC9zY3JpcHQ+DQo8L2JvZHk+
+DQo8L2h0bWw+DQo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

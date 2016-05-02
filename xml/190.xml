@@ -1,0 +1,307 @@
+<bug>
+          <bug_id>190</bug_id>
+          
+          <creation_ts>2006-10-16 11:43:00 +0200</creation_ts>
+          <short_desc>Internet Explorer crashes in RPC tests</short_desc>
+          <delta_ts>2014-03-03 15:26:46 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>0.6.1</version>
+          <rep_platform>IE 6</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://demo.qooxdoo.org/html/test/RPC_1.html</bug_file_loc>
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.7.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Sebastian Dauß">sebastian.dauss</reporter>
+          <assigned_to name="Derrell Lipman">derrell.lipman</assigned_to>
+          <cc>craquerpro</cc>
+    
+    <cc>thbu</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          <cf_browser_version>6</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>554</commentid>
+            <who name="Sebastian Dauß">sebastian.dauss</who>
+            <bug_when>2006-10-16 11:43:26 +0200</bug_when>
+            <thetext>On some of our workstations, qooxdoo crashes in some tests and demos, all involving remote requests:
+ * all &quot;RPC&quot; demos crash
+ * RpcTreeFullControl crashes
+
+Error message is (roughly translated from german) &quot;The instruction at address 0x77525553 referenced memory at 0x03c6d350 (EDIT: varying). The memory could not be read.&quot;
+
+Interestingly, no &quot;Transport&quot; test crashes.
+
+System information:
+ * Windows XP Professional Version 2002 SP 2
+ * Internet Explorer 6.0.2900.2180.xpsp_sp2_gdr.050301-1519
+ * Microsoft Office Professional 2003
+
+Maybe it is just a misconfiguration of those machines, but perhaps the problem affects a percentage of our users...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>555</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2006-10-16 12:42:04 +0200</bug_when>
+            <thetext>This problem is currently being analyzed.
+
+For clarification: the crashes occur for the RPC online demos at http://demo.qooxdoo.org where RPC servers are not available at all. Therefore, those demos without a corresponding RPC backend should probably not have been put online in the first place.
+
+The problems are only seen on two computers of the same user, so a misconfiguration in software setup (maybe involving MS Office on the same machine) may be the reason. 
+
+Anyway, it still is important to figure out why IE is so fragile.
+
+Has anyone noticed any problems regarding IE  and qx.io.remote.Request, etc.??</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>556</commentid>
+            <who name="Til Schneider">tilman.schneider</who>
+            <bug_when>2006-10-16 13:42:01 +0200</bug_when>
+            <thetext>XmlHttpTransport makes IE crash when a HTTP response with a statusCode != 200 arrives. The problem is propably some manipulation on the XmlHttpRequest object during the handling of onreadystatechange.
+
+There is a workaround: By calling the handler code in a timeout these problems are avoided, because onreadystatechange can return instantly.
+
+The following code applies this workaround. Execute this after loading qooxdoo.
+----- snip -----
+if (qx.sys.Client.getInstance().isMshtml()) { 
+  var originalOnreadystatechange = qx.io.remote.XmlHttpTransport.prototype._onreadystatechange; 
+  qx.io.remote.XmlHttpTransport.prototype._onreadystatechange = function() { 
+    var obj = this; 
+    window.setTimeout(function() { 
+      originalOnreadystatechange.call(obj); 
+    }, 0); 
+  }; 
+} 
+----- snap -----</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>557</commentid>
+            <who name="Thomas Butz">thbu</who>
+            <bug_when>2006-10-16 13:47:51 +0200</bug_when>
+            <thetext>Hello 
+
+not only two work stations my IE 6.0.2900.2180.xsp_sp2_gdr crash too when I start the RPC5 test!
+(XP with Office 2002 SP3)
+greetings
+thomas</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>560</commentid>
+            <who name="Sebastian Dauß">sebastian.dauss</who>
+            <bug_when>2006-10-16 14:58:57 +0200</bug_when>
+            <thetext>Thanks Til,
+
+using the proposed workaround IE no longer crashes in our application. Would be nice if the qooxdoo-team could include it in the qx codebase, at least for IE6.
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1097</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2007-03-23 11:46:23 +0100</bug_when>
+            <thetext>The proposed code that seems to fix the problem has not been included into the framework, because it was planned to track down the fundamental error that caused the problem.
+
+Unfortunately, there has been no success in determining the underlying problem, so this workaround may make it into the next release. According to projects that use it for quite some time now, no side effects have been observed.
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1098</commentid>
+            <who name="David Perez">craquerpro</who>
+            <bug_when>2007-03-23 12:57:50 +0100</bug_when>
+            <thetext>Andreas,
+
+Thanks a lot for your tip.
+I had a crash with IE7+Windows Server 2003+qooxdoo 0.6.6 and the timeout has solved it!.         :-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1257</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2007-05-10 14:26:40 +0200</bug_when>
+            <thetext>I&#39;ll take care of this change.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1260</commentid>
+            <who name="David Perez">craquerpro</who>
+            <bug_when>2007-05-10 17:39:23 +0200</bug_when>
+            <thetext>It has happened to more people, so this is clearly a potential problem, with a known solution.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1263</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2007-05-11 09:40:48 +0200</bug_when>
+            <thetext>Fixed by incorporating the workaround, both in trunk and legacy_0_6_x. It&#39;s the best pragmatic solution for now. Still, this bug needs further investigation, what exactly causes IE to crash. 
+
+None of our Windows PCs shows those problems, so it would be great if people affected by this bug could help in tracking down the cause (e.g. ways to reproduce the crash, additional debugging statements, ...).
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1833</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2007-07-05 12:38:38 +0200</bug_when>
+            <thetext>The workaround breaks synchronous calls. Did the original version crash for synchronous call as well?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1843</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-07-05 14:09:02 +0200</bug_when>
+            <thetext>Another way will be to add debug statements to all methods which apply stuff to the native xmlhttp object. Maybe we can see what method, if so, really do something after the complete has been fired. This should be possible even on computers which are not affected by this crash.
+
+Yes it breaks syncronous requests. Is anybody really depending on them. I would prefer if this is not selectable at all. By all the bad side effects which are known for syncronous requests - is anybody outthere really using them or better depending on them. I could perfectly live with a async only solution. This would even improve the usability as the other transport layers are also not able to support this. Which results into identical behavior independend from the implementation used.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1846</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2007-07-05 14:33:35 +0200</bug_when>
+            <thetext>Unfortunately, people are using sync requests.  We&#39;ve seen it in various messages to the mailing list at times.  I&#39;d love to get rid of them too.  I even put big warnings in the docs about the dangers of using them.  
+
+If we remove them, we need to provide replacement functionality that implements sync on top of async in a manner that can be automatically migrated.  This would be too big of a functionality change (and would affect the way that applications are designed) to remove this functionality.  (Too bad.)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1870</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-07-06 17:21:18 +0200</bug_when>
+            <thetext>Maybe we can still implement them in XmlHttpRequest but don&#39;t publish them to the remote.Request class. When the XMLhttpRequest will be useable standalone sometime this may be an option.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1871</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-07-06 17:23:51 +0200</bug_when>
+            <thetext>Changed to target = 0.7.2. It seems not be realistic to find a solution here in the next one or two working days.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1872</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-07-06 17:25:31 +0200</bug_when>
+            <thetext>Recuded priority because the issue is not fixed for (the most used) async calls but may still exist for sync&#39;ed calls.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1873</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-07-06 17:26:01 +0200</bug_when>
+            <thetext>Reduced serverity, too.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2349</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-09-18 18:25:24 +0200</bug_when>
+            <thetext>Mass move of bugs to target 0.7.3</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2417</commentid>
+              <attachid>261</attachid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2007-09-26 07:28:55 +0200</bug_when>
+            <thetext>Created attachment 261
+Possible fix for the problem which avoids timeout call to onreadystatechange function
+
+There seems to be some interaction with this issue and bug 664. In particular, it&#39;s possible that the IE crash was caused by a spurious call to onreadystatechange after the request was closed. If the qooxdoo class had been disposed this may well have caused a crash. That&#39;s because for IE, the code in the destructor of qx.io.remote.XmlHttpTransport just left onreadystatechange pointing to the class _onreadystatechange (suitably enclosed in timer now). 
+
+I&#39;ve had a go at testing this, but can&#39;t emulate the original problem reported here. But I&#39;m proposing a patch for this which may fix things. Note that this patch includes the changes required for bug 664 so you may have to merge changes if that patch has already been applied. The patch also only applies to 0.7.x as I can&#39;t test 0.6.x or trunk.
+
+Note that at the very minimum the call to set up onreadystatechange in the constructor of XmlHttpTransport should be removed as it&#39;s redundant with the setup call in send introduced as the original fix for this bug.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2672</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-01-11 11:12:23 +0100</bug_when>
+            <thetext>@Hugh: This was already modified comparable to your solution in SVN. Thank you for your contrib.
+
+I will set this report to FIXED as it seems the problem was really to set the listener to null. Please reopen if error occours again.
+
+I&#39;ve cleaned up the old more verbose code a bit and removed all old workarounds.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39228</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:46 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>261</attachid>
+            <date>2007-09-26 07:28:00 +0200</date>
+            <delta_ts>2007-09-26 07:28:55 +0200</delta_ts>
+            <desc>Possible fix for the problem which avoids timeout call to onreadystatechange function</desc>
+            <filename>qxbug190.patch</filename>
+            <type>application/octet-stream</type>
+            <size>2581</size>
+            <attacher>hgibson</attacher>
+            
+              <data encoding="base64">SW5kZXg6IGJyYW5jaGVzL2xlZ2FjeV8wXzdfeC9xb294ZG9vL2Zyb250ZW5kL2ZyYW1ld29yay9z
+b3VyY2UvY2xhc3MvcXgvaW8vcmVtb3RlL1htbEh0dHBUcmFuc3BvcnQuanMNCj09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0N
+Ci0tLSBicmFuY2hlcy9sZWdhY3lfMF83X3gvcW9veGRvby9mcm9udGVuZC9mcmFtZXdvcmsvc291
+cmNlL2NsYXNzL3F4L2lvL3JlbW90ZS9YbWxIdHRwVHJhbnNwb3J0LmpzCShyZXZpc2lvbiAxMDIz
+MSkNCisrKyBicmFuY2hlcy9sZWdhY3lfMF83X3gvcW9veGRvby9mcm9udGVuZC9mcmFtZXdvcmsv
+c291cmNlL2NsYXNzL3F4L2lvL3JlbW90ZS9YbWxIdHRwVHJhbnNwb3J0LmpzCSh3b3JraW5nIGNv
+cHkpDQpAQCAtMTEwLDYgKzExMCwxNSBAQA0KICAgICAgKi8KICAgICBjcmVhdGVSZXF1ZXN0T2Jq
+ZWN0IDogZnVuY3Rpb24oKSB7CiAgICAgICByZXR1cm4gcXgubmV0Lkh0dHBSZXF1ZXN0LmNyZWF0
+ZSgpOworICAgIH0sCisKKworICAgIC8qKgorICAgICAqIER1bW15IGZ1bmN0aW9uIHRvIHVzZSBm
+b3Igb25yZWFkeXN0YXRlY2hhbmdlIGFmdGVyIGRpc3Bvc2FsCisgICAgICoKKyAgICAgKiBAdHlw
+ZSBzdGF0aWMKKyAgICAgKi8KKyAgICBfX2R1bW15IDogZnVuY3Rpb24oKSB7CiAgICAgfQogICB9
+LAogCkBAIC0yMzIsMzMgKzI0MSw2IEBADQogICAgICAgICByZXR1cm4gb3V0cHV0OwogICAgICAg
+fTsKIAotICAgICAgLyoKLSAgICAgICAgIFhtbEh0dHBUcmFuc3BvcnQgbWFrZXMgSUUgY3Jhc2gg
+d2hlbiBhIEhUVFAgcmVzcG9uc2Ugd2l0aCBhIHN0YXR1c0NvZGUgIT0gMjAwCi0gICAgICAgICBh
+cnJpdmVzLiBUaGUgcHJvYmxlbSBpcyBwcm9wYWJseSBzb21lIG1hbmlwdWxhdGlvbiBvbiB0aGUg
+WG1sSHR0cFJlcXVlc3Qgb2JqZWN0Ci0gICAgICAgICBkdXJpbmcgdGhlIGhhbmRsaW5nIG9mIG9u
+cmVhZHlzdGF0ZWNoYW5nZS4gVGhpcyBwcm9ibGVtIG5lZWRzIGZ1cnRoZXIKLSAgICAgICAgIGlu
+dmVzdGlnYXRpb24uCi0KLSAgICAgICAgIGh0dHA6Ly9idWd6aWxsYS5xb294ZG9vLm9yZy9zaG93
+X2J1Zy5jZ2k/aWQ9MTkwCi0KLSAgICAgICAgIFRoZSBmb2xsb3dpbmcgd29ya2Fyb3VuZCBjYWxs
+cyB0aGUgaGFuZGxlciBjb2RlIHdpdGggYSB6ZXJvIHRpbWVvdXQgaW4gb3JkZXIKLSAgICAgICAg
+IHRvIGF2b2lkIHRob3NlIHByb2JsZW1zLCBiZWNhdXNlIG9ucmVhZHlzdGF0ZWNoYW5nZSBjYW4g
+dGhlbiByZXR1cm4gaW5zdGFudGx5LgotICAgICAgKi8KLSAgICAgIHZhciBvbnJlYWR5U3RhdGVD
+aGFuZ2VDYWxsYmFjayA9IHF4LmxhbmcuRnVuY3Rpb24uYmluZCh0aGlzLl9vbnJlYWR5c3RhdGVj
+aGFuZ2UsIHRoaXMpOwotICAgICAgaWYgKHF4LmNvcmUuVmFyaWFudC5pc1NldCgicXguY2xpZW50
+IiwgIm1zaHRtbCIpICYmIHRoaXMuZ2V0QXN5bmNocm9ub3VzKCkpCi0gICAgICB7Ci0gICAgICAg
+IHZSZXF1ZXN0Lm9ucmVhZHlzdGF0ZWNoYW5nZSA9IGZ1bmN0aW9uKGUpCi0gICAgICAgIHsKLSAg
+ICAgICAgICB2YXIgc2VsZiA9IHRoaXM7Ci0gICAgICAgICAgd2luZG93LnNldFRpbWVvdXQoZnVu
+Y3Rpb24oZSkgewotICAgICAgICAgICAgb25yZWFkeVN0YXRlQ2hhbmdlQ2FsbGJhY2soZSk7Ci0g
+ICAgICAgICAgfSwgMCk7Ci0gICAgICAgIH07Ci0gICAgICB9Ci0gICAgICBlbHNlCi0gICAgICB7
+Ci0gICAgICAgIHZSZXF1ZXN0Lm9ucmVhZHlzdGF0ZWNoYW5nZSA9IG9ucmVhZHlTdGF0ZUNoYW5n
+ZUNhbGxiYWNrCi0gICAgICB9Ci0KICAgICAgIC8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tCiAgICAgICAvLyAgIE9wZW5pbmcgY29ubmVjdGlvbgogICAgICAgLy8gLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KQEAgLTg4MywxMyArODY1LDEwIEBA
+DQogCiAgICAgaWYgKHZSZXF1ZXN0KQogICAgIHsKLSAgICAgIC8vIFNob3VsZCBiZSByaWdodCwK
+LSAgICAgIC8vIGJ1dCBpcyBub3QgY29tcGF0aWJsZSB0byBtc2h0bWwgKHRocm93cyBhbiBleGNl
+cHRpb24pCi0gICAgICBpZiAocXguY29yZS5WYXJpYW50LmlzU2V0KCJxeC5jbGllbnQiLCAibXNo
+dG1sIikpIHsKLSAgICAgIH0gZWxzZSB7IC8vIGVtcHR5IHRvIGhlbHAgdGhlIGdlbmVyYXRvciB0
+byBvcHRpbWl6ZSB0aGlzIHZhcmlhbnQKLSAgICAgICAgdlJlcXVlc3Qub25yZWFkeXN0YXRlY2hh
+bmdlID0gbnVsbDsKLSAgICAgIH0KLQorICAgICAgLy8gQ2xlYW4gdXAgc3RhdGUgY2hhbmdlIGhh
+bmRsZXIKKyAgICAgIC8vIE5vdGUgdGhhdCBmb3IgSUUgdGhlIHByb3BlciB3YXkgdG8gZG8gdGhp
+cyBpcyB0byBzZXQgaXQgdG8gYSAKKyAgICAgIC8vIGR1bW15IGZ1bmN0aW9uLCBub3QgbnVsbCAo
+R29vZ2xlIG9uICJvbnJlYWR5c3RhdGVjaGFuZ2UgZHVtbXkgSUUgdW5ob29rIikKKyAgICAgIHZS
+ZXF1ZXN0Lm9ucmVhZHlzdGF0ZWNoYW5nZSA9IHF4LmlvLnJlbW90ZS5YbWxIdHRwVHJhbnNwb3J0
+Ll9fZHVtbXk7CiAgICAgICAvLyBBYm9ydGluZwogICAgICAgc3dpdGNoKHZSZXF1ZXN0LnJlYWR5
+U3RhdGUpCiAgICAgICB7Cg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

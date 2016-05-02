@@ -1,0 +1,95 @@
+<bug>
+          <bug_id>5125</bug_id>
+          
+          <creation_ts>2011-05-14 19:33:00 +0200</creation_ts>
+          <short_desc>In the menu (#widget~Menu.html) demo, right click on menu button shows two menus</short_desc>
+          <delta_ts>2011-07-25 08:04:28 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>app.demobrowser</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.4.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Leandro Santiago">leandrosansilva</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>24524</commentid>
+            <who name="Leandro Santiago">leandrosansilva</who>
+            <bug_when>2011-05-14 19:33:44 +0200</bug_when>
+            <thetext>In the menu (#widget~Menu.html) demo, right click on menu button shows two menus.
+
+As the root widget shows a menu (getRootContextMenu()) when user click with right button, when you click on the button labeled &quot;Menu button&quot;, two menus are displayed: the button menu, with is the same when you click with the left button, and the root menu. [1]
+
+The same happens with the &quot;Split button&quot;, when you click with right button on the option button [2].
+
+And also happens with the toolbar [3].
+
+But this is not the behavior when you click in a scrool bar, which doesn&#39;t show any menu.
+
+[1] http://dl.dropbox.com/u/3550969/qooxdoo-button-menu.png
+[2] http://dl.dropbox.com/u/3550969/qooxdoo-button-menu1.png
+[3] http://dl.dropbox.com/u/3550969/qooxdoo-button-menu2.png</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24532</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-05-16 09:15:01 +0200</bug_when>
+            <thetext>Thanks for the report!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24822</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-06-01 11:56:07 +0200</bug_when>
+            <thetext>After I digged into it, I discovered that the MenuButtons, Buttons, in fact any widget, when it doesn&#39;t have a contextMenu, lets the contextMenu event propagate up the widget tree untill it gets to the widget that has contextmenu, and so it has a contextmenuhandler, that stops the propagation of the event.
+
+the simplest solution that i tried was to add another default contextmenu handler that will stop the propagation when it had no conetxtmenu, and when it had a contextmenu, it had a contextmenuhandler and then that would take care of thing.
+unfortunately, the default handler works well when the right click happens on a MenuButton [show contextmenu if it has one and stops propagation, or just stop propagation when it doesn&#39;t have a context menu]
+but it is wrong in the case of Composite container, when the Application has a contextmenu. when you right click on the background, you expect the application to react and show the context menu , but it first hits the composite container in many cases and it extends widget, and stops the propagation of the event because it has no contextmenu.
+so this is approach is wrong.
+
+if you go and see the _applyContextMenu method, it adds and removes contextMenu listener , whether we have or we do not have a contextMenu for the widget - i would change this behaviour and always have a listener and do an if in the handler to see if we have the menu in which case i show it.
+
+i see no quick and nice solution, because we have to make a difference between a button and a container [in the case of a button we must not let contextmenu event go through, in the case of the container it makes sense to let it go].
+The only acceptable solution that i see is to add a default stop propagation to the buttons, input, lists etc ... , in the widget, and override this behaviour to let the event through for containers [they are fewer in number].</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25172</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-06-20 12:28:34 +0200</bug_when>
+            <thetext>The main issue here is not to stop the context menu, its to get either the menu or context menu. So as a user, I would expect that on a left click, the menu will be openend and on a right click, the context menu should be opened instead.
+
+trunk: r27726
+1.4.x: r27727</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

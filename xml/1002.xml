@@ -1,0 +1,151 @@
+<bug>
+          <bug_id>1002</bug_id>
+          
+          <creation_ts>2008-06-23 11:08:00 +0200</creation_ts>
+          <short_desc>Positions problems with enabled scrollbars in FF3</short_desc>
+          <delta_ts>2014-03-03 15:20:57 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>0.7.3</version>
+          <rep_platform>Firefox 3.0</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>critical</bug_severity>
+          <target_milestone>0.7.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Torsten Wesolek">torsten.wesolek</reporter>
+          <assigned_to name="Sebastian Werner">info</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>3</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>3466</commentid>
+            <who name="Torsten Wesolek">torsten.wesolek</who>
+            <bug_when>2008-06-23 11:08:06 +0200</bug_when>
+            <thetext>There are some &quot;position&quot; bugs with Firefox 3 in HTML pages with enabled scrollbars. You can check this out here for a while:
+http://www.event-4all.org/SMS/
+Please login as qooxdoo:qooxdoo
+Try to select a row. If your page is not scrolled down, everything works fine. Please scroll down and you will see, that the wrong row ist selected.
+Next issue: select a line (check the checkbox left) where a mobile number is given. Click at &quot;SMS senden&quot;. A window for SMS input should come up. Click at the menue bar: &quot;Optionen&quot;. If the page is scrolled, the menue opens at wrong place.
+All this works fine with IE 6, IE 7 and FF 2.x</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3473</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-06-23 12:10:12 +0200</bug_when>
+            <thetext>The location code in 0.7 is backported from 0.8.
+
+We must make sure this problem does not occur on 0.8 as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3481</commentid>
+            <who name="Torsten Wesolek">torsten.wesolek</who>
+            <bug_when>2008-06-25 07:32:56 +0200</bug_when>
+            <thetext>It seems to me I found a fix for ff3, at least for the table row selection problem.
+Could someone evaluate this? May be this is a suboptimal browser check, but it seems to work.
+
+qx.event.type.MouseEvent:
+starting at Line 236:
+    getPageX : qx.core.Variant.select(&quot;qx.client&quot;,
+    {
+      &quot;mshtml&quot; : function() {
+        return this.getDomEvent().clientX + qx.bom.Viewport.getScrollLeft(window);
+      },
+
+      &quot;default&quot; : function() {
+		// test bufix FF3
+		if (qx.core.Client.getEngine() == &quot;gecko&quot; &amp;&amp; qx.core.Client.getVersion() &gt;= 1.9) {
+			return this.getDomEvent().pageX - qx.bom.Viewport.getScrollLeft(window);
+		}
+		// test ende
+        return this.getDomEvent().pageX;
+      }
+    }),
+
+    /**
+     * TODOC
+     *
+     * @type member
+     * @return {var} TODOC
+     * @signature function()
+     */
+    getPageY : qx.core.Variant.select(&quot;qx.client&quot;,
+    {
+      &quot;mshtml&quot; : function() {
+        return this.getDomEvent().clientY + qx.bom.Viewport.getScrollTop(window);
+      },
+
+      &quot;default&quot; : function() {
+		// test bufix FF3
+		if (qx.core.Client.getEngine() == &quot;gecko&quot; &amp;&amp; qx.core.Client.getVersion() &gt;= 1.9) {
+			return this.getDomEvent().pageY - qx.bom.Viewport.getScrollTop(window);
+		}
+		// test ende
+        return this.getDomEvent().pageY;
+      }
+    }),
+
+The Position of the menue is still not fixed.
+Cheers
+Torsten
+(In reply to comment #0)
+&gt; There are some &quot;position&quot; bugs with Firefox 3 in HTML pages with enabled
+&gt; scrollbars. You can check this out here for a while:
+&gt; http://www.event-4all.org/SMS/
+&gt; Please login as qooxdoo:qooxdoo
+&gt; Try to select a row. If your page is not scrolled down, everything works fine.
+&gt; Please scroll down and you will see, that the wrong row ist selected.
+&gt; Next issue: select a line (check the checkbox left) where a mobile number is
+&gt; given. Click at &quot;SMS senden&quot;. A window for SMS input should come up. Click at
+&gt; the menue bar: &quot;Optionen&quot;. If the page is scrolled, the menue opens at wrong
+&gt; place.
+&gt; All this works fine with IE 6, IE 7 and FF 2.x
+&gt; 
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3483</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-06-25 09:36:52 +0200</bug_when>
+            <thetext>Can please try the SVN version? There were some fixes and updates of the legacy 
+code from the trunk. Maybe these fix this issue as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3554</commentid>
+            <who name="Torsten Wesolek">torsten.wesolek</who>
+            <bug_when>2008-06-27 15:13:42 +0200</bug_when>
+            <thetext>Yes, Sebastian, you are right. I got the 0.7.4 and these issues are fixed. Thank you, so this bug can be marked as solved.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37096</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:57 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

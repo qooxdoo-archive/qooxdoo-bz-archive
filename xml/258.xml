@@ -1,0 +1,166 @@
+<bug>
+          <bug_id>258</bug_id>
+          
+          <creation_ts>2007-01-03 15:06:00 +0100</creation_ts>
+          <short_desc>Object fromHashCode is broken</short_desc>
+          <delta_ts>2007-01-09 14:31:56 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P5</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Hugh Gibson">hgibson</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>802</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2007-01-03 15:06:34 +0100</bug_when>
+            <thetext>The class function fromHashCode in Object is broken. 
+
+The constructor increments the global hash ID counter, then pushes the object onto qx.core.Object._db. fromHashCode depends on the counter being the same as the index in _db. However, if just one object has vAutoDispose set to false then the relationship is broken as the object is not pushed onto the _db array. Therefore a call to fromHashCode returns the wrong object as all the indexes will be out of step.
+
+To reliably record all objects we should add an additional array that is used for the qx.Class.dispose function. The _db array should be retained for keeping a complete record of the allocated objects.
+
+I note also that the class toHashCode function might generate an additional hash from the counter but not add it to the _db array, further breaking things.
+
+An alternative might be to delete the fromHashCode function completely.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>803</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-01-04 11:11:58 +0100</bug_when>
+            <thetext>Wow. Thank you for this report. This seems to be a really ugly bug. I will take a look at it asap.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>804</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-01-04 11:27:05 +0100</bug_when>
+            <thetext>Hopefully fixed with revision 5484 (trunk). I will attach a patch for users of older / non SVN versions.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>805</commentid>
+              <attachid>94</attachid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-01-04 11:28:04 +0100</bug_when>
+            <thetext>Created attachment 94
+Bugfix</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>806</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2007-01-04 13:47:40 +0100</bug_when>
+            <thetext>I don&#39;t think it is fixed - though I see that you picked up on another implication of it, that the wrong entry was cleared from the _db array when disposing.
+
+You still use qx.Class._db as the reference array of all objects. However, an object will be omitted from the array if vAutoDispose is set to false, so for those objects you will never be able to find them from the hash code.
+
+And then, if you have an object which is added *after* one with  vAutoDispose set to false, its index in the _db array *does* *not* *correspond* with the value of this._hashCode. Therefore the call to fromHashCode will return the wrong object, as it depends on the index into the _db array being the same as the hash code.
+
+To illustrate:
+
+Object  vAutoDispose    Hashcode        _db
+  A     true            0               [A]
+  B     true            1               [A, B]
+  C     false           2               [A, B]
+  D     true            3               [A, B, D]
+  E     true            4               [A, B, D, E]
+  
+Now, qx.Object.fromHashCode(D.toHashCode) returns E.  qx.Object.fromHashCode(C.toHashCode) returns D.
+
+I also see that you&#39;ve left the class toHashCode function untouched. So again, if you call this function with an object which is not derived from qx.object, it will allocate a hash code to it but won&#39;t remember it in the _db array. If you never intend a non-qx.object parameter being passed to the function, I suggest you get rid of the code to test for the existence of the hashCode member, and just return o.hashCode directly.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>827</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-01-09 14:18:12 +0100</bug_when>
+            <thetext>Mhh, this is already fixed in SVN, Hugh?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>829</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2007-01-09 14:31:56 +0100</bug_when>
+            <thetext>Yep, you fixed it with SVN revision #5492 but didn&#39;t update the bug report here. Now done.
+
+Hugh</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>94</attachid>
+            <date>2007-01-04 11:28:00 +0100</date>
+            <delta_ts>2007-01-04 11:28:04 +0100</delta_ts>
+            <desc>Bugfix</desc>
+            <filename>bugfix.patch</filename>
+            <type>text/plain</type>
+            <size>1753</size>
+            <attacher>info</attacher>
+            
+              <data encoding="base64">LS0tIHRydW5rL3Fvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9jb3Jl
+L09iamVjdC5qcwkyMDA3LTAxLTA0IDEwOjIyOjQ5IFVUQyAocmV2IDU0ODMpDQorKysgdHJ1bmsv
+cW9veGRvby9mcm9udGVuZC9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2NvcmUvT2JqZWN0Lmpz
+CTIwMDctMDEtMDQgMTA6MjQ6NTMgVVRDIChyZXYgNTQ4NCkNCkBAIC00MSw5ICs0MSwxMSBAQA0K
+IHF4Lk9PLmRlZmluZUNsYXNzKCJxeC5jb3JlLk9iamVjdCIsIE9iamVjdCwNCiBmdW5jdGlvbih2
+QXV0b0Rpc3Bvc2UpDQogew0KLSAgdGhpcy5faGFzaENvZGUgPSBxeC5jb3JlLk9iamVjdC5fY291
+bnRlcisrOw0KKyAgdGhpcy5faGFzaENvZGUgPSBxeC5jb3JlLk9iamVjdC5fbGFzdEhhc2hDb2Rl
+Kys7DQogDQotICBpZiAodkF1dG9EaXNwb3NlICE9PSBmYWxzZSkgew0KKyAgaWYgKHZBdXRvRGlz
+cG9zZSAhPT0gZmFsc2UpDQorICB7DQorICAgIHRoaXMuX2RiS2V5ID0gcXguY29yZS5PYmplY3Qu
+X2RiLmxlbmd0aDsNCiAgICAgcXguY29yZS5PYmplY3QuX2RiLnB1c2godGhpcyk7DQogICB9DQog
+DQpAQCAtODUsNyArODcsNyBAQA0KICAgIENsYXNzIGRhdGEsIHByb3BlcnRpZXMgYW5kIG1ldGhv
+ZHMNCiAqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKiogKi8NCiANCi1xeC5DbGFzcy5fY291bnRlciA9IDA7DQorcXgu
+Q2xhc3MuX2xhc3RIYXNoQ29kZSA9IDA7DQogcXguQ2xhc3MuX2RiID0gW107DQogcXguQ2xhc3Mu
+X2Rpc3Bvc2VBbGwgPSBmYWxzZTsNCiANCkBAIC0xMDIsNyArMTA0LDcgQEANCiAgICAgcmV0dXJu
+IG8uX2hhc2hDb2RlOw0KICAgfQ0KIA0KLSAgcmV0dXJuIG8uX2hhc2hDb2RlID0gcXguY29yZS5P
+YmplY3QuX2NvdW50ZXIrKzsNCisgIHJldHVybiBvLl9oYXNoQ29kZSA9IHF4LmNvcmUuT2JqZWN0
+Ll9sYXN0SGFzaENvZGUrKzsNCiB9DQogDQogDQpAQCAtNTk4LDExICs2MDAsMjggQEANCiAgIH0N
+CiAgICovDQogDQorICAvKg0KKyAgLy8gc2VlIGJ1ZyAjMjU4Lg0KKyAgaWYodGhpcy5fZGJLZXkg
+IT0gdGhpcy5faGFzaENvZGUpIHsNCisgICAgY29uc29sZS5sb2coIkRpc3Bvc2luZyB3cm9uZyBl
+bnRyeTogIiArIHRoaXMuX2RiS2V5ICsgIiB2cy4gIiArIHRoaXMuX2hhc2hDb2RlKTsNCisgIH0N
+CisgICovDQorDQogICAvLyBEZWxldGUgRW50cnkgZnJvbSBPYmplY3QgREINCi0gIGlmIChxeC5j
+b3JlLk9iamVjdC5fZGlzcG9zZUFsbCkgew0KLSAgICBxeC5jb3JlLk9iamVjdC5fZGJbdGhpcy5f
+aGFzaENvZGVdID0gbnVsbDsNCi0gIH0gZWxzZSB7DQotICAgIGRlbGV0ZSBxeC5jb3JlLk9iamVj
+dC5fZGJbdGhpcy5faGFzaENvZGVdOw0KKyAgaWYgKHRoaXMuX2RiS2V5ICE9IG51bGwpDQorICB7
+DQorICAgIGlmIChxeC5jb3JlLk9iamVjdC5fZGlzcG9zZUFsbCkNCisgICAgew0KKyAgICAgIHF4
+LmNvcmUuT2JqZWN0Ll9kYlt0aGlzLl9kYktleV0gPSBudWxsOw0KKyAgICAgIHRoaXMuX2hhc2hD
+b2RlID0gbnVsbDsNCisgICAgICB0aGlzLl9kYktleSA9IG51bGw7DQorICAgIH0NCisgICAgZWxz
+ZQ0KKyAgICB7DQorICAgICAgZGVsZXRlIHF4LmNvcmUuT2JqZWN0Ll9kYlt0aGlzLl9kYktleV07
+DQorICAgICAgZGVsZXRlIHRoaXMuX2hhc2hDb2RlOw0KKyAgICAgIGRlbGV0ZSB0aGlzLl9kYktl
+eTsNCisgICAgfQ0KICAgfQ0KIA0KICAgLy8gTWFyayBhcyBkaXNwb3NlZA==
+</data>
+
+          </attachment>
+      
+
+    </bug>

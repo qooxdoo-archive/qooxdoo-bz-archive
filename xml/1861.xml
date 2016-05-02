@@ -1,0 +1,398 @@
+<bug>
+          <bug_id>1861</bug_id>
+          
+          <creation_ts>2009-01-21 16:06:00 +0100</creation_ts>
+          <short_desc>Generator cannot handle complex name spaces</short_desc>
+          <delta_ts>2009-10-05 19:00:25 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.system</component>
+          <version>0.8.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>charledou</cc>
+    
+    <cc>matthew+qooxdoo</cc>
+    
+    <cc>mbaudier</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>7422</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-01-21 16:06:39 +0100</bug_when>
+            <thetext>Charles reported on the ML:
+
+If you use a complex namespace like &quot;org.qooxdoo.slc&quot; and map it to folder structure under &#39;class&#39;, like
+
+  org/
+        qooxdoo/
+                      slc/
+
+the generator will only pick up the top-level part of the name space in the library scan (like &quot;org&quot; in this example). If you maintain multiple libraries that distinguish themselves at some level down from the top-most part (e.g. a second library with name space &quot;org.qooxdoo.dor&quot;), the generator will overwrite the top-level part multiple times, and the information of the various libraries is lost (for some functionality of the generator). 
+
+One consequence is that class URIs in the generated source output are wrong, and class files are searched in the wrong library.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7428</commentid>
+              <attachid>435</attachid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-01-21 18:27:57 +0100</bug_when>
+            <thetext>Created attachment 435
+Generator.py patch against 0.8.1 release version
+
+Charles, you might use this patch if you decide to use a patched 0.8.1 version of qooxdoo</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7429</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-01-21 18:29:12 +0100</bug_when>
+            <thetext>provided a fix for the bug (r17325)
+
+the fix patches the _namespace member of LibraryPath objects; tests look good;
+
+but the balance between LibraryPath objects (for library file scanning) and Job config
+&quot;library&quot; members (from config.json and Manifest.json information) has to be re-worked.
+
+I&#39;ll appended a patch file that can be applied against the affected 0.8.1 release version of
+tool/pylib/generator/Generator.py</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7430</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-01-21 18:50:08 +0100</bug_when>
+            <thetext>This fix breaks projects that use contribs :(
+
+I don&#39;t know the generator tool that well, but I&#39;ve found if I remove line 85 from generator.py it fixes the problem.
+
+The line is:
+  path = os.path.abspath(os.path.normpath(path))
+
+And this is the output from my &#39;generate source&#39;
+
+Traceback (most recent call last):
+  File &quot;C:\Projects\web2\qooxdoo-sdk\tool\bin\generator.py&quot;, line 144, in &lt;module&gt;
+    main()
+  File &quot;C:\Projects\web2\qooxdoo-sdk\tool\bin\generator.py&quot;, line 139, in main
+    Generator(config, job, console).run()
+  File &quot;C:\Projects\web2\qooxdoo-sdk\tool\pylib\generator\Generator.py&quot;, line 344, in run
+    self._libs) = self.scanLibrary(config.get(&quot;library&quot;))
+  File &quot;C:\Projects\web2\qooxdoo-sdk\tool\pylib\generator\Generator.py&quot;, line 103, in scanLibrary
+    namespace = getJobsLib(key)[&#39;namespace&#39;]
+  File &quot;C:\Projects\web2\qooxdoo-sdk\tool\pylib\generator\Generator.py&quot;, line 92, in getJobsLib
+    raise RuntimeError(&quot;Unable to look up library \&quot;%s\&quot; in Job definition&quot; % path)
+RuntimeError: Unable to look up library &quot;C:\Projects\web2\frontend\cache\downloads\FlowLayout\trunk&quot; in Job definition
+
+Also: Am I correct in reopening this bug as it broke something or should I have opened a new bug using the &quot;Bug x depends on&quot; or &quot;bug x blocks&quot;?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7431</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-01-21 19:24:21 +0100</bug_when>
+            <thetext>applied Matt&#39;s fix (r17334)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7432</commentid>
+              <attachid>436</attachid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-01-21 19:51:39 +0100</bug_when>
+            <thetext>Created attachment 436
+Updated Generator.py against 0.8.1 patch
+
+patch containing Matt&#39;s fix</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7433</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-01-22 14:11:06 +0100</bug_when>
+            <thetext>applied a corollary patch from Matt that normalizes the path to contrib downloads (r17339)
+
+(this would probably re-enable my initial version of bug fix, but since it works at it is now I just leave it that way).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7440</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-01-23 11:04:00 +0100</bug_when>
+            <thetext>Just checked this out and it is working fine. Thanks for commiting the change :)
+
+Bug closed</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7441</commentid>
+            <who name="Charles du Jeu">charledou</who>
+            <bug_when>2009-01-23 15:07:06 +0100</bug_when>
+            <thetext>It&#39;s working for me too (i&#39;m the initial reporter)
+thanks a lot
+Charles</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7444</commentid>
+            <who name="Mathieu Baudier">mbaudier</who>
+            <bug_when>2009-01-24 22:10:33 +0100</bug_when>
+            <thetext>We generated a package which contains only:
+- Qooxdoo v0.8.1
+- the latest version of the patch (comment #5)
+
+It can be found here:
+http://www.argeo.org/maven/argeo/org/argeo/dep/dist/qooxdoo-sdk/0.8.1.argeo.1/qooxdoo-sdk-0.8.1.argeo.1-dist.zip
+and may be helpful to anyone who just wants to test this particular fix.
+
+Please note that the root directory of the package is qooxdoo-sdk and not qooxdoo-sdk-0.8.1.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10697</commentid>
+            <who name="Charles du Jeu">charledou</who>
+            <bug_when>2009-07-01 09:19:56 +0200</bug_when>
+            <thetext>Today I&#39;m experimenting further in my &quot;exotic&quot; setup where I use java-like namespace, and handling with resources, I found out other problems.
++ What&#39;s new in my setup : I used to put all the resources in one main library, where as now I want to dispatch them in the various libraries &quot;resources&quot; folder, which is what it is done for.
++ The symptom : let&#39;s say I have 3 libraries providing namespaces as described above, I will put and image in one of them and call it via the #asset statement. In build mode (so in the copy-resources task), the image is copied 3 times in 3 various subdirectories inside the build/resource folder!
++ The solution : once again, digging the Generator.py (I will end up a python expert!!), I found the responsible is the Cache management inside the ResourceHandler : in the findAllResources function, the cache data is indexed by namespace. And once again as in the old bug, the namespace is still the wrong one : always only the first part of the real namespace : &quot;org&quot; for org.argeo.ria, &quot;org&quot; for org.argeo.ria.slc, and &quot;org&quot; again for org.argeo.ria.slcweb =&gt; 3 times copies of the image.
+
+I&#39;ve done my own patch, using the same method as Thomas had when correcting the bug 1861 (see below). However I&#39;m not sure that it&#39;s a very good solution : shouldn&#39;t we definitely fix the namespace bug directly in the LibraryPath object, using the &quot;namespace&quot; provided by the Manifest.json, instead of detecting the folders??? Otherwise I&#39;m quasi sure that this will reappear.
+
+--- E:/charlie/software/APPS/slc/svn/server/org.argeo.slc.ria/src/qooxdoo-sdk/tool/pylib/generator/GeneratorOrig.py	lun. mars  2 11:00:12 2009
++++ E:/charlie/software/APPS/slc/svn/server/org.argeo.slc.ria/src/qooxdoo-sdk/tool/pylib/generator/Generator.py	mar. juin 30 21:25:10 2009
+@@ -1698,7 +1698,22 @@
+ 
+         # - Helpers -----------------------------------------------------------
+ 
+-        def getCache(lib):
++        def getJobsLib(path):
++            lib = None
++            #path = os.path.abspath(os.path.normpath(path))  # this shouldn&#39;t be necessary, and breaks in some scenarios (s. bug#1861)
++            libMaps = self._genobj._job.getFeature(&quot;library&quot;)
++            for l in libMaps:
++                if l[&#39;path&#39;] == path:
++                    lib = l
++                    break
++            if not lib:   # this must never happen
++                raise RuntimeError(&quot;Unable to look up library \&quot;%s\&quot; in Job definition&quot; % path)
++            return lib
++
++        def getCache(lib, path):
++            namespace = getJobsLib(path)[&#39;namespace&#39;]
++            lib._namespace = namespace  # patch namespace
++            self._genobj._console.info(&quot;Patched namespace : &#39;%s&#39;&quot; % namespace)        
+             cacheId = &quot;resinlib-%s&quot; % lib.getNamespace()
+             liblist = self._genobj._cache.read(cacheId, dependsOn=None, memory=True)
+             return liblist, cacheId
+@@ -1735,7 +1750,7 @@
+             # create wrapper object
+             libObj = LibraryPath(lib, self._genobj._console)
+             # retrieve list of library resources
+-            libList, cacheId = getCache(libObj)
++            libList, cacheId = getCache(libObj, lib.get(&quot;path&quot;, &quot;&quot;))
+             if libList:
+                 inCache = True
+             else:
+
+Cheers
+Charles</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10813</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-08 17:54:08 +0200</bug_when>
+            <thetext>(In reply to comment #10)
+
+&gt; + The solution : once again, digging the Generator.py (I will end up a python 
+expert!!), I found the responsible is the Cache management inside the 
+ResourceHandler : in the findAllResources function, the cache data is indexed 
+by namespace. And once again as in the old bug, the namespace is still the 
+wrong one : always only the first part of the real namespace : &quot;org&quot; for 
+org.argeo.ria, &quot;org&quot; for org.argeo.ria.slc, and &quot;org&quot; again for 
+org.argeo.ria.slcweb =&gt; 3 times copies of the image.
+&gt; 
+
+Charles, thanks for making the effort. But the code has changed considerably 
+since 0.8.1, therefore I cannot apply your patch right away. But looking 
+through the changed lines I think we already fixed this particular issue by 
+using the library path for the cache key, rather than the name space (this has 
+some additional benefits, too). So it should work right away with trunk. Could 
+you re-test your libraries with a trunk version of qooxdoo, and close this bug 
+if it works there?! (This is generally a good strategy, to test first with 
+trunk before opening a bug or creating a patch).
+
+&gt; I&#39;ve done my own patch, using the same method as Thomas had when correcting 
+the bug 1861 (see below). However I&#39;m not sure that it&#39;s a very good solution : 
+shouldn&#39;t we definitely fix the namespace bug directly in the LibraryPath 
+object, using the &quot;namespace&quot; provided by the Manifest.json, instead of 
+detecting the folders??? Otherwise I&#39;m quasi sure that this will reappear.
+&gt; 
+
+You are right. Could you open a new bug for this specifically? Thanks!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11878</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-03 20:38:32 +0200</bug_when>
+            <thetext>This was in REOPENED state but targeting the past 0.8.2. Moved to 0.9.
+
+Charles, could you verify this bug as fixed, please?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12232</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-14 10:37:02 +0200</bug_when>
+            <thetext>.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12841</commentid>
+            <who name="Charles du Jeu">charledou</who>
+            <bug_when>2009-10-03 12:57:34 +0200</bug_when>
+            <thetext>Ok this is fixed in 0.8.3, sorry I didn&#39;t have time to verify it before.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12871</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-05 19:00:25 +0200</bug_when>
+            <thetext>Thanks Charles for verifying. Closing it for 0.8.3.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>435</attachid>
+            <date>2009-01-21 18:27:00 +0100</date>
+            <delta_ts>2009-01-21 18:27:57 +0100</delta_ts>
+            <desc>Generator.py patch against 0.8.1 release version</desc>
+            <filename>Generator.py_0.8.1.patch</filename>
+            <type>text/plain</type>
+            <size>2561</size>
+            <attacher>thron7</attacher>
+            
+              <data encoding="base64">SW5kZXg6IEdlbmVyYXRvci5weQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Ci0tLSBHZW5lcmF0b3IucHkJKHJldmlzaW9u
+IDE3MzMyKQorKysgR2VuZXJhdG9yLnB5CShyZXZpc2lvbiAxNzA1NykKQEAgLTgwLDE4ICs4MCw2
+IEBACiAgICAgICAgIGlmIG5vdCBpc2luc3RhbmNlKGxpYnJhcnksIHR5cGVzLkxpc3RUeXBlKToK
+ICAgICAgICAgICAgIHJldHVybiAoX25hbWVzcGFjZXMsIF9jbGFzc2VzLCBfZG9jcywgX3RyYW5z
+bGF0aW9ucywgX2xpYnMpCiAKLSAgICAgICAgZGVmIGdldEpvYnNMaWIocGF0aCk6Ci0gICAgICAg
+ICAgICBsaWIgPSBOb25lCi0gICAgICAgICAgICBwYXRoID0gb3MucGF0aC5hYnNwYXRoKG9zLnBh
+dGgubm9ybXBhdGgocGF0aCkpCi0gICAgICAgICAgICBsaWJNYXBzID0gc2VsZi5fam9iLmdldEZl
+YXR1cmUoImxpYnJhcnkiKQotICAgICAgICAgICAgZm9yIGwgaW4gbGliTWFwczoKLSAgICAgICAg
+ICAgICAgICBpZiBsWydwYXRoJ10gPT0gcGF0aDoKLSAgICAgICAgICAgICAgICAgICAgbGliID0g
+bAotICAgICAgICAgICAgICAgICAgICBicmVhawotICAgICAgICAgICAgaWYgbm90IGxpYjogICAj
+IHRoaXMgbXVzdCBuZXZlciBoYXBwZW4KLSAgICAgICAgICAgICAgICByYWlzZSBSdW50aW1lRXJy
+b3IoIlVuYWJsZSB0byBsb29rIHVwIGxpYnJhcnkgXCIlc1wiIGluIEpvYiBkZWZpbml0aW9uIiAl
+IHBhdGgpCi0gICAgICAgICAgICByZXR1cm4gbGliCi0KICAgICAgICAgZm9yIGVudHJ5IGluIGxp
+YnJhcnk6CiAgICAgICAgICAgICBrZXkgID0gZW50cnlbInBhdGgiXQogCkBAIC0xMDAsMTIgKzg4
+LDkgQEAKICAgICAgICAgICAgICAgICBwYXRoID0gbWVtY2FjaGVba2V5XQogICAgICAgICAgICAg
+ZWxzZToKICAgICAgICAgICAgICAgICBwYXRoID0gTGlicmFyeVBhdGgoZW50cnksIHNlbGYuX2Nv
+bnNvbGUpCi0gICAgICAgICAgICAgICAgbmFtZXNwYWNlID0gZ2V0Sm9ic0xpYihrZXkpWyduYW1l
+c3BhY2UnXQotICAgICAgICAgICAgICAgIHBhdGguX25hbWVzcGFjZSA9IG5hbWVzcGFjZSAgIyBw
+YXRjaCBuYW1lc3BhY2UKICAgICAgICAgICAgICAgICBwYXRoLnNjYW4oKQogCiAgICAgICAgICAg
+ICBuYW1lc3BhY2UgPSBwYXRoLmdldE5hbWVzcGFjZSgpCi0gICAgICAgICAgICAjbmFtZXNwYWNl
+ID0gZ2V0Sm9ic0xpYihrZXkpWyduYW1lc3BhY2UnXQogICAgICAgICAgICAgX25hbWVzcGFjZXMu
+YXBwZW5kKG5hbWVzcGFjZSkKIAogICAgICAgICAgICAgY2xhc3NlcyA9IHBhdGguZ2V0Q2xhc3Nl
+cygpCkBAIC0zNDgsNyArMzMzLDcgQEAKICAgICAgICAgc2VsZi5fZGVwTG9hZGVyICAgICAgPSBE
+ZXBlbmRlbmN5TG9hZGVyKHNlbGYuX2NsYXNzZXMsIHNlbGYuX2NhY2hlLCBzZWxmLl9jb25zb2xl
+LCBzZWxmLl90cmVlTG9hZGVyLCByZXF1aXJlLCB1c2UpCiAgICAgICAgIHNlbGYuX3RyZWVDb21w
+aWxlciAgID0gVHJlZUNvbXBpbGVyKHNlbGYuX2NsYXNzZXMsIHNlbGYuX2NhY2hlLCBzZWxmLl9j
+b25zb2xlLCBzZWxmLl90cmVlTG9hZGVyKQogICAgICAgICBzZWxmLl9sb2NhbGUgICAgICAgICA9
+IExvY2FsZShzZWxmLl9jbGFzc2VzLCBzZWxmLl90cmFuc2xhdGlvbnMsIHNlbGYuX2NhY2hlLCBz
+ZWxmLl9jb25zb2xlLCBzZWxmLl90cmVlTG9hZGVyKQotICAgICAgICBzZWxmLl9wYXJ0QnVpbGRl
+ciAgICA9IFBhcnRCdWlsZGVyKHNlbGYuX2NvbnNvbGUsIHNlbGYuX2RlcExvYWRlciwgc2VsZi5f
+dHJlZUNvbXBpbGVyKQorICAgICAgICBwYXJ0QnVpbGRlciAgICAgICAgICA9IFBhcnRCdWlsZGVy
+KHNlbGYuX2NvbnNvbGUsIHNlbGYuX2RlcExvYWRlciwgc2VsZi5fdHJlZUNvbXBpbGVyKQogICAg
+ICAgICBzZWxmLl9yZXNvdXJjZUhhbmRsZXI9IF9SZXNvdXJjZUhhbmRsZXIoc2VsZikKIAogICAg
+ICAgICAjIFVwZGF0aW5nIHRyYW5zbGF0aW9uCkBAIC00MDksNyArMzk0LDcgQEAKICAgICAgICAg
+ICAgICAgICAjIENvbXB1dGluZyBwYWNrYWdlcwogICAgICAgICAgICAgICAgICMgcGFydFBhY2th
+Z2VzW3BhcnRJZF09WzAsMSwzXQogICAgICAgICAgICAgICAgICMgcGFja2FnZUNsYXNzZXNbMF09
+WydxeC5DbGFzcycsJ3F4LmJvbS5TdHlsZXNoZWV0JywuLi5dCi0gICAgICAgICAgICAgICAgcGFy
+dFBhY2thZ2VzLCBwYWNrYWdlQ2xhc3NlcyA9IHNlbGYuX3BhcnRCdWlsZGVyLmdldFBhY2thZ2Vz
+KHBhcnRJbmNsdWRlcywgc21hcnRFeGNsdWRlLCBjbGFzc0xpc3QsIGNvbGxhcHNlQ2ZnLCB2YXJp
+YW50cywgbWluUGFja2FnZVNpemUsIG1pblBhY2thZ2VTaXplRm9yVW5zaGFyZWQpCisgICAgICAg
+ICAgICAgICAgcGFydHMsIHBhY2thZ2VzID0gc2VsZi5fcGFydEJ1aWxkZXIuZ2V0UGFja2FnZXMo
+cGFydEluY2x1ZGVzLCBzbWFydEV4Y2x1ZGUsIGNsYXNzTGlzdCwgY29sbGFwc2VDZmcsIHZhcmlh
+bnRzLCBtaW5QYWNrYWdlU2l6ZSwgbWluUGFja2FnZVNpemVGb3JVbnNoYXJlZCkKIAogICAgICAg
+ICAgICAgZWxzZToKICAgICAgICAgICAgICAgICAjIEVtdWxhdGUgY29uZmlndXJhdGlvbgo=
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>436</attachid>
+            <date>2009-01-21 19:51:00 +0100</date>
+            <delta_ts>2009-01-21 19:51:39 +0100</delta_ts>
+            <desc>Updated Generator.py against 0.8.1 patch</desc>
+            <filename>Generator.py_0.8.1.patch</filename>
+            <type>text/plain</type>
+            <size>2595</size>
+            <attacher>thron7</attacher>
+            
+              <data encoding="base64">LS0tIEdlbmVyYXRvci5weQkyMDA5LTAxLTIxIDE4OjQ5OjAzLjAwMDAwMDAwMCArMDAwMAorKysg
+R2VuZXJhdG9yLnB5LmN1cnJlbnQJMjAwOS0wMS0yMSAxODoxNjozNC4wMDAwMDAwMDAgKzAwMDAK
+QEAgLTgwLDYgKzgwLDE4IEBACiAgICAgICAgIGlmIG5vdCBpc2luc3RhbmNlKGxpYnJhcnksIHR5
+cGVzLkxpc3RUeXBlKToKICAgICAgICAgICAgIHJldHVybiAoX25hbWVzcGFjZXMsIF9jbGFzc2Vz
+LCBfZG9jcywgX3RyYW5zbGF0aW9ucywgX2xpYnMpCiAKKyAgICAgICAgZGVmIGdldEpvYnNMaWIo
+cGF0aCk6CisgICAgICAgICAgICBsaWIgPSBOb25lCisgICAgICAgICAgICAjcGF0aCA9IG9zLnBh
+dGguYWJzcGF0aChvcy5wYXRoLm5vcm1wYXRoKHBhdGgpKSAgIyB0aGlzIHNob3VsZG4ndCBiZSBu
+ZWNlc3NhcnksIGFuZCBicmVha3MgaW4gc29tZSBzY2VuYXJpb3MgKHMuIGJ1ZyMxODYxKQorICAg
+ICAgICAgICAgbGliTWFwcyA9IHNlbGYuX2pvYi5nZXRGZWF0dXJlKCJsaWJyYXJ5IikKKyAgICAg
+ICAgICAgIGZvciBsIGluIGxpYk1hcHM6CisgICAgICAgICAgICAgICAgaWYgbFsncGF0aCddID09
+IHBhdGg6CisgICAgICAgICAgICAgICAgICAgIGxpYiA9IGwKKyAgICAgICAgICAgICAgICAgICAg
+YnJlYWsKKyAgICAgICAgICAgIGlmIG5vdCBsaWI6ICAgIyB0aGlzIG11c3QgbmV2ZXIgaGFwcGVu
+CisgICAgICAgICAgICAgICAgcmFpc2UgUnVudGltZUVycm9yKCJVbmFibGUgdG8gbG9vayB1cCBs
+aWJyYXJ5IFwiJXNcIiBpbiBKb2IgZGVmaW5pdGlvbiIgJSBwYXRoKQorICAgICAgICAgICAgcmV0
+dXJuIGxpYgorCiAgICAgICAgIGZvciBlbnRyeSBpbiBsaWJyYXJ5OgogICAgICAgICAgICAga2V5
+ICA9IGVudHJ5WyJwYXRoIl0KIApAQCAtODgsOSArMTAwLDEyIEBACiAgICAgICAgICAgICAgICAg
+cGF0aCA9IG1lbWNhY2hlW2tleV0KICAgICAgICAgICAgIGVsc2U6CiAgICAgICAgICAgICAgICAg
+cGF0aCA9IExpYnJhcnlQYXRoKGVudHJ5LCBzZWxmLl9jb25zb2xlKQorICAgICAgICAgICAgICAg
+IG5hbWVzcGFjZSA9IGdldEpvYnNMaWIoa2V5KVsnbmFtZXNwYWNlJ10KKyAgICAgICAgICAgICAg
+ICBwYXRoLl9uYW1lc3BhY2UgPSBuYW1lc3BhY2UgICMgcGF0Y2ggbmFtZXNwYWNlCiAgICAgICAg
+ICAgICAgICAgcGF0aC5zY2FuKCkKIAogICAgICAgICAgICAgbmFtZXNwYWNlID0gcGF0aC5nZXRO
+YW1lc3BhY2UoKQorICAgICAgICAgICAgI25hbWVzcGFjZSA9IGdldEpvYnNMaWIoa2V5KVsnbmFt
+ZXNwYWNlJ10KICAgICAgICAgICAgIF9uYW1lc3BhY2VzLmFwcGVuZChuYW1lc3BhY2UpCiAKICAg
+ICAgICAgICAgIGNsYXNzZXMgPSBwYXRoLmdldENsYXNzZXMoKQpAQCAtMzMzLDcgKzM0OCw3IEBA
+CiAgICAgICAgIHNlbGYuX2RlcExvYWRlciAgICAgID0gRGVwZW5kZW5jeUxvYWRlcihzZWxmLl9j
+bGFzc2VzLCBzZWxmLl9jYWNoZSwgc2VsZi5fY29uc29sZSwgc2VsZi5fdHJlZUxvYWRlciwgcmVx
+dWlyZSwgdXNlKQogICAgICAgICBzZWxmLl90cmVlQ29tcGlsZXIgICA9IFRyZWVDb21waWxlcihz
+ZWxmLl9jbGFzc2VzLCBzZWxmLl9jYWNoZSwgc2VsZi5fY29uc29sZSwgc2VsZi5fdHJlZUxvYWRl
+cikKICAgICAgICAgc2VsZi5fbG9jYWxlICAgICAgICAgPSBMb2NhbGUoc2VsZi5fY2xhc3Nlcywg
+c2VsZi5fdHJhbnNsYXRpb25zLCBzZWxmLl9jYWNoZSwgc2VsZi5fY29uc29sZSwgc2VsZi5fdHJl
+ZUxvYWRlcikKLSAgICAgICAgcGFydEJ1aWxkZXIgICAgICAgICAgPSBQYXJ0QnVpbGRlcihzZWxm
+Ll9jb25zb2xlLCBzZWxmLl9kZXBMb2FkZXIsIHNlbGYuX3RyZWVDb21waWxlcikKKyAgICAgICAg
+c2VsZi5fcGFydEJ1aWxkZXIgICAgPSBQYXJ0QnVpbGRlcihzZWxmLl9jb25zb2xlLCBzZWxmLl9k
+ZXBMb2FkZXIsIHNlbGYuX3RyZWVDb21waWxlcikKICAgICAgICAgc2VsZi5fcmVzb3VyY2VIYW5k
+bGVyPSBfUmVzb3VyY2VIYW5kbGVyKHNlbGYpCiAKICAgICAgICAgIyBVcGRhdGluZyB0cmFuc2xh
+dGlvbgpAQCAtMzk0LDcgKzQwOSw3IEBACiAgICAgICAgICAgICAgICAgIyBDb21wdXRpbmcgcGFj
+a2FnZXMKICAgICAgICAgICAgICAgICAjIHBhcnRQYWNrYWdlc1twYXJ0SWRdPVswLDEsM10KICAg
+ICAgICAgICAgICAgICAjIHBhY2thZ2VDbGFzc2VzWzBdPVsncXguQ2xhc3MnLCdxeC5ib20uU3R5
+bGVzaGVldCcsLi4uXQotICAgICAgICAgICAgICAgIHBhcnRzLCBwYWNrYWdlcyA9IHNlbGYuX3Bh
+cnRCdWlsZGVyLmdldFBhY2thZ2VzKHBhcnRJbmNsdWRlcywgc21hcnRFeGNsdWRlLCBjbGFzc0xp
+c3QsIGNvbGxhcHNlQ2ZnLCB2YXJpYW50cywgbWluUGFja2FnZVNpemUsIG1pblBhY2thZ2VTaXpl
+Rm9yVW5zaGFyZWQpCisgICAgICAgICAgICAgICAgcGFydFBhY2thZ2VzLCBwYWNrYWdlQ2xhc3Nl
+cyA9IHNlbGYuX3BhcnRCdWlsZGVyLmdldFBhY2thZ2VzKHBhcnRJbmNsdWRlcywgc21hcnRFeGNs
+dWRlLCBjbGFzc0xpc3QsIGNvbGxhcHNlQ2ZnLCB2YXJpYW50cywgbWluUGFja2FnZVNpemUsIG1p
+blBhY2thZ2VTaXplRm9yVW5zaGFyZWQpCiAKICAgICAgICAgICAgIGVsc2U6CiAgICAgICAgICAg
+ICAgICAgIyBFbXVsYXRlIGNvbmZpZ3VyYXRpb24K
+</data>
+
+          </attachment>
+      
+
+    </bug>

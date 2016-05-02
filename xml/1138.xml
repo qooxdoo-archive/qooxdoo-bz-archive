@@ -1,0 +1,168 @@
+<bug>
+          <bug_id>1138</bug_id>
+          
+          <creation_ts>2008-08-05 11:27:00 +0200</creation_ts>
+          <short_desc>Unification of variants, settings and themes on a technical level</short_desc>
+          <delta_ts>2014-03-03 15:22:17 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.5</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>fabian.jakobs</cc>
+    
+    <cc>info</cc>
+    
+    <cc>qooxdoo</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>4168</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-08-05 11:27:57 +0200</bug_when>
+            <thetext>There seem to be a common pattern behind these three entities in the qooxdoo compile and runtime system. If an underlying model can be deduced, unifying the handling of these would greatly reduce complexity of our system, on both ends. This affects the technical realization and does not preclude having a user model that distinguishes these entities.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4169</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-08-05 11:47:30 +0200</bug_when>
+            <thetext>Here is a first, rough outline of the issue:
+
+- Devise a model that allows to embed the current concepts of variants, settings and themes. This might look like this:
+- There are named entities (let&#39;s call them &quot;thingies&quot;).
+- Those names are single-assignment and their value is retrievable at runtime (e.g. &quot;qx.thingy.get(&#39;name&#39;)&quot;).
+- Code variants in qooxdoo code are selectable depending on thingy values (&quot;qx.thiny.select()&quot;).
+- They are configurable through config maps: &quot;thingies&quot; : {&quot;thingy1&quot;:&quot;value1&quot;, &quot;thingy2&quot;:&quot;value2&quot;,...}, and/or there might be other (more semantical) entries that are transformed into thingy values internally.
+- They can receive their value in source code (&quot;qx.thingy.set()&quot;)
+
+So the bottom line might be to have a pool of global, single-assignment variables, some of them predefined by the system, others user-defined, which you can access through defined interfaces at config-time (Json entries), load-time and run-time (get/set/select).
+
+If such a thingy is given multiple values in the config, this will trigger generation of code variants. They either only differ in different values being assigned to the thingy in the bootstrap code, or actual class variants if it is used in code through a &quot;select&quot; construct.
+
+It seems that currently there are actually differences how variants, settings and themes are *used*, but maybe there are no differences how they can be *provided* by the system. Provision could be unified, usage is driven by conventions corresponding to a concrete thingy (like e.g. &quot;qx.client&quot;).
+
+Also, naming of thingies (&#39;variants&#39;/&#39;settings&#39;/&#39;globals&#39;/&#39;tags&#39;/&#39;bogos&#39;/...) is open to discussion.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5243</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-04 15:23:40 +0200</bug_when>
+            <thetext>To P1. Highly important tech target for 0.8.2 as 0.8.1 is mainly a bugfix 
+release.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5269</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-05 08:07:56 +0200</bug_when>
+            <thetext>sorted into enhancement queue</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5278</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-05 13:56:49 +0200</bug_when>
+            <thetext>After talking a bit with Thomas.
+
+I would suggest to move all default values and possible values of variants and 
+settings out of the code to the Manifest of the library which initially needs 
+them e.g. qx.debug could be defined in the qooxdoo manifest. This means that 
+the generator automatically falls back to the default value when no value is 
+given in the projects config.json. Fallback handling is not needed in the JS 
+code anymore then. This would also fix issues reported by Lothar Kaiser where 
+it is complicated to find an ideal place to declare settings when they are 
+required by multiple classes. The manifest are really optimal places for this 
+type of information. This data may also used to create a at-a-glance overview 
+page from each Manifest containing information like version, authors, supported 
+settings and variants, etc.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5288</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-09-05 17:49:15 +0200</bug_when>
+            <thetext>I spent a bit of time talking with Thomas about a related issue.  There were two widgets that both defined the same setting.  I wanted to ensure that if either of them got loaded, the setting would be available and defined.  The concept was appropriate, but since settings can only be set once, it meant that the two widgets couldn&#39;t be used in the same application.  One wouldn&#39;t know that one had done that (intentionally or otherwise) without having happened to use the two widgets in the same application.
+
+I like Sebastian&#39;s idea of moving settings (in particular) but variants also, into a single more &quot;global&quot; place.  It then becomes obvious what settings there are, and what values they take on.  One possibility is that the framework provides a set of values in a config file of some sort (it could be a settings -- or &quot;thingy&quot; -- class, or it could be in config.json or the manifest... but the application could also override those values by overloading the class or providing settings in its own config.json or manifest file.  There would then be a single place to look in the framework for all of the thingy default values... and possibly one additional place per application to look for overrides of those defaults.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5291</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-05 19:17:17 +0200</bug_when>
+            <thetext>@Derrell: The Manifest is the right file because it is automatically read out 
+by each application using a specific library and could this way easily be used 
+to integrate the defined settings and variants of the library.
+
+One thing which we should also respect is that the current way how url settings 
+are allowed is quite bad. Normally it would be OK, to limit url support to a 
+specific set of settings and this should be an information stored in the 
+config.json of the application. Maybe support some kind of special value which 
+could be defined for each variant. For example &quot;from-url&quot;.
+
+I would also suggest to handle the whole url processing in the loader script. 
+This would make it easily possible to dynamically select a file depending on a 
+specific variant e.g. loading with &quot;?qx.theme=qx.theme.Modern&quot; could 
+automatically select the output file for such a variant. Need to spend some 
+more hours on this thought though. At least some type of support for these 
+things in the loader would dramatically simplifier the way the demo browser 
+select themes for example. I think on some type of pre-selecting like the GWT 
+guys do it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24151</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-04-20 11:14:00 +0200</bug_when>
+            <thetext>In my view, the intent of this bug is completely covered by the recent 
+qx.core.Environment class and its infrastructure, which has basically been 
+implemented through bug#4641 and bug#4734. qx.core.Environment unifies 
+features, variants and settings, and I can&#39;t remember why I would have included 
+themes when the bug was created; I don&#39;t see this as related by now.
+
+The only aspect dangling is the question where to provide library defaults for 
+environment settings, and how to document them.  All framework defaults are 
+documented with the qx.core.Environment class, which is also linked from the 
+manual. Custom libraries should provide their defaults in class code, and 
+expose them also through API docs (e.g. putting them in the top-level package 
+doc, or the class doc for the library&#39;s main class). I think this is a very 
+acceptable way of handling them, and plays well if the library is included by 
+another app. I currently don&#39;t see a need to extract environment settings into 
+e.g. the manifest file, and I would be hesitant to open up yet another place 
+for them.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37620</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:17 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

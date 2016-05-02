@@ -1,0 +1,151 @@
+<bug>
+          <bug_id>3945</bug_id>
+          
+          <creation_ts>2010-08-02 22:51:00 +0200</creation_ts>
+          <short_desc>[Request inclusion?] A mixin that manages automatic removal of events &amp; binding</short_desc>
+          <delta_ts>2014-03-03 08:47:16 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>1.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Ralf Nieuwenhuijsen">Ralf.Nieuwenhuijsen</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>Ralf.Nieuwenhuijsen</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>19609</commentid>
+            <who name="Ralf Nieuwenhuijsen">Ralf.Nieuwenhuijsen</who>
+            <bug_when>2010-08-02 22:51:55 +0200</bug_when>
+            <thetext>Below is a mixin for the automatic removal of remote listeners &amp; bindings on dispose.
+Rather than calling [target].addListener, [target].addListenerOnce  or [source].bind you call either of these two methods:
+
+  [myObject].addListenerTo( [target], [event], [func], [context] )
+  [myObject].addListenerOnceTo( [target], [event], [func], [context] )
+  [myObject].addBindingTo( [source], [sourceProperty], [target], [targetProp] )
+
+Now when [myObject] is disposed, the listeners and bindings created on its behalf are removed.
+
+Also, when adding events and the [context] you want is &quot;this&quot;, you don&#39;t need to specify it anymore.
+Which makes sense, since we know for sure, the context will exist, when the [func] is called.
+
+Inclusion?
+
+Perhaps the Qooxdoo developers want to add this behavior to qx.core.Object by default?
+Usage of these methods, also in the framework code itself, would mean you don&#39;t have to manually clean up a lot of bindings and events all over the place, which should lead to less dispose-related bugs. 
+It would prevent exactly the same sort of bug, i reported before about the form-controller (and which has already been fixed, with manual clean-up in the disposer)
+
+-- Greetings
+-- Ralf ( @ gong.nl )
+
+============================================================================  
+
+//////////////////////////////
+qx.Mixin.define(&quot;app.MHacks&quot;,{
+destruct:function(){
+//////////////////////////////
+
+  if( this.__remoteBindings ){
+    this.__remoteBindings.forEach( function( vMap ){ 
+      vMap.target.removeBinding( vMap.id ); 
+    });
+    this.__remoteBindings = null
+  }
+  
+  if( this.__remoteListeners ){
+    this.__remoteListeners.forEach( function( vMap ){ 
+      vMap.target.removeListenerById( vMap.id ); 
+    });
+    this.__remoteListeners = null;
+  } 
+
+///////////
+},members:{
+///////////
+
+  addBindingTo:function( vSource, vSourceProp, vTarget, vTargetProp, vMap ){
+    if( !this.__remoteBindings ) this.__remoteBindings = [];
+    var vBindId = vSource.bind( vSourceProp, vTarget, vTargetProp, vMap );
+    this.__remoteBindings.push( {bindId: vBindId, target: vSource} )  
+    return vBindId;
+  },
+  
+  addListenerTo:function( vTarget, vEvent, vFunc, vContext ){
+    if( !this.__remoteListeners ) this.__remoteListeners = [];
+    var vListenerId = vTarget.addListener( vEvent, vFunc, vContext ? vContext : this );
+    this.__remoteListeners.push( {listenerId: vListenerId, target: vTarget} );
+  },
+
+  addListenerOnceTo:function( vTarget, vEvent, vFunc, vContext ){
+    if( !this.__remoteListeners ) this.__remoteListeners = [];
+    var vListenerId = vTarget.addListenerOnce( vEvent, vFunc, vContext ? vContext : this );
+    this.__remoteListeners.push( {listenerId: vListenerId, target: vTarget} );  
+  }
+
+////
+}});
+////</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19610</commentid>
+            <who name="Ralf Nieuwenhuijsen">Ralf.Nieuwenhuijsen</who>
+            <bug_when>2010-08-02 22:54:25 +0200</bug_when>
+            <thetext>Martin said:
+
+thanks for the details. Could you open up a bug report for that? That a thing i need to think about a but because i&#39;m not sure if we want that behavior in every situation. Additionally, I currently have no idea of the side effects of that. Maybe is slows down the shutdown, maybe it has a big memory impact, ... i currently have no idea and during testing and building a release, its hard to get time for that. 
+
+My reply:
+
+
+
+I don&#39;t think you need to worry too much about it.
+
+It&#39;s not a replacement for &quot;addListener&quot; and &quot;bind&quot;. 
+I&#39;ve called them something different on purpose.
+
+Events and bindings get removed by two different mechanism currently:
+
+1. They are automatically removed upon disposal of the source object.
+2. They are manually removed by custom clean up code in disposers, when the source object outlives whatever it is bound to
+
+I&#39;m just suggesting a third option:
+
+3. You use these utility methods, so you don&#39;t have to write custom clean up code.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35846</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:47:16 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

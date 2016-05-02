@@ -1,0 +1,372 @@
+<bug>
+          <bug_id>7667</bug_id>
+          
+          <creation_ts>2013-08-20 20:23:00 +0200</creation_ts>
+          <short_desc>qx.module.event.Native and qx.module.Traversing together break native partial build</short_desc>
+          <delta_ts>2014-01-16 12:00:27 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>3.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>VERIFIED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>3.5.1</target_milestone>
+          <dependson>7061</dependson>
+          <blocked>7481</blocked>
+          <votes>4</votes>
+          <everconfirmed>1</everconfirmed>
+          <reporter name="saaj">id</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          <cc>alexander.steitz</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>33668</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2013-08-20 20:23:26 +0200</bug_when>
+            <thetext>Well, the thing is strange. It&#39;s likely a dependency issue which generator doesn&#39;t recognize. 
+
+Steps to reproduce:
+
+  1. Create native app
+  2. Add to JSDoc comment (these two are usual for real set of qxWeb modules)
+
+    @use(qx.module.event.Native)
+    @use(qx.module.Traversing)
+
+  3. Add to config common section
+
+    &quot;packages&quot; :
+    {
+      &quot;parts&quot; :
+      {
+        &quot;boot&quot; :
+        {
+          &quot;include&quot; : [&quot;${APPLICATION}.Application&quot;]
+        }
+      }
+    } 
+
+As the result, the build version is broken, with undefined ``qx.lang.Type`` as a first error.
+
+As a workaround, ``qx.bom.Event``&#39;s method can be used directly e.g.  ``q(qx.bom.Event.getTarget(event)).hide()`` while event normalization is not included.
+
+Related to #7481.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33669</commentid>
+              <attachid>1280</attachid>
+            <who name="saaj">id</who>
+            <bug_when>2013-08-20 20:24:07 +0200</bug_when>
+            <thetext>Created attachment 1280
+Example app</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33906</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2013-09-12 18:28:19 +0200</bug_when>
+            <thetext>Assumption:
+
+The class &quot;qx.module.event.Native&quot; has a defer block which consists of this line:
+
+qxWeb.$registerEventNormalization(statics.TYPES, statics.normalize);
+
+When the generator sees this he tries to follow &quot;$registerEventNormalization&quot; to gather its dependencies but &quot;$registerEventNormalization&quot; is not yet available cause it is added later dynamically in/by &quot;qx.module.Event&quot; (via &quot;qxWeb.$attachStatic()&quot;). Therefore the generator cannot add &quot;qx.lang.Type&quot; to its dependency list which is needed when &quot;$registerNormalization&quot; will be finally called.
+
+Due to the fact that the use of &quot;qx.lang.Type&quot; is very common in framework classes the generator is sometimes able to add it to its dependency list anyway, which is the reason why this problem occurs only in certain circumstances.
+
+Also note that for the qxWeb module *files* (i.e. in the related build jobs) we include &quot;qx.lang.Type&quot; explicitly via a config include for the core module (which we require for all other modules) - see &quot;component/standalone/website/module.json&quot;.
+
+=&gt; Reassign to Thomas after talking with him about this issue and coming to the above conclusion.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34492</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-12-03 19:04:46 +0100</bug_when>
+            <thetext>There is a known issue with an app with no parts vs. the same app with a 
+trivially defined &#39;boot&#39; part (s. bug#7061).  This seems to play into this bug, 
+so I put #7061 as &#39;Depends On&#39;.
+
+The funny thing is that with at least this application, both setups result in 
+the same set of classes, but with different load ordering, and I cannot figure 
+out why. It seems both calls to DependencyLoader.sortClasses are done with the 
+same params (in DependencyLoader.getClassList when creating the general 
+application class list, and in PartBuilder._getFinalClassList when calculating 
+the class list for the single package).
+
+Eventually, in Generator.partsConfigFromClassList the &#39;if 0&#39; branch sould 
+always be used (this is the same as defining the trivial &#39;boot&#39; part in the 
+config), and should result in the same class list as what is currently done in 
+the &#39;else&#39; branch, under &quot;Emulate a boot part&quot;. Then the entire &#39;else&#39; branch 
+could be removed.
+
+I will not be able to fix this for 3.0.2, so re-target to 3.51.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34497</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2013-12-04 11:10:10 +0100</bug_when>
+            <thetext>Well, to do a quickfix it&#39;s sufficient to add ``@require(qx.lang.Type)`` to ``qx.module.event.Native`` jsdoc. I suggest to commit it to the 3.0.2 and 3.1. It will unlikely cause any negative side effects and will practically workaround the issue. I quickly checked on test app and a real app, and normalization seems to work. Then to closely investigate generator side after the December release.
+
+Btw, why 3.5 not 3.1?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34499</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-12-04 12:49:30 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; Well, to do a quickfix it&#39;s sufficient to add ``@require(qx.lang.Type)`` to 
+``qx.module.event.Native`` jsdoc. I suggest to commit it to the 3.0.2 and 3.1. 
+It will unlikely cause any negative side effects and will practically 
+workaround the issue. I quickly checked on test app and a real app, and 
+normalization seems to work. Then to closely investigate generator side after 
+the December release.
+
+The issue is not with the @require hints (you could just leave them out 
+entirely and just use the classes in code, as with any other qooxdoo app), but 
+with specifying the &#39;boot&#39; part explicitly in the config, which corrupts the 
+load-ordering of the classes.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34501</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2013-12-04 12:56:31 +0100</bug_when>
+            <thetext>&gt; The issue is not with the @require hints...
+
+I know. Didn&#39;t I call it a workaround? Forcing ``qx.lang.Type`` dependency of the class results in correct order. So I just suggested to temporarily fix it this way.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34741</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-01-10 11:40:15 +0100</bug_when>
+            <thetext>&gt; There is a known issue with an app with no parts vs. the same app with a 
+&gt; trivially defined &#39;boot&#39; part (s. bug#7061).  This seems to play into this bug, 
+&gt; so I put #7061 as &#39;Depends On&#39;.
+
+That&#39;s true. With the findings below, I could fix that. The load order still isn&#39;t exactly the same, but only slightly different (some adjacent classes swap places and stuff like that).
+
+&gt; The funny thing is that with at least this application, both setups result in 
+&gt; the same set of classes, but with different load ordering, and I cannot figure 
+&gt; out why. It seems both calls to DependencyLoader.sortClasses are done with the 
+&gt; same params (in DependencyLoader.getClassList when creating the general 
+&gt; application class list, and in PartBuilder._getFinalClassList when calculating 
+&gt; the class list for the single package).
+
+I have the assumption that DependencyLoader.sortClassesRec() isn&#39;t sorting at all, so the root cause for this is happening earlier. Both code paths (static package definition in the config.json vs. dynamically build package definition) start of with the result of DependencyLoader.getClassList(). But the &quot;static package&quot; path then works internally with a dict which is converted back into a list at some point, where both code paths meet again (calling DependencyLoader.sortClasses()). Due to the fact that Python dictionaries are implemented as hash tables (insertion) order isn&#39;t preserved. So the classes stay the same but are mixed up and DependencyLoader.sortClassesRec() isn&#39;t changing their order. With the help of an OrderedDict, which preserves the insertion order, I could fix that.
+
+&gt; Eventually, in Generator.partsConfigFromClassList the &#39;if 0&#39; branch sould 
+&gt; always be used (this is the same as defining the trivial &#39;boot&#39; part in the 
+&gt; config), and should result in the same class list as what is currently done in 
+&gt; the &#39;else&#39; branch, under &quot;Emulate a boot part&quot;. Then the entire &#39;else&#39; branch 
+&gt; could be removed.
+
+With findings and the applied changes, I could also refactor that.
+
+The reported error in the attached app is then gone. Tested also other apps using parts (e.g. Feed Reader, Showcase, WidgetBrowser).
+
+master: d7e2445c54871ff8e765e1db5ae79be4d1f98da6
+branch_3_5_x: 08bd32fe1003ce03cea92b12ef05dff7047fbd26</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34746</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-01-10 16:41:01 +0100</bug_when>
+            <thetext>Backing out changes in master because of issues found by Alex.
+
+master: 62ef554d06c765e5e259b344995cca647c7241f6
+
+Will have a deeper look at the problem Alex got ...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34747</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2014-01-10 16:59:19 +0100</bug_when>
+            <thetext>The error message is
+
+&quot;These necessary classes are not covered by parts: qxCLASS&quot;
+
+This error is reproducable. Let&#39;s have a look next week.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34779</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-01-14 16:24:13 +0100</bug_when>
+            <thetext>Fixed. 
+
+master: 373ed79cf80308640a08db0a7e98cd0facd3c600
+branch_3_5_x: e523a59565984bde8dcf69445ea38d4b4bfee7a4</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34790</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2014-01-16 12:00:27 +0100</bug_when>
+            <thetext>Good news. Test app is fine. I&#39;ve built a partial and a single-file app against master. Seems fine also.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1280</attachid>
+            <date>2013-08-20 20:24:00 +0200</date>
+            <delta_ts>2013-08-20 20:24:07 +0200</delta_ts>
+            <desc>Example app</desc>
+            <filename>entest.zip</filename>
+            <type>application/octet-stream</type>
+            <size>7460</size>
+            <attacher>id</attacher>
+            
+              <data encoding="base64">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
+wY/DH1BLAwQUAAAACACGnhRDBfYdHJgAAADnAAAAEQAAAHNvdXJjZS9pbmRleC5odG1sPU+7DsIw
+ENuR+Icje8mKRNIFmGHowhjSQ23VF41b0b8n7VVMlu2z5TOH6/2SPR83KtDU6X5n/sguj0hkGoaL
+NvqEP2M5WXXpWnCLJJt7VuSFWQX+Qi/xM/nCDYFhR7yTkyItRShRc8rxPMDolYkR/FD2IMS+raZy
+kxNVURi8VUK0hI9VUKnRoi1j9bbWvLp8js4Cq7598wNQSwMECgAAAAAAhp4UQwAAAAAAAAAAAAAA
+ABAAAABzb3VyY2UvcmVzb3VyY2UvUEsDBAoAAAAAAOWElj8AAAAAAAAAAAAAAAAXAAAAc291cmNl
+L3Jlc291cmNlL2VudGVzdC9QSwMECgAAAAAA5YSWPwAAAAAAAAAAAAAAACEAAABzb3VyY2UvcmVz
+b3VyY2UvZW50ZXN0Ly5naXRpZ25vcmVQSwMECgAAAAAA07IUQwAAAAAAAAAAAAAAAA4AAABzb3Vy
+Y2Uvc2NyaXB0L1BLAwQKAAAAAACOnhRDAAAAAAAAAAAAAAAAEwAAAHNvdXJjZS90cmFuc2xhdGlv
+bi9QSwECFAAKAAAAAAAFnxRDAAAAAAAAAAAAAAAABgAAAAAAAAAAABAgAAAAAAAAYnVpbGQvUEsB
+AhQAFAAAAAgAhKQUQwX2HRyYAAAA5wAAABAAAAAAAAAAAAAgIAAAJAAAAGJ1aWxkL2luZGV4Lmh0
+bWxQSwECFAAKAAAAAAD0nhRDAAAAAAAAAAAAAAAADwAAAAAAAAAAABAgAADqAAAAYnVpbGQvcmVz
+b3VyY2UvUEsBAhQACgAAAAAA9J4UQwAAAAAAAAAAAAAAABIAAAAAAAAAAAAQIAAAFwEAAGJ1aWxk
+L3Jlc291cmNlL3F4L1BLAQIUAAoAAAAAAPSeFEMAAAAAAAAAAAAAAAAZAAAAAAAAAAAAECAAAEcB
+AABidWlsZC9yZXNvdXJjZS9xeC9zdGF0aWMvUEsBAhQACgAAAAAAg6QUQ9435PAxAAAAMQAAACIA
+AAAAAAAAAAAgIAAAfgEAAGJ1aWxkL3Jlc291cmNlL3F4L3N0YXRpYy9ibGFuay5naWZQSwECFAAK
+AAAAAADQshRDAAAAAAAAAAAAAAAADQAAAAAAAAAAABAgAADvAQAAYnVpbGQvc2NyaXB0L1BLAQIU
+ABQAAAAIANWiFEN3uXdY3AMAABEKAAALAAAAAAAAAAAAICAAABoCAABjb25maWcuanNvblBLAQIU
+ABQAAAAIAIaeFEO5h0INzwcAABoUAAALAAAAAAAAAAAAICAAAB8GAABnZW5lcmF0ZS5weVBLAQIU
+ABQAAAAIAIaeFENCzMzhSgEAAMcCAAANAAAAAAAAAAAAICAAABcOAABNYW5pZmVzdC5qc29uUEsB
+AhQACgAAAAAAhp4UQwAAAAAAAAAAAAAAAAcAAAAAAAAAAAAQIAAAjA8AAHNvdXJjZS9QSwECFAAK
+AAAAAACGnhRDAAAAAAAAAAAAAAAADQAAAAAAAAAAABAgAACxDwAAc291cmNlL2NsYXNzL1BLAQIU
+AAoAAAAAAKahFEMAAAAAAAAAAAAAAAAUAAAAAAAAAAAAECAAANwPAABzb3VyY2UvY2xhc3MvZW50
+ZXN0L1BLAQIUABQAAAAIAJaiFENOwRFIRQEAAOkCAAAiAAAAAAAAAAAAICAAAA4QAABzb3VyY2Uv
+Y2xhc3MvZW50ZXN0L0FwcGxpY2F0aW9uLmpzUEsBAhQACgAAAAAAhp4UQwAAAAAAAAAAAAAAABkA
+AAAAAAAAAAAQIAAAkxEAAHNvdXJjZS9jbGFzcy9lbnRlc3QvdGVzdC9QSwECFAAUAAAACACGnhRD
+KVvImqMCAAAvBgAAJAAAAAAAAAAAACAgAADKEQAAc291cmNlL2NsYXNzL2VudGVzdC90ZXN0L0Rl
+bW9UZXN0LmpzUEsBAhQAFAAAAAgAhp4UQ+a3+ad4AAAAlAAAAB8AAAAAAAAAAAAgIAAArxQAAHNv
+dXJjZS9jbGFzcy9lbnRlc3QvX19pbml0X18uanNQSwECFAAUAAAACACGnhRDBfYdHJgAAADnAAAA
+EQAAAAAAAAAAACAgAABkFQAAc291cmNlL2luZGV4Lmh0bWxQSwECFAAKAAAAAACGnhRDAAAAAAAA
+AAAAAAAAEAAAAAAAAAAAABAgAAArFgAAc291cmNlL3Jlc291cmNlL1BLAQIUAAoAAAAAAOWElj8A
+AAAAAAAAAAAAAAAXAAAAAAAAAAAAECAAAFkWAABzb3VyY2UvcmVzb3VyY2UvZW50ZXN0L1BLAQIU
+AAoAAAAAAOWElj8AAAAAAAAAAAAAAAAhAAAAAAAAAAAAICAAAI4WAABzb3VyY2UvcmVzb3VyY2Uv
+ZW50ZXN0Ly5naXRpZ25vcmVQSwECFAAKAAAAAADTshRDAAAAAAAAAAAAAAAADgAAAAAAAAAAABAg
+AADNFgAAc291cmNlL3NjcmlwdC9QSwECFAAKAAAAAACOnhRDAAAAAAAAAAAAAAAAEwAAAAAAAAAA
+ABAgAAD5FgAAc291cmNlL3RyYW5zbGF0aW9uL1BLBQYAAAAAFwAXAOQFAAAqFwAAAAA=
+</data>
+
+          </attachment>
+      
+
+    </bug>

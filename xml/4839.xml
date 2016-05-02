@@ -1,0 +1,217 @@
+<bug>
+          <bug_id>4839</bug_id>
+          
+          <creation_ts>2011-03-23 12:57:00 +0100</creation_ts>
+          <short_desc>SelectBox changeSelection not fired on model modification</short_desc>
+          <delta_ts>2011-11-04 09:24:04 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core.selection</component>
+          <version>1.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.4.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Dmitry Lisay">pingw33n</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>uwe.stahl</cc>
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>23483</commentid>
+            <who name="Dmitry Lisay">pingw33n</who>
+            <bug_when>2011-03-23 12:57:51 +0100</bug_when>
+            <thetext>http://tinyurl.com/6jgsq2r
+
+When deleting any not the last item changeSelection doesn&#39;t happen:
+
+230730 playground.Application[478]: Deleting id=1
+232804 playground.Application[478]: changeSelection id=4 // manual change
+233955 playground.Application[478]: Deleting id=4
+236588 playground.Application[478]: Deleting id=5
+236592 playground.Application[478]: changeSelection id=2 // event fired for the last item</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23484</commentid>
+            <who name="Dmitry Lisay">pingw33n</who>
+            <bug_when>2011-03-23 12:59:26 +0100</bug_when>
+            <thetext>This link is better: http://tinyurl.com/48ek6eq</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23503</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-24 08:26:59 +0100</bug_when>
+            <thetext>Thanks for the report. Haven&#39;t been aware of that but thats in deed expected behavior which could not be fixed easily. The reason for that is the implementation of the list controller. In your case, it deletes the last widget from the select box and updates the model and bindings. As the last widget was not the selected, wie select box itself does not know that it should update its selection. So there is not change event expect for the last item because in that case, we remove all items and with that of course, also the current selected widget.
+The supported way is to use changeModelSelection which will work as expected.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23508</commentid>
+            <who name="Dmitry Lisay">pingw33n</who>
+            <bug_when>2011-03-24 10:00:36 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; Thanks for the report. Haven&#39;t been aware of that but thats in deed expected
+&gt; behavior which could not be fixed easily. The reason for that is the
+&gt; implementation of the list controller. In your case, it deletes the last widget
+&gt; from the select box and updates the model and bindings. As the last widget was
+&gt; not the selected, wie select box itself does not know that it should update its
+&gt; selection. So there is not change event expect for the last item because in
+&gt; that case, we remove all items and with that of course, also the current
+&gt; selected widget.
+&gt; The supported way is to use changeModelSelection which will work as expected.
+
+The api docs say:
+
+&gt; changeModelSelection Pseudo event. It will never be fired because the array 
+&gt; itself can not be changed. But the event description is needed for the data 
+&gt; binding.
+
+It seems to work as advertised (doesn&#39;t get fired): http://tinyurl.com/62kaq6m (or am I doing it wrong?)
+
+In my app I temporarily solved this by manually updating the selection before deleting the item. But the changeModelSelection way is supposed to be more cleaner.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23562</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-25 09:35:12 +0100</bug_when>
+            <thetext>AH, sorry, my mistake! The changeModelSelection is ofc not the right event! I ment to use the change event of the selection array:
+
+selectBox.getModelSelection().addListener(&quot;change&quot;, function()
+{
+  this.debug(&quot;changeModelSelection&quot;);
+}, this);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23571</commentid>
+            <who name="Dmitry Lisay">pingw33n</who>
+            <bug_when>2011-03-25 11:19:54 +0100</bug_when>
+            <thetext>Sorry but &quot;change&quot; event of modelSelection seems to be working the same way as changeSelection: http://tinyurl.com/5wvjfxm</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23613</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-28 08:22:17 +0200</bug_when>
+            <thetext>I do get the proper event and log messages in your example. Maybe we are talking about two different expected behaviors? What events do you expect?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23633</commentid>
+            <who name="Dmitry Lisay">pingw33n</who>
+            <bug_when>2011-03-28 09:24:40 +0200</bug_when>
+            <thetext>I expect the event to get fired after I delete the item. This does seem to happen only for the last item (like for changeSelection):
+
+109134 playground.Application[478]: Deleting id=1
+109638 playground.Application[478]: Deleting id=2
+110662 playground.Application[478]: Deleting id=3
+
+As you can see there&#39;s no &quot;modelSelection.change&quot; entries. And if I switch manually to the last item (5) and delete it:
+
+221680 playground.Application[478]: modelSelection.change id=order 
+224437 playground.Application[478]: Deleting id=5
+224444 playground.Application[478]: modelSelection.change id=order
+
+This is expected behavior for any item.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23687</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-29 09:03:42 +0200</bug_when>
+            <thetext>Oh, you are right. I reopen the bug and take care of that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25179</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-06-20 17:06:21 +0200</bug_when>
+            <thetext>It should work now. Added a selection update on every change of the model&#39;s length to ensure that the selection mode &quot;one&quot; also works, which is used within the select box. But keep in mind that the changeSelection of the select box does not work, you still have to use the change of the selection array to get it working the way it is designed.
+
+trunk: r27734
+1.4.x: r27735
+
+
+Here is the code to reproduce in the playground:
+
+
+
+var selectBox = new qx.ui.form.SelectBox();
+this.getRoot().add(selectBox);
+
+var model = new qx.data.Array([&quot;1&quot;, &quot;2&quot;, &quot;3&quot;]);
+var controller = new qx.data.controller.List(model, selectBox);
+
+controller.getSelection().addListener(&quot;change&quot;, function() {
+  this.debug(&quot;new selection&quot;, controller.getSelection().toArray());
+}, this);
+
+var button = new qx.ui.form.Button(&quot;Delete item&quot;);
+this.getRoot().add(button, {left: 0, top: 40});
+
+button.addListener(&quot;execute&quot;, function()
+{
+  var s = controller.getSelection().getItem(0);
+  if (s) {
+    this.debug(&quot;Deleting&quot;, s);
+    model.remove(s);
+  }
+}, this);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27395</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-11-04 09:24:04 +0100</bug_when>
+            <thetext>This bugfix has created a new bug in our application, after we have updated from Qooxdoo 1.3 to Qooxdoo 1.5.
+
+Our problem can be explained by the following playground code:
+
+-- ---------------------------------------------
+var selectBox = new qx.ui.form.SelectBox();
+this.getRoot().add(selectBox);
+
+var model = new qx.data.Array([&quot;1&quot;, &quot;2&quot;, &quot;3&quot;]);
+var controller = new qx.data.controller.List(model, selectBox);
+
+controller.getSelection().addListener(&quot;change&quot;, function() {
+  this.debug(&quot;new selection&quot;, controller.getSelection().toArray());
+}, this);
+
+var button = new qx.ui.form.Button(&quot;Add item&quot;);
+this.getRoot().add(button, {left: 0, top: 40});
+
+button.addListener(&quot;execute&quot;, function()
+{
+    model.push(&quot;new item&quot;);
+}, this);
+-- ---------------------------------------------
+
+The button &quot;add item&quot; adds a new item to the selectbox.
+The event &quot;change selection&quot; will be fired each team one clicks on the &quot;add item&quot; button,
+even if the selection does not change at all.
+
+Our workaround was to add an additional piece of code at the top of the change-event
+that checks whether the selection really has been changed.
+Since this workaround works, we have currently no need for a change in the Qooxdoo code.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

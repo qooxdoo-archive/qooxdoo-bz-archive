@@ -1,0 +1,148 @@
+<bug>
+          <bug_id>3111</bug_id>
+          
+          <creation_ts>2009-11-25 16:16:00 +0100</creation_ts>
+          <short_desc>cellrenders call _getContentHtml more than necessary</short_desc>
+          <delta_ts>2014-03-03 08:46:36 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tobias Oetiker">tobi</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>14919</commentid>
+            <who name="Tobias Oetiker">tobi</who>
+            <bug_when>2009-11-25 16:16:45 +0100</bug_when>
+            <thetext>While implementing the canvas cellrenderer I found that the  _getContentHtml method seems to get called way more often than necessary (for my untrained eye). Cases where it gets called offten are:
+
+* changing if a column is sortable or not. This has no visual effect whatsoever, so why call it?
+
+* altering the width of the table at least when the rows are set to be resizable (with relative widths).
+
+The problem with this is, that a complex cell renderer like the canvas renderer works way to much and slows down the gui for no aparent reason ... I am going to tackle that on the renderer end too, adding a slight grace periode before it starts updating, but still, it should not happen in the first place.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14930</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-25 17:59:39 +0100</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14938</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-25 19:04:30 +0100</bug_when>
+            <thetext>I can confirm the first issue. The table model fires a &quot;metaDataChanged&quot; event, when any of the column meta data changes AND when columns are sorted. Meta data changes are only important to render the headers and don&#39;t require a repaint. Only sort changes do require a repaint. To fix this I have to add a &quot;sort&quot; event and the pane is only repainted on sorts.
+
+I still have to look at the second issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14940</commentid>
+            <who name="Tobias Oetiker">tobi</who>
+            <bug_when>2009-11-25 20:32:35 +0100</bug_when>
+            <thetext>it might be that the problem coincides with
+
+tableColumnModel : function(obj) {
+                    return new qx.ui.table.columnmodel.Resize(obj);
+                },
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15853</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-12-14 15:06:01 +0100</bug_when>
+            <thetext>That&#39;s a good hint. I know that the resize model causes some unnecessary renderings. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15854</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-12-14 15:23:03 +0100</bug_when>
+            <thetext>None of the events listened to by the resize column model seem like they would cause excessive rendering, unless the events are being fired unnecessarily (or unexpectedly) at times. It used to be that the verticalScrollBarChanged event occurred only when the vertical scroll bar needed to be displayed or hidden, not, I think, when the knob moved. If it does in fact fire each time the vertical scroll bar knob moves, that would be the first place to investigate and determine what actually caused the event. Re-rendering should not occur simply because the vertical scroll bar knob moved. The event probably has data indicating whether this is a knob move or a display/hide, and the _onverticalscrollbarchanged method should limit actions to the display/hide case.
+
+Here are the events that the resize column model listens to:
+
+        // We&#39;ll do our column resizing when the table appears, ...
+        table.addListener(&quot;appear&quot;, this._onappear, this);
+
+        // ... when the inner width of the table changes, ...
+        table.addListener(&quot;tableWidthChanged&quot;, this._onTableWidthChanged, this);
+
+        // ... when a vertical scroll bar appears or disappears
+        table.addListener(
+          &quot;verticalScrollBarChanged&quot;,
+          this._onverticalscrollbarchanged,
+          this
+        );
+
+        // We want to manipulate the button visibility menu
+        table.addListener(
+          &quot;columnVisibilityMenuCreateEnd&quot;,
+          this._addResetColumnWidthButton,
+          this
+        );      
+        
+        // ... when columns are resized, ...
+        this.addListener(&quot;widthChanged&quot;, this._oncolumnwidthchanged, this );
+
+        // ... and when a column visibility changes.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16465</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-27 16:30:29 +0100</bug_when>
+            <thetext>moved to target 1.0.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17337</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-17 13:57:43 +0100</bug_when>
+            <thetext>to Jonny</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18830</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2010-06-21 14:45:18 +0200</bug_when>
+            <thetext>Assigning all table bugs to Martin.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35594</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:36 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

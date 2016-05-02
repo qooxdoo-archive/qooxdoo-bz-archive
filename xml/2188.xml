@@ -1,0 +1,179 @@
+<bug>
+          <bug_id>2188</bug_id>
+          
+          <creation_ts>2009-04-01 11:05:00 +0200</creation_ts>
+          <short_desc>Dependency resolution problem</short_desc>
+          <delta_ts>2014-03-03 15:25:57 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Daniel Wagner">daniel.wagner</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>qooxdoo-bugs</cc>
+    
+    <cc>thron7</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9051</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-04-01 11:05:38 +0200</bug_when>
+            <thetext>While loading the Playground app, there is an error in qx.util.format.DateFormat where the getDateInstance function tries to access qx.locale.Date which is not yet loaded. In the generated application js, qx.util.format.DateFormat is listed before qx.locale.Date.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9052</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-04-01 11:06:51 +0200</bug_when>
+            <thetext>Set target milestone to 0.8.3</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9132</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-03 14:55:46 +0200</bug_when>
+            <thetext>up priority</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9148</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-03 19:11:23 +0200</bug_when>
+            <thetext>As a temporary work-around (mainly benefiting Playground), 
+qx.util.format.DateFormat has been patched with a #require(qx.locale.Date) 
+compiler hint (r18658.).
+
+This should be removed after the bug has been fixed!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9156</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-06 10:19:53 +0200</bug_when>
+            <thetext>There might be a related problem with unresolved classes (qx.core.Assert)  when 
+turning qx.debug for the build version. Have to look into that, may also 
+deserve a separate bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9201</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-04-08 15:20:37 +0200</bug_when>
+            <thetext>Thomas, Fabian might have an idea here, so re-assigned it to him.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9203</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-08 15:32:51 +0200</bug_when>
+            <thetext>me to cc. Fabian, keep the bug updated so I know what you&#39;re after :-).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9220</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-09 09:58:39 +0200</bug_when>
+            <thetext>I have added some assertions to qx.lang.Object, which introduces a dependency to qx.core.Assert. Since these checks are only in the source version it makes sense that turning qx.debug off doesn&#39;t have this problem.
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9236</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-09 13:43:12 +0200</bug_when>
+            <thetext>Fabian&#39;s comment explains what changed. This affects the qx.debug=on setting 
+case. It seems that a &#39;use&#39; requirement changes into a &#39;require&#39; requirement, 
+which causes the issue. Adding #require in qx.lang.Object might lead to 
+circular dependencies. Have to investigate this.
+
+The issue with qx.util.format.DateFormat might be different issue. In that case 
+one of the two could be forked out into a separate bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9298</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-15 18:42:24 +0200</bug_when>
+            <thetext>Concerning qx.util.format.DateFormat:
+
+The automatic dependency analysis of the generator detects qx.locale.Date 
+correctly as a *runtime* dependency of DateFormat (qx.locale.Date is used in 
+its constructor).
+
+The problem arises when the class qx.ui.virtual.cell.Date instantiates a 
+DateFormat object (via a static method call 
+qx.util.format.DateFormat.getDateInstance), to provide a value to the &#39;init&#39; 
+attribute of a property. But &#39;init&#39; values, like any value of a map key, are 
+evaluated at *load time* (when the class code is parsed by the JS engine). So 
+all of a sudden, a runtime dependency becomes a load time dependency, which 
+cannot be easily accommodated. Even if you require (either automatically or 
+manually with #require) qx.util.format.DateFormat in qx.ui.virtual.cell.Date 
+and thus promote DateFormat to a load time dependency for cell.Date, the 
+runtime dependency of DateFormat to qx.locale.Date is *not* propagated to a 
+load time dependency. It would require serious research to solve this. You 
+probably have to analyse the particular method(!) called on the external class 
+(constructor, static method,...), then analyze its specific runtime 
+dependencies and promote those to load time dependencies. And then you have the 
+next problem whether this whole set of dependencies is free of conflicts and at 
+all solveable into a sequencing of classes. See a related bug#1455.
+
+I&#39;ll be in touch with Johnny to sort things out on the qx.ui.virtual.cell.Date 
+side.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9299</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-15 18:59:34 +0200</bug_when>
+            <thetext>Ah, I forgot to mention: The whole problem shows in Playground because 
+Playground is a &quot;source-all&quot; application, to fullfill the playground purpose. 
+Thus, qx.ui.virtual.cell.Date is loaded.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9317</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2009-04-16 14:44:48 +0200</bug_when>
+            <thetext>I corrected qx.ui.virtual.cell.Date  in r18760.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9324</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-16 18:18:08 +0200</bug_when>
+            <thetext>I removed the #require work-around in qx.util.format.DateFormat. Playground now 
+runs again with no disturbance. 
+
+Thus, I&#39;m closing this bug. The qx.core.Assert issue is carried over to its own 
+bug#2249. The underlying issue of resolving static initializers will be pursued 
+in bug#1455.
+
+Fixed with r18763.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38935</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:57 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

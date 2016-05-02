@@ -1,0 +1,178 @@
+<bug>
+          <bug_id>6490</bug_id>
+          
+          <creation_ts>2012-06-08 16:26:00 +0200</creation_ts>
+          <short_desc>Firefox: duplicate cache headers are unexpectedly inserted in POST XMLHttpRequests in versions below 19</short_desc>
+          <delta_ts>2014-03-03 08:46:14 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io.remote</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          <bug_file_loc>https://bugzilla.mozilla.org/show_bug.cgi?id=757042</bug_file_loc>
+          
+          <keywords>Performance</keywords>
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Helder Magalhães">helder.magalhaes</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>18 and below</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>29702</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2012-06-08 16:26:16 +0200</bug_when>
+            <thetext>As reported in Mozilla issue 757042 (set as bug&#39;s URL, https://bugzilla.mozilla.org/show_bug.cgi?id=757042), Firefox is always inserting cache related headers (even when already set) in XMLHttpRequests.
+
+As currently qooxdoo uses this to prevent caching (see &quot;prohibitCaching&quot; property of &quot;qx.io.remote.Request&quot;), this means useless overhead (20 bytes) in every client--&gt;server interaction (performance hit on intensive AJAX applications).
+
+Note that trying to diagnose this issue using Firebug can be deceiving, therefore issue 5531 was reported as well (http://code.google.com/p/fbug/issues/detail?id=5531).
+
+The proposal (already implemented, testing locally) is to avoid setting the duplicate headers whenever the trigger conditions are detected, as they are internally set afterwards. What do you think?
+
+One thing I don&#39;t have strong feelings about is: given we don&#39;t know in which version will the issue be fixed in Firefox, should we make ourselves future-proof and add an upper limit for the check? Something like &quot;if gecko above 1.8 or below 16 apply workaround&quot;, and keep adjusting the upper limit (&quot;16&quot; to &quot;17&quot;, &quot;18&quot;, etc.) until the issue is fixed. This has the disadvantage of allowing the overhead to trigger in future Firefox version if the limit isn&#39;t updated, but the advantage of protecting against cases in the future where the cache-related headers aren&#39;t set at all. Again, what do you think?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30702</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2012-09-14 15:13:46 +0200</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; The proposal (already implemented, testing locally) is to avoid setting the
+&gt; duplicate headers whenever the trigger conditions are detected, as they are
+&gt; internally set afterwards. What do you think?
+
+Also, would a pull request or a straight patch be preferred?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30707</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-09-17 08:29:02 +0200</bug_when>
+            <thetext>Thanks for the report. Quick answer for the last question: Whatever is more comfortable for you. We&#39;re fine with either Pull-Request or patch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31808</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2013-01-04 01:53:03 +0100</bug_when>
+            <thetext>Just noticed that the reported Firefox issue (into Mozilla&#39;s Bugzilla instance) ended up fixed in the trunk (within another issue&#39;s scope). Details in this bug&#39;s URL.
+
+Nevertheless, the patch is still a good investment, in my opinion, due to the useless overhead decrease and also because enterprise environments are known to update less frequently, if at all, so this issue may still be around several years from now (even if available as release within the next couple of months or so [1]).
+
+[1] https://wiki.mozilla.org/Releases</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31809</commentid>
+              <attachid>1223</attachid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2013-01-04 01:54:04 +0100</bug_when>
+            <thetext>Created attachment 1223
+Patch
+
+Regarding the patch:
+1. A &quot;for&quot; loop was duplicated and adapted for performance reasons, i. e., to avoid performing too many checks inside the loop. I&#39;ve left a similar comment in the code - feel free to remove it to keep it simple.
+2. I&#39;ve also considered performing this change in the &quot;setRequestHeader&quot; method,  as it seemed much more intuitive and fine grained. Unfortunately, the problematic headers seem to be set using lower level APIs so no go.
+3. Preliminary version tested for a couple months, now adjusted to match the latest information changes and improved code readability.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31830</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-01-07 10:42:52 +0100</bug_when>
+            <thetext>Thanks for the patch. Did you also use a unit test to check that which you can give us?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31834</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2013-01-07 11:46:49 +0100</bug_when>
+            <thetext>&gt; Thanks for the patch. Did you also use a unit test to check that which you can
+&gt; give us?
+
+Unfortunately no. As this is a somehow specific issue (affecting Firefox only and versions below 19), testing was made ad-hoc, based in network headers analysis.
+
+A testcase might not be easy to extract, as this is a browser issue which is being worked around (even Firebug has a related bug [1]).
+
+Nevertheless, a reduced testcase was added to the Mozilla bug report [2]; if adapting to the qooxdoo realm, it basically means creating a ServerRpc request, which currently sets the cache headers that trigger the issue. Unfortunately, browser APIs to look into HTTP headers at the network level are not very suitable and due to the issue might not even be accurate, which means that external tools would be required (which are then out of the scope of the qooxdoo testcases, as far as I can tell).
+
+In this case, I&#39;d say that unit testing should left to Gecko network layer developers (in the scope of the issue which actually fixed this behavior [3]).
+
+
+[1] https://bugzilla.mozilla.org/show_bug.cgi?id=757042#c9
+[2] https://bugzilla.mozilla.org/show_bug.cgi?id=757042#c0
+[3] https://bugzilla.mozilla.org/show_bug.cgi?id=801826</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31846</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-01-08 09:48:27 +0100</bug_when>
+            <thetext>Thanks for the good input.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35462</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:14 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>1223</attachid>
+            <date>2013-01-04 01:54:00 +0100</date>
+            <delta_ts>2013-01-04 01:54:04 +0100</delta_ts>
+            <desc>Patch</desc>
+            <filename>qooxdoo-bug_6490.patch</filename>
+            <type>text/plain</type>
+            <size>1490</size>
+            <attacher>helder.magalhaes</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvaW8vcmVtb3RlL3RyYW5zcG9y
+dC9YbWxIdHRwLmpzIGIvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9pby9yZW1vdGUvdHJhbnNw
+b3J0L1htbEh0dHAuanMKaW5kZXggMTA1OTZmYS4uODE3OTdjYSAxMDA2NDQKLS0tIGEvZnJhbWV3
+b3JrL3NvdXJjZS9jbGFzcy9xeC9pby9yZW1vdGUvdHJhbnNwb3J0L1htbEh0dHAuanMKKysrIGIv
+ZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9pby9yZW1vdGUvdHJhbnNwb3J0L1htbEh0dHAuanMK
+QEAgLTMyNiw4ICszMjYsMjkgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC5pby5yZW1vdGUudHJhbnNw
+b3J0LlhtbEh0dHAiLAogCiAgICAgICB2YXIgdlJlcXVlc3RIZWFkZXJzID0gdGhpcy5nZXRSZXF1
+ZXN0SGVhZGVycygpOwogCi0gICAgICBmb3IgKHZhciB2SWQgaW4gdlJlcXVlc3RIZWFkZXJzKSB7
+Ci0gICAgICAgIHZSZXF1ZXN0LnNldFJlcXVlc3RIZWFkZXIodklkLCB2UmVxdWVzdEhlYWRlcnNb
+dklkXSk7CisgICAgICAvLyBGaXJlZm94OiBkdXBsaWNhdGUgY2FjaGUgaGVhZGVycyBhcmUgdW5l
+eHBlY3RlZGx5IGluc2VydGVkIGluIFBPU1QgWE1MSHR0cFJlcXVlc3RzIGluIHZlcnNpb25zIGJl
+bG93IDE5CisgICAgICAvLyBTZWUgW0JVRyAjNjQ5MF0gZm9yIGRldGFpbHMKKyAgICAgIGlmICgK
+KyAgICAgICAgcXguY29yZS5FbnZpcm9ubWVudC5nZXQoImVuZ2luZS5uYW1lIikgPT0gImdlY2tv
+IiAmJgorICAgICAgICBxeC5jb3JlLkVudmlyb25tZW50LmdldCgiZW5naW5lLnZlcnNpb24iKSA8
+IDE5ICYmCisgICAgICAgIHZNZXRob2QgPT0gIlBPU1QiCisgICAgICApIHsKKyAgICAgICAgLy8g
+Tm90ZSB0aGF0IHRoZSAiZm9yIiBsb29wIHdhcyBkdXBsaWNhdGVkIGFuZCBhZGFwdGVkIGZvciBw
+ZXJmb3JtYW5jZSByZWFzb25zLAorICAgICAgICAvLyBpLiBlLiwgdG8gYXZvaWQgcGVyZm9ybWlu
+ZyB0b28gbWFueSBjaGVja3MgaW5zaWRlIHRoZSBsb29wCisgICAgICAgIGZvciAodmFyIHZJZCBp
+biB2UmVxdWVzdEhlYWRlcnMpIHsKKyAgICAgICAgICBpZiAoCisgICAgICAgICAgICAodklkICE9
+PSAiUHJhZ21hIiAmJiB2SWQgIT09ICJDYWNoZS1Db250cm9sIikgJiYKKyAgICAgICAgICAgIHZS
+ZXF1ZXN0SGVhZGVyc1t2SWRdICE9PSAibm8tY2FjaGUiCisgICAgICAgICAgKSB7CisgICAgICAg
+ICAgICB2UmVxdWVzdC5zZXRSZXF1ZXN0SGVhZGVyKHZJZCwgdlJlcXVlc3RIZWFkZXJzW3ZJZF0p
+OworICAgICAgICAgIH0KKyAgICAgICAgfQorICAgICAgfQorICAgICAgZWxzZQorICAgICAgewor
+ICAgICAgICBmb3IgKHZhciB2SWQgaW4gdlJlcXVlc3RIZWFkZXJzKSB7CisgICAgICAgICAgdlJl
+cXVlc3Quc2V0UmVxdWVzdEhlYWRlcih2SWQsIHZSZXF1ZXN0SGVhZGVyc1t2SWRdKTsKKyAgICAg
+ICAgfQogICAgICAgfQogCiAgICAgICAvLyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLQo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

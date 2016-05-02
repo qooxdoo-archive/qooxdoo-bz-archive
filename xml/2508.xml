@@ -1,0 +1,497 @@
+<bug>
+          <bug_id>2508</bug_id>
+          
+          <creation_ts>2009-06-24 21:54:00 +0200</creation_ts>
+          <short_desc>qx.bom.element.Location.get is currently wrong for WebKit</short_desc>
+          <delta_ts>2014-03-03 15:19:33 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Jean-Noel Rivasseau">elvanor</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>info</cc>
+    
+    <cc>vincent</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10562</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2009-06-24 21:54:43 +0200</bug_when>
+            <thetext>Currently this function will not work for WebKit if the document.body has a margin set. It will return the correct value for the body element, but not for any element.
+
+How to reproduce: do a very simple HTML page with a single div in the body. Set the body margin-top to 20px. qx.dom.Location will then correctly 20 for the top for the body, and will incorrectly return 40 for the div (when it should be 20).
+
+What happens: in qx.dom.Location we have the following code:
+
+        if (doc.compatMode === &quot;CSS1Compat&quot;)
+        {
+          left += this.__num(body, &quot;marginLeft&quot;);
+          top += this.__num(body, &quot;marginTop&quot;);
+        }
+
+It appears this code must be executed when we query the body, but for any other element, this is already taken into account into elem.getBoundingClientRect(); or elem.offsetTop. So adding it a second time when we add the top value of the body results in a wrong value.
+
+How to fix: I&#39;ve come up with a quick hack to get this working, but one core commiter will probably write it better than me. (For info, I just stored in a boolean the fact that we are asking for the body or not when calling __computeBody. If not, I dont run the code quoted above. But this is ugly, there are probably 100 better ways).
+
+If someone can explain me why WebKit behaves this way, I would be happy (I dont understand why in the end elem.offsetTop is broken only for the body).
+
+I tested on Chrome and Safari.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10564</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-06-25 10:35:34 +0200</bug_when>
+            <thetext>to Alex</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10750</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-07-02 17:44:53 +0200</bug_when>
+            <thetext>Important would be to find out if this is broken only in recent webkits or was a problem for months already. Not that we fix it for current versions and break it for older ones :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11210</commentid>
+              <attachid>564</attachid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2009-08-06 12:40:53 +0200</bug_when>
+            <thetext>Created attachment 564
+Sample app demonstrating the problem.
+
+Attached a sample app. Actually the problem is much worse than what I thought; basically every browser is broken as soon as there is some margin on the body element. See the mailing list.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11211</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-08-06 13:27:35 +0200</bug_when>
+            <thetext>Fabian, could you have a look at this or dispatch it to someone else. Alex is on vacation, but I think we should address the issue soon.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11212</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-08-06 14:51:28 +0200</bug_when>
+            <thetext>to Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11226</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-08-07 15:07:12 +0200</bug_when>
+            <thetext>I guess i am coming closer to the source of the bug. First of all, the get method of qx.bom.element.location returns the position relative to the body. So all browsers seem to work expect safari (webkit). The problem is the detection of the mode of the rendering engine (standard or quirks) as you posted in your initial comment.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11228</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2009-08-07 15:13:22 +0200</bug_when>
+            <thetext>No, the get method does NOT return the location with respect to the body. If it did, then on Firefox and my test example the first div would get a position of 0. This is not the case.
+
+If you DO intend the method to return the location wrt the body (which, I repeat, is currently not the case), I think this is a bad idea. This method should return the location wrt the document (viewport), since almost all other methods (like getting the position of the mouse cursor, etc) are based from the document.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11229</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-08-07 15:24:32 +0200</bug_when>
+            <thetext>Well it does return the location relative to the body if it is the body!?! ... well thats not how it should be! We&#39;ll dig into that on monday when Fabian is back at the office. Looks like we need to change something here to get the whole thing consistant again.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11230</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2009-08-07 15:56:31 +0200</bug_when>
+            <thetext>Look, there is clearly something wrong: On my test page there is a margin of 30px on the body, and there is a first div inside this body.
+
+Firefox returns 0 for the left position for the body and 30 for the first div.
+
+IF you intend it to return the position wrt the body, then what FF gives is correct for the body (since relative to itself, it&#39;s always 0) BUT WRONG for the first div.
+IF it&#39;s not relative to the body but to the document (as it should be!!!!!!) then the body location is wrong, and the first div location is correct.
+
+As I said, complex code, that&#39;s currently completely messed up IMHO.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11278</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-08-11 12:45:54 +0200</bug_when>
+            <thetext>Wrote test for the location and fixed bug in revision 19798.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11279</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2009-08-11 13:11:33 +0200</bug_when>
+            <thetext>How did you fix it in the end? Location.get returns position wrt the body or the document (I hope it&#39;s the document). I am going to checkout trunk and try to backport to 0.8.2 (is it hard?)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36530</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:33 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>564</attachid>
+            <date>2009-08-06 12:40:00 +0200</date>
+            <delta_ts>2009-08-06 12:40:53 +0200</delta_ts>
+            <desc>Sample app demonstrating the problem.</desc>
+            <filename>qooxdoo-location.zip</filename>
+            <type>application/zip</type>
+            <size>18588</size>
+            <attacher>elvanor</attacher>
+            
+              <data encoding="base64">UEsDBAoAAAAAAOZkBjsAAAAAAAAAAAAAAAARABUAcW9veGRvby1sb2NhdGlvbi9VVAkAA8+yekqR
+snpKVXgEAOgD6ANQSwMEFAAAAAgAqHDZOqYFXJ9FAQAApwIAAB4AFQBxb294ZG9vLWxvY2F0aW9u
+L01hbmlmZXN0Lmpzb25VVAkAA/xnQ0r8Z0NKVXgEAOgD6ANlkj9PwzAQxfd8ipMnkGgCW9UJhMTE
+BlvVwXKcxmriMz67UFX57vhvaYWUxPF7v1yezz43AEzpARlsILyfwx0UzWcZFSY8OZzZQ5N18vPM
+7SlZr8mCF2MmJbhTqAOWqF6SsMokKZKfoyIIFwc6yEk61DCgDdNcHfhfCfhWboQvxJ8esS0Fc9UR
+Z2n4PucanTObrqOgtdVovZ26S9RQUWrK9Ecg3su8ZOTejWipLBtgm561AbdNeFOWHLykL+DOq/6+
+VEmYnLmaEjdErs2Vn1O0HoOpWYGXNO5qwqO0VFvkrNeHmq0sf1UAYhvYssd23T6xXSCWiMV9MxaP
+KjT7/96R4SJkh5stzGm1wF7pfTSj692wWldTTJyIlYUFk9BbIbssF8bKrLJb5iIXzFmuaeKXM1Cw
+a7mSJyPrPyN5dRpi45ZmaZpfUEsDBBQAAAAIANpkBjsZA0QIfAEAABcDAAAcABUAcW9veGRvby1s
+b2NhdGlvbi9jb25maWcuanNvblVUCQADvLJ6SvxnQ0pVeAQA6APoA11SUYvCMAx+368Y5Z4O3d59
+Gzo4wbvt7nYgiEjt6qx0TV0rKLL/fm236uYYbZIvafIluQdhiASuKQrNNwsRuSgNNZoEFmCC8Etp
+sJnRNoF1ubvTYBLrI7IRb/fvLFsvsmyXJ8VHG2sAHpdY45iAOLAqxlJyRrBmIKKTAoHcE605t10a
+epXQ6GEWhCUzNThxf2G89ArhFAuvlEzpkeHArl5kQklKNDTewJnQXq5Z1bh6vEE2VOvbU4MDM/6V
+Nyi4NISOtSnm3Fs0VXooT8cBusFC8S7hkzWnPeWupSjJ89VynhTL7AuNR+HgYZNd36MofvlB6vgM
+cC0B4kfYuvhIP1PUTe3xaqSPtKZRYU/vmuTLXbqer/4WqStgg87XiNMKk1v0jiZWs+SMvO0jVtk8
+WaW/j8c3ZpYChR7+ybKix7rckaXfdvRPsFee/2DQU0UaJvvODNaNQC0Zp1M7c0u/t3vcefhNfYXs
+ZkBTYxd4wFzRB9QGw7u1lbRBG/wDUEsDBAoAAAAAAJqaBTsAAAAAAAAAAAAAAAAYABUAcW9veGRv
+by1sb2NhdGlvbi9zb3VyY2UvVVQJAANzv3lKkbJ6SlV4BADoA+gDUEsDBAoAAAAAABW0fzoAAAAA
+AAAAAAAAAAAeABUAcW9veGRvby1sb2NhdGlvbi9zb3VyY2UvY2xhc3MvVVQJAAPpfdJJkbJ6SlV4
+BADoA+gDUEsDBAoAAAAAAKhw2ToAAAAAAAAAAAAAAAAlABUAcW9veGRvby1sb2NhdGlvbi9zb3Vy
+Y2UvY2xhc3MvY3VzdG9tL1VUCQAD/GdDSpGyekpVeAQA6APoA1BLAwQKAAAAAACocNk6AAAAAAAA
+AAAAAAAAKgAVAHFvb3hkb28tbG9jYXRpb24vc291cmNlL2NsYXNzL2N1c3RvbS90ZXN0L1VUCQAD
+/GdDSpGyekpVeAQA6APoA1BLAwQUAAAACACocNk6NSiDA50CAAD4BQAANQAVAHFvb3hkb28tbG9j
+YXRpb24vc291cmNlL2NsYXNzL2N1c3RvbS90ZXN0L0RlbW9UZXN0LmpzVVQJAAP8Z0NK/GdDSlV4
+BADoA+gDtVNNb9swDL37V3A5uZlnN+hOadahyDqswE5rLsOwg2LRsVBZcvWRxiv630vK3tph3U6d
+gcQmJZKPj4/VHOYv9GQZAKxtPzi1a8MymZ9VjcbjaJzH0FrnyXipkjCvsqyi0jCHTas81Fp4DxI7
+a3xwIqCH1t5CsORrlEGIRgUgd/DQWAeDjQ5E32tVi6CsKSkTJ7s4YB0Dwqq2Es92aJCTlf2QYldV
+cnPan0cg0omLhuynGYHTCSPB9miAijfOdrAK4YzvV8pIPJRt6PSqIt9UftMidEhsSQ+hFQFqa4JQ
+hgyc0AuHoKhJYerHu7cqtISEU4zIn6LtHVFwKOGrjVALA7XDBNxQrq0ittwAJnZbwm+bVCUlSpQS
+j1pdU20m2RosGeKQ0mwRrNsJo36gJERU3uEuauGmYbSKCHJ1OxQpnSopOHpldjQS7KmYER36XtRU
+g3kS1Kxz5LFG8q1GaQRmtg6ReuYWJyJSmxORiT0aqZboeIhVdnMo1wygHCefz+rog+1Kvl1+IIVs
+6GNWZHckTTwEpNJLoCCJ+5JVUvL5WngsWLwdMjEelvTNEQDVPL3evNyT8gFsLq42V/8lN7ECMIEf
+0RODn5BYZTV529Gf6no9aWy6UaU3e67GwyU00dQs7vwond1NyFkdJavFhYubKLTP3xZw8npRwCxt
+p29t1BIM7mnsjVD61ezo9M/YjxSJecP/FLkmjaVvVhrJAN//irpPo/lHN51lS+55SeRfmjqfjh+7
+gvwIfutrT2IW8A5OTp84tuQQz6C/lGgCLb/ORQFbauAcnGX0A8l7AEvKHTUPzEhQWvPK0I1nubg0
+X4TZYX5SANG4OKZ8vL8daZn5uFaSl4RYTrs4MssbGYNXEuHbolgcf38kLOPfPVkPUEsDBAoAAAAA
+AKhw2ToAAAAAAAAAAAAAAAArABUAcW9veGRvby1sb2NhdGlvbi9zb3VyY2UvY2xhc3MvY3VzdG9t
+L3RoZW1lL1VUCQAD/GdDSpGyekpVeAQA6APoA1BLAwQUAAAACACocNk6HtYMJYMAAAAzAQAAOAAV
+AHFvb3hkb28tbG9jYXRpb24vc291cmNlL2NsYXNzL2N1c3RvbS90aGVtZS9BcHBlYXJhbmNlLmpz
+VVQJAAP8Z0NK/GdDSlV4BADoA+gDrY47DsIwEET7PcUqFViR05sqoqXkApa9YBf+YG+kIJS74yQS
+4gCZ7o1mNDMIFAcJABGvKb+LfzpWG968oVhph3Fil0ptcNQkigHgNcu7o0DS0sNHOnVmqpyC5M0c
+cyZddDTU9fBpN2hmihYVtt4eCclSiX/Jfr2rf1hRNV67CyznyxdQSwMEFAAAAAgAqHDZOpIEItR+
+AAAAJAEAADMAFQBxb294ZG9vLWxvY2F0aW9uL3NvdXJjZS9jbGFzcy9jdXN0b20vdGhlbWUvQ29s
+b3IuanNVVAkAA/xnQ0r8Z0NKVXgEAOgD6APT11LQohLg4lJQUHDOL6gsykzPKLECc30yk1PzilMh
+HMfSkoz8omIgh1pWKmjpc3EVVuiFZKTmpuqlpKZl5qVqKCWXFpfk5+qVgAWd83Pyi5R0uKqBLkit
+KEnNS1GwUgBqgcjm5qekFuVBFOmAHJkMYhUrWAGZIB21XLWa1gBQSwMEFAAAAAgAqHDZOruJY0yn
+AAAAsAEAADMAFQBxb294ZG9vLWxvY2F0aW9uL3NvdXJjZS9jbGFzcy9jdXN0b20vdGhlbWUvVGhl
+bWUuanNVVAkAA/xnQ0r8Z0NKVXgEAOgD6AOtjrEKgzAQhvc8xeHUisTdTmLp5OgLhHhqoOZsPKGl
++O6NCQh1NlO+//u5uzyF9KQnBABUNH2c6QcuAtZGo50xQrnwQG72cNZKSHMhXm/ZDDiibLEzFi+J
+XmamUXIIg0oy8fUXjMgKCv/ZAEDTkxwU8NevtjALvkVNTrEheyzddxObHVk+dh4+i9boMMHfGc3G
+slG2p+jVNKFyymo8zih344urWK+3H1BLAwQUAAAACACocNk6rpdk8YMAAAAzAQAAOAAVAHFvb3hk
+b28tbG9jYXRpb24vc291cmNlL2NsYXNzL2N1c3RvbS90aGVtZS9EZWNvcmF0aW9uLmpzVVQJAAP8
+Z0NK/GdDSlV4BADoA+gDrY6xDsIwEEP3+4pTpxJV6R4mBCMjP4CSg2RIDpKrVIT6701bCfEB9fYs
+W3avUO0kAEQ88+uTw9OLWfEaLKVCG5wG8ZxLhb0mUfUA71HfPEXSjh4hUdvYoQhHLat5Icv5LoFT
+08G33qBRKDk0WHtbJLKjnP6S3XLX/bCgqbx0J5gOxxlQSwMEFAAAAAgAqHDZOry9ptZ9AAAAIQEA
+ADIAFQBxb294ZG9vLWxvY2F0aW9uL3NvdXJjZS9jbGFzcy9jdXN0b20vdGhlbWUvRm9udC5qc1VU
+CQAD/GdDSvxnQ0pVeAQA6APoA9PXUtCiEuDiUlBQcM4vqCzKTM8osQJzfTKTU/OKUyEcx9KSjPyi
+YiCHWlYqaOlzcRVW6IVkpOam6qWkpmXmpWooJZcWl+Tn6pWABd3y80qUdLiqgQ5IrShJzUtRsFIA
+6oBI5uanpBblgdXogJyYBmQUK1gBWSD1tVy1mtYAUEsDBBQAAAAIACtiBju5ZdfsWQEAAIoDAAAz
+ABUAcW9veGRvby1sb2NhdGlvbi9zb3VyY2UvY2xhc3MvY3VzdG9tL0FwcGxpY2F0aW9uLmpzVVQJ
+AAOxrXpK/GdDSlV4BADoA+gDrZJNT8MwDIbP5FdY4dKWKUXi1okDGyBNQlyQuKet20VKk9Gk06Zp
+/x2nH3xJIAHrIWpsv49fu00TSE70MHYunUMfFZ3ztkmTmLFTsSFJGXvZiaWmFqLEShmM+NBI3Gw2
+WhXSK2v4jB0YAO48mhIyIIl8z4qV0SScMSppsMmxdZDR+yEEKCSVyaDqTBGKo7gPHvoTwK+VE7l0
+GMm27ho03sXzMacqiKhTYVsUz7JV0nih3BOtglO4xLyr+Qw42YvjUTJhIVjUtg42yTK24pGsbnH+
+bX5pjbP6reDI2NnZVraQ23L/YIdB4TrIctoNagxexZQRNbkqbdFPIIKGphgAlWqdv1Xb30LocjcU
+LParMuL3gUOTzoOzfm39BiK+oG6gJ3rk1rbTJeQIV5dxBhwuPs0gNFa+N/eR0cOBXP4M+jrLBCNa
+mkiNrf+7nVH+Pyf0P49fLxxHAr8CUEsDBAoAAAAAABW0fzoAAAAAAAAAAAAAAAAhABUAcW9veGRv
+by1sb2NhdGlvbi9zb3VyY2UvcmVzb3VyY2UvVVQJAAPpfdJJkbJ6SlV4BADoA+gDUEsDBAoAAAAA
+ABW0fzoAAAAAAAAAAAAAAAAoABUAcW9veGRvby1sb2NhdGlvbi9zb3VyY2UvcmVzb3VyY2UvY3Vz
+dG9tL1VUCQAD6X3SSZGyekpVeAQA6APoA1BLAwQKAAAAAAAVtH86cxLjZ64JAACuCQAAMAAVAHFv
+b3hkb28tbG9jYXRpb24vc291cmNlL3Jlc291cmNlL2N1c3RvbS90ZXN0LnBuZ1VUCQAD6X3SSel9
+0klVeAQA6APoA4lQTkcNChoKAAAADUlIRFIAAAAgAAAAIAgGAAAAc3p69AAAAARzQklUCAgICHwI
+ZIgAAAAJcEhZcwAACToAAAk6AfBkkkoAAAAZdEVYdFNvZnR3YXJlAHd3dy5pbmtzY2FwZS5vcmeb
+7jwaAAAJK0lEQVRYhcWXe4xU1R3HP+feO3dmdh67O7Ozsy9Ylt1ld1HQwKogsZaqVLFRoCgJNKW0
+1pi2JsamplUatWkrSUFM7RtbY9XWmiparURiTDRdBAEFBHZ5ue/3zu7s7Lzvvef0j13W1aVK9I+e
+5Je59yZzvp/z+33PSyil+H824/P+ceXKh412tyvi0qzUmdceTHzefsTFZqB+9SMRze3a4HabG8vC
+wcriYIFZXOg3MrmcjCcy9vDoRHI8mW1Jp9N/7HjtJ+8qxUV1/JkAQiAa1+74aW119K4vX9EQDYf8
+WsaCnJVGqTGkjOI2DfweA8e2OPVh/8TeltYz4+n4+o5/bW3/QgA1N22bFwgWvLhu1ZKmaCTlSWfa
+CBZ04hKDuN1nKSo0sFUVLcfvw5EKKSXFfpPyYje79x4aPNcV29764j3bPxdAw7pH762vLr1v3aql
+0XhqmALjBaQzylDyS5QHXiBclKG0pJRY6gqOnP0Klq1jOxJIABbzSqvoHxjJ7H7j/ePjmeTa7lce
+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
+Y2F0aW9uL2NvbmZpZy5qc29uVVQFAAO8snpKVXgAAFBLAQIXAwoAAAAAAJqaBTsAAAAAAAAAAAAA
+AAAYAA0AAAAAAAAAEADtQaUDAABxb294ZG9vLWxvY2F0aW9uL3NvdXJjZS9VVAUAA3O/eUpVeAAA
+UEsBAhcDCgAAAAAAFbR/OgAAAAAAAAAAAAAAAB4ADQAAAAAAAAAQAO1B8AMAAHFvb3hkb28tbG9j
+YXRpb24vc291cmNlL2NsYXNzL1VUBQAD6X3SSVV4AABQSwECFwMKAAAAAACocNk6AAAAAAAAAAAA
+AAAAJQANAAAAAAAAABAA7UFBBAAAcW9veGRvby1sb2NhdGlvbi9zb3VyY2UvY2xhc3MvY3VzdG9t
+L1VUBQAD/GdDSlV4AABQSwECFwMKAAAAAACocNk6AAAAAAAAAAAAAAAAKgANAAAAAAAAABAA7UGZ
+BAAAcW9veGRvby1sb2NhdGlvbi9zb3VyY2UvY2xhc3MvY3VzdG9tL3Rlc3QvVVQFAAP8Z0NKVXgA
+AFBLAQIXAxQAAAAIAKhw2To1KIMDnQIAAPgFAAA1AA0AAAAAAAEAAACkgfYEAABxb294ZG9vLWxv
+Y2F0aW9uL3NvdXJjZS9jbGFzcy9jdXN0b20vdGVzdC9EZW1vVGVzdC5qc1VUBQAD/GdDSlV4AABQ
+SwECFwMKAAAAAACocNk6AAAAAAAAAAAAAAAAKwANAAAAAAAAABAA7UH7BwAAcW9veGRvby1sb2Nh
+dGlvbi9zb3VyY2UvY2xhc3MvY3VzdG9tL3RoZW1lL1VUBQAD/GdDSlV4AABQSwECFwMUAAAACACo
+cNk6HtYMJYMAAAAzAQAAOAANAAAAAAABAAAApIFZCAAAcW9veGRvby1sb2NhdGlvbi9zb3VyY2Uv
+Y2xhc3MvY3VzdG9tL3RoZW1lL0FwcGVhcmFuY2UuanNVVAUAA/xnQ0pVeAAAUEsBAhcDFAAAAAgA
+qHDZOpIEItR+AAAAJAEAADMADQAAAAAAAQAAAKSBRwkAAHFvb3hkb28tbG9jYXRpb24vc291cmNl
+L2NsYXNzL2N1c3RvbS90aGVtZS9Db2xvci5qc1VUBQAD/GdDSlV4AABQSwECFwMUAAAACACocNk6
+u4ljTKcAAACwAQAAMwANAAAAAAABAAAApIErCgAAcW9veGRvby1sb2NhdGlvbi9zb3VyY2UvY2xh
+c3MvY3VzdG9tL3RoZW1lL1RoZW1lLmpzVVQFAAP8Z0NKVXgAAFBLAQIXAxQAAAAIAKhw2Tqul2Tx
+gwAAADMBAAA4AA0AAAAAAAEAAACkgTgLAABxb294ZG9vLWxvY2F0aW9uL3NvdXJjZS9jbGFzcy9j
+dXN0b20vdGhlbWUvRGVjb3JhdGlvbi5qc1VUBQAD/GdDSlV4AABQSwECFwMUAAAACACocNk6vL2m
+1n0AAAAhAQAAMgANAAAAAAABAAAApIEmDAAAcW9veGRvby1sb2NhdGlvbi9zb3VyY2UvY2xhc3Mv
+Y3VzdG9tL3RoZW1lL0ZvbnQuanNVVAUAA/xnQ0pVeAAAUEsBAhcDFAAAAAgAK2IGO7ll1+xZAQAA
+igMAADMADQAAAAAAAQAAAKSBCA0AAHFvb3hkb28tbG9jYXRpb24vc291cmNlL2NsYXNzL2N1c3Rv
+bS9BcHBsaWNhdGlvbi5qc1VUBQADsa16SlV4AABQSwECFwMKAAAAAAAVtH86AAAAAAAAAAAAAAAA
+IQANAAAAAAAAABAA7UHHDgAAcW9veGRvby1sb2NhdGlvbi9zb3VyY2UvcmVzb3VyY2UvVVQFAAPp
+fdJJVXgAAFBLAQIXAwoAAAAAABW0fzoAAAAAAAAAAAAAAAAoAA0AAAAAAAAAEADtQRsPAABxb294
+ZG9vLWxvY2F0aW9uL3NvdXJjZS9yZXNvdXJjZS9jdXN0b20vVVQFAAPpfdJJVXgAAFBLAQIXAwoA
+AAAAABW0fzpzEuNnrgkAAK4JAAAwAA0AAAAAAAAAAAC2gXYPAABxb294ZG9vLWxvY2F0aW9uL3Nv
+dXJjZS9yZXNvdXJjZS9jdXN0b20vdGVzdC5wbmdVVAUAA+l90klVeAAAUEsBAhcDFAAAAAgATr4F
+OxI5kPA1AgAA9gYAACIADQAAAAAAAQAAAKSBhxkAAHFvb3hkb28tbG9jYXRpb24vc291cmNlL2lu
+ZGV4Lmh0bWxVVAUAA6T+eUpVeAAAUEsBAhcDCgAAAAAAG2IGOwAAAAAAAAAAAAAAAB8ADQAAAAAA
+AAAQAO1BERwAAHFvb3hkb28tbG9jYXRpb24vc291cmNlL3NjcmlwdC9VVAUAA5atekpVeAAAUEsB
+AhcDFAAAAAgAG2IGO8Z8LVR8HQAAig4BACgADQAAAAAAAQAAAKSBYxwAAHFvb3hkb28tbG9jYXRp
+b24vc291cmNlL3NjcmlwdC9jdXN0b20uanNVVAUAA5atekpVeAAAUEsBAhcDCgAAAAAAFbR/OgAA
+AAAAAAAAAAAAACQADQAAAAAAAAAQAO1BOjoAAHFvb3hkb28tbG9jYXRpb24vc291cmNlL3RyYW5z
+bGF0aW9uL1VUBQAD6X3SSVV4AABQSwECFwMUAAAACAAVtH86kXvzZFUAAABpAAAALgANAAAAAAAB
+AAAAtoGROgAAcW9veGRvby1sb2NhdGlvbi9zb3VyY2UvdHJhbnNsYXRpb24vcmVhZG1lLnR4dFVU
+BQAD6X3SSVV4AABQSwECFwMUAAAACACocNk6b0X3QK0DAAApCAAAHAANAAAAAAABAAAA7YFHOwAA
+cW9veGRvby1sb2NhdGlvbi9nZW5lcmF0ZS5weVVUBQAD/GdDSlV4AABQSwUGAAAAABgAGABDCQAA
+Qz8AAAAA
+</data>
+
+          </attachment>
+      
+
+    </bug>

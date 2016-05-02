@@ -1,0 +1,123 @@
+<bug>
+          <bug_id>217</bug_id>
+          
+          <creation_ts>2006-11-15 22:00:00 +0100</creation_ts>
+          <short_desc>[Patch] Code improvement, file_get_contents, backend/php/services/index.php</short_desc>
+          <delta_ts>2010-09-16 10:36:03 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>contrib</product>
+          <component>RpcPhp</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Andrew Lambe">alambe</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="Derrell Lipman">derrell.lipman</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>635</commentid>
+            <who name="Andrew Lambe">alambe</who>
+            <bug_when>2006-11-15 22:00:34 +0100</bug_when>
+            <thetext>On line 225 of backend/php/services/index.php contains:
+file_get_contents(&#39;php://input&#39;, 1000000);
+
+file_get_contents is defined as (http://www.php.net/manual/en/function.file-get-contents.php):
+string file_get_contents ( string filename [, bool use_include_path [, resource context [, int offset [, int maxlen]]]] )
+
+The second parameter, use_include_path, is a bool (or int depending on what documentation you read), so it should be false (0) OR true (1).
+
+Since the call reads from stdin, use_include_path is irrelevant.
+I suspect the 1000000 value was meant to be a max length i.e.
+file_get_contents(&#39;php://input&#39;,0,null,0,1000000);
+
+I recommend (1) this maxlen be set by a defined constant and (2) be set to null by default, since the max execution time and other resource limits on the script will create a dynamic limit anyway.
+See my suggested patch below.
+
+Since the code works as is (though may be misleading), I&#39;m not sure if this should be filed as a bug or just submitted to the mailing list.
+Let me know if I should be submitting this in a different way.
+
+
+
+Index: backend/php/services/index.php
+===================================================================
+--- backend/php/services/index.php	(revision 4810)
++++ backend/php/services/index.php	(working copy)
+@@ -30,6 +30,7 @@
+  * The location of the service class directories.
+  */
+ define(&quot;servicePathPrefix&quot;,                &quot;&quot;);
++define(&quot;JsonMaxPostRequestLength&quot;,null);
+ 
+ 
+ /*
+@@ -225,7 +226,7 @@
+     {
+     case &quot;text/json&quot;:
+         /* We found literal POSTed json-rpc data (we hope) */
+-        $input = file_get_contents(&#39;php://input&#39;, 1000000);
++        $input = file_get_contents(&#39;php://input&#39;,0,null,0,JsonMaxPostRequestLength);
+         $jsonInput = $json-&gt;decode($input);
+         break;
+     
+@@ -237,7 +238,7 @@
+         if (count($_POST) == 1 &amp;&amp; isset($_POST[&quot;_data_&quot;]))
+         {
+             /* $_POST[&quot;_data_&quot;] has quotes escaped.  php://input doesn&#39;t. */
+-            $input = file_get_contents(&#39;php://input&#39;, 1000000);
++            $input = file_get_contents(&#39;php://input&#39;,0,null,0,JsonMaxPostRequestLength);
+             $inputFields = explode(&quot;=&quot;, $input);
+             $jsonInput = $json-&gt;decode(urldecode($inputFields[1]));
+             break;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>636</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2006-11-15 22:55:23 +0100</bug_when>
+            <thetext>Wow.  Copy/paste error on my part?  Who knows.  Anyway, thanks!  Yes, this is the right place to post it even if it weren&#39;t a bug (and in this case, it certainly is!).  I&#39;ll try to get this fixed and checked in later tonight.  Thanks again!
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>640</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2006-11-16 05:45:57 +0100</bug_when>
+            <thetext>Fixed by check-in 4811.  I dropped the extra parameters.  I don&#39;t think we ever need to specify a length other than what is configured system-wide.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5002</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-02 22:17:03 +0200</bug_when>
+            <thetext>Moved to contrib</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

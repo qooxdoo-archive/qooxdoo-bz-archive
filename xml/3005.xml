@@ -1,0 +1,331 @@
+<bug>
+          <bug_id>3005</bug_id>
+          
+          <creation_ts>2009-10-28 15:56:00 +0100</creation_ts>
+          <short_desc>extending a singleton does not export getInstance() to subclass</short_desc>
+          <delta_ts>2014-03-03 08:47:34 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.oo</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>elvanor</cc>
+    
+    <cc>flj</cc>
+    
+    <cc>martin.wittemann</cc>
+    
+    <cc>thron7</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>13636</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-10-28 15:56:39 +0100</bug_when>
+            <thetext>The following snippet should work, but doesn&#39;t. It yields a message that custom.HelloWorld.getInstance is not a function. It doesn&#39;t seem reasonable that a singleton could be extended into a non-singleton, so any subclass of a singleton should also be a singleton automatically.
+
+qx.Class.define(&quot;custom.World&quot;,
+{
+  extend : qx.core.Object,
+  type   : &quot;singleton&quot;,
+  
+  members :
+  {
+    something : function()
+    {
+      this.debug(&quot;world&quot;);
+    }
+  }
+});
+      
+qx.Class.define(&quot;custom.HelloWorld&quot;,
+{
+  extend : custom.World,
+  
+  members :
+  {
+    something : function()
+    {
+      this.debug(&quot;hello world&quot;);
+    }
+  }
+});
+      
+qx.Class.define(&quot;custom.GoodByeWorld&quot;,
+{
+  extend : custom.World,
+  
+  members :
+  {
+    something : function()
+    {
+      this.debug(&quot;good bye world&quot;);
+    }
+  }
+});
+
+var hello = custom.HelloWorld.getInstance();</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13735</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-30 13:11:48 +0100</bug_when>
+            <thetext>No this is not supposed to work. The generated getInstance method is static and static methods cannot be inherited. This is true for any other static method as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13737</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-30 13:20:31 +0100</bug_when>
+            <thetext>Derrell, maybe it helps to think of the &quot;singleton&quot; declaration as some convenient annotation about the usage of the class itself, i.e. not an inheritable nature of the class?
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13741</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-10-30 13:24:16 +0100</bug_when>
+            <thetext>Well Fabian gave a technical explanation for why it doesn&#39;t work, and I understand
+that in its current implementation it doesn&#39;t and can&#39;t work, but the problem
+remains. I contend that the technical implementation appears incorrect, since
+(a) one should be able to extend a singleton without marking each subclass as a
+singleton, and (b) it is actually wrong in its current implementation because
+it allows one to take a singleton class and extend it into a non-singleton
+class.
+
+I propose that the implementation be modified. One possible alternate
+implementation is to look for a type of &quot;singleton&quot; in a class being extended,
+and automatically make the subclass a singleton. Equivalently, if the
+superclass has a getInstance() method, add one to the subclass.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14364</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-23 23:10:16 +0100</bug_when>
+            <thetext>Fabian, second thoughts on this one? I marked it as an enhancement, and while I haven&#39;t looked closer, Derrell&#39;s proposal sounds reasonable.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16515</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-27 16:30:58 +0100</bug_when>
+            <thetext>moved to target 1.0.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16919</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-02-22 16:09:11 +0100</bug_when>
+            <thetext>It seems sensible to me that a class derived from a singleton would again be a 
+singleton.
+
+But Martin brought up a very good argument regarding run time:
+If you derive from a singleton you have two different classes to code against. 
+But calling .getInstance() at one of them, what is it supposed to return? Mind 
+that you usually don&#39;t know if .getInstance() has been called before. 
+
+If you return an instance of the class it is called on, there might be an 
+instance of the other class already running, and you end up with two instances 
+where you reasonably might expect only one. 
+
+If you return the instance of the class that was instantiated first 
+(independent of which class .getInstance() was called on), you have the problem 
+that you might want to use the instance in ways (call methods etc.) that is not 
+supported by the instance you actually got. That would be breaking the class 
+contract.
+
+This might illustrate that it is not feasible to have to two singleton classes 
+of the same class hierarchy.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16920</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-02-22 16:41:14 +0100</bug_when>
+            <thetext>Thomas brings up a reasonable point. I don&#39;t think we want to eliminate, completely, the possibility to extend a singleton, though. We have this wonderful class-based, extensible architecture, that ought to work with singletons too. I think it just requires documented rules. The rule could be:
+
+--- If a singleton is extended, the subclass&#39; one and only (singleton) instance is independent of its superclass&#39; (singleton) one and only instance. Calling getInstance() on the subclass yields a different object than calling getInstance() on the superclass. ---
+
+This produces, I think, the best of both worlds: the ability to take advantage of the subclassing and extend a singleton superclass into a new, singleton subclass... while eliminating any ambiguity as to what object one gets when one calls getInstance().
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16921</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-02-23 08:50:25 +0100</bug_when>
+            <thetext>If I get your proposal right, Derrell, you would always return one (and always the same) instance for each class?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16928</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-02-23 12:56:46 +0100</bug_when>
+            <thetext>&gt; If I get your proposal right, Derrell, you would always return one (and always
+&gt; the same) instance for each class?
+
+Yes, I _think_ that makes intuitive sense. If A is a singleton and B extends A (so B *must* be a singleton), A.getInstance() returns one object and another call to A.getInstance() would return that same object, but B.getInstance() returns a different object that would be also be returned by another call to B.getInstance().
+
+Do you foresee any problem with usage if it were implemented this way? 
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16929</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-02-23 12:59:33 +0100</bug_when>
+            <thetext>&gt; If A is a singleton and B extends A (so B *must* be a singleton)
+
+And this leads back to the original point of this bug report. If B extends A then B should automatically become a singleton because A was a singleton. It should not be necessary for the singleton type to be specified for B when it extends A.
+
+Derrell
+ </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16930</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-02-23 14:45:22 +0100</bug_when>
+            <thetext>(In reply to comment #9) 
+&gt; Do you foresee any problem with usage if it were implemented this way? 
+
+I think it breaks the idea of a singleton where only one instance should be available. If B extends A, the object b is still instance of A and would result to:
+
+b instanceof A // true
+b instanceof B // true
+
+So you have two objects which can take care of the same things in a singleton pattern.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16931</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-02-23 15:00:56 +0100</bug_when>
+            <thetext>That&#39;s a valid point. I think the need for being able to extend a singleton is great enough that this warrants more thought. Another option for the rule is:
+
+-- A singleton class may be extended until its (single) instance has been created. Once an instance has been created, it may no longer be extended. (This could be caught at the time of instantiation rather than class creation if that is easier for implementation.) If the singleton class is extended, then the singleton object that is instantiated from the subclass has the capabilities of that subclass. Calling getInstance() on the superclass (original singleton) would yield the same &quot;more powerful&quot; object... or its getInstance() could be disabled. --
+
+This proposal is similar to simply patching the original singleton, except that include and patch don&#39;t have the ability to make minor changes to a method followed by a call to the superclass via this.base(arguments) or elsewise.
+
+Another alternative is that singletons in qooxdoo core be implemented fully in an abstract class, and the only thing done in the advertised class is to extend the abstract class and make the subclass a singleton. In this way, if someone wanted all of the features of that singleton but wanted to modify it for their own purposes, they could extend the same abstract class as qooxdoo&#39;s singleton did, make their required overrides and additions, and make it a singleton.
+
+Derrell
+
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16933</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-02-23 15:19:52 +0100</bug_when>
+            <thetext>I have really a bad feeling about making class extends dependent on the availability of objects. Thats one of those things hard to explain to someone when and why its acting like this and thats always a bad idea to include such things in a framework. Additionally, what if a singleton is subclassed by two classes? 
+A&lt;--B
+A&lt;--C
+So I am still not sure if we can find a solution for that problem because changing the return type of getInstance dependent on class extends is also something I don&#39;t like to have in the framework.
+
+Your second proposal sounds much better. Which class would you like to have that way?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16934</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-02-23 15:29:18 +0100</bug_when>
+            <thetext>There are actually not very many singletons in core and the work to do it for any one is small, so doing it for (nearly) all of them is probably useful. Here&#39;s the complete list, excluding the qx.test namespace. There are a few of these that it probably makes no sense to ever extend outside of the core because they aren&#39;t directly accessed by the user.   qx.io.remote.RequestQueue comes to mind; that&#39;s used only internally by the other qx.io.remote.* classes. It couldn&#39;t hurt, though, to do it with all of them...
+
+find . -type f -print0 | xargs -0 -e grep -nH -e &#39;type *: *&quot;singleton&quot;&#39;
+./fx/queue/Manager.js:43:  type : &quot;singleton&quot;,
+./io/PartLoader.js:27:  type : &quot;singleton&quot;,
+./io/remote/RequestQueue.js:33:  type : &quot;singleton&quot;,
+./ui/core/DragDropCursor.js:28:  type : &quot;singleton&quot;,
+./ui/core/FocusHandler.js:27:  type : &quot;singleton&quot;,
+./ui/menu/Manager.js:32:  type : &quot;singleton&quot;,
+./ui/popup/Manager.js:27:  type : &quot;singleton&quot;,
+./ui/tooltip/Manager.js:28:  type : &quot;singleton&quot;,
+./ui/virtual/cell/CellStylesheet.js:29:  type : &quot;singleton&quot;,
+./ui/virtual/form/ListItemCell.js:29:  type : &quot;singleton&quot;,
+./util/ResourceManager.js:28:  type    : &quot;singleton&quot;,
+./util/AliasManager.js:26:  type : &quot;singleton&quot;,
+./util/TimerManager.js:77:  type   : &quot;singleton&quot;,
+./util/DeferredCallManager.js:28:  type : &quot;singleton&quot;,
+./event/Idle.js:30:  type : &quot;singleton&quot;,
+./event/Pool.js:28:  type : &quot;singleton&quot;,
+./event/message/Bus.js:27:  type : &quot;singleton&quot;,
+./theme/manager/Appearance.js:26:  type : &quot;singleton&quot;,
+./theme/manager/Icon.js:26:  type : &quot;singleton&quot;,
+./theme/manager/Color.js:26:  type : &quot;singleton&quot;,
+./theme/manager/Decoration.js:27:  type : &quot;singleton&quot;,
+./theme/manager/Meta.js:26:  type : &quot;singleton&quot;,
+./theme/manager/Font.js:26:  type : &quot;singleton&quot;,
+./locale/Manager.js:35:  type : &quot;singleton&quot;,
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16939</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-02-24 08:32:22 +0100</bug_when>
+            <thetext>I have thought of the solution and still have one question about it. Whats the use for extending a framework singleton? The framework itself continues to use the original class anyway because it has had coded references to it. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17195</commentid>
+            <who name="">vincent</who>
+            <bug_when>2010-03-11 10:39:01 +0100</bug_when>
+            <thetext>I&#39;m not sure about framework singletons but we used to want to extend our own singletons classes in order to create a mock class which would only mock a select few methods of the original class. All of this in order to test other classes in our application. Input welcome if you think there is a better way to do this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17346</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-17 14:09:05 +0100</bug_when>
+            <thetext>to Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20277</commentid>
+            <who name="Florin Jurcovici">flj</who>
+            <bug_when>2010-09-22 08:42:21 +0200</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; The following snippet should work, but doesn&#39;t. It yields a message that
+&gt; custom.HelloWorld.getInstance is not a function. It doesn&#39;t seem reasonable
+&gt; that a singleton could be extended into a non-singleton, so any subclass of a
+&gt; singleton should also be a singleton automatically.
+
+I don&#39;t think so. Think about how singletons are implemented in other languages - typically private/protected constructor with no args plus public accessor method. Private constructor prevents derived classes from being instantiated, since they can&#39;t call the base class constructor. However, protected constructor allows derived classes to be instantiated freely, without derived classes needing to be singletons. Therefore, IMO the example above works as expected, since there&#39;s no private or protected concept in JavaScript.
+
+Singleton is IMO a thought concept, useful in modeling resources of which there&#39;s a single instance available in a given context. IMO it shouldn&#39;t be an inheritable construct in code. I can&#39;t think of a practical reason to forbid deriving singleton classes. The argument that classes derived from singletons should be singletons is IMO purely theoretical, and not really well founded - this would imply that no singleton is really a singleton unless it&#39;s also final, in Java terminology.
+
+What I&#39;m thinking of: it doesn&#39;t make sense to have multiple instances of a class managing a physical printer in a given context (printer managers being the classical singleton example). But it definitely makes sense to have printer manager classes which are not singletons to manage PDF or postscript output to files, for instance - which, depending on design, could be derived from the manager of the physical printer. Essentially, printer managers need to present the same interface to applications, but since the sequential job processing constraint is not applicable to PDF or postscript generation, there&#39;s no need to have the singleton nature inherited.
+
+Just my two cents worth of thinking.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35947</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:47:34 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,159 @@
+<bug>
+          <bug_id>8074</bug_id>
+          
+          <creation_ts>2014-01-31 09:25:00 +0100</creation_ts>
+          <short_desc>Tab no longer works when modal window looses the focus</short_desc>
+          <delta_ts>2015-10-07 11:50:16 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>3.0.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>NEW</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Jeroen">Jeroen.Smit</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>master</cc>
+    
+    <cc>stylkarr</cc>
+    
+    <cc>william.oprandi</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>34913</commentid>
+            <who name="Jeroen">Jeroen.Smit</who>
+            <bug_when>2014-01-31 09:25:57 +0100</bug_when>
+            <thetext>I encountered a bug in the combination of focus handling and the blocker of a modal window.
+
+Below I included a small piece of code that shows the bug when running the code in e.g. Chrome on the playground. When the window is shown and you click in the first textfield you can use TAB to go from one textfield to the other and SHIFT + TAB to go back. As soon as you click outside of the window and click back in the textfield you can edit but TAB no longer works. Other special keys like Escape and Enter are no longer propagated to the window too.
+
+Debugging the Qooxdoo code I found that
+- Initially TAB is handled by the FocusHandler (method __onKeyPress)
+- After clicking out of the window and back in the TAB is caught by method __stopTabEvent in Blocker.js
+
+I think that the order of registered events changes at runtime by the focus loss.
+
+------ Code example for playground ------
+
+var win = new qx.ui.window.Window(&quot;First Window&quot;);
+win.setWidth(300);
+win.setHeight(200);
+win.setShowMinimize(false);
+
+win.setLayout(new qx.ui.layout.Canvas());
+
+var tf1 = new qx.ui.form.TextField(&quot;test1&quot;);
+win.add(tf1, {left:10, top:10});
+
+var tf2 = new qx.ui.form.TextField(&quot;test2&quot;);
+win.add(tf2, {left:10, top:40});
+
+this.getRoot().add(win, {left:20, top:20});
+
+win.setModal(true);
+
+win.open();</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34939</commentid>
+            <who name="Jeroen">Jeroen.Smit</who>
+            <bug_when>2014-02-03 15:18:26 +0100</bug_when>
+            <thetext>I have an addition based on more analysis of the blocker code.
+
+When I open a window and set its modal property to true the code in Blocker.js (__activateBlockerElement) is not executed (blocker of the root of my application). Everything works fine then.
+
+When clicking outside of the modal window and back in the window I can see the method being triggered and the blocker element is activated. After that, it is the first one to receive special keyboard characters like Tab (event is stopped) and Escape, Enter etcetera.
+
+When I uncomment the &quot;this.getBlockerElement().activate();&quot; call everything works fine.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40786</commentid>
+              <attachid>1333</attachid>
+            <who name="Dmitry Golubkov">master</who>
+            <bug_when>2014-07-16 15:53:31 +0200</bug_when>
+            <thetext>Created attachment 1333
+Patch to fix keyboard events</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40787</commentid>
+            <who name="Dmitry Golubkov">master</who>
+            <bug_when>2014-07-16 15:56:23 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; Created attachment 1333 [details]
+&gt; Patch to fix keyboard events
+
+This patch fix the following use case:
+1. Open modal window
+2. Click to a place out of this window
+3. Click back to window
+4. Tab key doesn&#39;t work anymore.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42123</commentid>
+            <who name="Jeroen">Jeroen.Smit</who>
+            <bug_when>2015-01-09 15:41:05 +0100</bug_when>
+            <thetext>How come the code I just downloaded (version 4.0.2) still contains the statement &quot;this.setKeepBlockerActive(true);&quot;?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42140</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-01-12 16:35:50 +0100</bug_when>
+            <thetext>Because this bug is not resolved jet. As soon as we take care of that issue, we will document it here.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43581</commentid>
+            <who name="William Oprandi">william.oprandi</who>
+            <bug_when>2015-10-07 11:50:16 +0200</bug_when>
+            <thetext>Any news of this issue ? I just discovered it today and I was forced to set keepBlockerActive to false</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>1333</attachid>
+            <date>2014-07-16 15:53:00 +0200</date>
+            <delta_ts>2014-07-16 15:53:31 +0200</delta_ts>
+            <desc>Patch to fix keyboard events</desc>
+            <filename>8074.patch</filename>
+            <type>text/plain</type>
+            <size>503</size>
+            <attacher>master</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkvY29yZS9CbG9ja2VyLmpz
+IGIvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS9jb3JlL0Jsb2NrZXIuanMKaW5kZXggYWQy
+NGE0NS4uZTAzZjRkYiAxMDA2NDQKLS0tIGEvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS9j
+b3JlL0Jsb2NrZXIuanMKKysrIGIvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS9jb3JlL0Js
+b2NrZXIuanMKQEAgLTYzLDcgKzYzLDYgQEAgcXguQ2xhc3MuZGVmaW5lKCJxeC51aS5jb3JlLkJs
+b2NrZXIiLAogICAgIGlmIChxeC5DbGFzcy5pc0RlZmluZWQoInF4LnVpLnJvb3QuQWJzdHJhY3Qi
+KSAmJgogICAgICAgICB3aWRnZXQgaW5zdGFuY2VvZiBxeC51aS5yb290LkFic3RyYWN0KSB7CiAg
+ICAgICB0aGlzLl9pc1Jvb3QgPSB0cnVlOwotICAgICAgdGhpcy5zZXRLZWVwQmxvY2tlckFjdGl2
+ZSh0cnVlKTsKICAgICB9CiAKICAgICAvLyBkeW5hbWljIHRoZW1lIHN3aXRjaAo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

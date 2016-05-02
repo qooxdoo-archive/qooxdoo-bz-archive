@@ -1,0 +1,191 @@
+<bug>
+          <bug_id>3782</bug_id>
+          
+          <creation_ts>2010-06-17 22:57:00 +0200</creation_ts>
+          <short_desc>Globally enable/disable tooltips</short_desc>
+          <delta_ts>2014-03-03 15:19:54 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Fritz Zaucker">fritz.zaucker</reporter>
+          <assigned_to name="Adrian Olaru">adrian.olaru</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>18786</commentid>
+            <who name="Fritz Zaucker">fritz.zaucker</who>
+            <bug_when>2010-06-17 22:57:02 +0200</bug_when>
+            <thetext>It would be useful to be able to enable/disable all (or even better a subset of) tooltips in an application.
+Use case:
+- Have tooltips enabled for training
+- Allow the user to disable the tooltips once (s)he is familiar with the application
+
+Cheers,
+Fritz</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18790</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-06-18 09:42:15 +0200</bug_when>
+            <thetext>Sounds like a good idea which should not be too much work to implement.
+
+--&gt; Daniel</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19254</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-07-12 15:44:24 +0200</bug_when>
+            <thetext>To Adrian.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19273</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2010-07-13 10:42:10 +0200</bug_when>
+            <thetext>accept</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19275</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2010-07-13 12:10:39 +0200</bug_when>
+            <thetext>Hey guys,
+
+I was thinking about a way to do this. What do you think?
+
+
+So, every qooxdoo app starts by inheriting one of qx.application app types (Standalone, Inline, Page).
+
+Every qx.application has a root widget of qx.ui.root type (also, Standalone, Inline, Page). Every root widget inherits the qx.ui.Widget class.
+The Widget class has the following tooltip API.
+  widget.setToolTip(new qx.ui.tooltip.ToolTip(&quot;Big tip&quot;));
+  widget.setToolTipText(&quot;Big tip&quot;); //uses a shared qx.ui.tooltip.ToolTip instance
+  widget.setToolTipIcon(&quot;some icon&quot;); //uses a shared qx.ui.tooltip.ToolTip instance
+  widget.setBlockToolTip(true); 
+
+Every tooltip is handled by the qx.ui.tooltip.Manager singleton. This is created by qx.application (actually AbstractGui which is their parent).
+
+Note: There are other types of tooltips that shouldn&#39;t be touched by this enhancements (i.e. Error Tooltips)
+
+1. The best place for disabling/enabling tooltips/applications is by having an API at the root widget level.
+  root.BlockToolTips(Boolean: true/false); default: false
+
+2. If we wanna disable some of the tooltips, one way is to use a tooltip group parameter.
+  widget.setToolTip(new qx.ui.tooltip.ToolTip(&quot;Big tip&quot;, &quot;group&quot;));
+  widget.setToolTipGroup(&quot;somegroup&quot;); 
+  root.BlockToolTips(Boolean: true/false, String: ?group); default: false
+
+In both cases the blocking will be done in qx.ui.tooltip.Manager.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19280</commentid>
+            <who name="Fritz Zaucker">fritz.zaucker</who>
+            <bug_when>2010-07-13 13:53:56 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+
+Hi Adrian,
+
+I can&#39;t say much about the details of the implementation, but for being consistent with other parts of the framework, I&#39;d suggest
+
+setToolTipsEnabled(Boolean) (default true)
+
+instead of
+
+blockToolTips()
+
+I very much like the extension to groups, you suggest, that would allow more fine-grained control but would still be a lot more efficent than dealing with individual tooltips all over the place.
+
+Cheers,
+Fritz</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19285</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2010-07-13 14:19:03 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; (In reply to comment #4)
+&gt; 
+&gt; Hi Adrian,
+&gt; 
+&gt; I can&#39;t say much about the details of the implementation, but for being
+&gt; consistent with other parts of the framework, I&#39;d suggest
+&gt; 
+&gt; setToolTipsEnabled(Boolean) (default true)
+&gt; 
+&gt; instead of
+&gt; 
+&gt; blockToolTips()
+&gt; 
+&gt; I very much like the extension to groups, you suggest, that would allow more
+&gt; fine-grained control but would still be a lot more efficent than dealing with
+&gt; individual tooltips all over the place.
+&gt; 
+&gt; Cheers,
+&gt; Fritz
+
+Hey Fritz, thanks for the comment. 
+
+You see, you can block a widget&#39;s tooltip by using the property blockToolTip ( getBlockToolTip() and setBlockToolTip(true/false) ). In our case, we&#39;ll have the blockToolTips property(getBlockToolTips() and setBlockToolTips(true/false, group). 
+
+So, when I&#39;ve picked the blockToolTips name, I was trying to be consistent. :)
+
+Cheers,
+Adrian</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19288</commentid>
+            <who name="Fritz Zaucker">fritz.zaucker</who>
+            <bug_when>2010-07-13 14:21:59 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+
+I see ... I guess in this case it&#39;s better to stay &#39;locally consistent&#39; ...
+
+Cheers,
+Fritz</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19332</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2010-07-15 13:19:36 +0200</bug_when>
+            <thetext>[r22703] Added a new property showToolTips(Boolean bool) to qx.ui.tooltip.Manager class.
+When false, all application tooltips (except error tooltips) are disabled. Default is true.
+
+For now, we won&#39;t support blocking a subset of tooltips.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36678</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:54 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

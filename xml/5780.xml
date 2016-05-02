@@ -1,0 +1,187 @@
+<bug>
+          <bug_id>5780</bug_id>
+          
+          <creation_ts>2011-11-07 15:40:00 +0100</creation_ts>
+          <short_desc>The selection mode MULTIPLE_INTERVAL_SELECTION_TOGGLE does not work properly</short_desc>
+          <delta_ts>2014-03-03 08:47:59 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>27436</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-11-07 15:40:25 +0100</bug_when>
+            <thetext>Our designers have decided to have a selection mode that equals Qooxdoos selection mode MULTIPLE_INTERVAL_SELECTION_TOGGLE.
+When trying to use this selection mode, we have found out several things that do not work as expected.
+These problems can be demonstrated by copying the attached code into the qooxdoo playground.
+This playground code creates a left table which has a normal multi selection mode and a right table that uses MULTIPLE_INTERVAL_SELECTION_TOGGLE.
+
+Problem 1:
+When clicking on line 1 and then shift-clicking on line 5, then:
+- the left table selects line 1 to line 5
+- the right table selects line 2 to line 5
+
+Problem 2:
+When clicking on line 20 and then shift-clicking on line 15, then:
+- the left table selects lines 15 to 20
+- the right table selects only line 20
+
+Problem 3:
+When pressing CRTL-A:
+- the left table selects all lines
+- the right table inverts the selection
+
+I have found no way to override this selection behavious without patching Qooxdoo. The problem is that the property &quot;selectionModel&quot; of the table class only allows object of class &quot;qx.ui.table.selection.Model&quot; - even subclasses of this class are forbidden.
+
+-- -------------------------------------------------------------
+
+var tableModel1 = new qx.ui.table.model.Simple();
+tableModel1.setColumns( [&quot;Name&quot;, &quot;Size&quot;]);
+
+var tableData1 = [];
+for(var i=1;i&lt;=20;i++) {
+  tableData1.push( [&quot;test &quot; + i, &quot;size &quot; + i ]);
+}
+tableModel1.setData(tableData1);
+
+var table1 = new qx.ui.table.Table(tableModel1);
+table1.getSelectionModel().setSelectionMode(qx.ui.table.selection.Model.MULTIPLE_INTERVAL_SELECTION);
+
+table1.setMaxWidth(220);
+this.getRoot().add(table1,
+{
+  left : 0,
+  top  : 5
+});
+
+
+
+
+var tableModel2 = new qx.ui.table.model.Simple();
+tableModel2.setColumns( [&quot;Name&quot;, &quot;Size&quot;]);
+
+var tableData2 = [];
+for(var i=1;i&lt;=20;i++) {
+  tableData2.push( [&quot;test &quot; + i, &quot;size &quot; + i ]);
+}
+tableModel2.setData(tableData2);
+
+var table2 = new qx.ui.table.Table(tableModel2);
+table2.getSelectionModel().setSelectionMode(qx.ui.table.selection.Model.MULTIPLE_INTERVAL_SELECTION_TOGGLE);
+
+
+table2.setMaxWidth(220);
+this.getRoot().add(table2,
+{
+  left : 230,
+  top  : 5
+});
+
+-- -------------------------------------------------------------</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27447</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-11-08 07:57:44 +0100</bug_when>
+            <thetext>Thanks for the report, Uwe. Would it be enough for you if we just remove that not needed restriction to the qx.ui.table.selection.Model class?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27448</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-11-08 08:00:21 +0100</bug_when>
+            <thetext>The removal of the restriction &quot;qx.ui.table.selection.Model&quot; would help me very much. 
+This would not solve the original problem that the selection model &quot;MULTIPLE_INTERVAL_SELECTION_TOGGLE&quot; does not work, but would allow us to develop a own selection model.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27462</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-11-09 07:59:50 +0100</bug_when>
+            <thetext>Just checked out the code and it seems thats possible to set a subclass of qx.ui.table.selection.Model as selection model. Just check out the code in the playground:
+http://tinyurl.com/chv6glp
+
+Does that work for you as a workaround?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27463</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-11-09 08:09:03 +0100</bug_when>
+            <thetext>The code from Comment 3 would be a workaround.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27468</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-11-09 11:55:59 +0100</bug_when>
+            <thetext>The recommended workaround is not very nice.
+
+We have now implemented a own selection model by creating a own class that inherits from qx.ui.table.selection.Model and overwrites the method &quot;setSelectionInterval&quot;.
+But this copied method has to contain code like:
+          catch (e)
+          {
+            // IE doesn&#39;t execute the &quot;finally&quot; block if no &quot;catch&quot; block is present
+            // this hack is used to fix [BUG #3688]
+            if (
+              qx.core.Environment.get(&quot;browser.name&quot;) == &#39;ie&#39; &amp;&amp;
+              qx.core.Environment.get(&quot;browser.version&quot;) &lt;= 7
+            ) {
+              this.setBatchMode(false);
+            }
+            throw e;
+          }
+          finally {
+            this.setBatchMode(false);
+          }
+
+
+It is not nice to copy this piece of code from qooxdoo to our own code.
+
+Therefore I would recommend a real fix of this issue instead of this workaround.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27479</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-11-10 07:40:03 +0100</bug_when>
+            <thetext>To do a &quot;real&quot; fix is not a questions, that needs to be done! I just wanted to make sure you have a way to continue to work. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36094</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:47:59 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

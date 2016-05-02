@@ -1,0 +1,139 @@
+<bug>
+          <bug_id>5950</bug_id>
+          
+          <creation_ts>2011-12-14 15:17:00 +0100</creation_ts>
+          <short_desc>Safari 5.1.2 on Mac does not create a window on right mouse click</short_desc>
+          <delta_ts>2012-05-16 10:23:27 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>1.6</version>
+          <rep_platform>Safari 5</rep_platform>
+          <op_sys>Mac OS</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Matti Linnanvuori">matti.linnanvuori</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>Safari</cf_browser>
+          <cf_browser_version>5</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>28006</commentid>
+            <who name="Matti Linnanvuori">matti.linnanvuori</who>
+            <bug_when>2011-12-14 15:17:00 +0100</bug_when>
+            <thetext>Safari 5.1.2 on Mac OS X 10.6.8 does not create a window on right mouse click. Mozilla Firefox 8.0.1 on the same Mac creates a window on right mouse click of the same application. Class iac.ext.OpenLayersMap that extends qx.ui.tabview.Page registers a listener for &quot;click&quot; and opens a window on right click.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28010</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-12-15 08:12:02 +0100</bug_when>
+            <thetext>Thanks for the report. Could you maybe provide a sample piece of code running in the qooxdoo playground? Its hard to tell only from the description if the bug is in your code or the framework part.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28012</commentid>
+            <who name="Matti Linnanvuori">matti.linnanvuori</who>
+            <bug_when>2011-12-15 08:38:59 +0100</bug_when>
+            <thetext>The following is the code that adds a listener to the &quot;click&quot; event:
+
+        map.addListener(&quot;click&quot;, function(e) {
+            _iaclog(&quot;----&gt; OverviewPage.js: map is clicked...&quot;);
+            var clickedMarker = this.__unitmarkers.getActiveMarker();
+           // _iaclog(&quot;VideoMarker 1&quot;, clickedMarker);
+            if(clickedMarker != null) {
+            	_iaclog(&quot;----&gt; OverviewPage.js: map was clicked, marker was selected&quot;);
+                theMarkerId = clickedMarker.markerId;
+               // _iaclog(&quot;----&gt; Video icon clicked:&quot;, theMarkerId);
+                //_iaclog(videolist);
+                //var video_toSelect = videolist.findItem(theMarkerId);
+                //_iaclog(&quot;video_toSelect&quot;, video_toSelect);
+               // if (video_toSelect != null) {
+                 //   videolist.setSelection([video_toSelect]);
+                //}
+            } else {
+            	if(e.isRightPressed()) {
+            		_iaclog(&quot;----&gt; OverviewPage.js: map was clicked, marker not selected&quot;);
+					// get gps coordinates and projection
+               		var px = new OpenLayers.Pixel(e.getDocumentLeft(), e.getDocumentTop());
+            		var lonlat = this.__map.getLonLatFromPixel(px);
+  					lonlat.transform(this.__map.getProjectionObject(),
+                               		new OpenLayers.Projection(&quot;EPSG:4326&quot;));
+            
+ 					var incidentform = new qx.ui.form.Form();
+					var fincidentloc_lat= new qx.ui.form.TextField();
+					var fincidentloc_lon = new qx.ui.form.TextField(); 
+					var fincidentstatus = new qx.ui.form.TextField(); 
+					var fincidentnote = new qx.ui.form.TextArea(); 
+			
+					fincidentloc_lat.setValue(&quot;&quot;+lonlat.lat);
+					fincidentloc_lon.setValue(&quot;&quot;+lonlat.lon);
+	
+					incidentform.add(fincidentloc_lat, &quot;Location latitude&quot;, null, &quot;name&quot;);
+					incidentform.add(fincidentloc_lon, &quot;Location longitutude&quot;, null, &quot;name&quot;);
+					incidentform.add(fincidentstatus, &quot;Status&quot;, null, &quot;name&quot;);
+					incidentform.add(fincidentnote, &quot;Note&quot;, null, &quot;name&quot;);
+        	
+					var incidentbutton = new qx.ui.form.Button(&quot;Send&quot;);
+					incidentform.addButton(incidentbutton);
+					var cancelbutton = new qx.ui.form.Button(&quot;Cancel&quot;);
+					incidentform.addButton(cancelbutton);
+					var formrendererincident = new qx.ui.form.renderer.Single(incidentform);  	
+					var incidentwin = new qx.ui.window.Window(&quot;Create incident&quot;);
+					var incidentLayout = new qx.ui.layout.Grid(0,0);
+					incidentLayout.setColumnFlex(1, 1);
+					incidentLayout.setRowFlex(1, 1);
+					incidentwin.setLayout(incidentLayout);
+					incidentwin.setWidth(200);
+					incidentwin.setHeight(200);
+					incidentwin.moveTo(e.getDocumentLeft(),e.getDocumentTop());
+					incidentwin.setShowMinimize(false);
+					incidentwin.add(formrendererincident, {row: 0, column: 0});
+					incidentwin.open();
+            
+					cancelbutton.addListener(&quot;execute&quot;, function(e) { 
+						incidentwin.close();	
+					});	
+					incidentbutton.addListener(&quot;execute&quot;, function(e) { 
+						window.gIACApp.create_incident(
+							fincidentstatus.getValue(),
+							fincidentloc_lat.getValue(),
+							fincidentloc_lon.getValue(),
+							new Date().getTime(),
+							fincidentnote.getValue());
+					});		
+				}
+            }
+        });</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28045</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-12-20 08:17:47 +0100</bug_when>
+            <thetext>I&#39;m sorry but that&#39;s only a piece of application code with a lot of stuff and its sure not executable in the playground.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

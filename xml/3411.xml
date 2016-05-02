@@ -1,0 +1,118 @@
+<bug>
+          <bug_id>3411</bug_id>
+          
+          <creation_ts>2010-02-03 10:15:00 +0100</creation_ts>
+          <short_desc>Improve dispose of qooxdoo objects</short_desc>
+          <delta_ts>2010-04-23 11:32:10 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.oo</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          <keywords>Performance</keywords>
+          <priority>P1</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martin Wittemann">martin.wittemann</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>tinobutz</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>16658</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-02-03 10:15:55 +0100</bug_when>
+            <thetext>The current disposing of qooxdoo objects is very expensive because we cut of all references to be sure the garbage collector can collet this object. But we really don&#39;t exactly know if thats all necessary. 
+We should investigate and test how the dispose of objects could be made faster by using more of the features of the javascript garbage collectors.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16659</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-02-03 10:16:45 +0100</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17627</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-01 14:32:27 +0200</bug_when>
+            <thetext>I took the time to read some good articles about garbage collection and to find out how we can benefit from that.
+
+http://blogs.msdn.com/ericlippert/archive/2003/09/17/53038.aspx
+http://pupius.co.uk/blog/2007/03/garbage-collection-in-ie6/
+http://www.google.com/googlebooks/chrome/big_14.html
+http://code.google.com/intl/de/apis/v8/design.html
+
+
+All browser seem to use the described mark-and-sweep algorithm [1] (generational or nongenerational), which means we don&#39;t have to disconnect each object from every reference. We just need to take care of the disconnection of the object from the current scope or every object in that scope.
+From that point of view, every reference to an object only used and accessed by the object we are currently deleting can be held because the algorithm wont reach that object anymore (except we have references to the DOM). 
+
+Ways to invoke the garbage collection.
+IE: CollectGarbage() [http://blogs.msdn.com/ericlippert/archive/2003/09/17/53038.aspx]
+Opera: opera.collect() [http://www.howtocreate.co.uk/operaStuff/operaObject.html]
+Webkit: 
+Firefox: 
+Chrome: 
+
+[1] http://www.brpreiss.com/books/opus5/html/page424.html</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17630</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-01 15:37:51 +0200</bug_when>
+            <thetext>I checked our current dispose behavior. All references to properties will be set to undefined if the property config will have the dispose key.
+This key can be set manually, or will be set in the following cases, dependent on the check of the property (qx.core.Property, line 531):
+  - if its one of the following checks (DOM objects):
+    - Node
+    - Element
+    - Document
+    - Window
+    - Event
+  - the check is a defined qooxdoo class
+  - the check is a defined qooxdoo interface
+
+As far as I understand the garbage collector algorithm, we don&#39;t necessarily need the last two cases because references between qooxdoo objects are not bad if the connection to the local or global scope is cut off. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17815</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-16 13:05:07 +0200</bug_when>
+            <thetext>Accept</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17909</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-21 16:19:41 +0200</bug_when>
+            <thetext>As I said in comment #3, we removed the automatic dereference of qooxdoo objects and interfaces. Only for IE6 and FF2 keep the old behavior because the seem to have a bad garbage collection algorithm. (r21977)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17957</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-04-23 11:32:10 +0200</bug_when>
+            <thetext>CLOSED</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

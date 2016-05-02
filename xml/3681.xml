@@ -1,0 +1,185 @@
+<bug>
+          <bug_id>3681</bug_id>
+          
+          <creation_ts>2010-05-05 18:36:00 +0200</creation_ts>
+          <short_desc>Introduce an interface for Forms</short_desc>
+          <delta_ts>2014-03-03 08:46:43 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Guilherme Krycek">gradinf</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>18219</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2010-05-05 18:36:21 +0200</bug_when>
+            <thetext>Although there is an IForm it is more an IFormField. It would be nice to have a real IForm (for forms) and rename the current IForm to IFormField.
+
+Suggestion methods to IForm to implement:
+
+	addButton : function(button)	{},
+	reset : function () {},
+	getItems : function () {},
+	validate : function () {},
+	redefineResetter : function () {},
+	getValidationManager : function () {}</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18223</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-05-06 08:35:37 +0200</bug_when>
+            <thetext>I don&#39;t get what that interface should define and why? Should it define the API for the qx.ui.form.Form?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18235</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2010-05-06 14:04:26 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; I don&#39;t get what that interface should define and why? Should it define the API
+&gt; for the qx.ui.form.Form?
+&gt; 
+
+Exactly, the reason for it to exist is that in my implementation of #2685, I need to know when the element created is a Form. Currently I have no way to know that.
+
+I have a different implementation of qx.ui.formForm also. And I want to be able to use one or another without hacking the Json declaration Builder to keep it as simple as possible.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18237</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-05-06 15:01:32 +0200</bug_when>
+            <thetext>Ok, now I get it. ;) Do you already have such an interface which you can attach as patch?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18242</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2010-05-06 18:32:32 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; Ok, now I get it. ;) Do you already have such an interface which you can attach
+&gt; as patch?
+&gt; 
+
+qx.Interface.define(&quot;qx.ui.form.IForm&quot;,
+{
+  members :
+  {
+	addButton : function(button)	{},
+	reset : function () {},
+	getItems : function () {},
+	validate : function () {},
+	redefineResetter : function () {},
+	getValidationManager : function () {}
+  }
+});
+
+That&#39;s it! 
+
+But I think that would be nice to have a reference to the form controller too. What do you think? </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18244</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2010-05-06 19:26:23 +0200</bug_when>
+            <thetext>duh, I forgot the main method: 
+
+addItem (id, item, options)
+
+It&#39;s not like the qx.ui.form.Form.add(item, label, name, validator) because my Form extends qx.ui.container.Composite and I&#39;m using the &quot;add&quot; method for layouting.
+
+To be compatible with the new form classes that can/will be created it would be nice if all options relate to that field came as a map (options). Today it can be just a &quot;validator&quot; and &quot;label&quot; entry, tomorrow it can have all kinds of atts and the interface would still be the same.
+
+For the qx.ui.form.Form the addItem would be like:
+
+addItem: function(id, item, options)
+{
+    var label = options.label? options.label : id;
+    this.add(item, options.label, options.validator, id);
+}
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18251</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-05-07 09:51:13 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; But I think that would be nice to have a reference to the form controller too.
+&gt; What do you think? 
+
+No way! Thats the main trick of MVC that the view does not know whats its controller and stays as generic as possible. 
+
+Also adding the add method is a not a good idea. It may be useful in your use case but generally, the form does not need to have an add method and thous we should no include it in its interface. 
+
+Thanks for the code snippet. But its not that easy to include such an interface in the framework. We need at least one unit test, complete API documentation, ...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18268</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2010-05-07 14:02:46 +0200</bug_when>
+            <thetext>Alright, I&#39;m not actually using the controller directly into the form. Then no need to have that reference.
+
+Regarding the add method, the only thing that I can think of is creating an addValidator(item, validator). Then I wouldn&#39;t need the add method at all.
+
+But... imagine that I want to create a form that can be &#39;submitted&#39;, and if that form will handle upload of files or not, etc. I need to have a way to pass those options to the form, what about the constructor receive an options map?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18312</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-05-12 08:07:58 +0200</bug_when>
+            <thetext>I don&#39;t think we should and will change the implementation of the qooxdoo form in the near future. So adding some not implemented details to the interface is truly not a good idea. ;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18321</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2010-05-12 15:06:06 +0200</bug_when>
+            <thetext>Well, the current qooxdoo form implementation was not created with extendability in mind. Qooxdoo NEEDS a form interface and if the current implementation is not adequate, it has to be changed.
+
+I can understand that methods have to be well thought before make into an interface. But using the actual form implementation to justify some method to exist or not doesn&#39;t make sense. 
+
+As I already said, the current form implementation shouldn&#39;t be reference to create an form interface. It should had been marked as experimental before reached the production status. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18322</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-05-12 15:30:27 +0200</bug_when>
+            <thetext>Well, I completely disagree with you at that point. I did exactly that work - thinking of what methods to include in the form - as I designed it so I&#39;m really not willing to roll up the whole work again! Sorry, but as long as we don&#39;t have any trouble with the current implementation, thats our reference.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35637</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:43 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,177 @@
+<bug>
+          <bug_id>1303</bug_id>
+          
+          <creation_ts>2008-08-29 17:44:00 +0200</creation_ts>
+          <short_desc>Rework application loading</short_desc>
+          <delta_ts>2014-03-03 15:19:29 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>app.demobrowser</component>
+          <version>0.8</version>
+          <rep_platform>IE</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.8.1</target_milestone>
+          
+          <blocked>1286</blocked>
+    
+    <blocked>1415</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Claus Augusti">claus</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          <cc>fabian.jakobs</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>4845</commentid>
+            <who name="Claus Augusti">claus</who>
+            <bug_when>2008-08-29 17:44:20 +0200</bug_when>
+            <thetext>The Demo Browser starts up but won&#39;t show demos in IE 6 and 7 reliably. No error is shown. The JS Code view shows the correct class. Tested on IE 6 and 7 on Windows XP SP 2. I have MultipleIE running on that machine, so I also tested IE 6 on a clean Windows XP SP 2 using Parallels on a Mac with the same effect as described above. 
+
+After a while of testing and clicking various demos to observe the output in Log File, demos showed up occasionally. It&#39;s always a few after each other, then again some blank pages. Click interval doesn&#39;t make a difference. 
+
+Log File gives
+
+... Part boot successfully loaded 
+... qx.core.ObjectRegistry: Disposed ... objects
+
+and 
+
+... Part boot successfully loaded 
+
+on starting a new demo reliably even when no demo is shown.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4846</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-08-29 18:54:09 +0200</bug_when>
+            <thetext>This happens for me in the build version only.
+
+After some debugging is seems that the problem is the native &quot;load&quot; event. If the main application file is loaded sometime the &quot;load&quot; event has already been fired. Since the event handler is added in the main file, it will never get fired. Calling qx.core.Init.__ready manually from the console starts the application without any problems.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4847</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-08-29 18:54:54 +0200</bug_when>
+            <thetext>How can we check, whether the load event has already been fired?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4850</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-08-29 19:22:49 +0200</bug_when>
+            <thetext>we can use document.readyState to check whether the document is loaded (only IE, Opera and Webkit). Changing the defer block of qx.core.Init fixes this problem for IE but we need to make sure it is problem does not exist in other browsers.
+
+  defer : function(statics)
+  {
+    if (/complete|interactive/.test(document.readyState))
+    {
+      setTimeout(function() {
+        statics.__ready();
+      }, 0)
+    } else {
+      qx.event.Registration.addListener(window, &quot;ready&quot;, statics.__ready, statics);
+    }
+    
+    qx.event.Registration.addListener(window, &quot;shutdown&quot;, statics.__shutdown, statics);
+  }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4851</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-08-29 21:50:45 +0200</bug_when>
+            <thetext>The proposed fix breaks Webkit!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4860</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-09-01 11:21:57 +0200</bug_when>
+            <thetext>This is now fixed for the demo browser. However the solution is still not ideal. The fix to the loader must still be revised as well as the &quot;helper.js&quot; used in the demos.
+
+Leaving this bug open</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4912</commentid>
+            <who name="Claus Augusti">claus</who>
+            <bug_when>2008-09-01 16:24:52 +0200</bug_when>
+            <thetext>I can confirm the bug is fixed for IE 7. However, IE 6 still shows the same behavior on my machine in the online version so I can&#39;t confirm thron7&#39;s post to the mailing list. Also, I found some weird pattern: the animation-&gt;Scroll demo always works.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4941</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-09-01 18:30:37 +0200</bug_when>
+            <thetext>We&#39;ve tried to repro the bug on our machines. On Johnny&#39;s XP/IE6 machine the &#39;widget&#39; demos run just fine. On our Test PC, the virtual machines with IE6 crash when trying to step through more than one &#39;widget&#39; demo :-(</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4967</commentid>
+            <who name="Claus Augusti">claus</who>
+            <bug_when>2008-09-02 11:47:16 +0200</bug_when>
+            <thetext>Another addition to comment #6: not only the demo animation-&gt;scroll always works, but all demos inside &#39;event&#39; as well. None of the demos that work always use any qooxdoo widgets, but instead access the DOM directly which might be a hint on solving this nasty behavior. 
+
+Feel free to come up to 713 to abuse my machine for testing :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5317</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-05 20:13:46 +0200</bug_when>
+            <thetext>I think this is fixed in SVN.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5424</commentid>
+            <who name="Claus Augusti">claus</who>
+            <bug_when>2008-09-09 10:43:51 +0200</bug_when>
+            <thetext>The current 0.8.1-pre demo browser version still doesn&#39;t work in IE 6, IE 7 is fine. The first load of the demo browser app always yields an empty page, no errors are shown. Only on reload the app starts up. IE 6 crashed two times after the application loaded, that didn&#39;t happen before. 
+
+As a side note: trying to open a node of the Demo tree gives an JS Error in IE only. Do you want me to file another bug? </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5444</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-09 14:43:19 +0200</bug_when>
+            <thetext>To Fabian</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5556</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-09-17 12:03:06 +0200</bug_when>
+            <thetext>The provided fix breaks source versions of the skeleton applications in IE.
+
+In the &quot;defer&quot; section of &quot;qx.core.Init&quot; the application was initialized by using the &quot;readystate&quot; of the document. This is too early for source versions, because IE still loads the scripts in the background thus breaking the whole init process and leaving a blank page behind.
+
+Another way to fix this issue is needed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5714</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-10-06 14:45:21 +0200</bug_when>
+            <thetext>I have move the check into the loader. The loader is the only place where we know that all scripts are loaded. (rev. 16453)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36505</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:29 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

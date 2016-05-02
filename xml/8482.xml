@@ -1,0 +1,144 @@
+<bug>
+          <bug_id>8482</bug_id>
+          
+          <creation_ts>2014-07-11 05:08:00 +0200</creation_ts>
+          <short_desc>New selection behavior in 4.0 affects &quot;contextmenu&quot; behavior</short_desc>
+          <delta_ts>2014-12-16 11:44:28 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core.selection</component>
+          <version>4.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="eda">edadasiewicz</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>40743</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2014-07-11 05:08:21 +0200</bug_when>
+            <thetext>I noticed that changing the selection behavior in 4.0 seems to have also affected &quot;contextmenu&quot; behavior.  In certain cases I need to right-click twice before I see a context menu -- first to &quot;move&quot; the selection and then to display the context menu.  For example: open up several several levels of TreeFolders. To bring up the context menu requires 2 right-click&#39;s on a TreeFile but then right-clicking on a different &quot;sibling&quot; TreeFile only needs 1 right-click.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40748</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-11 08:48:58 +0200</bug_when>
+            <thetext>Do you have any sample for us how to reproduce? A playground sample would be best.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40756</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2014-07-11 16:42:32 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Do you have any sample for us how to reproduce? A playground sample would be
+&gt; best.
+
+I&#39;m currently on vacation until the 20th and although I can do email on my laptop I would be hard pressed to come up with a sample before then.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40816</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2014-07-22 22:14:32 +0200</bug_when>
+            <thetext>Not sure if I created the playground sample correctly but the following url will get you there:
+
+http://demo.qooxdoo.org/current/playground/#%7B%22code%22%3A%22var%2520tree%2520
+
+and (at least for me) I needed to then click on bug8482.
+
+If you open up the tree until leafs appear at any level and then right-click on a leaf you need to do so twice until the alert occurs.  If you then right-click on a sibling leaf the wrong alert is displayed since the selection did not change.  At this point you need to left-click on another leaf (within any subtree) before you can right-click on it and get the correct value.  Note that there may be nothing wrong with your sdk and perhaps it is the way I implemented the contextmenu listener, but it worked differently under 3.5.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40819</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-23 08:38:26 +0200</bug_when>
+            <thetext>The link does not seem to work for me. :(</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40828</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2014-07-23 15:15:13 +0200</bug_when>
+            <thetext>It worked for me but I needed to click on bug8482 in the Samples column.  Is there any docs as how to correctly create a playground sample?  The code I used is as follows:
+
+var tree = new qx.ui.tree.Tree();
+tree.set({
+    width: 300,
+    height: 500
+})
+this.getRoot().add(tree);
+
+var root = new qx.ui.tree.TreeFolder(&quot;root&quot;);
+tree.setRoot(root);
+
+for (var i = 0; i &lt; 5; i++) {
+  var l1Branch = new qx.ui.tree.TreeFolder(&quot;level &quot;+i);
+  root.add(l1Branch);
+  for (var j = 0; j &lt; 5; j++) {
+    var l2Branch = new qx.ui.tree.TreeFolder(&quot;level &quot;+i+&quot;.&quot;+j);
+    l1Branch.add(l2Branch);
+    for (var k = 0; k &lt; 5; k++) {
+      var leaf = new qx.ui.tree.TreeFile(&quot;leaf &quot;+i+&quot;.&quot;+j+&quot;.&quot;+k);
+      l2Branch.add(leaf);
+    }
+  }
+}
+
+tree.getChildControl(&quot;pane&quot;).addListener(&quot;contextmenu&quot;, function(e) {
+  var sel = tree.getSelection()[0];
+  if (sel instanceof qx.ui.tree.TreeFile) {
+    alert(sel.getLabel());
+  }
+});
+
+root.setOpen(true);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40829</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2014-07-23 18:18:12 +0200</bug_when>
+            <thetext>You can close this bug.  As soon as I changed:
+
+var sel = tree.getSelection()[0];
+
+to:
+
+var sel = e.getTarget();
+
+The problem no longer occurs.  This is probably what I should have done in the first case.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40830</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-24 07:55:29 +0200</bug_when>
+            <thetext>Great to hear that the problem is gone. Thanks for letting us know.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

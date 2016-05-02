@@ -1,0 +1,137 @@
+<bug>
+          <bug_id>589</bug_id>
+          
+          <creation_ts>2007-08-14 13:52:00 +0200</creation_ts>
+          <short_desc>The getContent() member of a failed qx.io.remote.Request&#39;s response always returns &#39;null&#39;.</short_desc>
+          <delta_ts>2014-03-03 15:26:13 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>0.7.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>0.8.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christian Ebke">christian.ebke</reporter>
+          <assigned_to name="Derrell Lipman">derrell.lipman</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2120</commentid>
+            <who name="Christian Ebke">christian.ebke</who>
+            <bug_when>2007-08-14 13:52:25 +0200</bug_when>
+            <thetext>The qx.io.remote.Request&#39;s response&#39;s getContent() method should return the content whenever available, even if the request resulted in a non 20x status code.
+
+Consider this code snippet:
+
+/* SNIP */
+
+var req = new qx.io.remote.Request(&#39;http://localhost/foo&#39;, &#39;GET&#39;, &#39;text/plain&#39;);
+
+req.addEventListener(&quot;failed&quot;, function(e) {
+  window.alert(e.getStatusCode() + &quot;: &quot; + e.getContent());
+});
+
+/* SNIP */
+
+In the alert popup it will always say &quot;&lt;code&gt;: null&quot; even if the server actually returned a response. This is a severe bug because the server might include information in the responseText explaining why the request resulted in a non 20x response code. This information may be vital to the frontend application.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2236</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-09-11 14:25:49 +0200</bug_when>
+            <thetext>Good point. Added to the 0.7.2 target.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2366</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-09-18 18:25:39 +0200</bug_when>
+            <thetext>Mass move of bugs to target 0.7.3</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2700</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-01-11 14:17:06 +0100</bug_when>
+            <thetext>To 0.7.4.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7475</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-01-30 09:08:38 +0100</bug_when>
+            <thetext>Derrell, this is quite an old bug report. Could you please check if it is still valid and should be fixed (0.7.x and/or 0.8.x)?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7496</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-01-30 14:06:26 +0100</bug_when>
+            <thetext>The content on a failure is arbitrary HTML likely relevant to the programmer but not to the end user. This information is easily available in the &quot;Net&quot; tab of Firebug. 
+
+If it were easy and unobtrusive to provide the requested information, I&#39;d make the change, but the way the failure is propogated and the content dealt with, the chance of breaking something is too high for (at least in my opinion) the perceived value.
+
+If you can show me a use case where application access to that content would be valuable, I&#39;m certainly willing to be convinced, but for now I&#39;ll close this bug.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7503</commentid>
+            <who name="Christian Ebke">christian.ebke</who>
+            <bug_when>2009-01-30 15:52:32 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; If you can show me a use case where application access to that content would be
+&gt; valuable, I&#39;m certainly willing to be convinced, but for now I&#39;ll close this
+&gt; bug.
+
+For example, the web application may answer with code 403 (Forbidden) to a login attempt, both, in case the user entered a wrong user id or a wrong password. The qooxdoo frontend could then, depending on the application&#39;s response, decide whether to prompt for a different password or a different user name.
+
+Similarily, the server could answer with 404 (Not Found) upon an attempt to perform an operation involving more than one resource. With the server&#39;s response available, the qooxdoo frontend could tell the user which of the specified resources were not found.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7504</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-01-30 16:13:52 +0100</bug_when>
+            <thetext>The problem is that the text returned in the content is highly browser dependent. The frontend code would have to deal with parsing any number of different HTML responses, any of which could change from release to release of any particular browser, making the application highly unreliable.
+
+In addition, in your 403 example, I *really hope* that no server would tell you whether the cause of a login failure was unknown user name or invalid password. That&#39;s providing way too much information to the cracker attempting to gain access. No reasonable security model would provide that information. It must simply say, No Access and provide no additional information.
+
+I don&#39;t understand your 404 example at all, but again, it would require parsing varying HTML.
+
+I suggest that to solve both of these types of issues, add a &quot;protocol&quot; at one level higher, such as an RPC mechanism. Your higher level protocol would return a valid HTTP response (so that it ends up in &quot;completed&quot; rather than &quot;failed&quot;) with the additional information required for the frontend to determine how to provide useful feedback to the user.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39033</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:13 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

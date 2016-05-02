@@ -1,0 +1,234 @@
+<bug>
+          <bug_id>2733</bug_id>
+          
+          <creation_ts>2009-08-28 11:34:00 +0200</creation_ts>
+          <short_desc>Reintroduce value property for selectbox and radiogroup</short_desc>
+          <delta_ts>2009-09-08 08:08:45 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          <dependson>2754</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martin Wittemann">martin.wittemann</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>gradinf</cc>
+    
+    <cc>info</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>11679</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-08-28 11:34:59 +0200</bug_when>
+            <thetext>During the change of the form API (bug #2099) we removed the value property. Most of the users had some trouble with that change so we reintroduce it again.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11680</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-08-28 11:35:12 +0200</bug_when>
+            <thetext>Accept</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11681</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-08-28 11:43:47 +0200</bug_when>
+            <thetext>I would say that if you add it, you might maybe do it without a property, as you do not want to double-storage and sync between these properties. Better have a setter and getter which directs the request to the selection property. IMHO. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11682</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-08-28 11:47:18 +0200</bug_when>
+            <thetext>Sure I will not store the information in two places. The &quot;property&quot; was more meant as idea and not as implementation detail. ;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11732</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-09-01 10:53:37 +0200</bug_when>
+            <thetext>We just found out that we need to change the name from value to something different because the RadioButtons already have a value which is the boolean state of the button. So we can not take value to store some additional information which server as representative for the widget. So we name the &quot;property&quot; model which fits perfectly in the data binding context.
+Additionally, to align the model with the selection API, we chose to always return an array of models in the selectbox, list and radiogroup. That will keep the selection in the framework at the same idea.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11787</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2009-09-01 23:17:21 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; We just found out that we need to change the name from value to something
+&gt; different because the RadioButtons already have a value which is the boolean
+&gt; state of the button. So we can not take value to store some additional
+&gt; information which server as representative for the widget. So we name the
+&gt; &quot;property&quot; model which fits perfectly in the data binding context.
+&gt; Additionally, to align the model with the selection API, we chose to always
+&gt; return an array of models in the selectbox, list and radiogroup. That will keep
+&gt; the selection in the framework at the same idea.
+&gt; 
+
+I don&#39;t think &quot;Model&quot; is a good idea. Wouldn&#39;t It be more appropriate to call the &quot;model&quot; of &quot;value&quot;? and replace the current &quot;value&quot; for &quot;checked&quot;. Everyone thinks the &quot;value&quot; property should hold the... amm.. &quot;value&quot; because thats how html works. Don&#39;t make me think more than its necessary.
+
+To any form you create, RadioButtons and ListItems are not form items and don&#39;t need to act like ones. SelectBox and RadioGroup are the ones that the form has to know about. 
+
+What I mean is that I will never interact with a ListItem without a SelectBox, and RadioButton without a RadioGroup, so why is it necessary for RadioButton to implement IForm?
+
+Without the RadioButton&#39;s value restriction, it would be possible to call &quot;model&quot; of &quot;value&quot; again. Internally, RadioGroup can look for the &quot;checked&quot; property to know which radiobutton is selected.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11789</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-09-02 08:44:54 +0200</bug_when>
+            <thetext>Guilherme, thanks for your detailed comment. I&#39;ll explain you why we did this step and why we didn&#39;t go your way.
+
+We recently re-factored the whole form API (see bug #2099) and forced every element to use the &quot;value&quot; name for its value which can be changed by the user. Thats why the ListItem did not have a value at all. So changing the value on the RadioButton back to checked would cause an inconsistance between the RadioButton and the CheckBox. Renaming that causes a difference between those two widgets and the rest of the form widgets. So renaming the value back to checked is not an option cause the consistance was one of the reasons we did the whole re-factoring.
+
+So we could not stay with the name &quot;value&quot; for storing some additional data. And I think the decision is not too bad because as you said, value would look like HTML. But the model property is not intended to be like the HTML value. It can store even more because its not restricted to strings. For example it can and will handle the corresponding qooxdoo models in a data binding context.
+
+To your question why RadioButton is implementing IForm. IForm is the interface responsible for the invalid states and stuff necessary for the validation. So if you want to invalidate a RadioButton, you need to have that interface. But I guess you meant IBooleanForm which contains the boolean value property. Thats for the consistency among all form items.
+
+Additionally, we introduced the model property not only for RadioGroup and SelectBox. Tree and List does also have the model property for storing attached data. And I think a tree does not really have to be like HTML.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11797</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-09-02 13:42:59 +0200</bug_when>
+            <thetext>Added the new feature with revision 19976. Also changed the data binding to use the new model property.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11799</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2009-09-02 13:53:39 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; Guilherme, thanks for your detailed comment. I&#39;ll explain you why we did this
+&gt; step and why we didn&#39;t go your way.
+&gt; 
+&gt; We recently re-factored the whole form API (see bug #2099) and forced every
+&gt; element to use the &quot;value&quot; name for its value which can be changed by the user.
+&gt; Thats why the ListItem did not have a value at all. So changing the value on
+&gt; the RadioButton back to checked would cause an inconsistance between the
+&gt; RadioButton and the CheckBox. Renaming that causes a difference between those
+&gt; two widgets and the rest of the form widgets. So renaming the value back to
+&gt; checked is not an option cause the consistance was one of the reasons we did
+&gt; the whole re-factoring.
+&gt; 
+&gt; So we could not stay with the name &quot;value&quot; for storing some additional data.
+&gt; And I think the decision is not too bad because as you said, value would look
+&gt; like HTML. But the model property is not intended to be like the HTML value. It
+&gt; can store even more because its not restricted to strings. For example it can
+&gt; and will handle the corresponding qooxdoo models in a data binding context.
+&gt; 
+&gt; To your question why RadioButton is implementing IForm. IForm is the interface
+&gt; responsible for the invalid states and stuff necessary for the validation. So
+&gt; if you want to invalidate a RadioButton, you need to have that interface. But I
+&gt; guess you meant IBooleanForm which contains the boolean value property. Thats
+&gt; for the consistency among all form items.
+
+That&#39;s is what I don&#39;t understand, why would I want to invalidate a RadioButton? I will have a RadioGroup attchached to it. The RadioGroup that has to implement IForm. Since it&#39;s not a direct form item (RadioButton), it doesn&#39;t need to be consistent among other form items. For serialization and other stuff, RadioGroup that is the target and not RadioButtons.
+
+Or am I missing something here?
+
+&gt; 
+&gt; Additionally, we introduced the model property not only for RadioGroup and
+&gt; SelectBox. Tree and List does also have the model property for storing attached
+&gt; data. And I think a tree does not really have to be like HTML.
+&gt; 
+
+Is there any online example available?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11800</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-09-02 13:57:18 +0200</bug_when>
+            <thetext>The RadioGroup is an object in qooxdoo and has no visual style not is shown on the website. So how should this RadioGroup visualize its invalid state if its not even on the screen? Thats the problem here. The only visible things are the RadioItems so they need to show that something is invalid.
+
+There are only the data binding demos available using the model property currently.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11801</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2009-09-02 14:32:53 +0200</bug_when>
+            <thetext>(In reply to comment #9)
+&gt; The RadioGroup is an object in qooxdoo and has no visual style not is shown on
+&gt; the website. So how should this RadioGroup visualize its invalid state if its
+&gt; not even on the screen? Thats the problem here. The only visible things are the
+&gt; RadioItems so they need to show that something is invalid.
+&gt; 
+
+Ops, I meant RadioButtonGroup. The same way you can&#39;t use a ListItem without a SelectBox/List widget, you wouldn&#39;t be able to use RadioButtons without a RadioButtonGroup. 
+
+Anyway, what could it be an invalid state of a single RadioButton? The invalid state is always related to its group. Makes much more sense to invalidate the Group than its items.
+
+&gt; There are only the data binding demos available using the model property
+&gt; currently.
+&gt; 
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11802</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-09-02 14:37:29 +0200</bug_when>
+            <thetext>The RadioButtonGroup is a widget in deed but its only purpose is to render the RadioButtons. So the group itself has nothing to invalidate. Sure, a single RadioButton, no matter if valid or invalid makes not much sense. But if the button can not visualize its own invalida state, how should a set of buttons visualize it?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11805</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2009-09-02 14:54:00 +0200</bug_when>
+            <thetext>But the SelectBox/List isn&#39;t just a way to show its items too?
+
+&gt; But if the button can not visualize its own invalida state, how should a set of 
+&gt; buttons visualize it?
+
+The same way a ListItem doesn&#39;t know if it is valid or not. 
+
+What a required should mean to a RadioButton? That it should be selected? That doesn&#39;t make any sense.
+
+On the other hand, RadioButtonGroup be a required field makes sense and can have its own invalid state that could be turn all its RadioButtons items to red.
+
+I can&#39;t think of any case that RadioButtons should be treated as form items without being part of a group.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11806</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-09-02 15:04:18 +0200</bug_when>
+            <thetext>If you want to, see it as implementation detail that the radio button has also an invalid property. The radio group uses this property to, as you said right, mark all radio buttons red if the group is invalid.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11807</commentid>
+            <who name="Guilherme Krycek">gradinf</who>
+            <bug_when>2009-09-02 15:16:06 +0200</bug_when>
+            <thetext>OK, I guess that if I&#39;m the only one seeing more function inconsistencies than structural consistencies in this case I&#39;ll have to live with that. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11818</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-09-03 08:18:10 +0200</bug_when>
+            <thetext>All nightly tests have passed</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

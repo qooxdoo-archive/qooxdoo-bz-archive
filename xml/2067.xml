@@ -1,0 +1,418 @@
+<bug>
+          <bug_id>2067</bug_id>
+          
+          <creation_ts>2009-03-06 20:36:00 +0100</creation_ts>
+          <short_desc>Further improve part API</short_desc>
+          <delta_ts>2010-11-24 14:39:19 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Sebastian Werner">info</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          <cc>thron7</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>8365</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-03-06 20:36:30 +0100</bug_when>
+            <thetext>I just looked over the implementation of the new code for part handling in the qx.io2 namespace.
+
+The first issue I have is that I do not understand why it&#39;s now needed to supports lists instead of a single name. In 99% percent of the cases a part is exactly the dialog / section of the application one would to show so in all these cases only one part name is needed. The whole complexity with supporting multiple names here is overengineered in my opinion. Not sure what&#39;s the argumentation for this change as in the previous version it was a single string as well.
+
+Other than that, with the new integration as a full-blown qooxdoo class, I would prefer to have events instead of callbacks to send informations about successful load of the given part. Callbacks was implemented at a time that this was not such a qooxdoo class, so it was the only available pattern which was usable to have some kind of feedback to the application code. This has been changed with the new version. We should make use of the new possibility.
+
+Next thing would be to have some kind of method to detect where a part has been loaded.
+
+Another thing which should supported for any kind of user feedback is something to indicate that something is loaded currently. An event like &quot;active&quot; and &quot;inactive&quot; fired on the Singleton may be a good choice to stop the user from activation other features while waiting for the first request.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9513</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-23 11:09:49 +0200</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; I just looked over the implementation of the new code for part handling in the
+&gt; qx.io2 namespace.
+&gt; 
+&gt; The first issue I have is that I do not understand why it&#39;s now needed to
+&gt; supports lists instead of a single name. In 99% percent of the cases a part is
+&gt; exactly the dialog / section of the application one would to show so in all
+&gt; these cases only one part name is needed. The whole complexity with supporting
+&gt; multiple names here is overengineered in my opinion. Not sure what&#39;s the
+&gt; argumentation for this change as in the previous version it was a single string
+&gt; as well.
+
+The current implementation supports both arrays and single strings so this is not an issue.
+
+&gt; Other than that, with the new integration as a full-blown qooxdoo class, I would
+&gt; prefer to have events instead of callbacks to send informations about successful
+&gt; load of the given part. Callbacks was implemented at a time that this was not
+&gt; such a qooxdoo class, so it was the only available pattern which was usable to
+&gt; have some kind of feedback to the application code. This has been changed with
+&gt; the new version. We should make use of the new possibility.
+
+See my comments on bug #2246, which adresse this issue. Events are not a good fit to
+ implement the core part loading functionality. Further there are already an event, which is
+ fired atfer a part is loaded.
+&gt; 
+&gt; Next thing would be to have some kind of method to detect where a part has been
+&gt; loaded.
+
+Can you give an example. I don&#39;t get what you are missing.
+ 
+&gt; Another thing which should supported for any kind of user feedback is something
+&gt; to indicate that something is loaded currently. An event like &quot;active&quot; and
+&gt; &quot;inactive&quot; fired on the Singleton may be a good choice to stop the user from
+&gt; activation other features while waiting for the first request.
+
+Is this really required? Why would we want to stop the user from activating new features if
+other parts are currently loading. Since part loading is pipelined there should be no
+negative side effect besides that loading take a bit longer.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9567</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-23 21:48:10 +0200</bug_when>
+            <thetext>I think you do not understood what I mean: The new API to support Arrays is useless. Hope now it&#39;s true what I mean. Useless code is useless in a core API ;) Instead it just means additional bloat as the implementation is far more complex then in the case when just need to support a single string. The argumentation was not regarding compatibility to the old implementation but regarding &quot;bloat&quot;.
+
+The missing method was &quot;isPartLoaded&quot; (replace &quot;where&quot; with &quot;whether&quot; :))
+
+The problem regarding the missing active event is that you currently have *no* chance to give the user any feedback. It may not be needed to block the GUI. But maybe one want to have a animated loading symbol somewhere to show that something is happen in the background. Real-time user feedback is really important in modern applications and so in complex qooxdoo-based apps as well.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9575</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-24 09:11:12 +0200</bug_when>
+            <thetext>When I added support for arrays I had one specific use case in mind: Using the part
+loading mechanism for low level applications. I have a prototype skeleton here, which
+creates parts for all major low level functionality. The user can then write code like this in
+his index.html file:
+
+qx.io2.PartLoader.require([&quot;selector&quot;, &quot;animation&quot;], function() 
+{  
+    var q = qx.bom.Collection.query;
+    q(&quot;h1&quot;).setStyles({color: &quot;green&quot;});
+  
+    q(&quot;#juhu&quot;).addListener(&quot;click&quot;, function(e) {
+      var attention = new qx.fx.effect.core.Highlight(e.getCurrentTarget());
+      attention.start();      
+  });
+});
+
+The part loader would then only load the required parts. No build step is required. For this
+use case it is essential to support arrays. BTW it doesn&#39;t add too much complexity. Its
+just about 20 lines of code.
+
+Regarding the ready event: All the information you want is already available.
+
+var part = qx.io2.PartLoader.getInstance().getPart(&quot;selector&quot;);
+console.log(part.getReadyState()); // one of &quot;initializes&quot;, &quot;loading&quot;, &quot;complete&quot;
+part.addListener(&quot;load&quot;, function() {
+	console.log(&quot;selector part loaded&quot;);
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9637</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-24 17:35:32 +0200</bug_when>
+            <thetext>Fabian, regarding the array support I must say that I am still not sure if this is a valid use case. Parts are somewhat auto-build from the configuration. It was never planned to be used for such a kind of module load handling. In fact this might be better placed in a separate part of the configuration and frontend side in a separate part of implementation. Maybe really naming it &quot;modules&quot; then. Users already asked for these things so I also think it is a valid requirement. But I do not think that parts are a good match here. In parts I normally think in &quot;views&quot;. I want to show the view &quot;preferences&quot; or &quot;edit&quot; or &quot;addressbook&quot; or &quot;new&quot; etc. Parts are meant to be used for complete dialoges not for a collection of classes.
+
+In a module loader the array support make perfectly sense. But for parts it&#39;s quite useless as parts are no modules. 
+
+Hope this clears up a bit what I mean.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9638</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-24 17:37:48 +0200</bug_when>
+            <thetext>BTW: modules should be a lot simpler as well. They have no part-&gt;package logic etc. The bootstrap code itself may not be needed at all. It might also be possible to load module from externally (is this a good idea?) etc.
+
+Parts are something which is mainly built by the auto-dependency tracking while modules are built by a human author how create logical parts like &quot;animation&quot; or &quot;i18n&quot; etc.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9657</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-25 01:01:41 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; Fabian, regarding the array support I must say that I am still not sure if this
+&gt; is a valid use case. Parts are somewhat auto-build from the configuration. It
+&gt; was never planned to be used for such a kind of module load handling.
+
+This shouldn&#39;t hinder us to think about it this way, right?!
+
+&gt; In fact
+&gt; this might be better placed in a separate part of the configuration and
+
+I&#39;m skeptical. It is not good to have concepts that are too similar. This is not reasonable for the end users.
+
+&gt; frontend side in a separate part of implementation. Maybe really naming it
+&gt; &quot;modules&quot; then. Users already asked for these things so I also think it is a
+&gt; valid requirement. But I do not think that parts are a good match here. In
+&gt; parts I normally think in &quot;views&quot;. I want to show the view &quot;preferences&quot; or
+&gt; &quot;edit&quot; or &quot;addressbook&quot; or &quot;new&quot; etc. Parts are meant to be used for complete
+&gt; dialoges not for a collection of classes.
+
+This contradicts what you have written in the wiki: &quot;Each part can be seen as a logical or visual group of the application.&quot; (http://qooxdoo.org/documentation/0.8/generator#parts). There is &quot;logical&quot; in the sentence, right?, and this is how I understand Fabian: a package as a grouping of classes that have some sensible relation among them. How the set of the classes in a part is obtained, by explicit listing or dependency analysis, is an implementation detail that doesn&#39;t break the general understanding. Having &quot;modules&quot; alongside of &quot;parts&quot; seems like a lack of proper abstraction on our part, over-complicates conceptually, and cannot be communicated to the end-user.
+
+
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9661</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-25 08:08:26 +0200</bug_when>
+            <thetext>Thomas, in the case you mentioned the documentation needs to be updated. In fact parts are something mostly auto-created by the system. While modules are - in my thinking - a manually managed list. In parts I have my preferences window which consists of classes I not even know are included while in modules I would use explicitely defined lists of classes. Parts where never planned to be used for modules by the original developer ;)
+
+I would say that this is a huge difference between parts and modules. Regarding both documentation and implementation. And it is completely inpractical to keep these concepts in the same documentation and implementation in my opinion. Modules are a lot simpler and the load concept is different. In parts I think in visual stuff: dialoges, windows, etc. while in modules I think more technical, about classes, mixins etc.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9674</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-27 11:07:48 +0200</bug_when>
+            <thetext>In your definition the only difference between parts and modules is that parts are defined
+by one class (the preference window) and modules are defined by a list of classes. In both 
+cases the build system has to ensure that the dependencies are satisfied as well. The 
+current implementation can easily be used in both use cases. It already provides everything
+to use it in either way. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9684</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-04-27 13:17:36 +0200</bug_when>
+            <thetext>There are quite some interesting aspects in this discussion, so lets see how qooxdoo benefits from further improving the &quot;modularization&quot; concepts (parts and/or modules) and the corresponding implementation. 
+
+Wouldn&#39;t it be a good next step to make the low-level skeleton publicly available - if it isn&#39;t already (@Fabian)? What are some issues you experienced or envision when using qooxdoo in low-level scenarios (@Sebastian)? Particularly the &quot;load concept is different&quot;, which would probably need to be addressed and isn&#39;t sufficient in the current implementation.
+
+I&#39;m not really worried about differences between parts and modules. It looks like they could both be covered by a common concept. This could make it easier for users to understand and adopt it, without over-complicating it. If it shows that they are still too different at the end, we might keep them separate. 
+
+In addition to this bugzilla thread we should probably add definitions and features of both parts and modules to the wiki. Any takers? Are there any other issues still open right now (etc.missing API)?
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9688</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-27 14:13:35 +0200</bug_when>
+            <thetext>Fabian, sorry, but I think you are wrong here.
+
+Sure it handles dependencies but the following things are useless in modules:
+
+* Find common classes in different modules (in modules this should be done by the application developer)
+* Latency (Size) based re-combination of parts is nothing useful for modules.
+* Part/Package clientside-logic where one part means multiple packages to load.
+etc.
+
+In my opinion modules are just a hard-list of classes (with wildcards) but without any intelligence. They simply cover what is given in the configuration. The only thing they sort are classes in each module. It is more a less a hard class list like [&quot;qx.bom.Request&quot;, &quot;qx.io2.*&quot;] etc. Summarized: Modules are dead simple while parts are quite complex.
+
+Modules should be a simple mechanism which is easier to setup than different &quot;build&quot; sets in the configuration. Modules would also ignore things like theme or application settings as these are more like a drop-in for an existing application.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9690</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-27 14:17:36 +0200</bug_when>
+            <thetext>Andreas, as I have a huge feeling that we will finally have both mechanism separated I would suggest to start with modules and try to make it as ideal as possible. When we than have the feeling that they share enough in common we can still see. This would also be better for stability as it has no influences to the current part implementation.
+
+If you get yourself a coffee, settle yourself back and think about what modules should do I bet that you will came up with the same conclusion ;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9705</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-27 21:17:08 +0200</bug_when>
+            <thetext>(In reply to comment #10)
+
+Actually, your arguments seem to point in the opposite direction. If, as you say, modules are so simple, it should be straight-forward to implement them as an edge case of the more complex parts.
+
+&gt; * Find common classes in different modules (in modules this should be done by
+&gt; the application developer)
+&gt; * Latency (Size) based re-combination of parts is nothing useful for modules.
+&gt; * Part/Package clientside-logic where one part means multiple packages to load.
+&gt; etc.
+&gt; 
+
+All this can be accommodated. Commen class calculation can be omitted, as well as size-driven re-combining. Modules would be a part with a single package, as we already have.
+
+&gt; In my opinion modules are just a hard-list of classes (with wildcards) but
+&gt; without any intelligence. They simply cover what is given in the configuration.
+&gt; The only thing they sort are classes in each module. It is more a less a hard
+&gt; class list like [&quot;qx.bom.Request&quot;, &quot;qx.io2.*&quot;] etc. Summarized: Modules are
+&gt; dead simple while parts are quite complex.
+
+It would be easy to tag such &quot;part&quot;, e.g. by adding a &quot;simple&quot; subkey:
+
+&quot;packages&quot; : {
+  &quot;simple&quot;: {
+    &quot;myModule&quot; : [&quot;qx.bom.Request&quot;, &quot;qx.io2.*&quot;],
+
+
+&gt; 
+&gt; Modules should be a simple mechanism which is easier to setup than different
+&gt; &quot;build&quot; sets in the configuration.
+
+What do you mean with &quot;build sets&quot;?
+
+&gt; Modules would also ignore things like theme
+&gt; or application settings as these are more like a drop-in for an existing
+&gt; application.
+
+I don&#39;t get that. Do you want to restrict the kind of things that one could list in the class list?
+
+In sum, I have a strong feeling that we will finally have a single mechanism to handle both concepts. So I would suggest to start with with refactoring and extending parts and try to make them as ideal as possible. This will also save us the additional effort of maintaining two similar concepts, and then merging them eventually. Since the existing part features shall be retained, I expect litte destabilisation of the current functionality. 
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9706</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-27 22:33:46 +0200</bug_when>
+            <thetext>(in reply to comment #12)
+
+It was not easy for me to find a good match for the situation we have with modules vs. parts. Now I think I have found a good one. It is somewhat comparable to the situation of the compiler vs. pretty printer stuff. I thought once that it might be a good idea to keep the code in one class because of a comparable argumentation where there are a few code overlaps. Afterwards it turned out to be a bad decision because most of the logic is not comparable. It continues with the options which were applied where the pretty printer supports various formatting options and the compiler has things tweaking the compiled output for size/obfuscation etc. Thomas, you were the lead regarding these changes and they were a good thing. Let&#39;s do not repeat this fault on the next topic.
+
+Applied to the modules vs. part story my arguments from above are:
+
+* parts are visible areas/components of an application
+* these are processed for shared content which is layed out in a separate packages
+* packages are auto-combined in so-named packages based on size settings
+* there is an option to reduce a part to only use one package at all (for loadtime latency reduction)
+
+Basically all these things happen in the parts implementation. There is not even a little logic which can be reused by the modules logic. Modules would do:
+
+* build hard-lists of classes (without dependencies)
+* (hard-)exclude these classes from the application build
+
+That&#39;s my interpretation of what modules should do based on my experience in this area where I had issues doing the same with parts or other hard-wired separate build-processes. With these modules it is possible to compile modules which are shared between applications (and this way cached between applications - if hosted on the same server). As these modules are not based on dependencies, but on explicit configuration they even break in the last common area one may have seen.
+
+Sure we could discuss if my module description is somewhat like a consens already. Which I doubt in the moment. But if we really get to the point, where everybody thinks that this is a valid requirement, I hope I am not the only person, seeing that the parts model (even if modified), is not a good match here. I would say in this case it&#39;s a lot simpler and more straightforward to implement and document these two, completely different things, separately from each other.
+
+----
+
+To answer the outstanding question: &quot;build sets&quot;: I mean different &quot;build&quot; configuration with different &quot;include&quot; blocks where each one build a single set of classes.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9710</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-28 09:54:25 +0200</bug_when>
+            <thetext>I think the better analogy are variants and settings, which are established as 
+distinct concepts, but have so many features in common, and a few 
+complementary, that there is an effort underway to unify them (bug#1138). 
+Compiling and pretty-printing is a bad comparison, since neither the user model 
+nor the technical concept changed, only the low-level implementation.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9714</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-28 10:21:27 +0200</bug_when>
+            <thetext>I see no technical reasons for this bug to remain open. All the issues are addressed with
+comment #1 and #3.
+
+For a discussion about parts vs modules please use the mailing list.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9716</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-28 11:00:33 +0200</bug_when>
+            <thetext>I understand that you want to keep your radar free of dead bugs but here are a few outstanding things to discuss:
+
+* Answering to comment #14: As written in comment #13 both, the user model and the technical infrastructure is different. When there is even a little possibility to use parts the way described by comment #3 there wouldn&#39;t be a need for modules at all. But this is not the case.
+
+* Variants and Settings are a lot more comparable than modules and parts. But even for settings and variants I still think that the model introduced for the user is much better understandable than merging these two things. Both might share the same core-implementation in the generator, but to merge these two things at user-level (read config.json) is another.
+
+* There is still no isPartLoaded() function as explained by comment #2.
+
+* Events are still not supported by the part loader. This way there is not even an option to show user feedback while loading parts. Just try out the current feedreader with a slow connection and you will see why this is bad.
+
+* The API for the part loader still supports arrays which is useless in all imaginable cases. In the part model there is no need to load multiple ones at the same moment. The example given (selector+animation) is an example for modules not for parts. It would be interesting for me, what practical proven argument lead to the decision for adding the new array type here. Sure it might not be *that* expensive, but it&#39;s not that brilliant at all to introduce and keep APIs which are never used or even were required by anybody.
+
+* There is still no solution for modules. Sure I can open a separate bug for the missing modules support, but in my opinion it makes to sense to move this discussion to the mailing list. Please tell me if this would work for you.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9719</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-28 11:12:44 +0200</bug_when>
+            <thetext>&gt; * Answering to comment #14: As written in comment #13 both, the user model and
+&gt; the technical infrastructure is different. When there is even a little
+&gt; possibility to use parts the way described by comment #3 there wouldn&#39;t be a
+&gt; need for modules at all. But this is not the case.
+
+This bug is not about modules versus parts. What you call modules is to me just a different
+way to use the part loader. 
+ 
+&gt; * There is still no isPartLoaded() function as explained by comment #2.
+
+Please read the comments. There is this functionality:
+
+qx.io2.PartLoader.getInstance().getPart(“selector”).getReadyState() == &quot;completed&quot;
+ 
+&gt; * Events are still not supported by the part loader. This way there is not even
+&gt; an option to show user feedback while loading parts. Just try out the current
+&gt; feedreader with a slow connection and you will see why this is bad.
+
+PPlease read comment #3 again. We do support this use case with the current API.
+
+&gt; * The API for the part loader still supports arrays which is useless in all
+&gt; imaginable cases. In the part model there is no need to load multiple ones at
+&gt; the same moment. The example given (selector+animation) is an example for
+&gt; modules not for parts. It would be interesting for me, what practical proven
+&gt; argument lead to the decision for adding the new array type here. Sure it might
+&gt; not be *that* expensive, but it&#39;s not that brilliant at all to introduce and
+&gt; keep APIs which are never used or even were required by anybody.
+
+Maybe I have a better imagination than you. It doesn&#39;t impact the user of the API and it
+doesn&#39;t cost us anything to leave it this way. It would cost if we were to remove it.
+
+&gt; * There is still no solution for modules. Sure I can open a separate bug for the
+&gt; missing modules support, but in my opinion it makes to sense to move this
+&gt; discussion to the mailing list. Please tell me if this would work for you.
+
+Sure. Let&#39;s move it to the mailing list.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9721</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-28 11:40:14 +0200</bug_when>
+            <thetext>* Ok, maybe it&#39;s better to use questions: Why would you use the part loader for modules? Modules do not have packages. Modules no not have meta information. It&#39;s ok to say to use the ScriptLoader for modules, but the PartLoader do not help much.
+
+* You do not think that:
+qx.io2.PartLoader.getInstance().getPart(“selector”).getReadyState() ==
+&quot;completed&quot;
+ is identical to: qx.io2.PartLoader.isLoaded(&quot;selector&quot;)
+? Mhh, technically this is certainly correct, but it&#39;s hidden quite deeply and it would be nicer to offer an API which is easier accessible.
+
+* I have read comment #3, Fabian. I do not talk about a &quot;load&quot; event for a specific part but for a &quot;active&quot;/&quot;inactive&quot; event regarding the whole part loader. It&#39;s something which the new IO stuff should support as well one day (as jQuery do for example). It is a lot more convenient to have a global listener to show a &quot;wait&quot; cursor than to require the developer to listen to multiple events for the same effect.
+
+* Sure the removal of Array support would mean additional work. This need not to happen ASAP by the way. I just want to highlight that in my opinion it is useless and was introduced as a fact without any previous discussion (at least not with a bug report). There is still no example where this is needed. To keep APIs which tend to confuse new users because they are not needed by a practical use is also some cost. Not for the qooxdoo devs in first instance but for the users. I will stop complaining as soon as I see a valid argument for the API, but until now there wasn&#39;t an example which uses parts as they are today. It simply makes no sense to do: PartLoader.load([&quot;preferencesWindow&quot;, &quot;mailEditor&quot;], function() {}); 
+</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,190 @@
+<bug>
+          <bug_id>2376</bug_id>
+          
+          <creation_ts>2009-05-13 15:21:00 +0200</creation_ts>
+          <short_desc>Dependency analysis incorrectly caches *Availability* of referenced classes (which gets stale)</short_desc>
+          <delta_ts>2014-03-03 15:20:10 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.system</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          <blocked>2904</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>fabian.jakobs</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9944</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-05-13 15:21:25 +0200</bug_when>
+            <thetext>If you reference a non-existing class in a qooxdoo application, this will be warned about as an unknown class dependency. So far, so good. If you *then* add the missing class, the library will be re-scanned correctly. But still the warning will be issued when building the application, and the new class is not added to the build.
+
+The reason is that the application class file has not changed, so the cached dependency information will be used. This information still records the (now existing) class as missing. The dependency analysis does not invalidate the cached information since the referring class file has not changed. But it should.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9945</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-05-13 15:22:06 +0200</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9946</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-05-13 15:32:48 +0200</bug_when>
+            <thetext>Workaround: &#39;touch&#39; the using file, so its dependency information will be re-calculated.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11959</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-08 09:41:29 +0200</bug_when>
+            <thetext>moved from 0.8.3 to 0.9</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12856</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-05 11:07:26 +0200</bug_when>
+            <thetext>Up priority, as it repeatedly confuses developers when available classes are 
+warned about as &quot;unknown&quot;, and even more so when those classes are not picked 
+up in source/build runs, which consequently leads to broken applications. 
+Solving this will also reduce the number of unclear cache interference issues 
+that consistently show up, and lead to unhealthy &quot;you have to clear the cache&quot; 
+work-arounds.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12981</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-08 11:30:54 +0200</bug_when>
+            <thetext>Major changes in dependency tracking; switched to a new scheme of scrubbing and 
+validating code references; tests look ok to me (standard apps, mailclient); 
+memory consumption has increased for the build runs, as more data is kept in 
+memory; run time has increased, as there are more items checked; there are 
+currently a lot of &quot;Unknown class referenced&quot; warnings, as a lot more 
+references are checked now, but those have to be reviewed.
+
+With r20296.
+
+The current strategy is:
+1. compute dependencies completely from a source file, independent of their 
+availability
+2. this can be cached and is valid as long as the source doesn&#39;t change
+3. with every build run, check this list of dependencies against the current 
+contents of the involved libraries
+
+This means we have a stable and easy to control dependencies cache object, 
+while still having up-to-date checks for the availability of the prerequisite 
+classes (&quot;validation&quot;). So essentially, dependency analysis (1.) is now 
+separate from validation (3.), which is a good thing.
+
+This fixes the following issues (of which this bug is one):
+- dependencies that were unresolvable but have been added meanwhile, werer 
+still warned about
+- on the other hand, dependencies that were once satisfied by existing classes 
+but this classes have been removed (e.g. renamed), were not warned about at all
+
+Along the way, dep.analysis (1.) has been overhauled, to basically check all 
+references that are detected, wherever they appear in the code (The current 
+exception are references embedded in chained expressions, like the &#39;c&#39; in 
+a.b().c(), as they are prominent in the AST and therefore inspected).
+
+Among other things, this fixes the following issues:
+- missing theme classes referenced in meta themes were not detected
+- non-scoped variables were not detected (missing &quot;var&quot; declaration)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13008</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-08 14:52:33 +0200</bug_when>
+            <thetext>I re-activated the #ignore compiler hint, so that classes can indicate 
+references the dependency analyser should not care about. This will be most 
+helpful to &#39;switch off&#39; generator warnings for dependencies that have been 
+validated ok by the programmer.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13032</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-10-08 18:39:21 +0200</bug_when>
+            <thetext>While running generate.py api for a skeleton app, I got an &quot;Unknown class referenced&quot; warning for the apiviewer.dao namespace in apiviewer.TreeUtil. Adding &quot;#ignore(apiviewer.dao)&quot; to TreeUtil.js did not make the warning disappear.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13113</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-12 17:02:19 +0200</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; While running generate.py api for a skeleton app, I got an &quot;Unknown class 
+referenced&quot; warning for the apiviewer.dao namespace in apiviewer.TreeUtil. 
+Adding &quot;#ignore(apiviewer.dao)&quot; to TreeUtil.js did not make the warning 
+disappear.
+
+This was due to Daniel not having the latest revision of the tool chain :).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13114</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-12 17:06:17 +0200</bug_when>
+            <thetext>I&#39;m closing this as fixed as it seems to run stable during the recent days. In 
+terms of &quot;Unknown class reference&quot; warnings, there might be still some false 
+positives around, but I&#39;ll try to fix them as they appear. In case this hits a 
+more fundamental problem, the bug can be re-opened.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13185</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-14 15:38:52 +0200</bug_when>
+            <thetext>Adapted summary.
+
+The only loose end would be adding line numbers  to the &quot;Unknown class 
+referenced&quot; warnings. But this would require changing the data structure for 
+the dependencies of a class, to also hold a line number for each reference 
+(like the first or last occurrence of this reference in the class file). Then, 
+you had to adapt the routines that evaluate that data structure, both for 
+dependency tracking and warnings.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13197</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-14 20:00:49 +0200</bug_when>
+            <thetext>Added line numbers to warnings. - With r20371.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14500</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:15:03 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36783</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:10 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

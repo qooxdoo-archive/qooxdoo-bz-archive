@@ -1,0 +1,190 @@
+<bug>
+          <bug_id>1622</bug_id>
+          
+          <creation_ts>2008-11-22 12:10:00 +0100</creation_ts>
+          <short_desc>Got to unncomment some for FF3 (drag&amp;drop)</short_desc>
+          <delta_ts>2014-03-03 15:18:52 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>0.7.3</version>
+          <rep_platform>Firefox 3.0</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.7.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="saaj">id</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          <cc>alexander.steitz</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>3</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>6420</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2008-11-22 12:10:14 +0100</bug_when>
+            <thetext>Its necessary to uncomment lines below
+
+// This hack is no longer needed for Firefox 2.0
+// We should verify, which Firefox version needed this hack.
+
+for &quot;gecko&quot; in /qx/event/handler/DragAndDropHandler.js
+
+due to have drag&amp;drop work properly in FF3. In can be tested at 6th example of TreeVirtual on 0.7.3 and 0.7.x_legacy.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6429</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-11-24 11:56:32 +0100</bug_when>
+            <thetext>to Alex</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6449</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-11-24 16:16:17 +0100</bug_when>
+            <thetext>As far as I discovered the &quot;_supportDrop&quot; method of the &quot;qx.ui.treevirtual.MDragAndDropSupport&quot; does *not* get called.
+
+If you drag an item of the TreeVirtual the following methods are called:
+
+-&gt; _handleMouseMove (&quot;qx.event.handlerDragAndDropHandler&quot;)
+-&gt; getDropTarget (&quot;qx.event.handlerDragAndDropHandler&quot;)
+-&gt; getDropTarget uses the target of the mouseMove event and calls the &quot;supportsDrop&quot; method
+
+The TreeVirtual widget itself as such an own &quot;supportsDrop&quot; method, but the this widget is not the target of the &quot;mouseMove&quot; event -&gt; the customized &quot;supportsDrop&quot; gets not called.
+
+Derrell, could you take a look?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6450</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-11-24 16:18:10 +0100</bug_when>
+            <thetext>Additional comment:
+The suggested solution to uncomment the block in the &quot;DragAndDropHandler&quot; should be avoided since it uses x- and y-coordinates to determine the current target. This is okay for virtual widgets like the table, but should be avoided for *all* other widgets.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6454</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-11-24 16:46:33 +0100</bug_when>
+            <thetext>This is a question for Christian Boulanger who wrote the TreeVirtual D&amp;D mixin.  I&#39;ve never even used it and I prefer to keep my hands on the keyboard and never touch a mouse if possible :-) so I&#39;m probably the wrong person to look into this.
+
+I&#39;ve added Christian to the CC list on this bug so he can comment or look into it.
+(Oops that didn&#39;t work.  I&#39;ll forward it to him)
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6459</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2008-11-25 10:59:32 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; This is a question for Christian Boulanger who wrote the TreeVirtual D&amp;D mixin.
+&gt;  I&#39;ve never even used it and I prefer to keep my hands on the keyboard and
+&gt; never touch a mouse if possible :-) so I&#39;m probably the wrong person to look
+&gt; into this.
+&gt; 
+&gt; I&#39;ve added Christian to the CC list on this bug so he can comment or look into
+&gt; it.
+&gt; (Oops that didn&#39;t work.  I&#39;ll forward it to him)
+&gt; 
+&gt; Derrell
+&gt; 
+
+Hi, since there was never any interest from the core developers in supporting drag &amp; drop in virtual widgets, I have simply patched the qooxdoo code in my working copy as follows:
+
+        qx.ui.core.Widget.prototype.supportsDrop = function(dragCache)
+        {
+          var supportsDropMethod = this.getSupportsDropMethod();
+
+          if (supportsDropMethod !== null) {
+            return supportsDropMethod.call(this, dragCache);
+          }
+
+          return true;
+        };
+
+        qx.event.handler.DragAndDropHandler.prototype.getDropTarget = qx.core.Variant.select(&quot;qx.client&quot;,
+        {
+          &quot;gecko&quot; : function(e)
+          {
+            var vCurrent = e.getTarget();
+
+            //        if (vCurrent == this.__dragCache.sourceWidget) {
+            //          vCurrent = qx.event.handler.EventHandler.getTargetObject(qx.html.ElementFromPoint.getElementFromPoint(e.getPageX(), e.getPageY()));
+            //        } else {
+            vCurrent = qx.event.handler.EventHandler.getTargetObject(null, vCurrent);
+
+            //        }
+            while (vCurrent != null)
+            {
+              if (!vCurrent.supportsDrop(this.__dragCache)) {
+                return null;
+              }
+
+              if (this.supportsDrop(vCurrent)) {
+                return vCurrent;
+              }
+
+              vCurrent = vCurrent.getParent();
+            }
+
+            return null;
+          },
+[...]
+
+With this patch, drag &amp; drop works very well with the MDragAndDropSupport mixin in the treeVirtual widget. Unless there is real interest from the core devs to support d&amp;d in virtual widgets, I won&#39;t put any more effort into this, though. 
+
+Cheers, Christian
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6460</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2008-11-25 11:04:23 +0100</bug_when>
+            <thetext>Hi, just realized my last comment might sound unfriendly --- please don&#39;t get me wrong: I don&#39;t mind to live with the patch, I know that you cannot support everything and d&amp;d in treevirtual was never requested by many people.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6609</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-12-03 11:34:43 +0100</bug_when>
+            <thetext>to Alex. Could you extract that info to the wiki or code documentation? For the framework there should be a more general solution as described in bug #1215.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6717</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-12-04 18:15:51 +0100</bug_when>
+            <thetext>Added to the snippet section.
+
+-&gt; http://qooxdoo.org/documentation/0.8/snippets#enabling_drag_and_drop_in_virtual_widgets</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36245</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:18:52 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

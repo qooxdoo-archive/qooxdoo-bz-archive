@@ -1,0 +1,215 @@
+<bug>
+          <bug_id>6061</bug_id>
+          
+          <creation_ts>2012-01-20 13:33:00 +0100</creation_ts>
+          <short_desc>Basic loader incompatible with node 0.6.5 (require.paths is removed)</short_desc>
+          <delta_ts>2014-03-03 15:21:05 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.6.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tristan Koch">tristan.koch</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>daniel.wagner</cc>
+    
+    <cc>vladimir.dobriakov</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>28327</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2012-01-20 13:33:09 +0100</bug_when>
+            <thetext>$ node -v
+v0.6.5
+
+$ node source/script/basic.js 
+
+node.js:201
+        throw e; // process.nextTick error, or &#39;error&#39; event on first tick
+              ^
+Error: require.paths is removed. Use node_modules folders, or the NODE_PATH environment variable instead.
+    at Function.&lt;anonymous&gt; (module.js:376:11)
+    at /Users/trkoch/Code/qx-test/basic/source/script/basic.js:27:14
+    at Object.&lt;anonymous&gt; (/Users/trkoch/Code/qx-test/basic/source/script/basic.js:191:2)
+    at Module._compile (module.js:432:26)
+    at Object..js (module.js:450:10)
+    at Module.load (module.js:351:31)
+    at Function._load (module.js:310:12)
+    at Array.0 (module.js:470:10)
+    at EventEmitter._tickCallback (node.js:192:40)
+
+A quick and dirty work-around is to symlink node_modules to the current directory.
+
+See tool/data/generator/basic.loader.js.
+
+$ ln -s . node-modules</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28328</commentid>
+            <who name="Vladimir Dobriakov">vladimir.dobriakov</who>
+            <bug_when>2012-01-20 15:07:01 +0100</bug_when>
+            <thetext>Creating a symlink 
+
+    $ ln -s . node-modules
+
+did not help.
+
+I have to comment out the 
+
+    require.paths.push(&#39;.&#39;);  // add curdir
+
+line in the generated code after every generation.
+
+I am using node v0.7.0-pre</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28329</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2012-01-20 15:36:51 +0100</bug_when>
+            <thetext>Yes, forgot to add that
+
+require.paths.push(&#39;.&#39;);
+
+needs to be commented out. The symlink makes sure that the script files in the current path can be found by require(),</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28330</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-01-20 17:13:33 +0100</bug_when>
+            <thetext>I&#39;ve commited a tentative patch, please check if it is working for the newer 
+node versions.
+
+I think we can get away with just using relative paths to &#39;require&#39;, which is 
+ostensibly supported across old and newer node versions. This allows us to 
+remove the require.path call. Rather, I adjusted the basic skeleton&#39;s 
+config.json to make uris relative to the loader script. This allowed me to also 
+remove the ugly uri patching further down in the loader, before calling 
+&#39;require(p)&#39;.
+
+Now the only thing we have to make sure is that all the uris actually start 
+with &quot;.&quot;, since this is what makes Node load the uri relative to the loader 
+script.
+
+master: 4ce9918</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28331</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2012-01-20 17:22:29 +0100</bug_when>
+            <thetext>I like that. And looking at existing node projects, using relative paths seems to be the most popular approach…</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28332</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2012-01-20 17:49:29 +0100</bug_when>
+            <thetext>Adapted the script paths for the Test Runner&#39;s source-basic and build-basic jobs  with 18a75def on master and cc019b3c on branch_1_6</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28333</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-01-20 18:02:37 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Adapted the script paths for the Test Runner&#39;s source-basic and build-basic
+&gt; jobs  with 18a75def on master and cc019b3c on branch_1_6
+
+Does this work on branch? I&#39;ve commited my changes only on master ... ?!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28334</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-01-20 18:18:45 +0100</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; I&#39;ve commited a tentative patch, please check if it is working for the newer 
+&gt; node versions.
+
+CAVEAT: This breaks Rhino ... :..(</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28340</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2012-01-23 08:53:26 +0100</bug_when>
+            <thetext>Sorry, my mistake. Reverted the commit.
+
+(In reply to comment #6)
+&gt; Does this work on branch? I&#39;ve commited my changes only on master ... ?!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28341</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-01-23 12:01:24 +0100</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; (In reply to comment #3)
+&gt; &gt; I&#39;ve commited a tentative patch, please check if it is working for the 
+newer  &gt; node versions.
+&gt; 
+&gt; CAVEAT: This breaks Rhino ... :..(
+
+Rhino interprets all relative arguments to load() as relative to the current 
+working directory (not the containing script file, as with node&#39;s require()). 
+The issue now is that there is seemingly no way to infer the relation between 
+the process&#39; cwd and the script directory. So in an invocation like 
+
+java -cp path/to/js.jar org.mozilla.javascript.tools.shell.Main 
+source/script/foo.js
+
+there is no way of getting at the &quot;source/script&quot; part, which would be 
+necessary to patch the generated URIs when loading further scripts. So you have 
+a fixed &quot;application root&quot; no matter what. Up until now, this was the skeleton 
+root directory.
+
+After talking with Daniel we&#39;ve settled to make the script directory the 
+&quot;application root&quot;, to run the application from with Rhino (so you have to &#39;cd&#39; 
+to this directory before you can run it). This is slightly less convenient when 
+developing from the skeleton root (script/../..), but is more consistent when 
+you copy the build version around.
+
+Changed the manual to reflect that:
+
+master: 0b775ea</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29720</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-06-11 16:48:30 +0200</bug_when>
+            <thetext>Applied the same changes to branch as previously to master, which haven&#39;t had 
+any negative review.
+
+1.6.x: 8886002</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37152</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:05 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

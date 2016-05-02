@@ -1,0 +1,166 @@
+<bug>
+          <bug_id>5951</bug_id>
+          
+          <creation_ts>2011-12-14 21:43:00 +0100</creation_ts>
+          <short_desc>Error using qx-oo under Appcelerator Titanium on Android V8</short_desc>
+          <delta_ts>2011-12-16 07:49:34 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>1.6</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Dietrich Streifert">dietrich.streifert</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>thron7</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>28007</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2011-12-14 21:43:33 +0100</bug_when>
+            <thetext>During load of the qx-oo.js (or qx-oo-noopt.js) I&#39;m
+getting an error &quot;Object #&lt;Object&gt; has no method &#39;extendClass&#39;&quot;  in
+qx.Bootstrap.define. Here ist the error message using qx-oo-noopt.js
+from http://demo.qooxdoo.org/current/framework/qx-oo-noopt.js :
+
+E/TiJSError(  686): (main) [1120424,1122319] ----- Titanium Javascript
+Runtime Error -----
+E/TiJSError(  686): (main) [1,1122320] - In lib/qx-oo-noopt.js:129,14
+E/TiJSError(  686): (main) [3,1122323] - Message: Uncaught TypeError:
+Object #&lt;Object&gt;   has no method &#39;extendClass&#39;
+E/TiJSError(  686): (main) [0,1122323] - Source:
+this.extendClass(clazz, clazz, config.extend, name, basename);
+E/V8Exception(  686): Exception occurred at lib/qx-oo-noopt.js:129:
+Uncaught TypeError: Object #&lt;Object&gt;   has no method &#39;extendClass&#39;
+
+This is caused bin qx.Bootstrap.define:
+
+         if (config.extend) {
+           this.extendClass(clazz, clazz, config.extend, name, basename);
+         } 
+
+I&#39;ve startet a debugger session in Titanium Studio and set a breakpoint at line 3 of qx-oo-noopt.js which is the first instruction allowing to do so. Now I&#39;ve been stepping through the code while evaluating &quot;config&quot;, &quot;config.members&quot; and &quot;config.extend&quot; in the expressions window.
+
+config is still not defined until stepping into line 113 of qx-oo-noopt.js where it becomes defined in the current context because it is passed as parameter #2 to define in
+
+    qx.Bootstrap.define(&quot;qx.Bootstrap&quot;,
+    {
+        statics : .....
+
+At this line config.members is not defined as expected, but config.extend IS DEFINED and holds a function reference.
+
+From my undestanding of the qx-oo bootstrap code config.extend should be undefined at this point.
+
+A simple evaluation of
+
+    (new Object).extend
+
+shows that extend is a function reference.
+
+So I&#39;ve restarted the debugger and found that Object.extend is defined by default before qx-oo is loaded. 
+
+I&#39;ve created an issue in the titanium jira as well under http://jira.appcelerator.org/browse/TC-478</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28009</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-12-15 08:10:29 +0100</bug_when>
+            <thetext>Thanks for that good investigation! But as it is a function reference, I don&#39;t think we can do much about it currently because the keys which are allowed as extend are also functions (class references). :(
+I have no idea how we could get that fixed expect renaming the extend key and thats not really an option because it would change the whole framework.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28013</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2011-12-15 09:00:40 +0100</bug_when>
+            <thetext>Here is the additional post in the Q&amp;A section at appcelerator developer center:
+http://developer.appcelerator.com/question/129475/v8-runtime-defines-objectprototypeextend-which-may-break-compatibility-to-javascript-framework
+
+While hoping for answers and a fix from appcelerator my workaround will be to explicitly set extend to null on every class definition that does not derive from another class.
+
+There should not be a lot of places (10+) to change.
+
+Another possibility would be to rename &quot;extend&quot; to &quot;extending&quot; (&quot;extends&quot; is a reserved keyword in ECMvia search and replace put that is dangerous without parsing the structure.
+
+Does the qooxdoo toolchain require &quot;extend&quot; to be named this way or doesn&#39;t it matter?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28014</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2011-12-15 10:33:16 +0100</bug_when>
+            <thetext>Evaluating the the following code
+
+Object.prototype.extend.toString();
+
+in the the debugging session gives the following source code:
+
+function (other) {
+      if (!other) return;
+	
+      for (var name in other) {
+         if (other.hasOwnProperty(name)) {
+            this[name] = other[name];
+         }
+      }
+
+      return this;
+   }
+
+The code is obviously used to merge properties of &quot;other&quot; the current object instance. Where does it come from?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28019</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-12-15 16:50:28 +0100</bug_when>
+            <thetext>Upstream Appcelerator issue: http://jira.appcelerator.org/browse/TIMOB-6684</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28020</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-12-15 16:53:12 +0100</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Thanks for that good investigation! But as it is a function reference, I don&#39;t
+&gt; think we can do much about it currently because the keys which are allowed as
+&gt; extend are also functions (class references). :(
+
+One issue are also static classes in the framework which are detected by the *absence* of the &#39;extend&#39; key. This would never be true under this Titanium platform.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28021</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2011-12-16 07:49:34 +0100</bug_when>
+            <thetext>And already fixed in Titanium SDK!
+
+The fix is in https://github.com/appcelerator/titanium_mobile/commit/80547393e763f38e344c33504ad80326a61f546f and will make it into the upcomming GA releas of Titanium SDK 1.8.0.1 on monday!
+
+I&#39;ve changed the status to resolved - invalid because this was not the fault of qooxdoo.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

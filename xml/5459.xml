@@ -1,0 +1,1019 @@
+<bug>
+          <bug_id>5459</bug_id>
+          
+          <creation_ts>2011-07-28 16:22:00 +0200</creation_ts>
+          <short_desc>compile-options/optimize documentation is wrong</short_desc>
+          <delta_ts>2014-03-03 15:26:19 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>website</product>
+          <component>documentation</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          <bug_file_loc>http://manual.qooxdoo.org/1.5.x/pages/tool/generator_config_ref.html#compile-options</bug_file_loc>
+          
+          
+          <priority>P3</priority>
+          <bug_severity>trivial</bug_severity>
+          <target_milestone>1.6</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="John Spackman">john.spackman</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26298</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2011-07-28 16:22:00 +0200</bug_when>
+            <thetext>In the docs for compile-options, the optimize property is documented ascompile-options/code/optimize where it is actually compile-options/optimize.
+
+The page with the problem is here:
+   http://manual.qooxdoo.org/1.5.x/pages/tool/generator_config_ref.html#compile-options
+
+It links to a special section which is correct, here:
+
+http://manual.qooxdoo.org/1.5.x/pages/tool/generator_config_articles.html#pages-tool-generator-config-articles-optimize-key</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26309</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-07-29 08:21:42 +0200</bug_when>
+            <thetext>Oh btw. thanks for the report. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26313</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-07-29 09:42:15 +0200</bug_when>
+            <thetext>I don&#39;t know how you come to your conclusion, but this is certainly not true. compile-options/code/optimize is the correct path to the property. You should report your observations.
+
+The special section for &quot;optimize&quot; does not contradict this, as &quot;subkey&quot; should be taken as transitive, including direct subkeys, sub-subkeys, sub-sub-subkeys asf.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26317</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2011-07-29 12:18:06 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; I don&#39;t know how you come to your conclusion, but this is certainly not true.
+&gt; compile-options/code/optimize is the correct path to the property. You should
+&gt; report your observations.
+
+My observations are that setting the key does not to work.  I thought the docs were self evident so I didn&#39;t try to put together a reproducable test case, but here it is:
+
+Create a brand new app with create-application and do generate build, I get a script file that is 588,495 bytes long.  If I edit config.json to that jobs/build/compile-options/code/optimize is [ &quot;basecalls&quot; ] and do generate build, I get a file that is the same size; if I move optimize to be a direct subkey of compile-options I get the same size.  
+
+Only if I set the OPTIMIZE macro to [ &quot;basecalls&quot; ] do I get a different size, 720,756 bytes.  
+
+&gt; The special section for &quot;optimize&quot; does not contradict this, as &quot;subkey&quot; should
+&gt; be taken as transitive, including direct subkeys, sub-subkeys, sub-sub-subkeys
+&gt; asf.
+
+At the very least this is not clear and the documentation appears to be contradictory at the moment; I don&#39;t think that &quot;sub-key&quot; translates to &quot;any descendant, no matter how far removed&quot; and given that the generator is likely to be very specific about whether something is a subkey or sub-subkey it is misleading if the documentation is non-specific.
+
+The generator gives no feedback about whether keys specified are valid or not which means that the only way to confirm something is to observe the results - but this is not always helpful, especially when all you can observe is that (after digging around to try and find ways to check) the setting you just tried does not work for some unknown reason.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26319</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-07-29 14:33:16 +0200</bug_when>
+            <thetext>John,
+
+(In reply to comment #3)
+&gt; My observations are that setting the key does not to work.  
+
+But there is also the chance that you are doing something wrong, no?!
+
+&gt; 
+&gt; Create a brand new app with create-application and do generate build, I get a 
+script file that is 
+&gt; 588,495 bytes long.  If I edit config.json to that 
+jobs/build/compile-options/code/optimize is [ 
+&gt; &quot;basecalls&quot; ] and do generate build, I get a file that is the same size;
+
+What you didn&#39;t take into account is *value merging* [1]. In short, as 
+&quot;optimize&quot; has a complex value type, values of the same key of the parent jobs 
+are merged into it. If your current job inherits from other jobs with a 
+&#39;compile-options&#39; key, their corresponding values will be merged into yours.
+
+Chances are your current job was extending &#39;build-script&#39; (either directly or 
+by way of name shadowing), so the base.json &#39;build-script&#39; job&#39;s optimize 
+settings where merged with yours. As base.json sets all available optimize 
+options, adding all to some still results in all. That&#39;s why it never changed.
+
+The cure (also explained in [1]) is to prefix &#39;optimize&#39; with &#39;=&#39;, to block 
+additional values from parent jobs.
+
+[1] 
+http://manual.qooxdoo.org/1.5.x/pages/tool/generator_config_articles.html#extending-jobs 
+
+&gt;  if I move optimize to be a direct 
+&gt; subkey of compile-options I get the same size.  
+
+This could have convinced you that putting the key as a direct subkey doesn&#39;t 
+improve the situation, so is unlikely to be &quot;better&quot; than the other way.
+
+&gt; 
+&gt; Only if I set the OPTIMIZE macro to [ &quot;basecalls&quot; ] do I get a different 
+size, 720,756 bytes.  
+
+The advantage of the macro is that base.json&#39;s build-script job honors it, so 
+you are effectively *replacing* the default settings with the macro in this 
+job. (Tip: Try setting OPTIMIZE to e.g. [&quot;basecalls&quot;, &quot;variables&quot;] and 
+compile-options/code/optimize in your job to [&quot;strings&quot;], and see what happens 
+:).
+
+&gt; At the very least this is not clear and the documentation appears to be 
+contradictory at the 
+&gt; moment; I don&#39;t think that &quot;sub-key&quot; translates to &quot;any descendant, no matter 
+how far removed&quot; 
+&gt; and given that the generator is likely to be very specific about whether 
+something is a subkey or 
+&gt; sub-subkey it is misleading if the documentation is non-specific.
+
+The configuration reference [2] should be considered authoritative, so that 
+other parts of the manual, like the configuration articles, can be more 
+relaxed. I thought everybody would check back to the reference if in doubt. 
+(Personally, I don&#39;t like word constructs like &quot;sub-subkey&quot;, but you might be 
+right that &quot;subkey&quot; does not allow for a transitive interpretation).
+
+[2] http://manual.qooxdoo.org/1.5.x/pages/tool/generator_config_ref.html
+
+&gt; The generator gives no feedback about whether keys specified are valid or not 
+which means that 
+
+This is correct for sub*keys. Top-level and job-level keys are warned about if 
+unknown. But this also allows you to include own or temporary keys in a 
+particular config key without getting bothered.
+
+&gt; the only way to confirm something is to observe the results - but this is not 
+always helpful, 
+&gt; especially when all you can observe is that (after digging around to try and 
+find ways to check) the 
+&gt; setting you just tried does not work for some unknown reason.
+
+If config changes do not meet your expectations, there is actually a good way 
+to check what&#39;s going on: the generator&#39;s &#39;-w&#39; command line flag. This would 
+have allowed you to see that eventually your &#39;optimize&#39; key always holds the 
+full array of possible optimizations.
+
+Using &#39;-w&#39;, after a lot of noise from including and expanding various 
+configuration files, the generator will print out the entire job definition, 
+with everything expanded, that is actually going to be run, just before 
+starting the job with its normal messages. This expanded job definition is 
+usually all you have to look at, to see if your changes had the desired effect. 
+And please trust the config reference for all semantic aspects when 
+interpreting it (The reference page can have bugs, too, but is probably the 
+best-maintained page in the entire tools section of the manual).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26322</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2011-07-29 16:15:00 +0200</bug_when>
+            <thetext>&gt; What you didn&#39;t take into account is *value merging* [1]. 
+
+I had guessed as much, given that the OPTIMIZE macro does do the work, but the docs say that the config key should work and it doesn&#39;t unless you are intimately familiar with what the contents of base.json - and when reading the docs about compile-options, nowhere does it say that &quot;oh, btw, this key can only be changed if you put it in a job called X&quot;.  
+
+&gt; Chances are your current job was extending &#39;build-script&#39; (either directly or 
+&gt; by way of name shadowing), 
+
+In a brand new app from create-application, the created config.json includes an example of shadowing the &quot;build&quot; job to set &quot;compile-options/code/format&quot;, and following that clue it was &quot;build&quot; that I changed; it seems completely non-intuitive for it to NOT be ok to add an optimize that looks EXACTLY like the example in the documentation when the created skeleton uses exactly that mechanism.
+
+&gt; The cure (also explained in [1]) is to prefix &#39;optimize&#39; with &#39;=&#39;, to block 
+&gt; additional values from parent jobs.
+
+OK, and I have to admit I didn&#39;t know that and that&#39;s my fault - although I can understand why merge would be the default for keys with subkeys, but not so much for arrays.
+
+OTOH, that&#39;s one sentence in a 7,000+word document, and it still prevents copying the compile-options key from the docs and pasting it into config.json...instead, some bits will work and some bits won&#39;t, unless you know to go back and add the &quot;=&quot; on the relevant parts.
+
+&gt; The configuration reference [2] should be considered authoritative, so that 
+&gt; other parts of the manual, like the configuration articles, can be more 
+&gt; relaxed.
+
+Hm - if saying &quot;is a subkey of compile-options...&quot; is much more relaxed than saying &quot;is a subkey of compile-options/code...&quot;
+
+&gt; Using &#39;-w&#39;, after a lot of noise 
+
+A *lot* of noise - and which still does not say whether the key is correct or not, just what has been merged.
+
+Misinterpretting how to set optimize is my issue, not yours and although I still think there is an issue with the article&#39;s &quot;subkey&quot; it&#39;s hardly a big thing; but I&#39;ve long thought that there is a general issue where the generator can be non-intuitive to configure and use. 
+
+Of course the&quot;=&quot; was in the docs and you can legitimately say that I should have known about it but it&#39;s intensely frustrating (and time consuming) to have something work or not work based on a tiny detail that does not come up that often and which is easily overlooked.  I&#39;ve been using the generator since it&#39;s first version (when I had to hack the source to get uris to work) and this is the first time I&#39;ve come across this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26326</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-07-29 19:31:59 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; &gt; What you didn&#39;t take into account is *value merging* [1]. 
+&gt; 
+&gt; I had guessed as much, given that the OPTIMIZE macro does do the
+&gt; work, but the docs say that the config key should work and it doesn&#39;t
+
+It does *in the context* of the configuration system. It doesn&#39;t if you want to 
+cherry-pick and ignore the rest of it.
+
+&gt; unless you are intimately familiar with what the contents of
+&gt; base.json - and when reading the docs about compile-options, nowhere
+&gt; does it say that &quot;oh, btw, this key can only be changed if you put
+&gt; it in a job called X&quot;.  
+
+That&#39;s true. But the whole system is too complex to try to cover everything in 
+every place. The reference page is written as if you were defining everything 
+from scratch, no include files or job extending. I thought that was a sane 
+approach to establish the basic meaning of the keys.
+
+&gt; 
+&gt; &gt; Chances are your current job was extending &#39;build-script&#39; (either
+&gt; &gt; directly or by way of name shadowing), 
+&gt; 
+&gt; In a brand new app from create-application, the created config.json
+&gt; includes an example of shadowing the &quot;build&quot; job to set
+&gt; &quot;compile-options/code/format&quot;, and following that clue it was
+&gt; &quot;build&quot; that I changed; it seems completely non-intuitive for it to
+&gt; NOT be ok to add an optimize that looks EXACTLY like the example in
+&gt; the documentation when the created skeleton uses exactly that
+&gt; mechanism.
+
+Well, for one thing the skeleton uses compile-options/code/format for a reason. 
+It has a scalar value, and hence will not be overridden by any key of a parent 
+job :).
+
+For another, once you comment in the &quot;build&quot; job from the skeleton&#39;s 
+config.json, you get a warning in the console on running the generator that you 
+are &quot;shadowing&quot; the build job. This alerts you to the fact that there is job 
+inheritance going on, which might get you start thinking about how these jobs 
+interact.
+
+Now, at this point you might turn to the manual and search for &quot;shadowing&quot; 
+which would bring you to the &quot;extend&quot; article that details what is going on. 
+That at least was my hope.
+
+I realize that there is no single 50 line document I could point somebody to, 
+saying read this and you&#39;re all set. We have a good coverage of reference 
+material about the tool chain in the manual, but still little user guide 
+material. But honestly, I still don&#39;t have a good clue about how to approach 
+this, I don&#39;t know how to convey it efficiently.
+
+&gt; 
+&gt; &gt; The cure (also explained in [1]) is to prefix &#39;optimize&#39; with &#39;=&#39;,
+&gt; &gt; to block additional values from parent jobs.
+&gt; 
+&gt; OK, and I have to admit I didn&#39;t know that and that&#39;s my fault -
+&gt; although I can understand why merge would be the default for keys
+&gt; with subkeys, but not so much for arrays.
+
+You could argue about this design decision. My rational was along the line that 
+an array is a container, much like a map, and that values in a container need 
+intelligent merging. You might know the &quot;library&quot; key, which is an array, too, 
+and allows you to accumulate the libraries considered for the current job. If 
+you want to use an additional library or contrib, you just give its entry in 
+your config.json. But the framework and your own app need to be listed, too, 
+but these come from base.json. This wouldn&#39;t be possible without merging of 
+arrays. You would have to re-type all necessary libraries just to add one, and 
+this would require this deep familiarity with base.json and application.json 
+that you rightly want to avoid.
+
+&gt; 
+&gt; OTOH, that&#39;s one sentence in a 7,000+word document, and it still
+&gt; prevents copying the compile-options key from the docs and pasting
+&gt; it into config.json...instead, some bits will work and some bits
+&gt; won&#39;t, unless you know to go back and add the &quot;=&quot; on the relevant
+&gt; parts.
+
+Yes. The generator configuration is nothing you can get by with copy-and-paste. 
+You need to understand the basic mechanics of job inheritance and merging. And 
+I wouldn&#39;t know how to avoid that. To protect people from too much exposure to 
+those things, there are the macros. Many of them are just there to hide the 
+configuration complexity, OPTIMIZE being a prominent example.
+
+&gt; 
+&gt; &gt; Using &#39;-w&#39;, after a lot of noise 
+&gt; 
+&gt; A *lot* of noise - and which still does not say whether the key is
+&gt; correct or not, just what has been merged.
+
+It gets you exactly to the point where you can match the printed job config 
+against the manual reference. This is where what you see is what you get.
+
+&gt; 
+&gt; Misinterpretting how to set optimize is my issue, not yours and
+&gt; although I still think there is an issue with the article&#39;s &quot;subkey&quot;
+&gt; it&#39;s hardly a big thing; but I&#39;ve long thought that there is a
+&gt; general issue where the generator can be non-intuitive to configure
+&gt; and use. 
+
+I totally agree. I just wouldn&#39;t know, given time and resource constraints, how 
+to ameliorate it.
+
+&gt; 
+&gt; Of course the&quot;=&quot; was in the docs and you can legitimately say that I
+&gt; should have known about it but it&#39;s intensely frustrating (and time
+&gt; consuming) to have something work or not work based on a tiny detail
+&gt; that does not come up that often and which is easily overlooked.
+&gt; I&#39;ve been using the generator since it&#39;s first version (when I had
+&gt; to hack the source to get uris to work) and this is the first time
+&gt; I&#39;ve come across this.
+
+I understand perfectly. There are just things in this world that bite back if 
+treated carelessly, and I&#39;m afraid the generator configuration is one of them. 
+
+There are people that never look at it, just invoking the jobs as they are 
+given with the skeletons. Then there are those that need to tweak simple, 
+common things, for which we have macros. And then there are those that need to 
+tweak special things, and have to actually edit job definitions. Those have to 
+find out *which* keys to add or modify (not a trivial task in itself), have to 
+be conscious about the job they&#39;re extending/shadowing (for this you need to 
+understand the &#39;extend&#39; key and shadowing by name), and have to protect keys 
+they don&#39;t want to be merged (for that you need to understand job merging). 
+
+I sort of eat, dream and breathe generator configs, so I&#39;m most likely 
+routine-blinded. I would be very happy to hear practical suggestions on how to 
+improve information in the manual, or improve the ways to find it.
+
+We have recently added a tool chain tutorial, but this only covers the very 
+basics of job configuration. We&#39;re thinking of adding an advanced tutorial 
+which could go more into the intricacies of job merging. The question is: Would 
+you read it?!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26327</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2011-07-29 20:48:41 +0200</bug_when>
+            <thetext>&gt; Well, for one thing the skeleton uses compile-options/code/format for a reason. 
+&gt; It has a scalar value, and hence will not be overridden by any key of a parent 
+&gt; job :).
+
+sure - but therein lies the source of confusion, ie sometimes a property is seen as a finite value like a scalar, and sometimes as a container like the libraries key.  It&#39;s all about how you interpret the property, not the value.  How merging containers works is all perfectly logical when you work it through but perception isn&#39;t like that.
+
+&gt; Now, at this point you might turn to the manual and search for &quot;shadowing&quot; 
+&gt; which would bring you to the &quot;extend&quot; article that details what is going on. 
+&gt; That at least was my hope.
+
+a good idea but I don&#39;t think it works that way - if you&#39;ve been using Qx for a while you won&#39;t necessarly go back to re-read the docs in full again even though the documentation has massively increased over the past few years; when the generator first came out (or if you&#39;re a newbie today), there&#39;s elements of suffering from information overload and you might not appreciate the finer details anyway.  In any case, the alternative argument is that with the terms shadowing/extending it&#39;s easy to assume a parallel to writing code where the derived class takes precedence always and has to explicitly include the parent class.  Either way it&#39;s open to interpretation.
+
+I&#39;ve just been reading (well, skimming) base.json and it seems that most places an array is used it really is a list aka container, so perhaps optimize is an exception; if optimize became an object instead of an array, then it would be easy and natural to turn on or off various optimisations, eg optimize: {basecalls:true, string: false }.  On the rare occasions I want to turn off an optimisation, it&#39;s usually just one thing - usually privates, sometimes strings.
+
+&gt; I sort of eat, dream and breathe generator configs, so I&#39;m most likely 
+&gt; routine-blinded. I would be very happy to hear practical suggestions on how to 
+&gt; improve information in the manual, or improve the ways to find it.
+
+If the config.json was validated that would be a really good thing - because you get no feedback if you make a mistake, even a typo can throw you out.  If there was an error in an archived email or there&#39;s a document that could be interpreted in more than one way (and there is always the possibility of an error in the documentation), there is no confidence that the generator is doing what you think it&#39;s doing and that leads to trial and error to try and test and eliminate possibilities.
+
+&gt; We have recently added a tool chain tutorial, but this only covers the very 
+&gt; basics of job configuration. We&#39;re thinking of adding an advanced tutorial 
+&gt; which could go more into the intricacies of job merging. The question is: Would 
+&gt; you read it?!
+
+An advanced tutorial in merging object definitions?  On the one hand, you couldn&#39;t dismiss such a tutorial out of hand because it might tell you something crucial (like &quot;=&quot; prefix) but that&#39;s not a great title and you can&#39;t read everything just in case there&#39;s a little gem in there; my first question would be &quot;why should I read it?  what will it teach me to do?&quot;
+
+But honestly, if I had a day of your time and could assign anything I wanted, I&#39;d ask for the generator to validate more and document less.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26335</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-01 11:28:09 +0200</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; sure - but therein lies the source of confusion, ie sometimes a property is 
+seen as a finite value like a scalar, and sometimes as a container like the 
+libraries key.  It&#39;s all about how you interpret the property, not the value.  
+How merging containers works is all perfectly logical when you work it through 
+but perception isn&#39;t like that.
+
+Mh, I don&#39;t get this. It&#39;s usually crystal-clear if a property takes a scalar 
+(ie. string, number, boolean, null) value, or a complex value (list, map). You 
+just have to look it up in the config reference.
+
+&gt; 
+&gt; &gt; Now, at this point you might turn to the manual and search for &quot;shadowing&quot; 
+&gt; &gt; which would bring you to the &quot;extend&quot; article that details what is going 
+on. 
+&gt; &gt; That at least was my hope.
+&gt; 
+&gt; a good idea but I don&#39;t think it works that way - if you&#39;ve been using Qx for 
+a while you won&#39;t necessarly go back to re-read the docs in full again
+
+Well, you probably wouldn&#39;t read an entire page top to bottom. But searching 
+should lead you to the relevant sections, and then it shouldn&#39;t be too much of 
+a challenge to read, even re-read. that sections. I&#39;m constantly reviewing 
+documentation for the software I use, re-reading sections I have read before, 
+as my experience, my question or my point of view have changed. I don&#39;t know 
+how it could work any other way.
+
+&gt;  when the generator first came out (or if you&#39;re a newbie today), there&#39;s 
+elements of suffering from information overload
+
+This is the point where I&#39;m interested in feedback how to provide a better 
+structure / navigation to find the information you really need.
+
+&gt; and you might not appreciate the finer details anyway.
+
+But that&#39;s the normal process, isn&#39;t it?! You firs skim most of the 
+information, trying to get an overview and an orientation. Later, you come back 
+to certain sections to revise them and then get the &quot;finer details&quot;.
+
+&gt;  In any case, the alternative argument is that with the terms 
+shadowing/extending it&#39;s easy to assume a parallel to writing code where the 
+derived class takes precedence always and has to explicitly include the parent 
+class.  Either way it&#39;s open to interpretation.
+
+Agreed. But the good news is that the parallel to writing code gets you along 
+half the way. And then you need to adjust and refine this to get full 
+comprehension.
+
+&gt; 
+&gt; I&#39;ve just been reading (well, skimming) base.json and it seems that most 
+places an array is used it really is a list aka container, so perhaps optimize 
+is an exception; if optimize became an object instead of an array, then it 
+would be easy and natural to turn on or off various optimisations, eg optimize: 
+{basecalls:true, string: false }.  On the rare occasions I want to turn off an 
+optimisation, it&#39;s usually just one thing - usually privates, sometimes strings.
+
+I think this is actually a very good idea, and I opened a dedicated bug for it 
+(bug#5466).
+
+&gt; If the config.json was validated that would be a really good thing - because 
+you get no feedback if you make a mistake, even a typo can throw you out.
+
+Ok, maybe you are right in that flexibility is less interesting here (and less 
+taken advantage of anyway) then tight checking. There is already a bug for what 
+you describe (bug#4784).
+
+&gt; An advanced tutorial in merging object definitions?  On the one hand, you 
+couldn&#39;t dismiss such a tutorial out of hand because it might tell you 
+something crucial (like &quot;=&quot; prefix) but that&#39;s not a great title and you can&#39;t 
+read everything just in case there&#39;s a little gem in there; my first question 
+would be &quot;why should I read it? 
+
+Well, why did I bring it up in this context? I was thinking of ways to (better) 
+convey the information you were obviously lacking. I&#39;m not sure myself a 
+tutorial would be a good way to achieve that, because the issue at hand is 
+mostly about background knowledge. But I guess you can always wrap up knowledge 
+in a tutorial where you pretend it&#39;s about &quot;doing&quot; something. What will it 
+teach you to do? Make less mistakes? Waste less time? -  The general problem I 
+see with someone like you is to get you to actually *read* relevant sections of 
+the manual.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26340</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2011-08-01 13:13:12 +0200</bug_when>
+            <thetext>&gt; Mh, I don&#39;t get this. It&#39;s usually crystal-clear if a property takes a scalar 
+&gt; (ie. string, number, boolean, null) value, or a complex value (list, map). You 
+&gt; just have to look it up in the config reference.
+
+I did not mean that you can&#39;t tell if a key takes a scalar vs non-scalar.  I meant that the meaning of the key directs intuitive expectation - and my implication was that if you do not &quot;eat, breathe, and sleep&quot; generator configs it&#39;s easy to make a mistake.
+
+In this instance, it is unlikely (IMO) that successive config.json&#39;s would need to append to the optimize key and you would intuitively expect that the values you set are explicit and final, whereas with the library key this may not be the case.  IE the name and nature of the *key* directs the *intuitive* reaction.
+
+&gt; Well, you probably wouldn&#39;t read an entire page top to bottom. But searching 
+&gt; should lead you to the relevant sections, 
+
+searching for what?  &quot;using the config key but the generator ignores my value and gives no error or warning&quot;?  at what point do I start searching for &quot;=&quot;?  Should I start reading every document that could possibly be related top-to-bottom whenever I have a problem?
+
+&gt; I&#39;m constantly reviewing 
+&gt; documentation for the software I use, re-reading sections I have read before, 
+&gt; as my experience, my question or my point of view have changed. I don&#39;t know 
+&gt; how it could work any other way.
+
+Perhaps your workload is lighter than mine then - right now, I have around half a dozen major technologies directly associated with my current project (by major I mean ones that have a massive user base and therefore lots of docs and new features).  I really don&#39;t see how you could constantly re-read sections of, say, Oracle (which comes as a 400 Mb .zip file for documentation alone) just to remain familiar.
+
+Also, let&#39;s not loose sight of the needle and the haystack - one line of explanation in one 7,000+ word page out of the various generator pages to instruct the reader to be able to apply the single value of a key, where that key would be expected to take a single, explicit value!  Isn&#39;t it the case that the optimize key would *always* require the &quot;=&quot; prefix in order to be effective?
+
+&gt; &gt;  when the generator first came out (or if you&#39;re a newbie today), there&#39;s 
+&gt; elements of suffering from information overload
+&gt; 
+&gt; This is the point where I&#39;m interested in feedback how to provide a better 
+&gt; structure / navigation to find the information you really need.
+
+So more documentation and structure is the solution for a complex configuration, i.e. require the user to become *more* of an expert in the generator just to be able to achieve basic functionality?
+
+&gt; is an exception; if optimize became an object
+&gt; I think this is actually a very good idea, and I opened a dedicated bug for it 
+&gt; (bug#5466).
+
+Cool :)
+
+&gt; Ok, maybe you are right in that flexibility is less interesting here (and less 
+&gt; taken advantage of anyway) then tight checking. There is already a bug for what 
+&gt; you describe (bug#4784).
+
+Also cool :)
+
+&gt; &gt; An advanced tutorial in merging object definitions?  On the one hand, you 
+&gt; Well, why did I bring it up in this context? I was thinking of ways to (better) 
+&gt; convey the information you were obviously lacking. I&#39;m not sure myself a 
+
+If you write a tutorial the title of which is &quot;advanced ... job merging&quot;, after the discussion we&#39;ve just had, what would it include apart from how to use &quot;=&quot; prefix?  Job merging, to me, sounds like how the JSON keys are merged, and if there would be something in it beyond the &quot;normal&quot; merging of objects plus &quot;=&quot; prefix then yes I&#39;d read it.
+
+OTOH, while I have flicked through some of the tutorials, I have not read (for example) the twitter tutorial in any detail because I&#39;m pretty sure that I do not need to know it and it would be a waste of time for me to read it.  This is not to say that your tutorial would not be worth reading, just that you should be clear about what information you want to pass on.  
+
+&gt; tutorial would be a good way to achieve that, because the issue at hand is 
+&gt; mostly about background knowledge. But I guess you can always wrap up knowledge 
+&gt; in a tutorial where you pretend it&#39;s about &quot;doing&quot; something. 
+
+Actually I&#39;d rather have bullet points, I don&#39;t need it sugar coated I just want it to the point and to know that it&#39;s relevant.
+
+&gt; What will it 
+&gt; teach you to do? Make less mistakes? Waste less time? -  
+
+Just so long as it doesn&#39;t try and teach me something I already know or something that is not relevant.
+
+&gt; The general problem I 
+&gt; see with someone like you is to get you to actually *read* relevant sections of 
+&gt; the manual.
+
+What you really mean, surely, is that the problem with someone like me is that I don&#39;t re-read your documentation regularly, or every new page you produce.  Unless you have a photographic memory (or you eat, breathe, and sleep config) that&#39;s not a reasonable expectation.
+
+For &quot;someone like me&quot; (and probably 99% of the people on the lists) we do not have the luxury of studying the toolchain to such a high degree.  &quot;Someone like me&quot; would expect to be able to turn optimisation on or off with a single flick of a switch, and would not expect to need instruction on *how to use* the switch!!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26346</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-01 14:25:50 +0200</bug_when>
+            <thetext>(In reply to comment #9)
+&gt; searching for what?  &quot;using the config key but the generator ignores my value 
+and gives no error or warning&quot;?  at what point do I start searching for &quot;=&quot;?  
+Should I start reading every document that could possibly be related 
+top-to-bottom whenever I have a problem?
+
+You have to take this argument in context. In my other post (which I was 
+referring to here) I was saying that you (a) activate the &quot;build&quot; job in the 
+config, (b) subsequently get a &quot;Shadowing &#39;build&#39; job with local one&quot; warning 
+on the console, so that you (c) be alerted to interactions between local and 
+imported keys, so that you (d) search the documentation for &quot;shadowing&quot;, which 
+would lead you (e) to the longish &quot;extend&quot; article that covers all those 
+details, including &quot;=&quot; prefixes (which is, btw, a mere 1,000 words long).
+
+&gt; Perhaps your workload is lighter than mine then - right now, I have around 
+half a dozen major technologies directly associated with my current project (by 
+major I mean ones that have a massive user base and therefore lots of docs and 
+new features).  I really don&#39;t see how you could constantly re-read sections 
+of, say, Oracle (which comes as a 400 Mb .zip file for documentation alone) 
+just to remain familiar.
+
+I assume this plays also into the previous paragraph. I perfectly understand 
+your situation (although mine probably is lighter in this respect currently). I 
+just don&#39;t see a solution to it. My experience is, if you can&#39;t take time for 
+the technologies you deal with, you are doomed to work with your pre-existing 
+knowledge, modulo same-thing-in-new-disguise recognition. You can&#39;t pick up new 
+stuff (in the sense of conceptually new), and everything has to be a 
+re-iteration of what you already know.
+
+&gt; 
+&gt; So more documentation and structure is the solution for a complex 
+configuration, i.e. require the user to become *more* of an expert in the 
+generator just to be able to achieve basic functionality?
+
+That would be one possibility. Different abstractions would be another. I&#39;m 
+open to both.
+
+&gt; If you write a tutorial the title of which is &quot;advanced ... job merging&quot;, 
+after the discussion we&#39;ve just had, what would it include apart from how to 
+use &quot;=&quot; prefix?  Job merging, to me, sounds like how the JSON keys are merged, 
+and if there would be something in it beyond the &quot;normal&quot; merging of objects 
+plus &quot;=&quot; prefix then yes I&#39;d read it.
+
+No, the title would of course be &quot;advanced generator configuration&quot; :). And it 
+would include a configuration key that is subject to value merging, so readers 
+would need to understand merge semantics in order to come up with a working 
+configuration. Our discussion also revealed to me that the tutorial needs to 
+force people to use the documentation as part of the tutorial steps. It&#39;s not 
+so much about knowing details, it&#39;s about knowing where to look for them when 
+you need them. (I had some break-through experiences with complex software as 
+soon as I groked their documentation).
+
+&gt; Actually I&#39;d rather have bullet points, I don&#39;t need it sugar coated I just 
+want it to the point and to know that it&#39;s relevant.
+
+So we&#39;re back to &quot;more (other) documentation and structure&quot; :).
+
+&gt; What you really mean, surely, is that the problem with someone like me is 
+that I don&#39;t re-read your documentation regularly, or every new page you 
+produce.  Unless you have a photographic memory (or you eat, breathe, and sleep 
+config) that&#39;s not a reasonable expectation.
+
+Again, I think it&#39;s more about knowing where to look when you need it.
+
+&gt; 
+&gt; For &quot;someone like me&quot; (and probably 99% of the people on the lists) we do not 
+have the luxury of studying the toolchain to such a high degree.  &quot;Someone like 
+me&quot; would expect to be able to turn optimisation on or off with a single flick 
+of a switch, and would not expect to need instruction on *how to use* the 
+switch!!
+
+Hm, then what about renaming the key to something like &quot;optimizations&quot;?!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26365</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2011-08-02 11:49:17 +0200</bug_when>
+            <thetext>&gt; You have to take this argument in context. (a) activate the &quot;build&quot; job in the 
+&gt; config, (b) subsequently get a &quot;Shadowing &#39;build&#39; job with local one&quot; warning 
+&gt; on the console, so that you (c) be alerted to interactions between local and 
+&gt; imported keys, so that you (d) search the documentation for &quot;shadowing&quot;, which 
+&gt; would lead you (e) to the longish &quot;extend&quot; article that covers all those 
+&gt; details, including &quot;=&quot; prefixes (which is, btw, a mere 1,000 words long).
+
+When you generate a skeleton app, the sample app includes commented out sections for a contrib library and for setting compile-options/code; if you use either of these you get the warning.  Is it not the case that to make any such change to the config.json, including adding a contrib, the generator will output a &quot;warning&quot;?  You even get a warning about shadowing job that&#39;s not going to be use (eg a build job when you&#39;re doing a source build and vice versa).
+
+These &quot;warnings&quot; fire at the least change, and no matter how irrelevant, and therefore they rapidly cease to be warnings - they have no relevance to the content of the change, and they become standard messages.  They are, 99.9% of the time, redundant.
+
+But again, your point is that if something does not work as expected, require the user to read more and possibly you should document more.
+
+&gt; My experience is, if you can&#39;t take time for 
+&gt; the technologies you deal with, you are doomed to work with your pre-existing 
+&gt; knowledge, modulo same-thing-in-new-disguise recognition. You can&#39;t pick up new 
+&gt; stuff (in the sense of conceptually new), and everything has to be a 
+&gt; re-iteration of what you already know.
+
+So if I miss a single line in a document (which you wouldn&#39;t because you constantly re-read the documentation and would pick it up sooner rather than later) that&#39;s my fault, and there is no way the product is at fault if it is obscure and counter-intuitive?
+
+My experience is that if you make something intuitive and straightforward to use, there are less mistakes and higher productivity (and you&#39;ll get less support queries).
+
+It is also the case that even if you re-read the docs on a regular basis you can still make mistakes; whether it&#39;s a typo, or whatever.  Re-reading the docs won&#39;t help you you then, but a generator with config validation and specific warnings would.
+
+&gt; &gt; So more documentation and structure is the solution for a complex 
+&gt; configuration, i.e. require the user to become *more* of an expert in the 
+&gt; generator just to be able to achieve basic functionality?
+&gt; 
+&gt; That would be one possibility. Different abstractions would be another. I&#39;m 
+&gt; open to both.
+
+So the user either becomes more of an expert or you make the system more complicated and obscure?  And all this is preferable to have the generator simply (a) validate the configuration JSON, and (b) issue warnings at a finer level than at job level?
+
+&gt; Our discussion also revealed to me that the tutorial needs to 
+&gt; force people to use the documentation as part of the tutorial steps. 
+
+&quot;Force&quot; sounds very severe to me; if you really feel that way, perhaps you could put a big warning on the home page of the website that says &quot;WARNING: Do not use this product until you have read the entire manual, and are prepared to re-read the manual on a regular basis&quot;.
+
+The problem with the documentation which started this thread was that if you read the documentation, it is very easy to overlook a single, obscure, and non-intuitive point without which it is not possible to correctly interpret chunks of the rest of the manual.
+
+I&#39;m suggesting a two-part solution, validation and better/finer warnings (validation you&#39;d already suggested in bug 4784), both of which are beneficial now and in the future, for all types of users.  Again, no matter how often you re-read the docs, there&#39;s still the possibility of a typo or other error.
+
+&gt; &gt; Actually I&#39;d rather have bullet points, I don&#39;t need it sugar coated I just 
+&gt; want it to the point and to know that it&#39;s relevant.
+&gt; 
+&gt; So we&#39;re back to &quot;more (other) documentation and structure&quot; :).
+
+No - if you were going to produce a new tutorial or other documentation, then I prefer brevity over &quot;wrap up knowledge in a tutorial where you pretend it&#39;s about &quot;doing&quot; something&quot;
+
+&gt; Hm, then what about renaming the key to something like &quot;optimizations&quot;?!
+
+Are you referring to bug #5466?  I would have thought you&#39;d use the migration job.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26366</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-02 12:56:03 +0200</bug_when>
+            <thetext>(In reply to comment #11)
+&gt; When you generate a skeleton app, the sample app includes commented out 
+sections for a contrib library and for setting compile-options/code; if you use 
+either of these you get the warning.  Is it not the case that to make any such 
+change to the config.json, including adding a contrib, the generator will 
+output a &quot;warning&quot;?  You even get a warning about shadowing job that&#39;s not 
+going to be use (eg a build job when you&#39;re doing a source build and vice 
+versa).
+
+That&#39;s because shadowing is detected when the config includes are evaluated, 
+and before any concrete job is run. It&#39;s like a compiler warning about a 
+function that is not going to be used in the compiled app, but it&#39;s still there.
+
+&gt; 
+&gt; These &quot;warnings&quot; fire at the least change, and no matter how irrelevant, and 
+therefore they rapidly cease to be warnings - they have no relevance to the 
+content of the change, and they become standard messages.  They are, 99.9% of 
+the time, redundant.
+
+If you get a warning about the &#39;build&#39; job and you&#39;re doing the &#39;source&#39; job, 
+then it is redundant. If you are doing the &#39;build&#39; job, it&#39;s not.
+
+&gt; So if I miss a single line in a document (which you wouldn&#39;t because you 
+constantly re-read the documentation and would pick it up sooner rather than 
+later) that&#39;s my fault, and there is no way the product is at fault if it is 
+obscure and counter-intuitive?
+
+I&#39;m very interested to make our system less obscure and less counter-intuitive. 
+But I still don&#39;t see how.
+
+&gt; 
+&gt; My experience is that if you make something intuitive and straightforward to 
+use, there are less mistakes and higher productivity (and you&#39;ll get less 
+support queries).
+
+Definitely. 100% aggreed.
+
+&gt; 
+&gt; It is also the case that even if you re-read the docs on a regular basis you 
+can still make mistakes; whether it&#39;s a typo, or whatever.  Re-reading the docs 
+won&#39;t help you you then, but a generator with config validation and specific 
+warnings would.
+
+But what should I warn about? What you did was perfectly legal, it just wasn&#39;t 
+what you expected, and the system cannot magically sense your expections.
+
+&gt; &gt; That would be one possibility. Different abstractions would be another. I&#39;m 
+&gt; &gt; open to both.
+&gt; 
+&gt; So the user either becomes more of an expert or you make the system more 
+complicated and obscure? 
+
+That&#39;s your definition of &quot;different abstractions&quot;?!
+
+To give you a taste of it, we had a big discussion about putting everything 
+into macros. Hide jobs from the user altogether and only expose the top-level 
+macros for customization. (This would be basically what we had with the 
+previous generator system which was based on Makefiles).
+
+This would have resulted in a very long list of pre-defined macros, of the form 
+e.g. like
+
+   INCLUDE
+   EXCLUDE
+   ...
+   COMPILEOPTIONS_CODE_OPTIMIZE_STRINGS 
+   COMPILEOPTIONS_CODE_OPTIMIZE_VARIANTS
+   COMPILEOPTIONS_CODE_OPTIMIZE_BASECALLS
+   ...
+   COMPILEOPTIONS_PATHS_FILE
+   COMPILEOPTIONS_URIS_SCRIPT
+   ...
+   LIBRARIES_MANIFEST_...
+   LIBRARIES_URI_...
+   ...
+
+This *is* a different abstraction. And while I appreciate macros for certain 
+situations, I voted against this relapse to Makefile macros. It&#39;s terribly 
+verbose with a lot of redundancy, mimicks structural nesting with underscores, 
+and is eventually not capable to cover everything Json structures can (like 
+aggregating information as in the &quot;library&quot; case). I thought our users deserve 
+better.
+
+&gt; &quot;Force&quot; sounds very severe to me; if you really feel that way, perhaps you 
+could put a big warning on the home page of the website that says &quot;WARNING: Do 
+not use this product until you have read the entire manual, and are prepared to 
+re-read the manual on a regular basis&quot;.
+
+John, exaggeration doesn&#39;t help. I&#39;m not a reading machine that makes 10,000 
+lines of documention a day, and I don&#39;t expect anybody to be like that :). What 
+I&#39;m saying is that you (a) skim documentation to get an overview and an 
+orientation, know what to get from search, and then (b) *when you need more 
+detail* because you have a specific question or problem, you go back to read 
+the small print for that issue. I think this is a sensible approach.
+
+&gt; 
+&gt; The problem with the documentation which started this thread was that if you 
+read the documentation, it is very easy to overlook a single, obscure, and 
+non-intuitive point without which it is not possible to correctly interpret 
+chunks of the rest of the manual.
+
+However you look at it, you will never grok the configuration system if you 
+don&#39;t grok the merging. There is no way around that - other than to abolish 
+merging altogether, which would have major repercussions to the entire 
+configuration system.
+
+&gt; &gt; Hm, then what about renaming the key to something like &quot;optimizations&quot;?!
+&gt; 
+&gt; Are you referring to bug #5466?  I would have thought you&#39;d use the migration 
+job.
+
+No. #5466 is about changing the *value* type, and that&#39;s a different issue. But 
+as you said you find the key *name* counter-intuitive, I thought about renaming 
+that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26367</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2011-08-02 14:29:19 +0200</bug_when>
+            <thetext>&gt; (In reply to comment #11)
+&gt; &gt; When you generate a skeleton app, the sample app includes commented out 
+&gt; ...
+&gt; That&#39;s because shadowing is detected when the config includes are evaluated, 
+
+&quot;Why&quot; they appear doesn&#39;t make them more helpful :)
+
+&gt; I&#39;m very interested to make our system less obscure and less counter-intuitive. 
+&gt; But I still don&#39;t see how.
+
+I&#39;ve suggested:
+
+(a) validate config.json
+(b) finer warnings
+
+&gt; But what should I warn about? 
+
+How about:
+(1) setting list property X has no effect
+  (eg)
+     setting list property &quot;optimize&quot; has no effect
+
+(2) unexpected key &quot;build/compile-options/blah&quot;
+
+(3) key X has invalid value Y
+  (eg)
+    key &quot;build/compile-options/code/optimize&quot; has invalid value &quot;strngs&quot;, expected one of....
+
+(4) key X has unparsable value Y, expected type Z
+  (eg)
+    key &quot;build/compile-options/code/format&quot; has unparsable value &quot;yes please&quot; expected type  boolean
+
+For (1) - warn when merging, although possibly disable warnings until after base.json has been parsed.
+For (2), (3), and (4) - after merging, pass the config to a JSON schema validator
+
+&gt; What you did was perfectly legal, it just wasn&#39;t 
+&gt; what you expected, and the system cannot magically sense your expections.
+
+I never asked it to - I only ask that it tells me I&#39;m wrong instead of staying silent.
+
+&gt; That&#39;s your definition of &quot;different abstractions&quot;?!
+&gt; 
+&gt; To give you a taste of it, we had a big discussion about putting everything 
+&gt; into macros. 
+
+I imagine that a big danger would be that macros have less structure and it would be exponentially harder to make it easy to use and understand; in your example, COMPILEOPTIONS_CODE_OPTIMIZE_STRINGS would be an attempt to impose a structure that is currently represented by JSON perfectly adequately.  
+
+I&#39;d be concerned that beyond basic scenarios, the user could hit a brick wall and have to learn a whole new config (perhaps the current config format, which might be considered the &quot;low-level&quot; implementation behind the macros), and/or there would be a risk of complex, difficult to explain and understand macros with very long names creeping in.
+
+&gt; John, exaggeration doesn&#39;t help. I&#39;m not a reading machine 
+
+I didn&#39;t say you were - but you did say you &quot;are constantly reviewing documentation ... re-reading sections&quot;; your argument is that you re-read documentation and that prevents making mistakes or misunderstandings, and you went on to say that a tutorial is necessary to &quot;force&quot; people to read the documentation.  
+
+From that, I take your position to be that iterative reading solves the problem, and if that doesn&#39;t work for others (your users) then the only solution is to simply force them to do more of the same!
+
+To me, that sounds like a warning that the problem could (should) be looked at from a different point of view - you&#39;ve already produced plenty of documentation and you agree that something needs to be done; why should documentation be the only answer??
+
+&gt; I&#39;m saying is that you (a) skim documentation to get an overview and an 
+&gt; orientation [...] and then (b) *when you need more detail* [...] go back to read 
+&gt; the small print for that issue. I think this is a sensible approach.
+
+I do too, but when the generator is simply *silent* about a problem, you have a million possibilities to consider.  The generator is in the *perfect* position to flag something up, but it does nothing.
+
+&gt; However you look at it, you will never grok the configuration system if you 
+&gt; don&#39;t grok the merging. There is no way around that - other than to abolish 
+&gt; merging altogether, which would have major repercussions to the entire 
+&gt; configuration system.
+
+According to wikipedia, &quot;grok&quot; is to &quot;intimately and completely share the same reality or line of thinking&quot; - so does this mean that to use a contrib you have to grok the generator?  Because the contrib will generate a warning about shadowing, and by your rationale I&#39;d have to become an expert in the generator.
+
+&gt; &gt; &gt; Hm, then what about renaming the key to something like &quot;optimizations&quot;?!
+&gt; &gt; 
+&gt; &gt; Are you referring to bug #5466?  I would have thought you&#39;d use the migration 
+&gt; job.
+&gt; 
+&gt; No. #5466 is about changing the *value* type, and that&#39;s a different issue. But 
+&gt; as you said you find the key *name* counter-intuitive, I thought about renaming 
+&gt; that.
+
+Actually I was talking about the value type of the property being counter-intuitive when compared to the (perceived) purpose of the property - which lead to my suggestion of changing the value type that became bug 5466.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26369</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-02 16:05:41 +0200</bug_when>
+            <thetext>(In reply to comment #13)
+
+&gt; I&#39;ve suggested:
+&gt; 
+&gt; (a) validate config.json
+&gt; (b) finer warnings
+
+Yes, I meant beyond that.
+
+&gt; I never asked it to - I only ask that it tells me I&#39;m wrong instead of staying
+&gt; silent.
+
+You weren&#39;t wrong.
+
+&gt; I&#39;d be concerned that beyond basic scenarios, the user could hit a brick wall
+&gt; and have to learn a whole new config (perhaps the current config format, which
+&gt; might be considered the &quot;low-level&quot; implementation behind the macros), and/or
+&gt; there would be a risk of complex, difficult to explain and understand macros
+&gt; with very long names creeping in.
+
+This confirms my own assessment.
+
+&gt; I didn&#39;t say you were - but you did say you &quot;are constantly reviewing
+&gt; documentation ... re-reading sections&quot;; your argument is that you re-read
+&gt; documentation and that prevents making mistakes or misunderstandings, and you
+
+No, my argument was that I return to take in detail information when I have to.
+
+&gt; went on to say that a tutorial is necessary to &quot;force&quot; people to read the
+&gt; documentation.  
+
+As much as they are &quot;forced&quot; to type in code or a command if they want to follow the tutorial.
+
+&gt; From that, I take your position to be that iterative reading solves the
+&gt; problem, and if that doesn&#39;t work for others (your users) then the only
+&gt; solution is to simply force them to do more of the same!
+
+&quot;iterative reading solves the problem&quot; ... Well, if that were true the world would be a better place :). But I hope you get my real point.
+
+&gt; I do too, but when the generator is simply *silent* about a problem, you have a
+&gt; million possibilities to consider.  The generator is in the *perfect* position
+&gt; to flag something up, but it does nothing.
+
+&lt;sigh&gt; ... It does flag the shadowing, right?!
+
+&gt; According to wikipedia, &quot;grok&quot; is to &quot;intimately and completely share the same
+&gt; reality or line of thinking&quot;
+
+Wiktionary also translates it with &quot;understanding intuitively&quot;.
+
+&gt; - so does this mean that to use a contrib you have
+&gt; to grok the generator?  Because the contrib will generate a warning about
+&gt; shadowing, and by your rationale I&#39;d have to become an expert in the generator.
+
+... and I was talking about job merging. 
+
+&gt; Actually I was talking about the value type of the property being
+&gt; counter-intuitive when compared to the (perceived) purpose of the property -
+
+You were saying &quot;IE the name and nature of the *key* directs the *intuitive*
+reaction&quot;, so you were also talking about the name.
+
+Ok, I think we can stop here. I think I get your essential points. Thanks for the discussion so far, we&#39;ll see what we can make of it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26370</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2011-08-02 17:15:31 +0200</bug_when>
+            <thetext>&gt; &gt; I&#39;ve suggested:
+&gt; &gt; 
+&gt; &gt; (a) validate config.json
+&gt; &gt; (b) finer warnings
+&gt; 
+&gt; Yes, I meant beyond that.
+
+
+
+&gt; &gt; I never asked it to - I only ask that it tells me I&#39;m wrong instead of staying
+&gt; &gt; silent.
+&gt; 
+&gt; You weren&#39;t wrong.
+
+??
+
+&gt; &gt; I do too, but when the generator is simply *silent* about a problem, you have a
+&gt; &gt; million possibilities to consider.  The generator is in the *perfect* position
+&gt; &gt; to flag something up, but it does nothing.
+&gt; 
+&gt; &lt;sigh&gt; ... It does flag the shadowing, right?!
+
+&lt;deeper sigh&gt; yes, but that&#39;s not particularly useful (see above)
+
+&gt; &gt; - so does this mean that to use a contrib you have
+&gt; &gt; to grok the generator?  Because the contrib will generate a warning about
+&gt; &gt; shadowing, and by your rationale I&#39;d have to become an expert in the generator.
+&gt; 
+&gt; ... and I was talking about job merging. 
+
+like merging a contrib into the library job?
+
+&gt; &gt; Actually I was talking about the value type of the property being
+&gt; &gt; counter-intuitive when compared to the (perceived) purpose of the property -
+&gt; 
+&gt; You were saying &quot;IE the name and nature of the *key* directs the *intuitive*
+&gt; reaction&quot;, so you were also talking about the name.
+
+yep, name and nature of the key directs the reaction to setting the property
+
+&gt; Ok, I think we can stop here.  I think I get your essential points. Thanks for
+&gt; the discussion so far, we&#39;ll see what we can make of it.
+
+OK, glad to help.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27237</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-10-17 18:33:37 +0200</bug_when>
+            <thetext>I&#39;m closing this. The documentation issue is sorted out, and for the more 
+general issue of schema checking the config there is dedicated bug#4784.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39070</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:19 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

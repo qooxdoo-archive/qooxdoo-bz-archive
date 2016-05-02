@@ -1,0 +1,92 @@
+<bug>
+          <bug_id>4040</bug_id>
+          
+          <creation_ts>2010-08-30 14:39:00 +0200</creation_ts>
+          <short_desc>Cannot use static vars to define another static var in the same class</short_desc>
+          <delta_ts>2010-08-30 16:09:49 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>website</component>
+          <version>1.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Adrian Gheorghe">adrian.gheorghe</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20029</commentid>
+            <who name="Adrian Gheorghe">adrian.gheorghe</who>
+            <bug_when>2010-08-30 14:39:38 +0200</bug_when>
+            <thetext>I have a class that uses code similar to the one below.
+
+qx.Class.define(&quot;bugs.ui.Example&quot;,
+{
+  type: &quot;static&quot;,
+  
+  statics:
+  {
+    YES: new qx.ui.form.Button(&quot;Yes&quot;),
+    NO: new qx.ui.form.Button(&quot;No&quot;),
+    
+    // this does not work: bugs.ui is undefined
+    YESNO: [bugs.ui.Example.YES, bugs.ui.Example.NO]
+  }
+});
+
+The only solution (better said workaround) I could find was to add an init method, which I call in Application.js, to set the variables. But I don&#39;t think that&#39;s reasonable.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20035</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-08-30 16:09:31 +0200</bug_when>
+            <thetext>This is by design and can not be changed. The code [bugs.ui.Example.YES, bugs.ui.Example.NO] is executed on load time before qx.Class.define is executed which means, before the class itself even exists. Every class can have a defer block which is exactly for such tasks:
+
+qx.Class.define(&quot;bugs.ui.Example&quot;,
+{
+  type: &quot;static&quot;,
+
+  statics:
+  {
+    YES: new qx.ui.form.Button(&quot;Yes&quot;),
+    NO: new qx.ui.form.Button(&quot;No&quot;),
+
+    // this does not work: bugs.ui is undefined
+    YESNO: null
+  },
+
+  defer : function(statics) {
+    statics.YESNO = [statics.YES, statics.NO]
+  }
+});</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

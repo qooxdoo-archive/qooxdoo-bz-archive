@@ -1,0 +1,127 @@
+<bug>
+          <bug_id>5251</bug_id>
+          
+          <creation_ts>2011-06-16 09:10:00 +0200</creation_ts>
+          <short_desc>Generator should not fail on missing directories</short_desc>
+          <delta_ts>2014-03-03 15:24:14 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>2.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martin Wittemann">martin.wittemann</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>michael</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>25118</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-06-16 09:10:04 +0200</bug_when>
+            <thetext>If the translation or resource folder is missing, the generator is unwilling to work. Creating an empty directory in that spot solves the problem.
+I do believe that the generator does not have more information than before and is still able to run. Maybe a warning for that missing folder would be enough because no substantial information is missing to build the application in either case.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25122</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-06-16 09:55:05 +0200</bug_when>
+            <thetext>I tend to dissent. Both translation and resource root folders are part of the Manifest, expressed in the &quot;provides&quot; section. And if a library says it *provides* such paths, it should actually provide them, and not name bogus and non-existent paths. The Manifest file is the basic, well, manifest of the library, it&#39;s fundamental declaration if you will. I don&#39;t think we should weaken its relevance. There is a lot of flexibility and configurability in qooxdoo, but at one point you should say stop, these are the things we need to rely on. And the basic library layout, as exemplified in the Manifest, documented in the manual, etc. etc., is one of those basic things.
+
+The skeletons handle all of that nicely, and this hasn&#39;t been a problem for anybody - except for those using git. And I don&#39;t think we should bow in front of this &quot;git-shit&quot;. Anybody commiting to qooxdoo has to be able to make sure his commits are sane and compliant, however they do it. And this isn&#39;t actually an issue, you can always check the directory structure on Sourceforge, or - even better - have a separate SVN checkout where you update and test your commits.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25123</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-06-16 10:13:07 +0200</bug_when>
+            <thetext>I agree with you in the point, that the manifest should not point to non existant paths. But the question is, is it that bad if they do? Do we need to cancel the whole process because of that? I&#39;m not saying we should just ignore it, but a warning should be fine for that like &quot;Unknown path in the manifest for resources&quot;.
+You said we need to rely on. Whats the difference of an empty directory to a not existant directory? I guess the input for the generator should be the same which is &quot;nothing to do here&quot;. So the input data is still the same amount of data.
+Sure, it is currently not really an issue because qooxdoo is not hosted using git. But as soon as we do, this is a massive problem and we need to find a solution for it. So justs saying i don&#39;t care at the moment and the developer should check that the data is correct is not a solution, still I do agree that the developers of the framework should check that anyway. But if that happens in the framework or somewhere out in the community, there is really no reason to break e.g. the nightly build because something is not applying to the rules we made without having a technical reason for it.
+
+The general idea behind that is, that as long as a tool is able to work, it should do what its able and not stop working because a statement is missing that there is nothing to be done in the resources e.g.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30518</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-08-28 15:40:33 +0200</bug_when>
+            <thetext>*** Bug 6752 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30519</commentid>
+            <who name="Michael Elsdoerfer">michael</who>
+            <bug_when>2012-08-28 20:37:19 +0200</bug_when>
+            <thetext>I agree that an error should be raised if the directory is missing. Ideally (not sure if this works yet), I should even be able to point to a non-standard location in my Manifest.json file (like ..\foo\source), so that directory not existing I would consider an error.
+
+But as noted in #6752, things would be fine if one could simply write a Manifest.json which does not declare resources or translations. However:
+
+...
+
+  File &quot;qooxdoo/tool/pylib/generator/cli.py&quot;, line 254, in execGenerator
+    return runJobs(config, console, context, level, options.jobs[:])
+  File &quot;qooxdoo/tool/pylib/generator/cli.py&quot;, line 141, in runJobs
+    generatorObj.run()
+  File &quot;qooxdoo/tool/pylib/generator/Generator.py&quot;, line 486, in run
+    prepareGenerator()
+  File &quot;qooxdoo/tool/pylib/generator/Generator.py&quot;, line 419, in prepareGenerator
+    self._libraries)     = self.scanLibrary(config.get(&quot;library&quot;, []))
+  File &quot;qooxdoo/tool/pylib/generator/Generator.py&quot;, line 1974, in scanLibrary
+    libObj._init_from_manifest()  # delayed until here, where jobconf is in effect
+  File &quot;qooxdoo/tool/pylib/generator/resource/Library.py&quot;, line 85, in _init_from_manifest
+    manifest = Manifest(self.manipath)
+  File &quot;qooxdoo/tool/pylib/generator/config/Manifest.py&quot;, line 46, in __init__
+    self.resource = self.libprovides[&#39;resource&#39;]
+KeyError: &#39;resource&#39;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31089</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-10-28 19:39:24 +0100</bug_when>
+            <thetext>Make &#39;class&#39;, &#39;resource&#39;, &#39;translation&#39; entries in Manifest.json optional, and continue with a warning if they are given and the corresponding directories do not exist.
+
+(Missing &#39;resource&#39; entry in Manifest.json results in a non-intuitive exit message with CodeGenerator).
+
+3829393 (master)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31113</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-10-29 16:36:53 +0100</bug_when>
+            <thetext>Improved handling of Manifest changes and moved asset paths.
+
+dcca846 (master)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38311</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:14 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,164 @@
+<bug>
+          <bug_id>7565</bug_id>
+          
+          <creation_ts>2013-07-16 16:15:00 +0200</creation_ts>
+          <short_desc>SelectBox - getModelSelection doesn&#39;t change value on selected item with a NULL model value</short_desc>
+          <delta_ts>2015-03-02 10:49:48 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>2.1.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>NEW</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Daniel">qooxdoo</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>schnepe2</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>33390</commentid>
+            <who name="Daniel">qooxdoo</who>
+            <bug_when>2013-07-16 16:15:18 +0200</bug_when>
+            <thetext>Example:
+
+var selectbox = new qx.ui.form.SelectBox();
+var listItemArray = new qx.data.Array(
+  {display: &quot;Test null&quot;, model: null}, 
+  {display: &quot;Test 1&quot;, model: 1},
+  {display: &quot;Test 2&quot;, model: 2},
+  {display: &quot;Test 3&quot;, model: 3}
+);
+listItemArray.forEach(function(item){
+  selectbox.add(new qx.ui.form.ListItem(item.display,null,item.model));
+});
+
+selectbox.addListener(&quot;changeSelection&quot;,function(event){
+  var listItem = event.getData()[0];
+  alert(listItem.getModel() + &quot; | &quot; + selectbox.getModelSelection().getItem(0));
+});
+
+Select an other ListItem in the SelectBox and then again to the first one (with the model value: null).
+getModelSelection doesn&#39;t accept the change to the value: null.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33398</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-07-17 09:00:35 +0200</bug_when>
+            <thetext>Thanks for the report.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39894</commentid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2014-04-07 16:29:56 +0200</bug_when>
+            <thetext>The following example shows the issue:
+
+  http://tinyurl.com/qhd5vu2
+
+When you select the &#39;null&#39; Item, the &quot;event data&quot; works as expected,
+the &quot;SelectBox::getModelSelection()&quot; does not[2].
+
+
+The following changes in MModelSelection[1] will fix that, but I don&#39;t know
+what else this would break ;)
+
+--- Pre: --------------------------------------
+&lt;code&gt;
+    __onModelSelectionChange : function() {
+// ...
+        var model = item.getModel ? item.getModel() : null;
+        if (model !== null) {
+          modelSelection.push(model);
+        }
+&lt;/code&gt;
+------------------------------------------------
+
+--- Post: --------------------------------------
+&lt;code&gt;
+    __onModelSelectionChange : function() {
+// ...
+        var model = item.getModel ? item.getModel() : undefined;
+        if (model !== undefined) {
+          modelSelection.push(model);
+        }
+&lt;/code&gt;
+------------------------------------------------
+
+[1] qx.ui.form.MModelSelection
+[2] it still returns the &#39;previous&#39; (old) selection</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39895</commentid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2014-04-07 16:59:25 +0200</bug_when>
+            <thetext>Following &#39;fix&#39; would be much better, &#39;cause it also allows &lt;undefined&gt; model values, too:
+---------------------------------------------
+&lt;code&gt;
+    __onModelSelectionChange : function() {
+// ...
+        if (item.getModel) {
+          modelSelection.push( item.getModel() );
+        }
+&lt;/code&gt;
+---------------------------------------------</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42664</commentid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2015-03-02 10:49:48 +0100</bug_when>
+            <thetext>This issue also creates a follow-up issue:
+
+Setup: A form (+controller) that uses -among others- a SelectBox with one
+    ListItem that has a model value of &lt;null&gt;.
+
+Result: Selecting *that* (&lt;null&gt; model) item does not trigger the &quot;changeBubble&quot;
+    event of the model...
+
+Playground example:
+    http://tinyurl.com/qgxxzk6
+
+Additional Info:
+  The &#39;0&#39; (zero) item works however, but I have to distinguish &lt;null&gt; from zero!
+  Applying this patch (see comment #3) works on my side:
+  &lt;code&gt;
+    __onModelSelectionChange : function() {
+      // ...
+      // create the array with the modes inside
+      var modelSelection = [];
+      for (var i = 0; i &lt; data.length; i++) {
+        var item = data[i];
+        if (item.getModel) {
+          modelSelection.push( item.getModel() );
+        }
+      };
+      // ...
+  &lt;/code&gt;</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

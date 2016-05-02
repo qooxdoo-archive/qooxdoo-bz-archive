@@ -1,0 +1,205 @@
+<bug>
+          <bug_id>794</bug_id>
+          
+          <creation_ts>2008-02-12 13:01:00 +0100</creation_ts>
+          <short_desc>Error in Widget.flushGlobalStateQueue</short_desc>
+          <delta_ts>2008-02-12 16:10:40 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>0.7.4</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Mac OS</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Fabian Jakobs">fabian.jakobs</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>dan.trif</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2864</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-02-12 13:01:16 +0100</bug_when>
+            <thetext>This bug has been reported by WilliP some time ago on the mailing list:
+
+I encountered an object undefined error (Internet Explorer and Firefox) which I have tracked down to Widget.flushGlobalStateQueue. I can see from the code below (from Widget.js) that the use of a while loop allows for the Widget._globalStateQueue to grow during the loop&#39;s execution but it does not allow for the possibility that it might shrink. When the problem occurred it was vQueue[i] that was undefined because vLength &gt; vQueue.length and the array index used in the for loop had run beyond the end of the array.
+
+The queue shrunk because one of the calls to Widget._renderAppearance() resulted in a Widget being removed from the Widget._globalStateQueue and thus the array was made shorter than it was when the while loop last set vLength = vQueue.length.
+
+Modifying the length of an array during an iteration of it is always dangerous and something to be avoided and indeed other languages like C# and Java explicitly prevent it.
+
+This seems like a problem waiting to happen in all the queues as all the flushGlobalXXXQueue methods have the same structure.
+
+Any comments?
+
+    flushGlobalStateQueue : function()
+    {
+      var vQueue = qx.ui.core.Widget._globalStateQueue, vLength, vWidget;
+
+      while ((vLength = vQueue.length) &gt; 0)
+      {
+        for (var i=0; i&lt;vLength; i++)
+        {
+          vWidget = vQueue[i];
+          vWidget._renderAppearance();
+
+          delete vWidget._isInGlobalStateQueue;
+        }
+
+        vQueue.splice(0, vLength);
+      }
+    },
+
+Thanks,
+
+Will</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2865</commentid>
+            <who name="Dan Trif">dan.trif</who>
+            <bug_when>2008-02-12 14:17:51 +0100</bug_when>
+            <thetext>Hi,
+
+ I encountered this problem when, using the following table, I tried to perform multiple operations on it when clicking on a button (e.g.):
+        
+	var tableModel = new qx.ui.table.model.Simple();
+	var table = new qx.ui.table.Table(tableModel);
+
+	// retrieve some data from the database using sinchronous call
+  	var rowData = getDataFromBackend(); 
+	
+	if (rowData != &quot;&quot;){
+		tableModel.addRows(rowData);
+		var index = tableModel.getRowCount()-1;
+		table.getSelectionModel().setSelectionInterval(index, index);
+		table.setFocusedCell(0, index, false);
+		table.setEnable(true);
+	}
+
+ I discovered that the one who caused the problem was the line:
+
+    table.setEnable(true);
+
+, when I tried to enable the table (disabled previously). 
+
+So I tried to move that line somewhere else and I found out that works if I enable the table, before executing the httpRequest to get data from the backend:
+
+......................
+	table.setEnable(true);
+	// retrieve some data from the database using sinchronous call
+  	var rowData = getDataFromBackend(); 
+.......................
+
+ This way works fine ... but in this case  if rowData == &quot;&quot; I needed  to disable the table again. So I suppose that is heaving a problem to render too many changes at a time.
+
+
+
+We made a hack into qx.ui.core.Widget.js, flushGlobalStateQueue function, but 
+I&#39;m not very sure that is the right thing to do it: 
+
+instead : 
+	  vWidget = vQueue[i];
+          vWidget._renderAppearance();
+
+          delete vWidget._isInGlobalStateQueue;
+
+we put:
+	if (vWidget != null) {
+	  vWidget = vQueue[i];
+          vWidget._renderAppearance();
+
+          delete vWidget._isInGlobalStateQueue;
+	}
+
+
+
+Using this hack I noticed that the command:
+		table.setFocusedCell(0, index, false);
+had no effect.
+
+
+Regards,
+
+Dan Trif
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2866</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-02-12 14:26:10 +0100</bug_when>
+            <thetext>I now work on a copy of the queue. This should solve the problem. I have commied it to legacy and tunk. Dan could you please verify that this changes fixes your problem?
+
+    flushGlobalStateQueue : function()
+    {
+      var Widget = qx.legay.ui.core.Widget;
+
+      // the queue may change while doing the flush so we work on a copy of
+      // the queue and loop while the queue has any entries.
+      while(Widget._globalStateQueue.length &gt; 0)
+      {
+        var queue = qx.lang.Array.copy(Widget._globalStateQueue);
+        Widget._globalStateQueue = [];
+
+        for (var i=0, l=queue.length; i&lt;l; i++)
+        {
+          var widget = queue[i];
+          if (widget._isInGlobalStateQueue)
+          {
+            widget._renderAppearance();
+            delete widget._isInGlobalStateQueue;
+          }
+        }
+      }
+    },
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2867</commentid>
+            <who name="Dan Trif">dan.trif</who>
+            <bug_when>2008-02-12 15:48:57 +0100</bug_when>
+            <thetext>I retested my application using this method and works OK.
+
+I used:
+      var Widget = qx.ui.core.Widget;
+
+instead of:
+      var Widget = qx.legay.ui.core.Widget;
+
+
+Cheers</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2868</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-02-12 16:10:40 +0100</bug_when>
+            <thetext>perfect. The &quot;legacy&quot; comes from the trunk code.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

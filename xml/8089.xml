@@ -1,0 +1,131 @@
+<bug>
+          <bug_id>8089</bug_id>
+          
+          <creation_ts>2014-02-05 14:14:00 +0100</creation_ts>
+          <short_desc>non reserved keywords marked as reserved by generator</short_desc>
+          <delta_ts>2014-02-11 10:32:52 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Rob Franken">qooxdoo</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          <cc>mustafa.sak</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>34965</commentid>
+            <who name="Rob Franken">qooxdoo</who>
+            <bug_when>2014-02-05 14:14:49 +0100</bug_when>
+            <thetext>In pylib/ecmascript/frontend/lang.py the list of future reserved keywords is not in sync with current ecma script standards
+
+https://github.com/qooxdoo/qooxdoo/pull/74 updates this to ecma5 specification</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34984</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-02-06 13:57:59 +0100</bug_when>
+            <thetext>Thanks a lot for the pull request and the bug report, this makes things
+much easier! :)
+
+master: 34176cf930bf84cd6afed1e7fad7ebdf658fb11b</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34998</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-02-07 12:50:33 +0100</bug_when>
+            <thetext>yield is used as a property name in SINON, that why the generator currently breaks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35001</commentid>
+            <who name="Rob Franken">qooxdoo</who>
+            <bug_when>2014-02-07 13:59:53 +0100</bug_when>
+            <thetext>This is technically another bug in the language parser since propertynames are alowed to be reserved names where they are not an Identifier (so in object.propertyname). in a statement like 
+object = { propertyname : value };
+they are not allowed to be a reserved name however
+
+If I look at https://github.com/cjohansen/Sinon.JS/blob/master/lib/sinon/call.js they do this correctly. So while we see this bug now after we changed the list of reserved words it is not the same bug</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35003</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-02-07 14:44:55 +0100</bug_when>
+            <thetext>@Rob: Right, that&#39;s exactly what I wanted to write. Thanks! :)
+
+Anyway ... I backed out the changes for now, falling back to the ES3 FutureReservedWords because of the impact.
+
+master: 0384500353d1c64111184c3b204c8f6316a7a727
+
+I will have a look at:
+
+1) how the parser can be adapted (allowing reserved words as IdentifierNames) [1]
+and
+2) maybe introduce a config setting where you can opt in for ES3 FRW (ES5 would then be the default needing no explicit config setting).
+
+[1] https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Reserved_Words#Reserved_word_usage</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35023</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2014-02-11 10:32:52 +0100</bug_when>
+            <thetext>Revisited the issue - what have I done:
+
+1) Generator now supports FutureReservedWords from ES3 AND ES5.
+2) The following lines are legal JS:
+
+--
+a.import // Generator accepts this as correct syntax (now fixed)
+a[&quot;import&quot;] // Generator accepts this as correct syntax (hasn&#39;t changed)
+a = { import: &quot;test&quot; } // Generator will still (incorrectly) grumble about that
+--
+
+So a.import will now pass the Generator and he won&#39;t choke about similar things like that:
+
+elem.style.float
+callProto.yield
+
+Conclusion:
+
+This is a compromise it
+
+a) keeps ES3 FutureReservedWords support for older Browsers like IE8,
+b) introduces also the ES5 FutureReservedWords and
+c) allows (legal) dot notation for object properties which are FutureReservedWords.
+
+Actually ReservedWords would be allowed too (and are accepted by newer browsers, e.g. &quot;a.if = 2;&quot;), but we won&#39;t &quot;open the door too wide&quot; in order to keep the backward compatibility.
+
+If IE8 (or similar ES3 browser) usage declines and ES3-browsers generally aren&#39;t supported by the framework anymore, we can finally drop the ES3 FutureReservedWords and allow every kind of ReservedWords.
+
+master: 31de63d029e74e9b4441bdc37543527d21252704</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

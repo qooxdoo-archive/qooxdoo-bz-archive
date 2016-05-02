@@ -1,0 +1,137 @@
+<bug>
+          <bug_id>620</bug_id>
+          
+          <creation_ts>2007-09-05 11:44:00 +0200</creation_ts>
+          <short_desc>Stray mouseup causes unwelcome selection in a table</short_desc>
+          <delta_ts>2014-03-03 15:27:50 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>0.7.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://www.nabble.com/combobox-and-event-question-tf4335283.html</bug_file_loc>
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.7.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Hugh Gibson">hgibson</reporter>
+          <assigned_to name="Til Schneider">tilman.schneider</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2188</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2007-09-05 11:44:26 +0200</bug_when>
+            <thetext>This is from an email thread - see http://www.nabble.com/combobox-and-event-question-tf4335283.html
+
+Text of message documenting the reason for the issue is:
+
+&gt; Assuming that we have a widget like a combobox. If I want to select 
+&gt; an
+&gt; entry, the popup of the combobox opens. I click on an ListItem. The 
+&gt; combobox
+&gt; disappears.
+&gt; But the click event is not eaten. In my case it changes the active 
+&gt; Row in a
+&gt; table, which is below the combobox.
+&gt; If you want to see this in action please have a look at here:
+&gt; http://www.fitnesswelt.com/shopajx.html - In the first field type in
+&gt; something, the table should be filled. Then you can try to change 
+&gt; the
+&gt; listboxes. If you have your browser configured to allow open 
+&gt; popups, you
+&gt; will se what I mean.
+
+It happens on the first click, when there is nothing selected in the
+table. And then it only happens if you have just clicked on the selected
+row (for example, select the second row and then click on it again).
+
+Also it only happens when the mouse is being released. If you do mouse
+down, and hold it, the combo-box disappears and the table is reloaded but
+nothing is selected in it. Then release the mouse and the first row is
+selected.
+
+*BUG 1* The main issue would appear to be that qooxdoo should handle the
+selection process in mouse up in the combo box, rather than mouse down.
+Then the mouse up wouldn&#39;t be sent to the table that&#39;s underneath.
+
+Analysing the reason for the mouse up behaviour, we can see it by looking
+at qx.ui.table.selection.Manager.js. handleMouseUp has this code:
+
+      if (evt.isLeftButtonPressed() &amp;&amp; !this._lastMouseDownHandled) {
+        this._handleSelectEvent(index, evt);
+      }
+      
+But this._lastMouseDownHandled is only created when there has been a
+mouse down event on the table. So it is &quot;undefined&quot; when the first
+mouseUp event occurs. *BUG 2* - prevent this happening perhaps with
+another flag to indicate that no mouse event has come through yet.
+
+Then in handleMouseDown there is code that affects
+this._lastMouseDownHandled - setting it to false if a click is made on
+the current selection (which is why the problem you see occurs when you
+click on a row that is already selected). *BUG 3* - reset the flag in
+mouseUp if you have clicked on a row that is already selected.
+
+There are some options to fix this:
+
+1. rename this._lastMouseDownHandled to this._handleClickOnMouseUp which
+also inverts the sense of it, so the test in handleMouseUp tests for
+&quot;true&quot; rather than false. If it&#39;s true, then on MouseUp it&#39;s reset to
+false. Then when it is undefined, or a mouseUp is made on the same table
+entry (with no mouseDown), the flag is false and it doesn&#39;t result in a
+select event.
+
+2. Another way, which would fix the combo box problem as well, is to only
+handle click events on mouse up anyway. That way the combo box would eat
+the mouse up event.
+
+Option 2 is probably the best way of handling it as otherwise the
+drag/drop functionality is probably going to be affected.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2216</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-09-11 13:52:04 +0200</bug_when>
+            <thetext>Added to the list for 0.7.2.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2342</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2007-09-18 18:01:53 +0200</bug_when>
+            <thetext>fixed in trunk and legacy.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39603</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:50 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

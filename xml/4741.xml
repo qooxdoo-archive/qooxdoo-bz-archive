@@ -1,0 +1,261 @@
+<bug>
+          <bug_id>4741</bug_id>
+          
+          <creation_ts>2011-03-05 17:07:00 +0100</creation_ts>
+          <short_desc>SimpleTreeDataModel  .   setTreeColumn      problem.</short_desc>
+          <delta_ts>2014-03-03 15:27:12 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.treevirtual</component>
+          <version>1.3</version>
+          <rep_platform>Chrome</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="René Olivo">rene</reporter>
+          <assigned_to name="Derrell Lipman">derrell.lipman</assigned_to>
+          <cc>rene</cc>
+          <qa_contact name="Derrell Lipman">derrell.lipman</qa_contact>
+          <cf_browser>Chrome</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>23090</commentid>
+            <who name="René Olivo">rene</who>
+            <bug_when>2011-03-05 17:07:06 +0100</bug_when>
+            <thetext>Hello,
+
+I have found that using the setTreeColumn doesn&#39;t render the tree on the column specified, it doesn&#39;t even render it in the default column (0). This was the code I used:
+
+
+-------------------------------------------------
+var model = this.getDataModel();
+model.setTreeColumn(1);
+
+var root = model.addBranch(null, &#39;First one!!!&#39;);
+model.setColumnData(root, 0, &#39;#1&#39;);
+
+model.setData();
+-------------------------------------------------
+
+
+I&#39;m extending the TreeVirtual class and adding all the data from within inside this new class, I don&#39;t know this would be a contributing factor. 
+
+On the good side, if I initialize the class in this way it works:
+
+-------------------------------------------------
+this.base(arguments, this.columns, {treeColumn: 1});
+-------------------------------------------------
+
+I specified the tree column on the map parameter and it does place the tree on the second column. Maybe the problem is the setter method?
+
+I tried FF and Chrome, using both the Aristo and Modern theme and both gave trouble (so it&#39;s not a theme thing).
+
+Has anyone experienced the same thing?
+
+Best regards,
+
+René</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23098</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-07 09:05:47 +0100</bug_when>
+            <thetext>Thanks for the report.
+Derrell, could you maybe take a look at that? If not, just assign it back to me. Thanks. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23117</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-03-07 22:13:20 +0100</bug_when>
+            <thetext>Please provide a small playground example demonstrating the problem, so I can see what you&#39;re doing. As I review the TreeVirtual and SimpleTreeDataModel code, I can see no reason why the code you&#39;ve presented should not work as you expect it to, so I suspect something in the code that you&#39;re not showing me to be the issue.
+
+Thanks,
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23120</commentid>
+            <who name="René Olivo">rene</who>
+            <bug_when>2011-03-07 23:43:38 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; Please provide a small playground example demonstrating the problem, so I can
+&gt; see what you&#39;re doing. As I review the TreeVirtual and SimpleTreeDataModel
+&gt; code, I can see no reason why the code you&#39;ve presented should not work as you
+&gt; expect it to, so I suspect something in the code that you&#39;re not showing me to
+&gt; be the issue.
+&gt; 
+&gt; Thanks,
+&gt; 
+&gt; Derrell
+
+
+Hello!!
+
+Sorry, for the delay. Here&#39;s the code:
+
+---------------------------------------
+qx.Class.include(qx.ui.treevirtual.TreeVirtual,
+                 qx.ui.treevirtual.MNode);
+
+// Use an HBox to hold the tree and the groupbox
+var hBox = new qx.ui.container.Composite(new qx.ui.layout.HBox(20));
+this.getRoot().add(hBox, { edge : 30 });
+
+// tree
+var tree = new qx.ui.treevirtual.TreeVirtual(
+    [
+      &quot;Tree&quot;,
+      &quot;Permissions&quot;,
+      &quot;Last Accessed&quot;
+    ]/*, 
+    {
+      treeColumn: 1
+    }*/ //If you remove the comments, it will work!
+);
+tree.set(
+  {
+    width  : 400
+  });
+tree.setAlwaysShowOpenCloseSymbol(true);
+
+
+hBox.add(tree);
+
+// tree data model
+var dataModel = tree.getDataModel();
+    dataModel.setTreeColumn(1); /// Doesn&#39;t work :(
+
+var te1 = dataModel.addBranch(null, &quot;Desktop&quot;, true);
+
+dataModel.setData();
+---------------------------------------------------------
+
+This is not the code I&#39;m using myself, but I used the one on the playground as a base. This code is also presetting the same issue as the one I&#39;m using.
+
+Notice that by removing the comments from the code { treeColumn: 1 }, the tree will show on the column specified.
+
+If I&#39;m doing something wrong, sorry for being such a noob :P</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23121</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-03-08 02:49:26 +0100</bug_when>
+            <thetext>Right. Ok. The problem is that the wrong cell renderer is used. You can&#39;t simply alter the tree column without also altering the cell renderers. At the point you&#39;re changing the tree column, all cell renderers have already been established. The typical usage is using the &#39;treeColumn&#39; field in the &#39;custom&#39; map, which does all of the work for you.
+
+Here&#39;s a playground example that does what you want, manually resetting the cell renderers. This is not the preferred way to do it, though. The reported behavior is actually not a bug, albeit a bit unintuitive.
+
+
+qx.Class.include(qx.ui.treevirtual.TreeVirtual,
+                qx.ui.treevirtual.MNode);
+
+// Use an HBox to hold the tree and the groupbox
+var hBox = new qx.ui.container.Composite(new qx.ui.layout.HBox(20));
+this.getRoot().add(hBox, { edge : 30 });
+
+// tree
+var tree = new qx.ui.treevirtual.TreeVirtual(
+   [
+     &quot;Tree&quot;,
+     &quot;Permissions&quot;,
+     &quot;Last Accessed&quot;
+   ]/*,
+   {
+     treeColumn: 1
+   }*/ //If you remove the comments, it will work!
+);
+tree.set(
+ {
+   width  : 400
+ });
+tree.setAlwaysShowOpenCloseSymbol(true);
+
+
+hBox.add(tree);
+
+// tree data model
+var treeCol = 1;
+var dataModel = tree.getDataModel();
+dataModel.setTreeColumn(treeCol); /// Doesn&#39;t work :(
+    
+// Set the data cell render.  We use the SimpleTreeDataCellRenderer for the
+// tree column, and our DefaultDataCellRenderer for all other columns.
+var stdcr = new qx.ui.treevirtual.SimpleTreeDataCellRenderer();
+var ddcr = new qx.ui.treevirtual.DefaultDataCellRenderer();
+var tcm = tree.getTableColumnModel();
+var treeCol = tree.getDataModel().getTreeColumn();
+
+for (var i=0; i&lt;3; i++)
+{
+  tcm.setDataCellRenderer(i, i == treeCol ? stdcr : ddcr);
+}
+
+var te1 = dataModel.addBranch(null, &quot;Desktop&quot;, true);
+
+dataModel.setData();</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23122</commentid>
+            <who name="René Olivo">rene</who>
+            <bug_when>2011-03-08 05:58:36 +0100</bug_when>
+            <thetext>I see what you mean and that makes total sense!!
+
+But shouldn&#39;t there be some kind of exception thrown here then? Because it only shows the empty tree table, makes it look like that was the expected behavior. 
+
+I&#39;m having some troubles with the table column model, but I&#39;ll leave that for the mailing list. 
+
+Thank you and sorry for the trouble.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23151</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-03-08 14:47:57 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; I see what you mean and that makes total sense!!
+&gt; 
+&gt; But shouldn&#39;t there be some kind of exception thrown here then? Because it only
+&gt; shows the empty tree table, makes it look like that was the expected behavior. 
+
+Exception, no. Better documentation? Certainly. With r25416, I&#39;ve updated the documentation to make it clear that calling setTreeColumn() manually does not also set the cell renderer, and that the expected means of setting the tree column is via the &#39;treeColumn&#39; member in the &#39;custom&#39; map provided to the constructor of TreeVirtual.
+
+Thanks.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23152</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-03-08 14:48:30 +0100</bug_when>
+            <thetext>With documentation updated, we should be ready to close this one out.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39384</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:12 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

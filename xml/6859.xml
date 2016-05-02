@@ -1,0 +1,205 @@
+<bug>
+          <bug_id>6859</bug_id>
+          
+          <creation_ts>2012-09-28 09:20:00 +0200</creation_ts>
+          <short_desc>Add SCSS Support to the Toolchain</short_desc>
+          <delta_ts>2014-03-03 15:23:15 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          <keywords>CSS-Compiler</keywords>
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martin Wittemann">martin.wittemann</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>christopher.zuendorf</cc>
+    
+    <cc>richard.sternagel</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30829</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-09-28 09:20:23 +0200</bug_when>
+            <thetext>Less is a tool used for mobile development within the qooxdoo environment. But we also use it to generate the CSS files for qooxdoo.org. It could be a good enhancement to add Less support to the toolchain so we could integrate it into the mobile and website development.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30832</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-09-28 13:06:59 +0200</bug_when>
+            <thetext>It&#39;s not as straight-forward as I thought:
+
+o The package I was thinking of,
+    https://github.com/Kronuz/pyScss
+  supports Scss, which is distinct from the Less syntax.
+  (Tristan once looked at it and said it is useful featurewise, though).
+  So here the descision boils down whether we want to support Less or Scss.
+
+o There is a pure Python Less project,
+    https://github.com/metalshark/lesscss-python
+  but it seems very immature, has no real parser, and cannot even process our
+  existing base.less etc.
+  This would mean a lot of work on our side, and as it has no parser, probably
+  a re-write.
+
+o Lesscpy,
+    https://github.com/robotis/lesscpy
+  looks very good implementation-wise, using PLY to parse .less files, but
+  runs only on Python 3.
+  Here, the effort would be back-porting it to Python 2.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31571</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-11-30 15:26:59 +0100</bug_when>
+            <thetext>Re-targeting this bug to Sass/Scss.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31711</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-12-12 10:17:57 +0100</bug_when>
+            <thetext>Add pyScss module to the toolchain as tool/pylib/scss, and a frontend as 
+tool/bin/scss.py.
+
+Removed the blocking of relative @import paths.
+
+master: c29e879</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31714</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2012-12-12 14:44:20 +0100</bug_when>
+            <thetext>There is another bug, when opening the compiled CSS files in Mozilla Firefox:
+
+.vbox &gt; * :not(.navigationbar,.master-detail-master) {
+  @include box-flex(0);
+}
+
+in _layout.scss 
+Line 74
+
+Gets to something like:
+
+.hbox &gt; * :not(.navigationbar, .master-detail-master),
+.selectbox &gt; * :not(.navigationbar {
+ -webkit-box-flex: 0;
+ -moz-box-flex: 0;
+ -ms-flex: 0 0 auto;
+ box-flex: 0;
+}
+.vbox {
+ display: -webkit-box;
+ display: -moz-box;
+ display: -ms-flexbox;
+ display: box;
+ -webkit-box-orient: vertical;
+ -moz-box-orient: vertical;
+ box-orient: vertical;
+ -webkit-box-sizing: border-box;
+ -moz-box-sizing: border-box;
+ box-sizing: border-box;
+ -ms-flex-direction: column;
+}
+.master-detail-master),
+
+
+in ios.css in line 183
+
+Everything after the weird    .master-detail-master)    gets ignored by Firefox....</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31715</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-12-12 14:53:20 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt;  box-sizing: border-box;
+&gt;  -ms-flex-direction: column;
+&gt; }
+&gt; .master-detail-master),
+
+The complete last line is:
+
+.master-detail-master), .vbox &gt; * :not(.navigationbar {
+
+which is correct except the second argument to not() is rotated to the 
+beginning of the line.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31720</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-12-12 18:33:50 +0100</bug_when>
+            <thetext>:not() issue:
+
+  Seems that chaining is the right way, ie.
+    :not(.foo):not(.bar)
+  instead of 
+    :not(.foo, .bar)
+
+  MDN and W3C docs suggest that :not() is monadic.
+
+
+@-moz-document issue:
+
+  Christopher has tentatively removed it, could well be that we can do without.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31721</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-12-12 18:48:42 +0100</bug_when>
+            <thetext>Another issue was with a line like
+
+   linear-gradient(-45deg, a b, c d)
+
+which would issue an ERROR message, but the compile went on alright, while 
+
+   linear-gradient(to bottom, a b, c d)
+
+has no such message.
+
+CZ could also remove this line as not needed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31744</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-12-14 16:21:56 +0100</bug_when>
+            <thetext>We decided to go with pyScss for the time being, advising about its limitations 
+in our manual. Each user can then decide to switch to using the Ruby reference 
+implementation if needed.
+
+Further issues should be handled in their dedicated bugs.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37945</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:15 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

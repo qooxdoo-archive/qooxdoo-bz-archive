@@ -1,0 +1,123 @@
+<bug>
+          <bug_id>5097</bug_id>
+          
+          <creation_ts>2011-05-09 10:25:00 +0200</creation_ts>
+          <short_desc>Cannot resend a request more than one time with old transport</short_desc>
+          <delta_ts>2012-05-16 09:46:05 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io.remote</component>
+          <version>1.4</version>
+          <rep_platform>Firefox 4.0</rep_platform>
+          <op_sys>Linux</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Johannes Kissel">johannes.kissel</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>4</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>24375</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2011-05-09 10:25:41 +0200</bug_when>
+            <thetext>Example: http://tinyurl.com/6x6c8z8
+
+The events are fired on change of the state property. The state is reset by the send method. I also checked the _check method of the RequestQueue. All the if conditions which return do not evaluate to true.
+
+So far from my research...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24376</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-05-09 12:22:40 +0200</bug_when>
+            <thetext>Thanks for the example.
+
+The request is disposed once the failed listener is processed (see _onfailed). When the request is disposed, the underlying transport gets removed (see destruct). In other words: While the second request is send, the request is no longer tied to qooxdoo when the answer is received.
+
+Example:
+
+var req = new qx.io.remote.Request(&quot;/foo&quot;);
+var i = 3;
+
+var listener = function(e) {
+  qx.log.Logger.debug(&quot;Type: &quot; + e.getType());
+  
+  if (i-- &gt; 0) {
+    qx.log.Logger.debug(&quot;Send again&quot;);
+    req.send(); 
+  }
+  
+  qx.log.Logger.debug(&quot;Finished processing listener&quot;);
+}
+req.addListener(&quot;failed&quot;, listener);
+req.send();
+
+Result:
+
+(Request #1 as indicated in network tab)
+Type: failed
+Send again
+Finished processing listener
+Destruct
+(Request #2 as indicated in network tab)
+
+Note that you need to add a console.log(&quot;Destruct&quot;) statement to destruct() to see similar log messages.
+
+The feature you&#39;re looking after is to recycle the same request object to make many requests. However, qx.io.remote.Request was probably not written with this feature in mind. Legacy browsers (IE &lt; 8, Firefox &lt; 3.5) did not support reusing the same instance of XHR. I guess this is why the feature was never really considered.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24380</commentid>
+            <who name="Johannes Kissel">johannes.kissel</who>
+            <bug_when>2011-05-09 12:47:48 +0200</bug_when>
+            <thetext>Any ideas how to do it anyways, do you know a workaround?
+
+Cloning the request object before send does not work.
+
+Will this feature be part of the new Xhr implementation?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24382</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-05-09 13:04:43 +0200</bug_when>
+            <thetext>To work around, you&#39;ll need to make a new request.
+
+Yes, it is part of the new Xhr implementation. The new implementation also comes with browser fixes for legacy browsers mentioned above.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27969</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-12-12 13:22:45 +0100</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; Yes, it is part of the new Xhr implementation. The new implementation also
+&gt; comes with browser fixes for legacy browsers mentioned above.
+
+So I guess we won&#39;t fix that for the old one.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

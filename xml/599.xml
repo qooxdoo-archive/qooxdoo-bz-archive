@@ -1,0 +1,121 @@
+<bug>
+          <bug_id>599</bug_id>
+          
+          <creation_ts>2007-08-23 14:19:00 +0200</creation_ts>
+          <short_desc>Property Setter Performance</short_desc>
+          <delta_ts>2008-09-03 20:45:28 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>0.7</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>critical</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Rüdiger Herrmann">rherrmann</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2148</commentid>
+            <who name="Rüdiger Herrmann">rherrmann</who>
+            <bug_when>2007-08-23 14:19:16 +0200</bug_when>
+            <thetext>In an effort to improve JavaScript performance especially for IE, we encountered that omitting the generation of the check code for properties lead to some performance improvements.
+We could measure a benefit of about 20 ms when creating 300 Label objects.
+
+Attached is a patch that only generates the check code when variant &#39;qx.debug&#39; is set to &#39;on&#39;. To reuse the debug variant therefore was mainly done for the sake of simplicity. One could also think of a new &#39;qx.unsafeProperties&#39; or whatever variant. However, for our use case the qx.debug variant would suffice.
+
+When looking at the generated code, I stumbled over one thing that could be optimized in my opinion.
+The &#39;var prop=qx.core.Property;&#39; statement that occurs at the top of each setter is only useful in case that an error is actually thrown. As the average setter will probably be executed successfully more often than it will fail, this statement should only be executed when actually necessary.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2149</commentid>
+              <attachid>244</attachid>
+            <who name="Rüdiger Herrmann">rherrmann</who>
+            <bug_when>2007-08-23 14:19:52 +0200</bug_when>
+            <thetext>Created attachment 244
+Patch as described in the bug report</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2229</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-09-11 14:09:05 +0200</bug_when>
+            <thetext>We already optimize some cases where appliying appearance values etc. But for typical user values this check is always activated and we continue to think that it is a good default. To save 20ms when creating 300 objects is not really that important IMHO.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2383</commentid>
+            <who name="Rüdiger Herrmann">rherrmann</who>
+            <bug_when>2007-09-18 22:15:41 +0200</bug_when>
+            <thetext>Why do you think that *always* checking values is a good idea? I didn&#39;t propose to change the default but provide a way to disable checks (e.g. when qx.debug=off or any other suitable setting)
+I think, that with a release quality app, these kind of errors shouldn&#39;t occur at all. But if one such error occurs, the app would stop or malfunction anyway. The only benefit would be an early catch and maybe a more describptive error message.
+Again, I didn&#39;t intend to discard the checks completely, but provide the developer with an option to improve performance.
+Given the bad performace of IE and its number of users, 20ms count a lot in my opinion. This may just be the time an impatient user closes the whole window/tab in frustration and doesn&#39;t come back for good.
+
+BTW what do you think about the suggested change of the &#39;var prop=qx.core.Property;&#39; statement mentioned in the first comment?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2384</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-09-18 23:31:29 +0200</bug_when>
+            <thetext>You use the system in a server/backend controlled process. But normal qooxdoo applications are controlled directly by the user. In such environments and maybe in yours too, it is possible that the actions the user take have direct influence to the properties (this is also often the case for the included widgets as well). To remove these checks, make no sense because of this. The benefit is by far not nearly, in any way, as attractive for the missing features you will have. Do not forget BTW that most property changes happen from during the appearance handling which already disabled the checks in the build version. To disable these checks in the frameworks is nothing we will support or provide. You cannot be sure that even a tested app do not produce errors here. Users can always do stuff nobody imagine currently. No topic for the framework but nobody blocks you from patch this for any local version you may use. 
+
+20ms for 300 labels is nothing which is somewhere in the area of important. Much more interesting is how to reduce the number (using pooling or any other intelligent mechanism) instead of creating this number of instances. Especially labels use a lot more time during the rendering. The creation is normally not the important thing. The rendering is much more important. DOM transactions and the calculation of preferred sizes is by far the most time consuming part for the existance of any label instance. 20ms is nothing. 200 OK, but 20 - nothing to talk about normally. Don&#39;t let us spend more time on this less profitable area. There are better fields of activity.
+
+Regarding your comment for the &quot;var&quot; statement. I don&#39;t think that this costs anything measurable. Move this away from there means to have larger code base which needs to be evaluated which could be slower again. Even after I have reviewed this part, I don&#39;t think we need to modify it.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>244</attachid>
+            <date>2007-08-23 14:19:00 +0200</date>
+            <delta_ts>2007-08-23 14:19:52 +0200</delta_ts>
+            <desc>Patch as described in the bug report</desc>
+            <filename>Property.js.patch</filename>
+            <type>application/octet-stream</type>
+            <size>842</size>
+            <attacher>rherrmann</attacher>
+            
+              <data encoding="base64">SW5kZXg6IC4NCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT0NCi0tLSAuCShyZXZpc2lvbiA5Mjc4KQ0KKysrIC4JKHdvcmtp
+bmcgY29weSkNCkBAIC03OTEsNyArNzkxLDcgQEANCiAgICAgICAgIH0KIAogICAgICAgICAvLyBV
+bmRlZmluZWQgY2hlY2sKLSAgICAgICAgaWYgKHZhcmlhbnQgPT09ICJzZXQiKSB7CisgICAgICAg
+IGlmIChxeC5jb3JlLlZhcmlhbnQuaXNTZXQoInF4LmRlYnVnIiwgIm9uIikgJiYgdmFyaWFudCA9
+PT0gInNldCIpIHsKICAgICAgICAgICBjb2RlLnB1c2goJ2lmKHZhbHVlPT09dW5kZWZpbmVkKXBy
+b3AuZXJyb3IodGhpcywyLCInK25hbWUrJyIsIicrdmFyaWFudCsnIix2YWx1ZSk7Jyk7CiAgICAg
+ICAgIH0KICAgICAgIH0KQEAgLTgzOSw5ICs4MzksOSBAQA0KICAgICAgICAgY29kZS5wdXNoKCd2
+YXIgaW5oZXJpdD1wcm9wLiQkaW5oZXJpdDsnKTsKICAgICAgIH0KIAotICAgICAgLy8gRW5hYmxl
+IGNoZWNrcyBpbiBkZWJ1Z2dpbmcgbW9kZSBvciB0aGVuIGdlbmVyYXRpbmcgdGhlIHNldHRlcgor
+ICAgICAgLy8gR2VuZXJhdGUgY2hlY2tzIG9ubHkgaW4gZGVidWcgbW9kZQogCi0gICAgICBpZiAo
+aW5jb21pbmdWYWx1ZSAmJiAocXguY29yZS5WYXJpYW50LmlzU2V0KCJxeC5kZWJ1ZyIsICJvbiIp
+IHx8IHZhcmlhbnQgPT09ICJzZXQiKSkKKyAgICAgIGlmIChpbmNvbWluZ1ZhbHVlICYmIHF4LmNv
+cmUuVmFyaWFudC5pc1NldCgicXguZGVidWciLCAib24iKSkKICAgICAgIHsKICAgICAgICAgLy8g
+TnVsbCBjaGVjawogICAgICAgICBpZiAoIWNvbmZpZy5udWxsYWJsZSkgewo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

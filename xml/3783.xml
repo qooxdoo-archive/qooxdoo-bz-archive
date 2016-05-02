@@ -1,0 +1,135 @@
+<bug>
+          <bug_id>3783</bug_id>
+          
+          <creation_ts>2010-06-18 14:15:00 +0200</creation_ts>
+          <short_desc>Prevent detecting static variables as dependency</short_desc>
+          <delta_ts>2010-08-06 10:17:45 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Alexander Steitz">alexander.steitz</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>18792</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-06-18 14:15:07 +0200</bug_when>
+            <thetext>Currently the dependency analysis also detects static variables as dependencies. 
+
+--snip--
+qx.Class.define(&quot;my.Class&quot;, 
+{
+
+  statics :
+  {
+     &quot;MY_STATIC_VARIABLE&quot; : &quot;foo&quot;
+  }
+}
+
+// other class
+var myVar = my.Class.MY_STATIC_VARIABLE;
+--snip--
+
+The dependency analysis does detect the &quot;MY_STATIC_VARIABLE&quot; as dependency of the class in which the variable is used with the full qualified class name.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18800</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-06-18 16:53:24 +0200</bug_when>
+            <thetext>Cannot repro.
+
+I created a skeleton app with the scenario you described, but the dependency is 
+picked up correctly, ie. the dependency is only to &quot;my.Class&quot; and not to 
+&quot;my.Class.MY_STATIC_VARIABLE&quot;.
+
+Please create a skeleton app that reproduces the problem.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18811</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-06-21 10:42:32 +0200</bug_when>
+            <thetext>I forgot to mention that the static variable which is referenced is located in another library. So we do need two skeletons to check this.
+
+Anyway: using the &quot;#ignore&quot; directive does remove this dependency.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18888</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-06-22 20:18:36 +0200</bug_when>
+            <thetext>-&gt; 1.2; working on it</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18897</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-06-23 10:44:39 +0200</bug_when>
+            <thetext>The issue here is that the current implementation of the &#39;provider&#39; job works 
+on the local lib only:
+
+&quot;provider&quot; : {
+  &quot;extend&quot; : [&quot;cache&quot;, &quot;scan-local-lib&quot;, &quot;includes&quot;],
+  ...
+
+This is so that only local classes are taken into account when writing the 
+dependency.json. But the downside is, other classes are not known, and 
+therefore dependent symbols cannot be matched against the list of known names, 
+to see where the class name ends and the member name starts.
+
+If the restriction to &#39;scan-local-lib&#39; is dropped, the necessary narrowing when 
+writing dependency.json might be achieved by using &quot;exclude&quot;. Have to test 
+that...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19008</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-06-29 18:15:32 +0200</bug_when>
+            <thetext>Fixed by (as indicated) including *all* libraries for the input, but limiting 
+output processing by using provider/include, provider/exclude config keys.
+
+With r22538.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19039</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2010-06-30 14:52:45 +0200</bug_when>
+            <thetext>verified</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19059</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-06-30 17:24:39 +0200</bug_when>
+            <thetext>-&gt; 1.2</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

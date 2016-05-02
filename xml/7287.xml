@@ -1,0 +1,136 @@
+<bug>
+          <bug_id>7287</bug_id>
+          
+          <creation_ts>2013-03-07 19:28:00 +0100</creation_ts>
+          <short_desc>Problem with qx.Application.Routing with History of CustomData</short_desc>
+          <delta_ts>2014-02-04 14:23:21 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.application</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Mac OS</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>3.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christopher Zuendorf">christopher.zuendorf</reporter>
+          <assigned_to name="Christopher Zuendorf">christopher.zuendorf</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>32424</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-03-07 19:28:06 +0100</bug_when>
+            <thetext>There is a problem in qx.Mobile when using customData parameter of _executeGet:
+
+
+Page 1:
+
+Calls:
+
+this.getRouting().executeGet(&quot;/page2&quot;);
+
+Page 2:
+
+Calls:
+
+this.getRouting().executeGet(&quot;/page1&quot;, {&quot;reverse&quot;:true});
+
+On first transition from Page 1 &gt; Page2. Everything is ok. No Reverse Transition.
+On second transition from Page 2 &gt; Page1. Everything is ok. Reverse transition.
+On third transition from Page 1 &gt; Page2:
+
+The Page2 has a reverse transition. &gt;&gt; Wrong.
+
+This is caused by the following code in qx.Application.Routing:
+
+LINE 256
+
+var history = this.__getFromHistory(path);
+      if (history)
+      {
+        if (!customData)
+        {
+          customData = history.data.customData || {};
+          customData.fromHistory = true;
+          customData.action = history.action;
+          customData.fromEvent = fromEvent;
+        } else {
+          this.__replaceCustomData(path, customData);
+        }
+      } else {
+        this.__addToHistory(path, customData);
+        qx.application.Routing.__forward = [];
+      }
+
+
+If no history is set, everything is ok. But on third transition there is a history for &quot;/page2&quot; route,
+and if there is no customData given on executeGet, it takes the any available customData from history:
+In this case &quot;{reverse:true}&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32425</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-03-07 19:34:32 +0100</bug_when>
+            <thetext>Master: 8ccc244da3c1e7a0f0987ee41bf70c18bdbcfa5c</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32426</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-03-07 19:35:48 +0100</bug_when>
+            <thetext>@Martin:
+
+Please review the solution.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32431</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2013-03-08 19:45:00 +0100</bug_when>
+            <thetext>Reopen because of unwanted side effects....
+
+Need a review of the solution.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32434</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-03-12 07:58:18 +0100</bug_when>
+            <thetext>The solution looks good to me. What are the side effects?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34946</commentid>
+            <who name="Christopher Zuendorf">christopher.zuendorf</who>
+            <bug_when>2014-02-04 14:23:21 +0100</bug_when>
+            <thetext>Master:
+
+71c44d6e436750c677e7419a03ac98345eb98ac0
+
+
+Problem was caused inside of mobile card layout. Reverse animation was displayed whenever fromHistory: true. This behaviour was wrong. The reverse animation should only be triggered via animation properties map, and not via the routing state.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,281 @@
+<bug>
+          <bug_id>1893</bug_id>
+          
+          <creation_ts>2009-02-02 16:43:00 +0100</creation_ts>
+          <short_desc>Variableoptimizer makes problems when dealing with closures</short_desc>
+          <delta_ts>2014-03-03 15:27:04 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.8.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Sebastian Werner">info</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>7545</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-02 16:43:43 +0100</bug_when>
+            <thetext>This source file:
+function()
+{
+  qx.Class.define(&quot;qx.core.BaseArray&quot;,
+  {
+    extend : Array
+  });
+  
+  function foo()
+  {
+    var Array = function() {};
+  };  
+}
+
+is being optimized with the variable optimizer and results into this compiled code.
+
+$ tool/bin/compile.py func.js -n
+function(){qx.Class.define(&quot;qx.core.BaseArray&quot;,
+{extend:b});
+function a(){var b=function(){};
+}}
+
+As &quot;Array&quot; is defined in an function it is not accesible in the location where &quot;extend&quot; references to it. The problem do no exist when the outer function is not there. This outer function may be added through the string optimizer in the previous step so it might be a problem in a larger area.
+
+The same problem happens when &quot;Array&quot; is renamed to &quot;foo&quot;. It do not depend on the native object name.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7546</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-02 16:49:43 +0100</bug_when>
+            <thetext>Maybe related to the &quot;if level==0&quot; part of the variantoptimizer.py which clears out variables only when a top-level function is closed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7547</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-02 17:04:11 +0100</bug_when>
+            <thetext>Another issue, not sure about the relation:
+
+var foo = function()
+{
+  var arguments = &quot;pop,push,indexOf&quot;;
+
+  var Foo = function() {};
+  Foo.prototype.concat = function() {
+    alert(arguments[0]);
+  }
+}
+
+results into this:
+var foo=function(){var a=&quot;pop,push,indexOf&quot;;
+var b=function(){};
+b.prototype.concat=function(){alert(a[0]);
+};
+};
+
+The error is the renamed &quot;arguments&quot; in the function &quot;concat&quot; which should be protected. It is renamed to &quot;a&quot; as the variable some lines above the declaration.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7550</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-02 18:17:53 +0100</bug_when>
+            <thetext>The last issue may be fixed with managing a map of keywords (not reserved words) with a special priority. I would suggest to do it like the following:
+
+Adding a dictionary with ignored names:
+IGNORE = {
+    # The arguments object from the last function has 
+    # higher priority than variables defined in any outer function
+    &quot;arguments&quot; : 1
+}
+
+Modify respect() like this:
+def respect(name, found):
+    return (name and not name in found and not name.startswith(&quot;_&quot;) and not name in IGNORE)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7551</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-02 18:19:08 +0100</bug_when>
+            <thetext>to thomas</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7552</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-02 18:20:52 +0100</bug_when>
+            <thetext>Just another note: When removing the line &quot;if level==0&quot; from the variableoptimizer the closure issue is fixed. We just need to be sure that this do not break any other things. For me there seems not to be any reason for this limitations. Thomas, do you still remember why we have added this one?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7570</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-02-03 15:42:29 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Just another note: When removing the line &quot;if level==0&quot; from the 
+variableoptimizer the closure issue is fixed. We just need to be sure that this 
+do not break any other things.
+
+Your sample code and Feedreader look fine, but I get regressions in other apps 
+(Playground, Apiviewer, ...) - have to look into that.
+
+&gt; For me there seems not to be any reason for this limitations. Thomas, do you 
+still remember why we have added this one?
+
+I have no idea :-) .  I spotted it only yesterday, and was surprised by myself. 
+See the comment I added at the &quot;del ...&quot; line.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7571</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-03 15:45:38 +0100</bug_when>
+            <thetext>One case which may be problematic with the new code are blocks which declare multiple closure methods inside like:
+
+(function()
+{
+  var x = &quot;hello&quot;;
+
+  function a()
+  {
+    var x = &quot;foo&quot;;
+  }
+
+  function b()
+  {
+    var x = &quot;bar&quot;;
+  }
+})();
+
+Not sure, but maybe the closing outer function will re-optimize the inner names again which would be bad. Just an idea. Not tested it yet.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7572</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-03 15:48:56 +0100</bug_when>
+            <thetext>Oh yes, at least something crazy happens:
+
+(function(){var c=&quot;hello&quot;;
+function c(){var e=&quot;foo&quot;;
+}function e(){var c=&quot;bar&quot;;
+}})();</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7579</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-02-03 18:45:26 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Just another note: When removing the line &quot;if level==0&quot; from the 
+variableoptimizer the closure issue is fixed. We just need to be sure that this 
+do not break any other things. For me there seems not to be any reason for this 
+limitations. Thomas, do you still remember why we have added this one?
+
+I get a regression in qx.core.Variant.__loadUrlVariants(). Will check that...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7581</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-03 20:13:00 +0100</bug_when>
+            <thetext>Just one idea. Maybe it works better when we do not collect all variables inside these closures and try to solve it like currently.
+
+Basically the important fact is that variables which get optimized are also declared in the function. When multiple functions are placed into each-other - the closure pattern - only the variables declared in the inner function are being optimized.
+
+The issue with this processing might be that we need to remember some kind of offset. When the inner function uses variable names &quot;a&quot;-&quot;d&quot; these must not be used by the outer function. This function must continue the naming at &quot;e&quot;.
+
+What do you think?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7583</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-02-04 09:27:03 +0100</bug_when>
+            <thetext>Why don&#39;t we use the scope analysis functionality of the lint tool to find free and bound variables? The lint tool is able to compute all bound variables of each function. Further is knows exactly, where each variable is used. With this information it should be trivial to build the variable optimizer. Further its much more generic than trying to handle each possible case explicitly in the code.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7584</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-04 09:48:28 +0100</bug_when>
+            <thetext>That&#39;s basically a good idea. The scope handling was not part of qooxdoo as the original optimizer was written. Regarding software architecture I would prefer this as well.
+
+Do the scope handling respect the &quot;catch(ex)&quot; things we recently added to the variableoptimizer? Would be a good addition I would think.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7585</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-02-04 09:58:25 +0100</bug_when>
+            <thetext>I&#39;m not sure whether the scope handling handles the catch(e) blocks correctly but I think it should be trivial to add.
+
+One further suggestion for the variable optimizer: If we find a function containing an &quot;eval&quot; or &quot;switch&quot; statement we should avoid optimizing any variables, which can be reached from these statements. This way we can make variable optimization a &quot;safe&quot; optimization.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7589</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-02-04 10:30:36 +0100</bug_when>
+            <thetext>(In reply to comment #11)
+
+Sounds good. I&#39;ll look into that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7721</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-02-12 16:14:34 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+
+&gt; var foo = function()
+&gt; {
+&gt;   var arguments = &quot;pop,push,indexOf&quot;;
+&gt; 
+&gt;   var Foo = function() {};
+&gt;   Foo.prototype.concat = function() {
+&gt;     alert(arguments[0]);
+&gt;   }
+&gt; }
+
+This also relates to the bug description (the &quot;Array&quot; example): For on thing, the &quot;extend: Array&quot; has to be separated from the &quot;var Array&quot;, that&#39;s unquestioned.
+
+But the next issue, which becomes apparent in comment#2, arises when names of reserved words (like Array, arguments) are optimized. There is no easy way of telling when an occurence of the name refers to the reserved binding or the new binding (esp. as we&#39;ve seen that browsers might handle it differently). I therefore think it would be best to leave such names unoptimized, rather than running into tricky corner cases of browsers&#39; scope handling. I think that would be a fair and safe tradeoff for those rare cases when somebody actually uses a reserved word as a local var.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7724</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-02-12 16:18:08 +0100</bug_when>
+            <thetext>Thomas that&#39;s a completely OK solution to leave these names as they are without trying to do some tricky optimization.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7755</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-02-13 23:38:45 +0100</bug_when>
+            <thetext>A new version of the variable optimizer, based on the Scope module, is in place. All test snippets provided in this bug look good.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39331</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:04 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,217 @@
+<bug>
+          <bug_id>2309</bug_id>
+          
+          <creation_ts>2009-04-27 10:17:00 +0200</creation_ts>
+          <short_desc>Cell Editor validation doesn&#39;t get called</short_desc>
+          <delta_ts>2014-03-03 15:22:38 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Fabian Jakobs">fabian.jakobs</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          <cc>info</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9669</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-27 10:17:05 +0200</bug_when>
+            <thetext>Reported by Jim Hunter on the Mailing List:
+
+OK&lt; I have a test for the Playground that show most of what I am
+seeing. In the following code you will see that the validation
+function only gets called for the first edit, never again. But there
+is a difference in the behavior I see in Playground to what I see in
+my app. In the Playground, subsequent attempts to put non-numeric data
+in the cell result in the contents of the cell showing NaN and not the
+text you type in. In my app, you get the typed in text. Something is
+not working correctly in both cases, just it&#39;s not working differently
+in both cases. I made a modification to my test code just now to see
+what would happen if two cells shared the same validation function and
+if you edit column 0 then column 1 doing the exact same thing in both
+cells you are going to get different results. Yes, there is a bug
+here.
+
+Here is the code:
+
+var doc = this.getRoot();
+var d = [[1,2,3]];
+var cols = [&#39;c-1&#39;,&#39;c-2&#39;,&#39;c-3&#39;];
+tm = new qx.ui.table.model.Simple;
+tm.setColumns(cols);
+tm.setData(d);
+t = new qx.ui.table.Table(tm);
+t.setWidth(400);
+t.setHeight(150);
+doc.add(t);
+var f = new qx.ui.table.celleditor.TextField;
+var chkNum = function(value, oldValue){
+  doc.info(&#39;function called&#39;); // this should get hit every time you
+make an edit in the cell
+ if (isNaN(value))
+    return oldValue;
+  else return value;
+};
+var tcm = t.getTableColumnModel();
+f.setValidationFunction(chkNum);
+t.getTableModel().setColumnEditable(1,true);
+t.getTableModel().setColumnEditable(0,true);
+tcm.setCellEditorFactory(1, f);
+tcm.setCellEditorFactory(0, f);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9670</commentid>
+              <attachid>499</attachid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-27 10:27:38 +0200</bug_when>
+            <thetext>Created attachment 499
+Patch by Derrell Lipman</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12982</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-10-08 13:37:29 +0200</bug_when>
+            <thetext>Fabian, could you look at this again (maybe let Derrell apply the patch?).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13250</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-16 17:22:24 +0200</bug_when>
+            <thetext>The offending code is this snippet from the TextField cell editor:
+      
+      // validation function will be called with new and old value
+      var validationFunc = this.getValidationFunction(); 
+      if ( ! this._done &amp;&amp; validationFunc )
+      {
+         value = validationFunc( value, cellEditor.originalValue ); 
+         this._done = true;      
+      }
+      
+ This was added by me in r10000 with the commit message:
+ 
+&quot;apply patch by christian boulanger to pass the table witch the cellinfo to the cell editor and add a validation property to the textfield editor.&quot;
+
+I really don&#39;t know why the &quot;_done&quot; flag is needed, Christian do you remember?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13257</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-16 17:50:53 +0200</bug_when>
+            <thetext>playground code
+
+http://demo.qooxdoo.org/current/playground/#%7B%22code%22%3A%20%22var%2520doc%2520%253D%2520this.getRoot%28%29%253B%250Avar%2520d%2520%253D%2520%255B%255B1%252C2%252C3%255D%255D%253B%250A%250Avar%2520cols%2520%253D%2520%255B%27c-1%27%252C%27c-2%27%252C%27c-3%27%255D%253B%250A%250Atm%2520%253D%2520new%2520qx.ui.table.model.Simple%28%29%253B%250Atm.setColumns%28cols%29%253B%250Atm.setData%28d%29%253B%250At%2520%253D%2520new%2520qx.ui.table.Table%28tm%29%253B%250At.setWidth%28400%29%253B%250At.setHeight%28150%29%253B%250Adoc.add%28t%29%253B%250A%250Avar%2520f%2520%253D%2520new%2520qx.ui.table.celleditor.TextField%28%29%253B%250Avar%2520chkNum%2520%253D%2520function%28value%252C%2520oldValue%29%2520%257B%250Adoc.info%28%27function%2520called%27%29%253B%250Aif%2520%28isNaN%28value%29%29%250Areturn%2520oldValue%253B%250Aelse%2520return%2520value%253B%250A%257D%253B%250Avar%2520tcm%2520%253D%2520t.getTableColumnModel%28%29%253B%250Af.setValidationFunction%28chkNum%29%253B%250At.getTableModel%28%29.setColumnEditable%281%252Ctrue%29%253B%250At.getTableModel%28%29.setColumnEditable%280%252Ctrue%29%253B%250Atcm.setCellEditorFactory%281%252C%2520f%29%253B%250Atcm.setCellEditorFactory%280%252C%2520f%29%253B%22%7D</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13258</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2009-10-16 22:05:56 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; The offending code is this snippet from the TextField cell editor:
+&gt; 
+&gt;       // validation function will be called with new and old value
+&gt;       var validationFunc = this.getValidationFunction(); 
+&gt;       if ( ! this._done &amp;&amp; validationFunc )
+&gt;       {
+&gt;          value = validationFunc( value, cellEditor.originalValue ); 
+&gt;          this._done = true;      
+&gt;       }
+&gt; 
+&gt;  This was added by me in r10000 with the commit message:
+&gt; 
+&gt; &quot;apply patch by christian boulanger to pass the table witch the cellinfo to the
+&gt; cell editor and add a validation property to the textfield editor.&quot;
+&gt; 
+&gt; I really don&#39;t know why the &quot;_done&quot; flag is needed, Christian do you remember?
+&gt; 
+
+I have no idea. I don&#39;t think I added this - my patch was meant to return a reference to the table in the cellinfo object. But I cannot really remember this. I think you can sefely remove the check.
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13259</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-16 22:49:13 +0200</bug_when>
+            <thetext>Thanks, then I&#39;ll go ahead and remove the check.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13270</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-10-19 10:31:47 +0200</bug_when>
+            <thetext>fixed in r20401</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14495</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:14:59 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37753</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:38 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>499</attachid>
+            <date>2009-04-27 10:27:00 +0200</date>
+            <delta_ts>2009-04-27 10:27:38 +0200</delta_ts>
+            <desc>Patch by Derrell Lipman</desc>
+            <filename>x.patch</filename>
+            <type>text/plain</type>
+            <size>973</size>
+            <attacher>fabian.jakobs</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS90YWJsZS9j
+ZWxsZWRpdG9yL1RleHRGaWVsZC5qcyBiL3Fvb3hkb28vZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9x
+eC91aS90YWJsZS9jZWxsZWRpdG9yL1RleHRGaWVsZC5qcwppbmRleCAyNGE2YWIyLi40ZWNlMzkx
+IDEwMDY0NAotLS0gYS9xb294ZG9vL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkvdGFibGUv
+Y2VsbGVkaXRvci9UZXh0RmllbGQuanMKKysrIGIvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2Ns
+YXNzL3F4L3VpL3RhYmxlL2NlbGxlZGl0b3IvVGV4dEZpZWxkLmpzCkBAIC03MSw5ICs3MSw2IEBA
+IHF4LkNsYXNzLmRlZmluZSgicXgudWkudGFibGUuY2VsbGVkaXRvci5UZXh0RmllbGQiLAogCiAg
+IG1lbWJlcnMgOgogICB7Ci0gICAgX19kb25lIDogbnVsbCwKLQotCiAgICAgLy8gaW50ZXJmYWNl
+IGltcGxlbWVudGF0aW9uCiAgICAgY3JlYXRlQ2VsbEVkaXRvciA6IGZ1bmN0aW9uKGNlbGxJbmZv
+KQogICAgIHsKQEAgLTEwMCwxMCArOTcsOSBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LnVpLnRhYmxl
+LmNlbGxlZGl0b3IuVGV4dEZpZWxkIiwKIAogICAgICAgLy8gdmFsaWRhdGlvbiBmdW5jdGlvbiB3
+aWxsIGJlIGNhbGxlZCB3aXRoIG5ldyBhbmQgb2xkIHZhbHVlCiAgICAgICB2YXIgdmFsaWRhdGlv
+bkZ1bmMgPSB0aGlzLmdldFZhbGlkYXRpb25GdW5jdGlvbigpOwotICAgICAgaWYgKCAhIHRoaXMu
+X19kb25lICYmIHZhbGlkYXRpb25GdW5jICkKKyAgICAgIGlmICh2YWxpZGF0aW9uRnVuYyApCiAg
+ICAgICB7CiAgICAgICAgICB2YWx1ZSA9IHZhbGlkYXRpb25GdW5jKCB2YWx1ZSwgY2VsbEVkaXRv
+ci5vcmlnaW5hbFZhbHVlICk7Ci0gICAgICAgICB0aGlzLl9fZG9uZSA9IHRydWU7CiAgICAgICB9
+CiAKICAgICAgIGlmICh0eXBlb2YgY2VsbEVkaXRvci5vcmlnaW5hbFZhbHVlID09ICJudW1iZXIi
+KSB7Cg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

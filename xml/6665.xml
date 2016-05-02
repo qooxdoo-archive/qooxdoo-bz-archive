@@ -1,0 +1,168 @@
+<bug>
+          <bug_id>6665</bug_id>
+          
+          <creation_ts>2012-07-24 09:20:00 +0200</creation_ts>
+          <short_desc>Clean up qx.lang namespace</short_desc>
+          <delta_ts>2014-03-03 15:27:11 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martin Wittemann">martin.wittemann</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>johannes.kissel</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30239</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-07-24 09:20:47 +0200</bug_when>
+            <thetext>As follow op for bug #6151.
+We should clean up the lang namespace and align the qx.module.Polyfill class with qx.lang.Core. Additionally, we could check what methods in qx.lang could be removed.
+
+I already added a proposal to the mailing list:
+http://qooxdoo.678.n2.nabble.com/cleanup-of-qx-lang-and-qx-type-td7580690.html;cid=1343114136802-330
+
+Here is the main content:
+
+qx.lang.Generics [1]
+- removed the class
+
+qx.lang.Core
+- rename the class
+- extend it with newer polyfills like Date.toJSON
+- remove the &quot;polyfill&quot; for string.quote because its not in the spec.
+
+qx.module.Polyfill
+- clean up the content of that class
+- use the former qx.lang.Core class
+
+qx.lang.Array
+- remove the following methods:
+     toArray: can be replaced with cast
+     fromCollection: we cant reproduce the bug its fixing
+     clone: its a simple concat
+     max: its available in Math
+     min: its available im Math
+     sum: easy to implement it yourself if needed
+
+qx.lang.Date
+- move &#39;now&#39; to polyfill
+- remove the whole class
+
+qx.lang.Function
+- move &#39;bind&#39; to polyfill 
+- remove empty, returnTrue, returnFalse, returnNull, returnThis, returnZero
+
+qx.lang.Object
+- move getKeys to polyfill
+- move toUriParameter to URI or serialization
+- remove 
+     hasMinLength: is a simple check and getLength
+     getKeysAsString: is a simple Object.keys + join
+     mergeWith, mergeCarefullyWith: can be replaced by merge
+     select: its a simple map[key] return
+
+qx.lang.String
+- remove contains: is a simple indexOf</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30299</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-08-01 14:10:45 +0200</bug_when>
+            <thetext>Added a new namespace called qx.lang.normlaize which holds a Class for each native type we add a normalization. This classes check for the availability for some native features using environment keys and add the features if not available.
+Additionally removed some of the convenience methods like proposed on the mailing list thread. We also decided to keep the qx.lang.Function.bind method but also added a normalization.
+
+master: 2239bb61d68cec6193edd37f56f9bff971ada2f7</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30300</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-08-01 14:13:54 +0200</bug_when>
+            <thetext>Also updated the manual: 8975da3d2fb501852217a5244e0663e637dc0fa5</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30304</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-08-01 15:52:40 +0200</bug_when>
+            <thetext>*** Bug 6503 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30355</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2012-08-10 13:59:41 +0200</bug_when>
+            <thetext>We removed the replacement for Array.slice since we couldn&#39;t reproduce the problem where old IEs would refuse to apply it to list-like objects that aren&#39;t Array instances. This problem still affects NodeLists in IE7, for example in qx.bom.Html.__convertHtmlString.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30357</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2012-08-10 15:19:56 +0200</bug_when>
+            <thetext>Reverted the deprecation of qx.lang.Array.fromCollection (549ad44d on master).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31979</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2013-01-25 10:13:00 +0100</bug_when>
+            <thetext>Replacing qx.lang.Function.empty with function() {} in the framework code broke qx.io.rest.Resource for certain use cases: Classes extending it may define method stubs in order to document REST actions, e.g.:
+
+  members:
+  {
+    /**
+     * (index action description)
+     *
+     * @signature function()
+     */
+    index: qx.lang.Function.empty
+  }
+
+At runtime, rest.Resource.map will be used to replace the stub with the actual implementation. It used to check if the existing method was a stub and thus safe to overwrite by comparing it to qx.lang.Function.empty. After the migration, this no longer works since it&#39;s now comparing two different function objects which will never be equal.
+
+There doesn&#39;t seem to be a reliable way to check if a function is empty (the return value of Function.toString is apparently not standardized), so we should consider reverting the deprecation.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32005</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2013-01-28 11:05:04 +0100</bug_when>
+            <thetext>rest.Resource is the only place in the framework classes where lang.Function.empty was used in a comparison. For this use case, we can simply replace it with null so reverting the deprecation won&#39;t be necessary.
+
+Fixed with
+2c9a513a (master)
+defbe01a (branch_2_1_x)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39374</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:11 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

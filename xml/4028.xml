@@ -1,0 +1,285 @@
+<bug>
+          <bug_id>4028</bug_id>
+          
+          <creation_ts>2010-08-26 14:17:00 +0200</creation_ts>
+          <short_desc>Add a build optimization: Remove unused static methods</short_desc>
+          <delta_ts>2014-03-03 15:22:34 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>2.0</target_milestone>
+          
+          <blocked>3694</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martin Wittemann">martin.wittemann</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>19999</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-08-26 14:17:42 +0200</bug_when>
+            <thetext>We have often thought about linking the code for the build version on the level of methods. This is in non type strict languages like javascript a hard task if possible at all. But what could be possible is to remove unused static methods. As we have a lot of utility classes where only a couple of methods are needed. Removing the not used could be a benefit, especially for restricted devices.
+
+@Thomas: I set the target to 1.3 because we should check whats the effort we need to put in to get this possibly done. If we know the estimate time this feature would need to add, we can move the bug to another taget if necessary.
+
+I also added bug #3694 as block because we don&#39;t need to change the OO design of qx.Class e.g. if the generator could do that for us.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20699</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-14 15:42:07 +0200</bug_when>
+            <thetext>Thomas, please have a look along those lines we just talked about.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21028</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-03 10:45:50 +0100</bug_when>
+            <thetext>The &#39;statics&#39; optimization can now be applied. But there is an inherent problem 
+with class references being passed around, and then static methods being called 
+on the reference.
+
+The problem shows e.g. in Feedreader. The classes of concern are 
+qx.event.Manager and qx.event.Registration. Registration is a static class, and 
+is passed as a parameter to the constructor of the Manager class. This 
+constructor then calls qx.event.Registration.getHandlers() (via 
+&quot;this.__registration.getHandlers()&quot;). The fact that it is the Registration&#39;s 
+getHandlers method is not apparent to the generator at this point. Hence, the 
+method is not marked as being used and is later removed from the Registration 
+class. This then causes a run time error.
+
+The current dependency tracking strategies of the generator fall short in this 
+case. What would be needed would be some kind of type inference. A fully 
+automatic inference, e.g. of Manager.__registration in the above example, seems 
+hardly feasible, as it might incure a full scan and (again wobbly) analysis of 
+Manager constructor calls in the entire application code.
+
+A more realistic approach would be exploiting type annotations. This could be 
+using the existing &quot;@param&quot; documentation of the constructor method, or a 
+direct annotation of the class attribute, like in the Manager class
+
+           /** @type {qx.event.Registration} */
+           __registration : null,
+
+It has to be clarified if there is the third option of re-coding the framework 
+to *not* use passing of static classes as parameters, which would avoid the 
+situation in the first place.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21029</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-03 10:57:19 +0100</bug_when>
+            <thetext>rem Martin from CC</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21030</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-03 11:01:02 +0100</bug_when>
+            <thetext>With r23651.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21088</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-04 14:11:47 +0100</bug_when>
+            <thetext>Caching:
+
+There is an inherent issue with caching statics-optimized classes. As the 
+resulting code of such a class now depends on the state of other classes (ie. 
+their dependencies), it is no longer safe to cache compile results of such 
+classes.
+
+So far, the compile result of a class only depended on the variant set and the 
+optimization categories in effect at the time of compiling. With the statics 
+optimization, this is no longer true, as you could e.g. change the code of some 
+other class to call a yet unused static method of the current class, and the 
+cached compile result would lack this method.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21169</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-08 19:02:19 +0100</bug_when>
+            <thetext>Looking into the missed recognition of static methods for a gui skeleton app, 
+these are the contexts where this happened:
+
+- class is passed as reference to another method, and the static method is 
+called on the reference (as already mentioned)
+- class is assigned to a local variable, and the method called on the variable 
+(&quot;var f = qx.core.Object; f.method()&quot;)
+- method is called with a map-style reference, also involving variables 
+(&quot;qx.bom.Element[methodName]&quot;)
+- method call was part of a string that is prepared for later eval 
+(&#39;&quot;qx.lang.Array.fromShortHand(&quot; + params + &quot;);&quot;&#39;)
+
+Here is a full list of missed references, why it was missed and where it 
+occurred. All of them can be fixed using a #use compiler hint, with the 
+#&lt;method&gt; extension:
+
++#use(qx.event.Registration#getHandlers)
+  - passing class reference (qx.event.Manager#findHandler)
+
++#use(qx.event.Registration#getDispatchers)
+  - passing class reference (qx.event.Manager#dispatchEvent)
+
++#use(qx.util.ColorUtil#isCssString)
+  - local alias for class (qx.theme.manager.Color#_applyTheme)
+
++#use(qx.ui.core.queue.Manager#__executeAndRescheduleOnError)
+  - local alias for class (qx.ui.core.queue.Manager#flush, shadowing &#39;self&#39;)
+
++#use(qx.bom.Label#getTextSize)
+  - local alias for class (qx.ui.basic.Label#__computeContentSize)
+
++#use(qx.ui.layout.Util#computeVerticalAlignOffset)
+  - local alias for class (qx.ui.layout.Atom#renderLayout)
+
++#use(qx.lang.Array#fromShortHand)
+  - eval&#39;d code (qx.core.Property#__attachGroupMethods)
+
++#use(qx.bom.Element#capture)
+  - map-style method deref, with variable (qx.html.Element#flush)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21170</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-08 19:03:31 +0100</bug_when>
+            <thetext>Open: The aim is to at least include local aliases to the recognition process, 
+so that these cases of static method use will be covered.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21252</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-12 11:21:27 +0100</bug_when>
+            <thetext>As I will not address tracking of local class aliases right now,
+-&gt; down prio, to unspec</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21274</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-15 09:28:35 +0100</bug_when>
+            <thetext>Shouldn&#39;t we move it to 1.4 to be sure to finish it for the next release?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27460</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-08 18:09:19 +0100</bug_when>
+            <thetext>I think one of the limitations of the current statics optimization is that it 
+is &quot;one shot&quot; only.
+
+- When parsing the classes for a build, a registry is being built up which 
+methods are being used.
+- The the generator runs through all classes and eliminates methods that are 
+not marked as being used. That&#39;s it.
+- What is missing from this is that the dependees of the eliminated methods 
+might not be needed anymore, and could also be eliminated. But this doesn&#39;t 
+happen currently.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27609</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-24 15:54:41 +0100</bug_when>
+            <thetext>A basic implementation is now in place, and has been introduced into the master 
+branch, deploying both a kind of reference counting and reachability graphs.
+
+The optimization is done in the CodeGenerator, as it needs to work on sets of 
+classes: Pruning unused code from one class reduces usage counts of its 
+dependencies. To achieve this, multiple iterations are used:
+
+- With a run through the class list, each class is checked in the featureMap, 
+and non-registered features or features with refcount 0 are removed. Classes 
+with all features removed (or none used by another class) will be removed 
+entirely from the class list. Both can again decrease ref counts in other 
+features.
+- These two steps are repeated in a fixed-point iteration mode, until no 
+feature can be removed anymore.
+- As now there might be sets of classes referencing each other without being 
+actually needed, those classes are filtered out using reachability graphs 
+starting off from the head classes.
+
+The actual code pruning is done in Class.optimize(), informed by the featureMap 
+with its references. Once a method is removed, references to it are removed 
+from the featureMap, which can be exploited in the next run through the classes.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27610</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-24 16:14:12 +0100</bug_when>
+            <thetext>FUTURE:
+A potential alternative to the approach described in the previous comment could 
+be using reachability graphs and forward reasoning alone:
+Starting from all features of the head classes, create the dependency graphs 
+that consider features as nodes. Then remove remove those features and their 
+sub-graphs that are outside the reachability graphs of the head classes.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27704</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-11-30 11:48:11 +0100</bug_when>
+            <thetext>Re-targeting this as unfinished.
+
+Current status:
+- In the bom/anniqx sample app the current support achieves the targeted amount 
+of classes (12). Methods and other classes are stripped, and the app is 
+working. Dependency logging reflects those classes and their optimized 
+dpendency relations.
+- It&#39;s hard to tell how well it works outside this confined scenario, and where 
+it starts breaking. Fact is that with this optimization Gui skeleton and 
+Feedreader build, but get runtime errors due to missing mixins. Playground 
+doesn&#39;t even build.
+- The internal processing of classes has been changed, to better accommodate 
+statics optimization. The interface of Class has been changed so that trees are 
+more exposed, and can be handled explicitly. This now allows e.g. applying a 
+given optimization to a given tree, calculating dependencies of a given tree, 
+asf.
+- Caching remains a big challenge in this context. Variant trees are continued 
+to be cached. Dependency information on variant-optimized trees are being 
+cached. But whenever statics optimization is involved, trees and dependencies 
+are not cached. This is due to the fact that statics optimization depends 
+(again) on all the classes involved in the build. E.g. if one class adds a 
+method call to another in its code, this might result in the remote method not 
+being optimized away anymore, so the optimized tree of this class changes. With 
+this method now in, it adds to the dependencies of this class (so the class&#39; 
+own dependencies change), and potentially changes the optimized trees of the 
+dependent classes as well (again, changing *their* dependencies).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29480</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-05-16 16:32:02 +0200</bug_when>
+            <thetext>Resolving this as fixed. The current implementation works in a confined 
+scenario. If we ever need something else we should open a new bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37726</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:34 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,143 @@
+<bug>
+          <bug_id>5078</bug_id>
+          
+          <creation_ts>2011-05-04 19:48:00 +0200</creation_ts>
+          <short_desc>Make it cleaner to add a new transport</short_desc>
+          <delta_ts>2014-03-03 08:47:59 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io.remote</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>24322</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-05-04 19:48:20 +0200</bug_when>
+            <thetext>Currently, it takes a bit of kludging to add a new transport. The following sequence of operations is done in the defer() function of the &quot;simulation&quot; Transport class in contrib:RpcJs/trunk/source/class/rpcjs/sim/remote/Transport.js to add a new &quot;need&quot; and register the new transport and set its order of precedence:
+
+    // Patch qx.io.remote.Exchange with our own send() method that supports
+    // looking at the &quot;need&quot; for a simulated transport.
+    qx.Class.patch(qx.io.remote.Exchange, rpcjs.sim.remote.MExchange);
+    
+    // Similarly, for qx.io.remote.Request, except it can be a simple include
+    // since it&#39;s only adding a property.
+    qx.Class.include(qx.io.remote.Request, rpcjs.sim.remote.MRequest);
+
+    // Patch qx.io.remote.Rpc with our own createRequest() method that supports
+    // setting the simulate property of the request.
+    qx.Class.patch(qx.io.remote.Rpc, rpcjs.sim.remote.MRpc);
+    
+    // Register ourself with qx.io.remote.Exchange
+    qx.io.remote.Exchange.registerType(rpcjs.sim.remote.Transport,
+                                       &quot;rpcjs.sim.remote.Transport&quot;);
+    
+    // Add ourself as the last tried transport
+    qx.io.remote.Exchange.typesOrder.push(&quot;rpcjs.sim.remote.Transport&quot;);
+
+In particular, having to patch the Exchange class with a different send() method is pretty heinous. There should be a standardized interface which allows new &quot;needs&quot; and transports to be easily added.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24324</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-05-05 08:21:04 +0200</bug_when>
+            <thetext>Agreed. We should take care of that in all the new layers we are building to ensure that its easy to extend! but I don&#39;t think we are putting much effort in the old layer to get that changed. :|</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24333</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-05-05 14:22:39 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Agreed. We should take care of that in all the new layers we are building to
+&gt; ensure that its easy to extend! but I don&#39;t think we are putting much effort in
+&gt; the old layer to get that changed. :|
+
+Yes, I wasn&#39;t specific in the initial report. I am referring to the new implementation. The old one can be patched as I indicated, as a work-around, until the new implementation is ready, and there&#39;s no need (from my standpoint) to put any new work into it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24398</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-05-09 17:40:28 +0200</bug_when>
+            <thetext>Classes that inherit from qx.io.request.AbstractRequest can be customized to query arbitrary low-level transports as long as they implement a very basic XHR like interface (open(), send(), readyState and the like).
+
+Would that be of any help in your case?
+
+Thanks for your input!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24399</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-05-09 17:48:16 +0200</bug_when>
+            <thetext>The issue that caused me to have to make most use of the qx.Class.patch() and qx.Class.include() calls was the means in which the current implementation determines which transport to use. In the case of my transport simulator, I wanted a transport that would be used if a &quot;need&quot; was expressed for simulation, just like needs are expressed for cross-domain or form fields, etc. There were numerous places that had to deal with this, thus the set of patch and include calls... as well as modifying the static qx.io.remote.Exchange.typesOrder array manually.
+
+The interface you suggest sounds fine. The real issue is in transport selection, which I think is not addressed by that interface.
+
+Cheers,
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25990</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-07-13 13:14:22 +0200</bug_when>
+            <thetext>I guess this bug can be closed?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25992</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-07-13 13:58:55 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; I guess this bug can be closed?
+
+I&#39;d suggest that it remain open until the RPC layer is built on top of it. That&#39;s where we&#39;ll see how easy it is to add a transport that is not included in the framework (e.g., the simulation transport that&#39;s part of the RpcJs contrib). The means of selecting a transport when using the RPC layer has not, to my knowledge, been determined.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>25995</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-07-13 14:02:51 +0200</bug_when>
+            <thetext>Agreed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36096</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:47:59 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,246 @@
+<bug>
+          <bug_id>3688</bug_id>
+          
+          <creation_ts>2010-05-07 11:31:00 +0200</creation_ts>
+          <short_desc>IE &lt;= 7: try / finally w/o catch</short_desc>
+          <delta_ts>2014-03-03 15:25:02 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>other</component>
+          <version>1.0.2</version>
+          <rep_platform>IE</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.2.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Carsten Lergenmüller">carsten.lergenmueller</reporter>
+          <assigned_to name="Gabriel Munteanu">jajalinux</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>18256</commentid>
+            <who name="Carsten Lergenmüller">carsten.lergenmueller</who>
+            <bug_when>2010-05-07 11:31:54 +0200</bug_when>
+            <thetext>In IE &lt;= 7 the following bug exists: 
+
+If an exception / error is thrown in the try - part of a try - finally block, the finally part is only executed if the exception does not run into the browser (but is catched before reaching the browser). If the exception reaches the browser, the JS execution is aborted w/o the finally part being executed.
+
+Can be verified with this code:
+
+try{
+  document.write(&quot;&lt;br&gt;try&quot;);
+  throw new Error(&quot;Boom!&quot;);
+} finally {
+  document.write(&quot;&lt;br&gt;finally&quot;);
+}
+
+-&gt; Finally not executed in IE 7, but in IE 8
+
+Adding a catch will only help if the exception is eaten by it, i. e. it is not rethrown:
+
+try{
+  document.write(&quot;&lt;br&gt;try&quot;);
+  throw new Error(&quot;Boom!&quot;);
+} catch(e) {
+  document.write(&quot;&lt;br&gt;catch&quot;);
+  throw e;
+} finally {
+  document.write(&quot;&lt;br&gt;finally&quot;);
+}
+
+-&gt; Finally not executed in IE 7, but in IE 8
+
+So the real fix is not adding a catch in the same try - block, but preventing the exception to reach the browser.
+
+(Adding a handler to window.onerror does not change this, add a 
+window.onerror = function(){}
+before the try to verify)
+
+There is code in qooxdoo which incorrectly deals with this problem.
+
+qx.event.handler.Application:
+
+    _onNativeUnload : qx.event.GlobalError.observeMethod(function()
+    {
+      if (!this.__isUnloaded)
+      {
+        this.__isUnloaded = true;
+
+        try
+        {
+          // Fire user event
+          qx.event.Registration.fireEvent(this._window, &quot;shutdown&quot;);
+        }
+        catch (e)
+        {
+          // IE doesn&#39;t execute the &quot;finally&quot; block if no &quot;catch&quot; block is present
+          throw e;
+        }
+        finally
+        {
+          // Execute registry shutdown
+          qx.core.ObjectRegistry.shutdown();
+        }
+
+      }
+    })
+
+This code does not work because of the 
+
+        catch (e)
+        {
+          // IE doesn&#39;t execute the &quot;finally&quot; block if no &quot;catch&quot; block is present
+          throw e;
+        }
+
+but because of the GlobalError.observeMethod which prevents the exception from reaching the browser.
+
+Problems we see in qooxdoo:
+
+- Code with try catch finally which rethrows the exception ought to be checked if it is only called from code which is wrapped in a GlobalError.observeMethod
+
+A quick search gave these results: 
+
+qx.event.handler.Application._onNativeUnload
+qx.ui.core.queue.Manager.__executeAndRescheduleOnError
+qx.ui.table.selection.Model.setSelectionInterval
+
+- remove unnecessary code like the one in onNativeUnload, it breaks the stacktrace and promises help where there is none.
+
+Disussed with Johnny, who asked to file a bug.
+
+We will improve our error monitoring to check if an error was caugth in a try / catch or in winow.onError to find places where exceptions might run into the browser.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18282</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-05-11 09:57:23 +0200</bug_when>
+            <thetext>--&gt; Johnny
+
+Is that a problem in the framework?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18847</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2010-06-21 14:49:28 +0200</bug_when>
+            <thetext>-&gt; Chris</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19722</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-08-09 15:25:28 +0200</bug_when>
+            <thetext>Adrian, pleas check if we have some not working pieces (try - finally (without catch)) in the code because this seems to be an IE abnormality we should take care of.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20642</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-13 07:54:15 +0200</bug_when>
+            <thetext>mass retargeting to 1.2.2 due to intermediate 1.2.1 release</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21459</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2010-11-22 13:48:29 +0100</bug_when>
+            <thetext>my solution to this issue is to modify the catch statement from:
+---------
+catch(e){
+ throw e;
+}
+finally {
+statements();
+}
+---------
+to:
+---------
+catch(e){
+ if(ie &amp;&amp; ieversion&lt;=7) {
+  statements();
+ }
+ throw e;
+}
+finally {
+statements();
+}
+---------
+
+this will keep throwing an exception as it should for the parties interested, and still execute the finally code.
+if the statements() would generate exceptions themselves, then the caller code that would expect a certain exception first, gets another one.
+this won&#39;t be very problematic as this case changes only the order in the appearance of the exceptions, and the caller code will handle both of them based on name and description of the exception in any case.
+
+indeed we have this only in 3 places in the framework codebase as Carsten Lergenmüller mentioned:
+qx.event.handler.Application._onNativeUnload
+qx.ui.core.queue.Manager.__executeAndRescheduleOnError
+qx.ui.table.selection.Model.setSelectionInterval
+
+so, only these 3 methods will be modified.
+
+it is a hack indeed , but to accommodate a bad implementation of ie that we still support, i guess it is worth it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21483</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-23 09:00:38 +0100</bug_when>
+            <thetext>Looks pretty ugly but if its working he way it should, go ahead. but don&#39;t forget to add the bug number as a comment to these code pieces. Its always interesting to get details on intensionally added ugly code. :)
+
+Maybe you can add a general unit test as well to test that IE workaround?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21563</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2010-11-25 16:14:33 +0100</bug_when>
+            <thetext>fixed on trunk with rev. 24003 .
+the were 2 solutions to the 3 places here this problem existed.
+
+in the case of _onNativeUnload , the function was called through qx.event.GlobalError.observeMethod , which had a try catch that covered the whole method onNativeUnload. because of this, finally executed all right, no need of any hack.
+
+for the other 2 methods , a check is done for browser name and version and finally code is executed inside catch.
+
+i did try to make a test inside qx.test.Browser, with no success, as it failed on the error inside try {} , and couldn&#39;t assert what happened inside catch and finally. i did try to get it all inside another try {} catch {} , but in that case the ie &lt;= 7, worked as expected , same as the other browsers.
+
+i need a feedback here, and if ok, i will commit on 1.2.x branch too.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21570</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-26 08:12:13 +0100</bug_when>
+            <thetext>Its looking good. The only thing I see is that you should use [BUG #xyz] to reference to a bug (like in the commit message). But thats only a minor thing so go ahead and apply it to the branch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21579</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2010-11-26 09:48:48 +0100</bug_when>
+            <thetext>fixed on branch_1_2_x with rev. 24018</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38608</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:02 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

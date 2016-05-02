@@ -1,0 +1,228 @@
+<bug>
+          <bug_id>6207</bug_id>
+          
+          <creation_ts>2012-03-10 18:36:00 +0100</creation_ts>
+          <short_desc>qx.data.Array.splice &quot;change&quot; event does not describe the change</short_desc>
+          <delta_ts>2013-08-26 09:14:14 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>2.1.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="John Spackman">john.spackman</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>marcputs</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>28789</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2012-03-10 18:36:59 +0100</bug_when>
+            <thetext>Methods in qx.data.Array fire &quot;change&quot; events that fully describe the change that was made; it is possible to use the event to see items being added to and removed from the array.
+
+The splice() method however does not provide this information.  splice() sends a &quot;change&quot;/&quot;add&quot; event if the array *length* has increased, or &quot;change&quot;/&quot;remove&quot; if it decreases.  If the array length remains the same, a &quot;change&quot;/&quot;order&quot; event is fired - even if the array contents were completely replaced with totally different contents.
+
+Also, when other methods fire &quot;change&quot;/&quot;add&quot;, they include the new items added to the array - splice() sends null.
+
+A solution to this would be to fire &quot;change&quot;/&quot;add&quot; _and_ &quot;change&quot;/&quot;remove&quot; in splice(); this will not have a negative effect on existing code because any existing code which handles add/remove will have failed or been forced to work around the event&#39;s missing info.
+
+Pull request to follow.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28790</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2012-03-10 18:42:36 +0100</bug_when>
+            <thetext>Please see pull request #19 for implementation and unit test updates</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28791</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-03-12 07:40:23 +0100</bug_when>
+            <thetext>Thanks for the report and the pull request. Will check that and plan to incude it for the next release.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30537</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-08-30 14:09:26 +0200</bug_when>
+            <thetext>Added a fix for that.
+
+master: 0118bdcf56303f5d1cb7bd25401e081d17f1a205
+2.0.x: aea43fd9d2be79066e0e628926bdd101ec68a31e</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30665</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-09-12 11:18:48 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; Added a fix for that.
+&gt; 
+&gt; master: 0118bdcf56303f5d1cb7bd25401e081d17f1a205
+&gt; 2.0.x: aea43fd9d2be79066e0e628926bdd101ec68a31e
+
+Sorry for the wrong post. These hashes are for bug #6743</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32715</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2013-05-08 12:04:57 +0200</bug_when>
+            <thetext>Pull request #19 is marked as the bug is already fixed but it&#39;s not - I think I screwed up my original PR and polluted it with other commits so it wasn&#39;t obvious what I&#39;d done, but the bug definitely still exists.
+
+Here&#39;s a playground example http://tinyurl.com/d826eyj
+
+Here&#39;s a new pull request that fixes the problem https://github.com/qooxdoo/qooxdoo/pull/61</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32728</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-05-13 08:28:16 +0200</bug_when>
+            <thetext>Thanks, will check that. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32975</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-06-18 13:26:39 +0200</bug_when>
+            <thetext>Hey,
+just checked your pull request and have some feedback. Firing two events instead of one is critical in my opinion. Most of the data binding controllers / data bound widgets do listen on the change event and e.g. trigger a new rendering based on that event. To reduce the amount of rendering, we used splice in the controller for optimal performance. So firing two events instead of one is performance critical. Nevertheless, I see you point in the missing information. I would suggest that the event should contain the data to determinate what happened. So instead of having the following data (current)
+
+{
+  &quot;start&quot;: 1,
+  &quot;end&quot;: 3,
+  &quot;type&quot;: &quot;add/remove&quot;,
+  &quot;items&quot;: {added: [], removed: []}
+} 
+
+we could send this (new):
+
+{
+  &quot;start&quot;: 1,
+  &quot;end&quot;: 1,
+  &quot;type&quot;: &quot;add/remove&quot;,
+  &quot;items&quot;: {added: [&quot;earthworm&quot;], removed: [&quot;bee&quot;]}
+} 
+
+What do you think of that?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32976</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2013-06-18 14:42:57 +0200</bug_when>
+            <thetext>Hi Martin
+
+I see your point about performance but originally quite liked the two events because it means that the event is backwards compatible and keeps the implementation of event handlers simpler.  In generic controllers like binding it&#39;s worth putting the extra effort to optimise every bit of performance, but in front end code the  added complexity and debugging isn&#39;t always justified (or needed) so a simpler &quot;add&quot; or &quot;remove&quot; is preferable.
+
+So I guess the ideal would be a way for existing code to work unmodified, but also provide for more advanced handlers that can take advantage of the add/remove combination.
+
+How about if a new event eg &quot;changeEx&quot; that has it&#39;s data={ added: [], removed: [] }; this could be fired as well as the &quot;change&quot; event and the caller could decide if they wanted to listen to the &quot;change&quot; or &quot;changeEx&quot; variant.  Perhaps the older &quot;change&quot; event could become deprecated at some point in the future.
+
+I&#39;m presuming that there isn&#39;t a performance hit in firing an event that isn&#39;t used?
+
+John</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32995</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-06-19 11:58:09 +0200</bug_when>
+            <thetext>Hey,
+
+&gt; I see your point about performance but originally quite liked the two events
+&gt; because it means that the event is backwards compatible and keeps the
+&gt; implementation of event handlers simpler.  In generic controllers like binding
+&gt; it&#39;s worth putting the extra effort to optimise every bit of performance, but
+&gt; in front end code the  added complexity and debugging isn&#39;t always justified
+&gt; (or needed) so a simpler &quot;add&quot; or &quot;remove&quot; is preferable.
+
+Totally agree with you. Still, sometimes it might also happen to application developers that they need to squeeze out every millisecond they can get.
+
+&gt; So I guess the ideal would be a way for existing code to work unmodified, but
+&gt; also provide for more advanced handlers that can take advantage of the
+&gt; add/remove combination.
+&gt; 
+&gt; How about if a new event eg &quot;changeEx&quot; that has it&#39;s data={ added: [], removed:
+&gt; [] }; this could be fired as well as the &quot;change&quot; event and the caller could
+&gt; decide if they wanted to listen to the &quot;change&quot; or &quot;changeEx&quot; variant.  Perhaps
+&gt; the older &quot;change&quot; event could become deprecated at some point in the future.
+
+A second event would be pretty unintuitive for a new user. Why are there two events? Which one should I take? I already see the questions on the mailing list about the differences. I am always interested in a clean and easy to understand API. I know that does not work all the time, especially in such complex scenarios as data binding. But in this case, I think a second event would do more harm than good for the learning curve of the whole topic.
+
+&gt; I&#39;m presuming that there isn&#39;t a performance hit in firing an event that isn&#39;t
+&gt; used?
+
+It depends on the fire rate of events. I would not add another one or two mouse move events e.g. In the change case, thats somehow similar. In a huge, data bound application, those events could be fired very often.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32999</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2013-06-19 14:22:01 +0200</bug_when>
+            <thetext>I just did quick search in the Qooxdoo source for addListener.*\(.*\&quot;change\&quot; to see what controllers would have to be modified if splice fired a single &quot;add/remove&quot; change event - I found 22 instances, but only one (qx.ui.mobile.List) pays any attention to the event data.  q.u.m.List only cares if it&#39;s an &quot;order&quot; event, while other controllers tend to use the change event as a queue to refresh the whole list, detecting add/remove manually.
+
+I&#39;ve also just done a quick playground to double check that the splice method currently only fires an &quot;order&quot; event if you add an element and remove another at the same time (http://tinyurl.com/n4jmkrd).
+
+It&#39;s a little surprising that nothing cares about the event data, but in hindsight I guess that this is why splice&#39;s behaviour hasn&#39;t caused a problem before - it also means that firing two events would cause two refreshes in bound controllers, and there would be no back-porting required for the controllers to cope with a new change event type (not in Qooxdoo anyway).
+
+I&#39;ll update the pull request with the single event as you suggested.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33069</commentid>
+            <who name="Marc Puts">marcputs</who>
+            <bug_when>2013-06-21 15:19:15 +0200</bug_when>
+            <thetext>I also opened a bug for this a while ago, see #7351 (I guess that could be closed as duplicate)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33077</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-06-24 07:57:28 +0200</bug_when>
+            <thetext>*** Bug 7351 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33078</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-06-24 07:58:10 +0200</bug_when>
+            <thetext>(In reply to comment #11)
+&gt; I also opened a bug for this a while ago, see #7351 (I guess that could be
+&gt; closed as duplicate)
+
+Thanks for the pointer. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33286</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-07-09 15:05:33 +0200</bug_when>
+            <thetext>Added two new properties to the data of the change event: 
+
+added : []
+removed : []
+
+Also changed the type from &quot;order&quot; to &quot;add/remove&quot;. The &#39;&#39;added&#39;&#39; and &#39;&#39;removed&#39;&#39; property will be available in every case, not only on a splice action. These two properties will replace the &quot;items&quot; property which is deprecated now. Unfortunately, there is no deprecation warning about that, only a hint in the docs and release notes.
+
+master: a4414d21041de34dd926adfcfe7c7fb69a160d19</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

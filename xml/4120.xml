@@ -1,0 +1,729 @@
+<bug>
+          <bug_id>4120</bug_id>
+          
+          <creation_ts>2010-09-27 16:57:00 +0200</creation_ts>
+          <short_desc>don&#39;t have any static expressions inside the loop parameter 2 or 3 if not necessary because of dynamic behaviour</short_desc>
+          <delta_ts>2010-09-30 21:58:42 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>DUPLICATE</resolution>
+          <dup_id>4122</dup_id>
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20363</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2010-09-27 16:57:06 +0200</bug_when>
+            <thetext>The following results is mainly coming from testing of latest FF. We have also performed the same tests for other browsers with varying results, but still showing a significant optimization.
+
+First test to get a correction value for the time of the outer bound of the test between the time markers.
+
+Second shows the results from the specific test of loops.
+
+1. Correction value
+var cycles = 100000000;
+
+var startTime = new Date().valueOf();
+startL.setValue(startTime.toString());
+
+var array = new Array(cycles);
+
+&lt;here comes loop&gt;
+
+var endTime = new Date().valueOf();
+endL.setValue(endTime.toString());
+
+var correction = (endTime - startTime);
+correctionL.setValue(correction.toString());
+
+2. length inside loop
+
+for(var x=0; x&lt;array.length; x++)
+
+Correction: 0 ms
+Result: 1294 ms
+
+3. local var with length outside
+
+var len2 = array2.length;
+
+for(var x=0; x&lt;len2; x++)
+
+Correction: 0 ms
+Result: 1103 ms
+
+4. local var with length inside
+
+for(var x=0, len3=array3.length; x&lt;len3; x++)
+
+Correction: 0 ms
+Result: 1100 ms
+
+5.
+var len4 = array4.length;
+
+do
+{
+} while(--len4);
+
+(--len4 is faster than len4--  !!!!)
+
+Correction: 0 ms
+Result: 843 ms
+
+---------------------------------
+
+at best about 35% improvement in speed!!!!
+
+We have used two different computers:
+- Acer Aspire One netbook
+- the fastest desktop PC we could find
+
+IE, FF, Opera and Safari have been tested.
+
+1000 repetitive test with the same setup have been performed.
+
+Bigger difference than these figures for the Acer Aspire One.
+
+----------------------------------
+
+After these tests we propose the following code changes:
+1. manual change of length in all loops
+
+for(var x=0, len = array.length; x&lt;len; x+)
+
+look at references below
+
+
+2. remove all dot references in the second parameter of the loop and change it to a local var
+
+for (var i = 0; i&lt;p.x.length; i++)
+
+move it outside if you don&#39;t want a dynamic behaviour of the condition! ....
+
+var len = p.x.length;
+
+for (var i=0; i&lt;len; i++)
+
+
+3. don&#39;t have any static expressions inside the loop parameter 2 or 3 if not necessary because of dynamic behaviour
+
+for (parm1; parm2; parm3)
+
+not even this.getColumnCount()  (this gives dot notation and this function is called every time it passes!!!!
+
+4. let the generator change all loops
+
+from for loops to reversed do-while loops
+
+same references below
+
+5. you use the word length as a local variable
+The word is not reserved, instead classified as &quot;other javascript keywords&quot;, but it is wise not to use it as a local variable as it can be mixed with the counting function of arrays.
+
+we propose to change it!
+
+
+Stefan
+-------------------------------------
+references (556 not optimized for length and expression and about 950 not optimized for for -&gt; do-while loops)
+
+framework/source/class/qx/data/marshal/Json.js:        for (var i = 0; i &lt; data.length; i++) {
+framework/source/class/qx/data/marshal/Json.js:        for (var i = 0; i &lt; data.length; i++) {
+framework/source/class/qx/data/controller/MSelection.js:      for (var i = 0; i &lt; targetSelection.length; i++) {
+framework/source/class/qx/data/controller/MSelection.js:        for (var i = 0; i &lt; this.getSelection().length; i++) {
+framework/source/class/qx/data/controller/MSelection.js:        for (var i = 0; i &lt; targetSelection.length; i++) {
+framework/source/class/qx/data/controller/MSelection.js:        for (var i = this.getSelection().length - 1; i &gt;= 0; i--) {
+framework/source/class/qx/data/controller/MSelection.js:      for (var i = 0; i &lt; children.length; i++) {
+framework/source/class/qx/data/controller/Object.js:      for (var i = 0; i &lt; this.__targets.length; i++) {
+framework/source/class/qx/data/controller/Object.js:      for (var i = 0; i &lt; this.__targets.length; i++) {
+framework/source/class/qx/data/controller/Object.js:      for (var i = 0; i &lt; currentListing.length; i++) {
+framework/source/class/qx/data/controller/Form.js:        for (var i = 0; i &lt; names.length; i++) {
+framework/source/class/qx/data/controller/List.js:          for (var i = 0; i &lt; length; i++) {
+framework/source/class/qx/data/controller/List.js:          for (var i = 0; i &lt; this.__lookupTable.length; i++) {
+framework/source/class/qx/data/controller/List.js:        for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/data/controller/List.js:      for (var i = 0; i &lt; this.__boundProperties.length; i++) {
+framework/source/class/qx/data/controller/List.js:      for (var  i = 0; i &lt; this.__boundProperties.length; i++) {
+framework/source/class/qx/data/controller/List.js:      for (var i = 0; i &lt; this.__boundPropertiesReverse.length; i++) {
+framework/source/class/qx/data/controller/List.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/data/controller/List.js:        for (var i = 0; i &lt; children.length; i++) {
+framework/source/class/qx/data/controller/List.js:      for (var i = 0, l = children.length; i &lt; l; i++) {
+framework/source/class/qx/data/controller/List.js:      for (var i = 0, l = children.length; i &lt; l; i++) {
+framework/source/class/qx/data/controller/List.js:        for (var j = oldTable.length; j &gt; this.__lookupTable.length; j--) {
+framework/source/class/qx/data/controller/List.js:        for (var j = oldTable.length; j &lt; this.__lookupTable.length; j++) {
+framework/source/class/qx/data/controller/List.js:      for (var i = 0; i &lt; listItems.length; i++) {
+framework/source/class/qx/data/controller/List.js:      for (var i = 0; i &lt; model.getLength(); i++) {
+framework/source/class/qx/data/controller/Tree.js:      for (var i = 0; i &lt; children.length; i++) {
+framework/source/class/qx/data/controller/Tree.js:          for (var j = i; j &lt; rootNode.getChildren().length; j++) {
+framework/source/class/qx/data/controller/Tree.js:      for (var i = rootNode.getChildren().length -1; i &gt;= children.length; i--) {
+framework/source/class/qx/data/controller/Tree.js:      for (var i = 0; i &lt; this.__boundProperties.length; i++) {
+framework/source/class/qx/data/controller/Tree.js:        for (var i = 0; i &lt; children.length; i++) {
+framework/source/class/qx/data/SingleValueBinding.js:      for (var i = 0; i &lt; propertyNames.length; i++) {
+framework/source/class/qx/data/SingleValueBinding.js:      for (var j = context.index + 1; j &lt; context.propertyNames.length; j++) {
+framework/source/class/qx/data/SingleValueBinding.js:      for (var j = context.index + 1; j &lt; context.propertyNames.length; j++) {
+framework/source/class/qx/data/SingleValueBinding.js:      for (var i = 0; i &lt; propertyNames.length - 1; i++) {
+framework/source/class/qx/data/SingleValueBinding.js:          for (var j = i + 1; j &lt; propertyNames.length - 1; j++) {
+framework/source/class/qx/data/SingleValueBinding.js:          for (var j = i + 1; j &lt; propertyNames.length - 1; j++) {
+framework/source/class/qx/data/SingleValueBinding.js:      for (var i = 0; i &lt; properties.length - 1; i++) {
+framework/source/class/qx/data/SingleValueBinding.js:      for (var i = 0; i &lt; propertyNames.length; i++) {
+framework/source/class/qx/data/SingleValueBinding.js:        for (var i = 0; i &lt; id.sources.length; i++) {
+framework/source/class/qx/data/SingleValueBinding.js:        for (var i = 0; i &lt; id.targets.length; i++) {
+framework/source/class/qx/data/SingleValueBinding.js:        for (var i = 0; i &lt; bindings.length; i++) {
+framework/source/class/qx/data/SingleValueBinding.js:      for (var i = 0; i &lt; this.__bindings[object.toHashCode()].length; i++) {
+framework/source/class/qx/data/SingleValueBinding.js:        for (var i = 0; i &lt; this.__bindings[hash].length; i++) {
+framework/source/class/qx/data/Array.js:      for (var i = 0; i &lt; arguments.length; i++) {
+framework/source/class/qx/data/Array.js:    for (var i=0; i&lt;this.__array.length; i++) {
+framework/source/class/qx/data/Array.js:      for (var i = 0; i &lt; arguments.length; i++) {
+framework/source/class/qx/data/Array.js:      for (var i = 2; i &lt; arguments.length; i++) {
+framework/source/class/qx/data/Array.js:      for (var i = 0; i &lt; returnArray.length; i++) {
+framework/source/class/qx/data/Array.js:      for (var i = 0; i &lt; this.__array.length; i++) {
+framework/source/class/qx/data/Array.js:      for (var i = 0; i &lt; array.length; i++) {
+framework/source/class/qx/data/Array.js:      for (var i = 0; i &lt; this.length; i++)
+framework/source/class/qx/data/Array.js:      for (var i = 0; i &lt; this.length; i++) {
+framework/source/class/qx/data/Array.js:      for (var i = 1; i &lt; this.length; i++)
+framework/source/class/qx/data/Array.js:      for (var i = 1; i &lt; this.length; i++)
+framework/source/class/qx/data/Array.js:      for (var i = 0; i &lt; this.__array.length; i++) {
+framework/source/class/qx/data/Array.js:    for (var i = 0; i &lt; this.__array.length; i++) {
+framework/source/class/qx/Class.js:      for (var i = 0; i &lt; ns.length; i++) {
+framework/source/class/qx/Class.js:            for (var i=0; i&lt;interfaces.length; i++) {
+framework/source/class/qx/ui/core/SingleSelectionManager.js:      for (var i = 0; i &lt; items.length; i++)
+framework/source/class/qx/ui/core/SingleSelectionManager.js:      for (var i = 0; i &lt; items.length; i++)
+framework/source/class/qx/ui/core/MExecutable.js:      for (var i = 0; i &lt; this._bindableProperties.length; i++) {
+framework/source/class/qx/ui/core/Blocker.js:      for (var i = 0; i &lt; blockers.length; i++) {
+framework/source/class/qx/ui/core/selection/ScrollArea.js:          for (; i&lt;length; i++)
+framework/source/class/qx/ui/core/selection/Abstract.js:      for (var i = 0; i &lt; selectables.length; i++)
+framework/source/class/qx/ui/core/selection/Widget.js:        for (var i=index+1; i&lt;children.length; i++)
+framework/source/class/qx/ui/core/MMultiSelectionHandling.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/ui/control/DateChooser.js:        for (var i=0; i&lt;6*7; i++)
+framework/source/class/qx/ui/control/ColorPopup.js:        for (var i=0; i&lt;this.__fieldNumber; i++)
+framework/source/class/qx/ui/control/ColorPopup.js:      for (var i=0; i&lt;vFields.length; i++) {
+framework/source/class/qx/ui/treevirtual/TreeVirtual.js:    for (var i=0; i&lt;headings.length; i++)
+framework/source/class/qx/ui/treevirtual/TreeVirtual.js:    for (var i=0; i&lt;scrollers.length; i++)
+framework/source/class/qx/ui/treevirtual/TreeVirtual.js:      for (var i=0;
+framework/source/class/qx/ui/treevirtual/TreeVirtual.js:        for (var j=selectedRanges[i].minIndex;
+framework/source/class/qx/ui/treevirtual/SimpleTreeDataCellRenderer.js:      for (var i=0; i&lt;node.level; i++)
+framework/source/class/qx/ui/treevirtual/SelectionManager.js:            for (var i=0; i&lt;scrollers.length; i++)
+framework/source/class/qx/ui/treevirtual/SelectionManager.js:          for (var i=0; i&lt;columnPositions[treeCol].visX; i++) {
+framework/source/class/qx/ui/treevirtual/SimpleTreeDataModel.js:      for (var col=0; col&lt;this.getColumnCount(); col++)
+framework/source/class/qx/ui/treevirtual/SimpleTreeDataModel.js:      for (var i=this._nodeArr[nodeId].children.length-1; i&gt;=0; i--)
+framework/source/class/qx/ui/treevirtual/SimpleTreeDataModel.js:              for (var j=0; j&lt;child.columnData.length; j++)
+framework/source/class/qx/ui/treevirtual/MFamily.js:      for (var i=0; i&lt;parentChildren.length; i++)
+framework/source/class/qx/ui/treevirtual/MFamily.js:      for (var i=0; i&lt;parentChildren.length; i++)
+framework/source/class/qx/ui/tree/SelectionManager.js:        for (var i = 0; i &lt; items.length; i++)
+framework/source/class/qx/ui/tree/Tree.js:      for (var i = 0; i &lt; selection.length; i++) {
+framework/source/class/qx/ui/layout/Grid.js:        for (var x=column; x&lt;column+props.colSpan; x++)
+framework/source/class/qx/ui/layout/Grid.js:          for (var y=row; y&lt;row+props.rowSpan; y++)
+framework/source/class/qx/ui/layout/Grid.js:      for (var y=0; y&lt;=maxRowIndex; y++) {
+framework/source/class/qx/ui/layout/Grid.js:        for (var j=0; j&lt;widgetProps.rowSpan; j++)
+framework/source/class/qx/ui/layout/Grid.js:          for (var j=0; j&lt;widgetProps.rowSpan; j++)
+framework/source/class/qx/ui/layout/Grid.js:          for (var j=0; j&lt;widgetProps.rowSpan; j++)
+framework/source/class/qx/ui/layout/Grid.js:        for (var j=0; j&lt;widgetProps.colSpan; j++)
+framework/source/class/qx/ui/layout/Grid.js:          for (var j=0; j&lt;widgetProps.colSpan; j++)
+framework/source/class/qx/ui/layout/Grid.js:          for (var j=0; j&lt;widgetProps.colSpan; j++)
+framework/source/class/qx/ui/layout/Grid.js:          for (var i=0; i&lt;widgetProps.colSpan; i++) {
+framework/source/class/qx/ui/layout/Grid.js:          for (var i=0; i&lt;widgetProps.rowSpan; i++) {
+framework/source/class/qx/ui/layout/Atom.js:          for (var i=0; i&lt;length; i++)
+framework/source/class/qx/ui/layout/Atom.js:          for (var i=0; i&lt;length; i++)
+framework/source/class/qx/ui/layout/LineSizeIterator.js:      for (var i=this.__childIndex; i&lt;children.length; i++)
+framework/source/class/qx/ui/layout/VBox.js:      for (var i=0; i&lt;length; i++)
+framework/source/class/qx/ui/layout/VBox.js:      for (i=0; i&lt;length; i+=1)
+framework/source/class/qx/ui/layout/VBox.js:        for (i=0; i&lt;length; i+=1)
+framework/source/class/qx/ui/layout/VBox.js:      for (i=0; i&lt;length; i+=1)
+framework/source/class/qx/ui/layout/VBox.js:      for (var i=0, l=children.length; i&lt;l; i+=1)
+framework/source/class/qx/ui/layout/HBox.js:      for (var i=0; i&lt;length; i++)
+framework/source/class/qx/ui/layout/HBox.js:      for (i=0; i&lt;length; i+=1)
+framework/source/class/qx/ui/layout/HBox.js:        for (i=0; i&lt;length; i+=1)
+framework/source/class/qx/ui/layout/HBox.js:      for (i=0; i&lt;length; i+=1)
+framework/source/class/qx/ui/layout/Flow.js:      for (var i=0; i&lt;line.children.length; i++)
+framework/source/class/qx/ui/layout/Dock.js:      for (var i=0; i&lt;length; i++)
+framework/source/class/qx/ui/layout/Dock.js:      for (var i=0; i&lt;length; i++)
+framework/source/class/qx/ui/layout/Dock.js:      for (var i=0; i&lt;length; i++)
+framework/source/class/qx/ui/layout/Dock.js:        for (var i=0; i&lt;length; i++)
+framework/source/class/qx/ui/layout/Dock.js:        for (var i=0; i&lt;length; i++)
+framework/source/class/qx/ui/layout/Dock.js:      for (var i=0; i&lt;length; i++)
+framework/source/class/qx/ui/layout/Dock.js:      for (var i=0; i&lt;length; i++)
+framework/source/class/qx/ui/toolbar/ToolBar.js:        for (var i = 0; i &lt; this.__removedItems.length; i++) {
+framework/source/class/qx/ui/menu/Manager.js:      for (var i=start; i&lt;length &amp;&amp; i&gt;=0; i+=iter)
+framework/source/class/qx/ui/menu/Manager.js:        for (var i = 1; i &lt;= length; i++)
+framework/source/class/qx/ui/menu/Manager.js:        for (var i = 1; i &lt;= length; i++)
+framework/source/class/qx/ui/menu/Menu.js:      for (var i = 0; i &lt; children.length; i++)
+framework/source/class/qx/ui/menu/Menu.js:          for (var i=0; i&lt;children.length; i++) {
+framework/source/class/qx/ui/menu/Layout.js:        for (var column=0; column&lt;sizes.length; column++)
+framework/source/class/qx/ui/virtual/core/Axis.js:      for (var i=0; i&lt;indexes.length; i++)
+framework/source/class/qx/ui/virtual/cell/Cell.js:      for (var i=0; i&lt;themableProperties.length; i++) {
+framework/source/class/qx/ui/virtual/cell/Cell.js:      for (var i=0; i&lt;properties.length; i++)
+framework/source/class/qx/ui/virtual/selection/Row.js:      for (var i=0, l=this._getItemCount(); i&lt;l; i++)
+framework/source/class/qx/ui/virtual/form/ListController.js:      for (var i = 0; i &lt; targetSelection.length; i++) {
+framework/source/class/qx/ui/virtual/form/List.js:      for (var i=0; i&lt;widgets.length; i++)
+framework/source/class/qx/ui/virtual/layer/Column.js:      for (var x=0; x&lt;columnSizes.length; x++)
+framework/source/class/qx/ui/virtual/layer/WidgetCellSpan.js:    for (var i=0; i&lt;children.length; i++) {
+framework/source/class/qx/ui/virtual/layer/WidgetCell.js:      for (var i=0; i&lt;children.length; i++)
+framework/source/class/qx/ui/virtual/layer/WidgetCell.js:      for (var y=0; y&lt;rowSizes.length; y++)
+framework/source/class/qx/ui/virtual/layer/WidgetCell.js:        for (var x=0; x&lt;columnSizes.length; x++)
+framework/source/class/qx/ui/virtual/layer/WidgetCell.js:      for (var i=0; i&lt;children.length; i++)
+framework/source/class/qx/ui/virtual/layer/WidgetCell.js:      for (var y=0; y&lt;rowSizes.length; y++)
+framework/source/class/qx/ui/virtual/layer/WidgetCell.js:        for (var x=0; x&lt;columnSizes.length; x++)
+framework/source/class/qx/ui/virtual/layer/WidgetCell.js:    for (var i=0; i&lt;children.length; i++) {
+framework/source/class/qx/ui/virtual/layer/HtmlCellSpan.js:        for (var i=0, l=cells.length; i&lt;l; i++)
+framework/source/class/qx/ui/virtual/layer/HtmlCellSpan.js:        for (var i=0; i&lt;rowSizes.length; i++) {
+framework/source/class/qx/ui/virtual/layer/HtmlCellSpan.js:      for (var x=0; x&lt;rowSizes.length; x++)
+framework/source/class/qx/ui/virtual/layer/Row.js:      for (var y=0; y&lt;rowSizes.length; y++)
+framework/source/class/qx/ui/virtual/layer/GridLines.js:      for (var y=0; y&lt;rowSizes.length-1; y++)
+framework/source/class/qx/ui/virtual/layer/GridLines.js:      for (var x=0; x&lt;columnSizes.length-1; x++)
+framework/source/class/qx/ui/virtual/layer/HtmlCell.js:      for (var y=0; y&lt;rowSizes.length; y++)
+framework/source/class/qx/ui/splitpane/VLayout.js:      for (var i=0; i&lt;length; i++)
+framework/source/class/qx/ui/splitpane/VLayout.js:      for (var i=0; i&lt;length; i++)
+framework/source/class/qx/ui/splitpane/HLayout.js:      for (var i=0; i&lt;length; i++)
+framework/source/class/qx/ui/splitpane/HLayout.js:      for (var i=0; i&lt;length; i++)
+framework/source/class/qx/ui/form/RadioButtonGroup.js:      for (var i = 0; i &lt; children.length; i++) {
+framework/source/class/qx/ui/form/RadioButtonGroup.js:      for (var i = 0; i &lt; children.length; i++) {
+framework/source/class/qx/ui/form/RadioButtonGroup.js:      for (var i = 0; i &lt; radioItems.length; i++) {
+framework/source/class/qx/ui/form/MModelSelection.js:      for (var i = 0; i &lt; data.length; i++) {
+framework/source/class/qx/ui/form/MModelSelection.js:      for (var i = 0; i &lt; modelSelection.length; i++) {
+framework/source/class/qx/ui/form/MModelSelection.js:        for (var j = 0; j &lt; selectables.length; j++) {
+framework/source/class/qx/ui/form/RadioGroup.js:      for (var i = 0; i &lt; this.__items.length; i++) {
+framework/source/class/qx/ui/form/RadioGroup.js:      for (var i = 0; i &lt; this.__items.length; i++) {
+framework/source/class/qx/ui/form/Form.js:      for (var i = 0; i &lt; this.__groups.length; i++) {
+framework/source/class/qx/ui/form/Form.js:        for (var j = 0; j &lt; group.names.length; j++) {
+framework/source/class/qx/ui/form/renderer/Double.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/ui/form/renderer/AbstractRenderer.js:    for (var i = 0; i &lt; groups.length; i++) {
+framework/source/class/qx/ui/form/renderer/AbstractRenderer.js:    for (var i = 0; i &lt; buttons.length; i++) {
+framework/source/class/qx/ui/form/renderer/AbstractRenderer.js:        for (var i = 0; i &lt; this._names.length; i++) {
+framework/source/class/qx/ui/form/renderer/AbstractRenderer.js:    for (var i = 0; i &lt; this._visibilityBindingIds.length; i++) {
+framework/source/class/qx/ui/form/renderer/SinglePlaceholder.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/ui/form/renderer/Single.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/ui/form/List.js:        for (var i=0; i&lt;items.length; i++) {
+framework/source/class/qx/ui/form/validation/Manager.js:      for (var i = 0; i &lt; this.__formItems.length; i++) {
+framework/source/class/qx/ui/form/validation/Manager.js:      for (var i = 0; i &lt; this.__formItems.length; i++) {
+framework/source/class/qx/ui/form/validation/Manager.js:      for (var i = 0; i &lt; this.__formItems.length; i++) {
+framework/source/class/qx/ui/form/Resetter.js:      for (var i = 0; i &lt; this.__items.length; i++) {
+framework/source/class/qx/ui/form/Resetter.js:      for (var i = 0; i &lt; this.__items.length; i++) {
+framework/source/class/qx/ui/form/Resetter.js:      for (var i = 0; i &lt; this.__items.length; i++) {
+framework/source/class/qx/ui/form/Resetter.js:      for (var i = 0; i &lt; this.__items.length; i++) {
+framework/source/class/qx/ui/progressive/headfoot/TableHeading.js:    for (var i = 0; i &lt; columnData.length; i++)
+framework/source/class/qx/ui/progressive/headfoot/TableHeading.js:      for (var i = 0; i &lt; columnData.length; i++)
+framework/source/class/qx/ui/progressive/renderer/table/cell/Conditional.js:      for (i = 0; i &lt; this.__conditions.length; i++)
+framework/source/class/qx/ui/progressive/renderer/table/Row.js:        for (var i = 0; i &lt; columnData.length; i++)
+framework/source/class/qx/ui/progressive/renderer/table/Row.js:      for (var i = 0; i &lt; data.length; i++)
+framework/source/class/qx/ui/progressive/renderer/table/Row.js:      for (var i = 0,
+framework/source/class/qx/ui/progressive/renderer/table/Row.js:        for (var i = tr.__clazz[hash].cellstylesheet.length - 1; i &gt;= 0; i--)
+framework/source/class/qx/ui/tabview/TabView.js:      for (var i = 0; i &lt; buttons.length; i++) {
+framework/source/class/qx/ui/tabview/TabView.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/ui/tabview/TabView.js:      for (var i = 0; i &lt;buttons.length; i++) {
+framework/source/class/qx/ui/table/columnmodel/Basic.js:      for (var hidden=0; hidden&lt;initiallyHiddenColumns.length; hidden++)
+framework/source/class/qx/ui/table/columnmodel/Basic.js:        for (var overX=0; overX&lt;this.__overallColumnArr.length; overX++)
+framework/source/class/qx/ui/table/columnmodel/Basic.js:        for (var visX=0; visX&lt;this.__visibleColumnArr.length; visX++)
+framework/source/class/qx/ui/table/columnmodel/Basic.js:          for (var x=overX+1; x&lt;this.__overallColumnArr.length; x++)
+framework/source/class/qx/ui/table/columnmodel/Basic.js:        for (var colIdx = 0; colIdx &lt; this.__overallColumnArr.length; colIdx++)
+framework/source/class/qx/ui/table/columnmodel/Basic.js:        for (var colIdx = 0; colIdx &lt; this.__overallColumnArr.length; colIdx++){
+framework/source/class/qx/ui/table/columnmodel/Basic.js:    for (var i=0; i&lt; this.__columnDataArr.length; i++)
+framework/source/class/qx/ui/table/columnmodel/resizebehavior/Default.js:        for (i=0; i&lt;visibleColumns.length; i++)
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++)
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:        for (var i=0; i&lt;scrollerArr.length; i++)
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++)
+framework/source/class/qx/ui/table/Table.js:        for (var i=scrollerArr.length; i&lt;metaColumnCounts.length; i++)
+framework/source/class/qx/ui/table/Table.js:              for (var i = 0; i &lt; capture.length; i++)
+framework/source/class/qx/ui/table/Table.js:              for (var i = 0; i &lt; bubble.length; i++)
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++)
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:        for (var i=scrollerArr.length-1; i&gt;=fromMetaColumn; i--)
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++)
+framework/source/class/qx/ui/table/Table.js:        for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++)
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:        for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++)
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++) {
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++)
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;metaColumnCounts.length; i++)
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++)
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++)
+framework/source/class/qx/ui/table/Table.js:      for (var i=0; i&lt;scrollerArr.length; i++)
+framework/source/class/qx/ui/table/Table.js:        for (var i = 0, arr = this._getPaneScrollerArr(); i &lt; arr.length; i++)
+framework/source/class/qx/ui/table/Table.js:        for (var i = 0, arr = this._getPaneScrollerArr(); i &lt; arr.length; i++)
+framework/source/class/qx/ui/table/Table.js:        for (var i = 0, arr = this._getPaneScrollerArr(); i &lt; arr.length; i++)
+framework/source/class/qx/ui/table/selection/Model.js:      for (var i=0; i&lt;this.__selectedRangeArr.length; i++)
+framework/source/class/qx/ui/table/selection/Model.js:      for (var i=0; i&lt;this.__selectedRangeArr.length; i++)
+framework/source/class/qx/ui/table/selection/Model.js:      for (var i=0; i&lt;this.__selectedRangeArr.length; i++)
+framework/source/class/qx/ui/table/selection/Model.js:      for (var i=0; i&lt;this.__selectedRangeArr.length; i++)
+framework/source/class/qx/ui/table/selection/Model.js:        for (var j=this.__selectedRangeArr[i].minIndex; j&lt;=this.__selectedRangeArr[i].maxIndex; j++) {
+framework/source/class/qx/ui/table/selection/Model.js:      for (var i=0; i&lt;this.__selectedRangeArr.length; i++)
+framework/source/class/qx/ui/table/selection/Model.js:      for (;newRangeIndex&lt;this.__selectedRangeArr.length; newRangeIndex++)
+framework/source/class/qx/ui/table/selection/Model.js:      for (var i=1; i&lt;this.__selectedRangeArr.length; i++)
+framework/source/class/qx/ui/table/selection/Model.js:      for (var i=0; i&lt;this.__selectedRangeArr.length; i++)
+framework/source/class/qx/ui/table/model/Abstract.js:      for (var i=0; i&lt;columnIdArr.length; i++) {
+framework/source/class/qx/ui/table/model/Abstract.js:      for (var i=0; i&lt;this.__columnIdArr.length; ++i) {
+framework/source/class/qx/ui/table/model/Filtered.js:      for (var kludge = rowNum;
+framework/source/class/qx/ui/table/model/Remote.js:          for (var relRow=0; relRow&lt;rowDataArr.length; relRow++)
+framework/source/class/qx/ui/table/model/Remote.js:      for (var col=0; col&lt;this.getColumnCount(); col++) {
+framework/source/class/qx/ui/table/model/Simple.js:        for (var col = 0; col &lt; this.getColumnCount(); col++) {
+framework/source/class/qx/ui/table/model/Simple.js:      for (var col=0; col&lt;this.getColumnCount(); col++) {
+framework/source/class/qx/ui/table/model/Simple.js:      for (var col=0; col&lt;this.getColumnCount(); col++) {
+framework/source/class/qx/ui/list/core/MSelectionHandling.js:      for (var i = 0; i &lt; selection.getLength(); i++)
+framework/source/class/qx/bom/element/Class.js:        for (var i=0; i&lt;classes.length; i++) {
+framework/source/class/qx/bom/element/Class.js:        for (var i=0; i&lt;classes.length; i++) {
+framework/source/class/qx/bom/htmlarea/HtmlArea.js:      for (i = 0; i &lt; a.length; i++)
+framework/source/class/qx/bom/htmlarea/manager/Command.js:         for (var i=0; i&lt;listTypes.length; i++)
+framework/source/class/qx/bom/htmlarea/manager/Command.js:           for (var j=0; j&lt;tmp.length; j++)
+framework/source/class/qx/bom/htmlarea/manager/Command.js:           for (i=0; i&lt;spans.length; i++) {
+framework/source/class/qx/bom/Selector.js:      for ( var i = 1; i &lt; results.length; i++ ) {
+framework/source/class/qx/bom/Selector.js:          for ( var i = 0; (item = curLoop[i]) != null; i++ ) {
+framework/source/class/qx/bom/Selector.js:      for ( var i = 0, elem; (elem = curLoop[i]) != null; i++ ) {
+framework/source/class/qx/bom/client/Flash.js:        for (var i=0; i&lt;splitInput.length; i++)
+framework/source/class/qx/bom/Font.js:      for (var i=0; i&lt;parts.length; i++)
+framework/source/class/qx/bom/Font.js:      for (var i=0, l=value.length; i&lt;l; i++)
+framework/source/class/qx/bom/Collection.js:        for (var i=0; i&lt;length; i++)
+framework/source/class/qx/bom/Input.js:        for (var i=one ? index : 0, max=one ? index+1 : options.length; i&lt;max; i++)
+framework/source/class/qx/core/Assert.js:      for (var i=0; i&lt;expected.length; i++) {
+framework/source/class/qx/core/Variant.js:      for (var i=0; i&lt;urlVariants.length; i++)
+framework/source/class/qx/core/Setting.js:      for (var i=0; i&lt;urlSettings.length; i++)
+framework/source/class/qx/core/Aspect.js:      for (var i=0; i&lt;reg.length; i++)
+framework/source/class/qx/core/Aspect.js:        for (var i=0; i&lt;before.length; i++) {
+framework/source/class/qx/core/Aspect.js:        for (var i=0; i&lt;after.length; i++) {
+framework/source/class/qx/locale/Manager.js:        for ( var i = 0; i &lt; args.length; i++)
+framework/source/class/qx/locale/Date.js:      for (var i=0; i&lt;days.length; i++)
+framework/source/class/qx/locale/Date.js:      for (var i=0; i&lt;12; i++)
+framework/source/class/qx/dev/unit/TestLoaderNative.js:      for (var i=0; i&lt;classes.length; i++)
+framework/source/class/qx/dev/unit/TestLoaderNative.js:        for (var j=0; j&lt;methods.length; j++) {
+framework/source/class/qx/dev/unit/TestLoaderNative.js:      for (var i=0; i&lt;classes.length; i++)
+framework/source/class/qx/dev/unit/TestLoaderNative.js:          for (var j=0; j&lt;methods.length; j++)
+framework/source/class/qx/dev/unit/TestLoaderNative.js:      for (var i=0; i&lt;classes.length; i++)
+framework/source/class/qx/dev/unit/TestSuite.js:      for (var i=0; i&lt;this._tests.length; i++)
+framework/source/class/qx/dev/unit/TestLoader.js:      for (var i=0; i&lt;classes.length; i++)
+framework/source/class/qx/dev/unit/TestLoader.js:        for (var j=0; j&lt;methods.length; j++) {
+framework/source/class/qx/dev/unit/TestLoader.js:      for (var i=0; i&lt;classes.length; i++)
+framework/source/class/qx/dev/unit/TestLoader.js:          for (var j=0; j&lt;methods.length; j++)
+framework/source/class/qx/dev/unit/TestLoader.js:      for (var i=0; i&lt;classes.length; i++)
+framework/source/class/qx/dev/unit/AbstractTestSuite.js:      for (var i=0; i&lt;this._tests.length; i++) {
+framework/source/class/qx/dev/unit/AbstractTestSuite.js:      for (var i=0; i&lt;this._tests.length; i++)
+framework/source/class/qx/dev/unit/TestLoaderInline.js:      for (var i=0; i&lt;classes.length; i++)
+framework/source/class/qx/dev/unit/TestLoaderInline.js:        for (var j=0; j&lt;methods.length; j++) {
+framework/source/class/qx/dev/unit/TestLoaderInline.js:      for (var i=0; i&lt;classes.length; i++)
+framework/source/class/qx/dev/unit/TestLoaderInline.js:          for (var j=0; j&lt;methods.length; j++)
+framework/source/class/qx/dev/unit/TestLoaderInline.js:      for (var i=0; i&lt;classes.length; i++)
+framework/source/class/qx/dev/ObjectSummary.js:      for (var i=0; i&lt;vArrData.length; i++) {
+framework/source/class/qx/dev/ObjectSummary.js:      for (var i=0; i&lt;vArrData.length; i++)
+framework/source/class/qx/dev/Pollution.js:          for (var frameIndex=0; frameIndex&lt;window.length; frameIndex++) {
+framework/source/class/qx/dev/Pollution.js:      for (var i=0; i&lt;ext.length; i++) {
+framework/source/class/qx/dev/Pollution.js:      for (var i=0; i&lt;ext.length; i++) {
+framework/source/class/qx/dev/Tokenizer.js:      for (var i = 0; i &lt; a.length; i++)
+framework/source/class/qx/dev/Tokenizer.js:      for (var i=0; i&lt;tokens.length; i++) {
+framework/source/class/qx/dev/StackTrace.js:          for (var i=0; i&lt;Math.min(callerTrace.length, errorTrace.length); i++)
+framework/source/class/qx/dev/StackTrace.js:        for (var i=0; i&lt;lines.length; i++)
+framework/source/class/qx/dev/Debug.js:        for (var i = 0; i &lt; model.length; i++) {
+framework/source/class/qx/dev/Profile.js:      for (var i=0; i&lt;data.length; i++)
+framework/source/class/qx/io/part/Part.js:    for (var i=0; i&lt;packages.length; i++)
+framework/source/class/qx/io/part/Part.js:      for (var i=0; i&lt;this._packages.length; i++)
+++) {
+framework/source/class/qx/io/part/ClosurePart.js:      for (var i = 0; i &lt; this._packages.length; i++)
+framework/source/class/qx/io/part/ClosurePart.js:      for (var i = 0; i &lt; this._packages.length; i++)
+framework/source/class/qx/io/part/ClosurePart.js:      for (var i = 0; i &lt; this._packages.length; i++) {
+framework/source/class/qx/io/remote/Exchange.js:              for (var i=0; i&lt;paramValue.length; i++)
+framework/source/class/qx/io/remote/transport/Script.js:          for (var i=0; i&lt;value.length; i++) {
+framework/source/class/qx/io/remote/transport/Iframe.js:          for (var i=0; i&lt;value.length; i++) {
+framework/source/class/qx/io/remote/transport/Iframe.js:            for (var i=0; i&lt;value.length; i++)
+framework/source/class/qx/io/remote/transport/XmlHttp.js:          for (var i=0; i&lt;value.length; i++) {
+framework/source/class/qx/io/remote/transport/XmlHttp.js:            for (var i=0; i&lt;value.length; i++)
+framework/source/class/qx/io/remote/transport/XmlHttp.js:        for (var i=0, l=vValues.length; i&lt;l; i++)
+framework/source/class/qx/io/remote/Rpc.js:      for (var i=offset+1; i&lt;args.length; ++i)
+framework/source/class/qx/event/message/Bus.js:        for (var i=0; i&lt;sub[message].length; i++)
+framework/source/class/qx/event/message/Bus.js:      for (var i=0; i&lt;subscribers.length; i++)
+framework/source/class/qx/event/type/Touch.js:        for (var i = 0; i &lt; nativeEvent.targetTouches.length; i++) {
+framework/source/class/qx/event/type/Touch.js:        for (var i = 0; i &lt; nativeEvent.changedTouches.length; i++) {
+framework/source/class/qx/event/type/Touch.js:        for (var i = 0; i &lt; nativeEvent.touches.length; i++) {
+framework/source/class/qx/Bootstrap.js:      for (var i=0, keys=qx.Bootstrap.getKeys(statics), l=keys.length; i&lt;l; i++) {
+framework/source/class/qx/Bootstrap.js:      for (var i=0, keys=qx.Bootstrap.getKeys(members), l=keys.length; i&lt;l; i++) {
+framework/source/class/qx/Bootstrap.js:        for (var i=0, a=shadowedKeys, l=a.length; i&lt;l; i++)
+framework/source/class/qx/log/Logger.js:    for (var i=0; i&lt;logs.length; i++) {
+framework/source/class/qx/util/fsm/State.js:        for (var i=0; i&lt;functionRequest.length; i++)
+framework/source/class/qx/util/fsm/State.js:          for (var j=0; j&lt;params.length; j++)
+framework/source/class/qx/util/fsm/State.js:          for (var j=0; j&lt;a.length; j++)
+framework/source/class/qx/util/fsm/State.js:            for (j=0; j&lt;g.length; j++)
+framework/source/class/qx/util/fsm/State.js:                &quot;  for (var i = 0; i &lt; groupObjects.length; i++)&quot; +
+framework/source/class/qx/util/fsm/FiniteStateMachine.js:      for (var i=0; i&lt;groupNames.length; i++)
+framework/source/class/qx/util/fsm/FiniteStateMachine.js:        for (var i=0; i&lt;this.__blockedEvents.length; i++)
+framework/source/class/qx/util/StringSplit.js:              for (var i = 1; i &lt; arguments.length - 2; i++)
+framework/source/class/qx/util/format/NumberFormat.js:        for (groupPos=origIntegerStr.length; groupPos&gt;3; groupPos-=3) {
+framework/source/class/qx/util/format/DateFormat.js:      for (var i=0; i&lt;this.__formatTree.length; i++)
+framework/source/class/qx/util/format/DateFormat.js:      for (var i=0; i&lt;this.__parseFeed.usedRules.length; i++)
+framework/source/class/qx/util/format/DateFormat.js:      for (var atomIdx=0; atomIdx&lt;this.__formatTree.length; atomIdx++)
+framework/source/class/qx/util/format/DateFormat.js:          for (var ruleIdx=0; ruleIdx&lt;this.__parseRules.length; ruleIdx++)
+framework/source/class/qx/util/format/DateFormat.js:      for (var i=0; i&lt;shortMonthNames.length; i++) {
+framework/source/class/qx/util/format/DateFormat.js:      for (var i=0; i&lt;fullMonthNames.length; i++) {
+framework/source/class/qx/util/format/DateFormat.js:      for (var i=0; i&lt;narrowDayNames.length; i++) {
+framework/source/class/qx/util/format/DateFormat.js:      for (var i=0; i&lt;abbrDayNames.length; i++) {
+framework/source/class/qx/util/format/DateFormat.js:      for (var i=0; i&lt;fullDayNames.length; i++) {
+framework/source/class/qx/util/EditDistance.js:      for (posA=0; posA&lt;=dataA.length; posA++)
+framework/source/class/qx/util/EditDistance.js:      for (posB=1; posB&lt;=dataB.length; posB++) {
+framework/source/class/qx/util/EditDistance.js:      for (posA=1; posA&lt;=dataA.length; posA++)
+framework/source/class/qx/util/EditDistance.js:        for (posB=1; posB&lt;=dataB.length; posB++)
+framework/source/class/qx/util/Permutation.js:      for (var i=0; i&lt;keys.length; i++)
+framework/source/class/qx/util/Permutation.js:        for (var i=0; i&lt;values.length; i++)
+framework/source/class/qx/util/TimerManager.js:      for (var i = 0; i &lt; length; i++)
+framework/source/class/qx/util/TimerManager.js:      for (var i = 0; i &lt; length; i++)
+framework/source/class/qx/util/Serializer.js:          for (var i = 0; i &lt; value.length; i++) {
+framework/source/class/qx/util/Serializer.js:        for (var i = 0; i &lt; object.getLength(); i++)
+framework/source/class/qx/util/Serializer.js:        for (var i = 0; i &lt; object.length; i++)
+framework/source/class/qx/util/Serializer.js:        for (var i = 0; i &lt; object.getLength(); i++) {
+framework/source/class/qx/util/Serializer.js:        for (var i = 0; i &lt; object.length; i++) {
+framework/source/class/qx/fx/effect/core/Parallel.js:      for (var i=0; i&lt;effects.length; i++) {
+framework/source/class/qx/fx/effect/core/Parallel.js:      for (var i=0; i&lt;effects.length; i++) {
+framework/source/class/qx/lang/Core.js:        for (var i=fromIndex; i&lt;this.length; i++)
+framework/source/class/qx/lang/JsonImpl.js:          for (var i = 0; i &lt; length; i += 1) {
+framework/source/class/qx/lang/JsonImpl.js:            for (var i = 0; i &lt; length; i += 1)
+framework/source/class/qx/lang/String.js:      for (var i=0; i&lt;args.length; i++) {
+framework/source/class/qx/lang/Array.js:      for (var i=0; i&lt;length; i++)
+framework/source/class/qx/type/BaseArray.js:    for (var length = args.length; length;) {
+framework/source/class/qx/type/BaseArray.js:    for (var i=0, length=arguments.length; i&lt;length; i++)
+framework/source/class/qx/dom/Node.js:          for (i=0; i&lt;length; i++) {
+framework/source/class/qx/html/Element.js:      for (var i=0; i&lt;this._actions.length; i++)
+framework/source/class/qx/html/Element.js:        for (var i=0; i&lt;length; i++)
+framework/source/class/qx/html/Element.js:        for (var i=0; i&lt;length; i++)
+framework/source/class/qx/html/Element.js:        for (var i=0; i&lt;length; i++)
+framework/source/class/qx/Part.js:    for (var i=0; i&lt;uris.length; i++)
+framework/source/class/qx/Part.js:      for (var i = 0; i &lt; pkgIndexes.length; i++) {
+framework/source/class/qx/Part.js:      for (var i = 0; i &lt; this.__packages.length; i++) {
+framework/source/class/qx/Part.js:      for (var i = 0; i &lt; listeners.length; i++) {
+framework/source/class/qx/Part.js:      for (var i=0; i&lt;partNames.length; i++) {
+framework/source/class/qx/Part.js:          for (var i = 0; i &lt; parts.length; i++) {
+framework/source/class/qx/Part.js:      for (var i=0; i&lt;parts.length; i++) {
+framework/source/class/qx/Part.js:      for (var i=0; i&lt;partNames.length; i++) {
+framework/source/class/qx/Part.js:            for (var i = 0; i &lt; partNames.length; i++) {
+framework/source/class/qx/Part.js:      for (var i=0; i&lt;packages.length; i++) {
+framework/source/class/qx/Part.js:        for (var i = 0; i &lt; listeners.length; i++) {
+framework/source/class/qx/Part.js:      for (var i=0; i&lt;listeners.length; i++) {
+framework/source/class/qx/xml/Element.js:        for (var i=0; i&lt;result.snapshotLength; i++) {
+framework/source/class/qx/test/data/controller/ListWithObjects.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/ListWithObjects.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/ListWithObjects.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/ListWithObjects.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/ListWithObjects.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/ListWithObjects.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/ListWithObjects.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/ListWithObjects.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/ListWithObjects.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/ListWithObjects.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/ListWithObjects.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/ListWithObjects.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/ListWithObjects.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/ListWithObjects.js:      for (var i = 0; i &lt; this.__list.getChildren().length; i++) {
+framework/source/class/qx/test/data/controller/ListReverse.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/test/data/controller/ListReverse.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/test/data/controller/ListReverse.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/test/data/controller/ListReverse.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/test/data/controller/ListReverse.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/test/data/controller/ListReverse.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/test/data/controller/ListReverse.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/test/data/controller/ListReverse.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/test/data/controller/ListReverse.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/test/data/controller/ListReverse.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/test/data/controller/ListReverse.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/test/data/controller/ListReverse.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/test/data/controller/ListReverse.js:      for (var i = 0; i &lt; items.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; checkArray.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; checkArray.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length - 2; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length - 2; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; selList.getChildren().length; i++) {
+framework/source/class/qx/test/data/controller/List.js:      for (var i = 0; i &lt; this.__data.length; i++) {
+framework/source/class/qx/test/data/controller/Tree.js:      for (var i = 0; i &lt; nodes.length; ++i) {
+framework/source/class/qx/test/data/controller/Tree.js:      for (var i = 0; i &lt; nodes.length; ++i) {
+framework/source/class/qx/test/Xml.js:      for (var i=0; i&lt;arr.length; i++) {
+framework/source/class/qx/test/ui/tree/Tree.js:      for (var i = 0; i &lt; children.length; i++) {
+framework/source/class/qx/test/ui/layout/LayoutItem.js:      for (var i=0; i&lt;children.length; i++)
+framework/source/class/qx/test/ui/ChildrenHandling.js:      for (var i=0; i&lt;expected.length; i++) {
+framework/source/class/qx/test/ui/ChildrenHandling.js:      for (var i=0; i&lt;children.length; i++) {
+framework/source/class/qx/test/ui/ChildrenHandling.js:      for (var i=0; i&lt;4; i++)
+framework/source/class/qx/test/ui/selection/TreeSingleSelection.js:      for (var i = 0; i &lt; length; i++) {
+framework/source/class/qx/test/ui/selection/Stack.js:      for (var i = 0; i &lt; length; i++) {
+framework/source/class/qx/test/ui/selection/RadioGroup.js:      for (var i = 0; i &lt; length; i++) {
+framework/source/class/qx/test/ui/selection/RadioGroup.js:      for (var i = 0; i &lt; this.__radioButtons.length; i++) {
+framework/source/class/qx/test/ui/selection/AbstractMultiSelectonTest.js:      for (var i = 0; i &lt; this._notInSelection.length; i++) {
+framework/source/class/qx/test/ui/selection/ListSingleSelection.js:      for (var i = 0; i &lt; length; i++) {
+framework/source/class/qx/test/ui/selection/SelectBox.js:      for (var i = 0; i &lt; length; i++) {
+framework/source/class/qx/test/ui/selection/TreeMultiSelection.js:      for (var i = 0; i &lt; length; i++) {
+framework/source/class/qx/test/ui/selection/AbstractSingleSelectonTest.js:      for (var i = 0; i &lt; items.length; i++)
+framework/source/class/qx/test/ui/selection/TabView.js:      for (var i = 0; i &lt; length; i++) {
+framework/source/class/qx/test/ui/selection/ListMultiSelection.js:      for (var i = 0; i &lt; length; i++) {
+framework/source/class/qx/test/ui/Destroy.js:        for (var i=0; i&lt;args.length; i++) {
+framework/source/class/qx/test/ui/Destroy.js:        for (var i=0; i&lt;layoutArgsArr.length; i++) {
+framework/source/class/qx/test/ui/Destroy.js:      for (var i=0; i&lt;layouts.length; i++) {
+framework/source/class/qx/test/ui/Destroy.js:      for (var i=0; i&lt;forms.length; i++) {
+framework/source/class/qx/test/ui/Destroy.js:      for (var i=0; i&lt;forms.length; i++) {
+framework/source/class/qx/test/ui/Destroy.js:        for (var i=0; i&lt;forms.length; i++) {
+framework/source/class/qx/test/ui/Destroy.js:        for (var i=0; i&lt;forms.length; i++) {
+framework/source/class/qx/test/ui/Destroy.js:      for (var i=0; i&lt;forms.length; i++) {
+framework/source/class/qx/test/ui/Destroy.js:      for (var i=0; i&lt;forms.length; i++) {
+framework/source/class/qx/test/ui/Destroy.js:      for (var i=0; i&lt;forms.length; i++) {
+framework/source/class/qx/test/ui/Destroy.js:      for (var i=0; i&lt;forms.length; i++) {
+framework/source/class/qx/test/ui/virtual/performance/AbstractLayerTest.js:      for (var i=0; i&lt;this.rowCount; i++) {
+framework/source/class/qx/test/ui/virtual/performance/AbstractLayerTest.js:      for (var i=0; i&lt;this.colCount; i++) {
+framework/source/class/qx/test/ui/virtual/performance/layer/HtmlDivRelative.js:      for (var x=0; x&lt;rowSizes.length; x++)
+framework/source/class/qx/test/ui/virtual/performance/layer/DomCell.js:      for (var x=0; x&lt;rowSizes.length; x++)
+framework/source/class/qx/test/ui/virtual/performance/layer/HtmlTableCssCell.js:      for (var x=0; x&lt;rowSizes.length; x++)
+framework/source/class/qx/test/ui/virtual/performance/layer/HtmlTableCellNaive.js:      for (var x=0; x&lt;rowSizes.length; x++)
+framework/source/class/qx/test/ui/virtual/performance/layer/DomPoolCell.js:      for (var x=0; x&lt;rowSizes.length; x++)
+framework/source/class/qx/test/ui/virtual/performance/layer/DomPoolCell.js:      for (var j=i; j&lt;childNodes.length; i++) {
+framework/source/class/qx/test/ui/virtual/performance/layer/HtmlTableCell.js:      for (var x=0; x&lt;rowSizes.length; x++)
+framework/source/class/qx/test/ui/virtual/PaneUpdate.js:      for (var i=0; i&lt;methodNames.length; i++) {
+framework/source/class/qx/test/ui/virtual/layer/LayerSimple.js:      for (var x=0; x&lt;rowSizes.length; x++)
+framework/source/class/qx/test/ui/virtual/layer/WidgetCell.js:      for (var i=0; i&lt;this._pool.length; i++) {
+framework/source/class/qx/test/ui/virtual/layer/CellSpanManager.js:      for (var i=0, l=cells.length; i&lt;l; i++)
+framework/source/class/qx/test/ui/virtual/Axis.js:      for (var i=0; i&lt;this.count; i++) {
+framework/source/class/qx/test/ui/virtual/Axis.js:      for (var i=0; i&lt;this.count; i++) {
+framework/source/class/qx/test/ui/virtual/Axis.js:      for (var j=0; j&lt;this.ITEM_POS_ITER; j++)
+framework/source/class/qx/test/ui/virtual/Axis.js:        for (var i=0; i&lt;this.ITEM_POS_COUNT; i++)
+framework/source/class/qx/test/ui/virtual/Axis.js:      for (var j=0; j&lt;this.TOTAL_SIZE_ITER; j++)
+framework/source/class/qx/test/ui/virtual/Axis.js:        for (var i=0; i&lt;this.TOTAL_SIZE_ITEMS; i++)
+framework/source/class/qx/test/ui/virtual/Axis.js:      for (var i=0; i&lt;this.SETUP_ITER; i++)
+framework/source/class/qx/test/ui/virtual/Axis.js:      for (var i=0; i&lt;this.count; i++) {
+framework/source/class/qx/test/ui/virtual/Axis.js:      for (var i=0; i&lt;this.SETUP_ITER; i++)
+framework/source/class/qx/test/ui/virtual/Axis.js:      for (var i=0; i&lt;this.FIND_ITER; i++) {
+framework/source/class/qx/test/ui/virtual/Axis.js:      for (var i=0; i&lt;this.count; i++) {
+framework/source/class/qx/test/ui/virtual/Axis.js:      for (var i=0; i&lt;this.FIND_ITER; i++) {
+framework/source/class/qx/test/ui/form/MenuButton.js:      for (var i = 0; i &lt; buttons.length; i++) {
+framework/source/class/qx/test/ui/form/ModelSelection.js:      for (var i = 0; i &lt; children.length; i++) {
+framework/source/class/qx/test/ui/form/FormManager.js:      for (var i = 0; i &lt; widgets.length; i++) {
+framework/source/class/qx/test/ui/form/FormManager.js:      for (var i = 0; i &lt; widgets.length; i++) {
+framework/source/class/qx/test/ui/LayoutTestCase.js:          for (var i=0; i&lt;listeners[hash][key].length; i++)
+framework/source/class/qx/test/ui/LayoutTestCase.js:        for (var i=0; i&lt;args.length; i++) {
+framework/source/class/qx/test/ui/Window.js:      for (var i = 0; i &lt; this._win.length; i++) {
+framework/source/class/qx/test/ui/Window.js:       for (var i = 0; i &lt; this._win.length; i++) {
+framework/source/class/qx/test/ui/table/Table.js:      for (var i = 0; i &lt; data.length - 1; i++) {
+framework/source/class/qx/test/ui/table/Table.js:      for (var i = 0; i &lt; data.length - 1; i++) {
+framework/source/class/qx/test/ui/table/Table.js:      for (var i = 0; i &lt; data.length - 1; i++) {
+framework/source/class/qx/test/ui/table/Table.js:      for (var i = 0; i &lt; data.length - 1; i++) {
+framework/source/class/qx/test/ui/table/Table.js:      for (var i = 0; i &lt; data.length - 1; i++) {
+framework/source/class/qx/test/ui/table/Table.js:      for (var i = 0; i &lt; data.length - 1; i++) {
+framework/source/class/qx/test/ui/table/Table.js:      for (var i = 0; i &lt; data.length - 1; i++) {
+framework/source/class/qx/test/ui/table/Table.js:      for (var i = 0; i &lt; data.length - 1; i++) {
+framework/source/class/qx/test/ui/table/Table.js:      for (var i = 0; i &lt; data.length - 1; i++) {
+framework/source/class/qx/test/ui/table/Table.js:      for (var i = 0; i &lt; data.length - 1; i++) {
+framework/source/class/qx/test/ui/list/core/MultiSelection.js:      for (var i = 0; i &lt; selectionFromManager.length; i++) {
+framework/source/class/qx/test/ui/list/core/MultiSelection.js:      for (var i = 0; i &lt; selectionFromManager.length; i++) {
+framework/source/class/qx/test/ui/list/core/MultiSelection.js:          for (var i = 0; i &lt; selectionFromManager.length; i++) {
+framework/source/class/qx/test/ui/list/MAssert.js:      for (var i = 0; i &lt; model.getLength(); i++) {
+framework/source/class/qx/test/core/Object.js:      for (var i = 0; i &lt; data.length; i++) {
+framework/source/class/qx/test/io/remote/Request.js:      for (var i = 0; i &lt; this.__requests.length; i++)
+framework/source/class/qx/test/io/remote/Request.js:      for (var i = 0; i &lt; this.__requests.length; i++)
+framework/source/class/qx/test/util/NumberFormat.js:      for (var i=0; i&lt;badNumberStrings.length; i++)
+framework/source/class/qx/test/util/placement/Placement.js:      for (var i=0; i&lt;modes.length; i++)
+framework/source/class/qx/test/util/StringSplit.js:      for (var i = 0; i &lt; testCode.length; i++)
+framework/source/class/qx/test/renderer/Color.js:      for (var i=0; i&lt;invalidColors.length; i++)
+framework/source/class/qx/test/lang/JsonParseES5.js:      for (var i=0; i&lt;spaces.length; i++)
+framework/source/class/qx/test/lang/JsonParseES5.js:      for (var i=0; i&lt;chars.length; i++)
+framework/source/class/qx/test/Part.js:      for (var s=0; s&lt;refUrls.length; s++){
+framework/source/class/qx/ui/virtual/layer/HtmlCellSpan.js:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/ui/virtual/layer/.svn/text-base/HtmlCellSpan.js.svn-base:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/ui/virtual/layer/.svn/text-base/HtmlCell.js.svn-base:        for(var x=0; x&lt;columnSizes.length; x++)
+framework/source/class/qx/ui/virtual/layer/HtmlCell.js:        for(var x=0; x&lt;columnSizes.length; x++)
+framework/source/class/qx/ui/list/core/MSelectionHandling.js:      for(var i = 0; i &lt; managerSelection.length; i++) {
+framework/source/class/qx/ui/list/core/.svn/text-base/MSelectionHandling.js.svn-base:      for(var i = 0; i &lt; managerSelection.length; i++) {
+framework/source/class/qx/bom/htmlarea/HtmlArea.js:        for(var i=0; i&lt;element.childNodes.length; i++)
+framework/source/class/qx/bom/htmlarea/.svn/text-base/HtmlArea.js.svn-base:        for(var i=0; i&lt;element.childNodes.length; i++)
+framework/source/class/qx/bom/htmlarea/manager/.svn/text-base/Command.js.svn-base:       for(var i=0; i&lt;parents.length; i++)
+framework/source/class/qx/bom/htmlarea/manager/.svn/text-base/Command.js.svn-base:         for(var i=0; i&lt;lists.length; i++)
+framework/source/class/qx/bom/htmlarea/manager/.svn/text-base/Command.js.svn-base:           for(j=0; j&lt;listElement.childNodes.length; j++)
+framework/source/class/qx/bom/htmlarea/manager/.svn/text-base/Command.js.svn-base:         for(i=0; i&lt;parents.length; i++)
+framework/source/class/qx/bom/htmlarea/manager/Command.js:       for(var i=0; i&lt;parents.length; i++)
+framework/source/class/qx/bom/htmlarea/manager/Command.js:         for(var i=0; i&lt;lists.length; i++)
+framework/source/class/qx/bom/htmlarea/manager/Command.js:           for(j=0; j&lt;listElement.childNodes.length; j++)
+framework/source/class/qx/bom/htmlarea/manager/Command.js:         for(i=0; i&lt;parents.length; i++)
+framework/source/class/qx/fx/effect/core/.svn/text-base/Parallel.js.svn-base:      for(var i=0; i&lt;effects.length; i++)
+framework/source/class/qx/fx/effect/core/Parallel.js:      for(var i=0; i&lt;effects.length; i++)
+framework/source/class/qx/lang/.svn/text-base/Function.js.svn-base:     *   for(var i = 0; i &lt; arguments.length; i++) {
+framework/source/class/qx/lang/Function.js:     *   for(var i = 0; i &lt; arguments.length; i++) {
+framework/source/class/qx/test/ui/virtual/performance/layer/HtmlDivRelative.js:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/test/ui/virtual/performance/layer/DomCell.js:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/test/ui/virtual/performance/layer/HtmlTableCssCell.js:      for(var y=0; y&lt;columnSizes.length; y++) {
+framework/source/class/qx/test/ui/virtual/performance/layer/HtmlTableCssCell.js:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/test/ui/virtual/performance/layer/HtmlTableCellNaive.js:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/test/ui/virtual/performance/layer/DomPoolCell.js:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/test/ui/virtual/performance/layer/HtmlTableCell.js:      for(var y=0; y&lt;columnSizes.length; y++) {
+framework/source/class/qx/test/ui/virtual/performance/layer/HtmlTableCell.js:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/test/ui/virtual/performance/layer/.svn/text-base/DomCell.js.svn-base:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/test/ui/virtual/performance/layer/.svn/text-base/HtmlTableCssCell.js.svn-base:      for(var y=0; y&lt;columnSizes.length; y++) {
+framework/source/class/qx/test/ui/virtual/performance/layer/.svn/text-base/HtmlTableCssCell.js.svn-base:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/test/ui/virtual/performance/layer/.svn/text-base/HtmlDivRelative.js.svn-base:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/test/ui/virtual/performance/layer/.svn/text-base/HtmlTableCell.js.svn-base:      for(var y=0; y&lt;columnSizes.length; y++) {
+framework/source/class/qx/test/ui/virtual/performance/layer/.svn/text-base/HtmlTableCell.js.svn-base:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/test/ui/virtual/performance/layer/.svn/text-base/DomPoolCell.js.svn-base:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/test/ui/virtual/performance/layer/.svn/text-base/HtmlTableCellNaive.js.svn-base:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/test/ui/virtual/layer/LayerSimple.js:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/test/ui/virtual/layer/.svn/text-base/LayerSimple.js.svn-base:        for(var y=0; y&lt;columnSizes.length; y++)
+framework/source/class/qx/test/ui/embed/Flash.js:          for(var i = 0; i &lt; children.length; i++)
+framework/source/class/qx/test/ui/embed/.svn/text-base/Flash.js.svn-base:          for(var i = 0; i &lt; children.length; i++)
+framework/source/class/qx/test/lang/JsonParseES5.js:      for  (var i=0; i&lt;strings.length; i++)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20431</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-09-30 21:58:42 +0200</bug_when>
+            <thetext>
+
+*** This bug has been marked as a duplicate of bug 4122 ***</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

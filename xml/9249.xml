@@ -1,0 +1,95 @@
+<bug>
+          <bug_id>9249</bug_id>
+          
+          <creation_ts>2016-01-29 19:23:00 +0100</creation_ts>
+          <short_desc>Wrong behaviour of scroll pane when the count of elements in the model changes</short_desc>
+          <delta_ts>2016-01-29 19:23:20 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.list</component>
+          <version>5.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>UNCONFIRMED</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          
+          <reporter name="Hugues Lefebvre">samael</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>43686</commentid>
+            <who name="Hugues Lefebvre">samael</who>
+            <bug_when>2016-01-29 19:23:20 +0100</bug_when>
+            <thetext>If a qx.ui.list.List is populated with more element than it&#39;s height it will then display scrollbars.
+Scroll to the bottom of the list and select last item.
+Put a button somewhere that removes the last element in the model.
+Try to select an item without scrolling =&gt; selection is not working as expected.
+
+In the qx.ui.virtual.Pane when the rowCount changes the __scrollTop member can have an out of range value, it&#39;s not set to getScrollMaxX in this case and it make the computing of the widget under mouse wrong.
+
+The issue can be reproduced here :
+
+http://demo.qooxdoo.org/current/playground/#%7B%22code%22%3A%22%250Avar%2520model%2520%253D%2520%255B%255D%253B%250Afor%2520%28var%2520i%2520%253D%25200%253B%2520i%2520%253C%252020%253B%2520i%252B%252B%29%250A%2520%2520model.push%28%257B%2520id%253A%2520i%252C%2520label%253A%2520%2522item%2522%2520%252B%2520i%257D%29%253B%250A%250Avar%2520list%2520%253D%2520new%2520qx.ui.list.List%28qx.data.marshal.Json.createModel%28model%29%29%253B%250Alist.setLabelPath%28%2522label%2522%29%253B%250Alist.setAutoScrollIntoView%28true%29%253B%250Alist.setMinHeight%28200%29%253B%250Alist.setMaxHeight%28200%29%253B%250Alist.setHeight%28200%29%253B%250Alist.getSelection%28%29.push%28list.getModel%28%29.getItem%2819%29%29%253B%250A%250Avar%2520button%2520%253D%2520new%2520qx.ui.form.Button%28%2522Reproduce%2520it%2522%29%253B%250Abutton.addListener%28%2522execute%2522%252C%2520function%28%29%250A%257B%250A%2520%2520var%2520max%2520%253D%2520list.getModel%28%29.getLength%28%29%253B%250A%2520%2520if%2520%28max%2520%253E%25202%29%250A%2520%2520%257B%250A%2520%2520%2520%2520list.getModel%28%29.removeAt%28max%2520-%25201%29%253B%250A%2520%2520%2520%2520list.getSelection%28%29.push%28list.getModel%28%29.getItem%28max%2520-%25202%29%29%253B%250A%2520%2520%257D%250A%257D%29%253B%250A%250Avar%2520cont%2520%253D%2520new%2520qx.ui.container.Composite%28new%2520qx.ui.layout.VBox%2810%29%29%253B%250Acont.add%28list%29%253B%250Acont.add%28button%29%253B%250A%250Athis.getRoot%28%29.add%28cont%252C%2520%257Bedge%253A%25200%257D%29%253B%250A%22%2C%20%22mode%22%3A%22ria%22%7D
+
+
+Subclassing the ui.list this way fixes the problem:
+
+qx.Class.define(&quot;test.List&quot;,
+{
+  extend: qx.ui.list.List,
+
+  construct: function(model)
+  {
+    this.base(arguments, model);
+
+    var originalMethod = this.getPane().constructor.prototype.syncWidget;
+    this.getPane().constructor.prototype.syncWidget = function(jobs)
+    {
+      if (this.__jobs == null)
+        return;
+      if (this.isUpdatePending())
+      {
+        var normalizeValues = function(value, min, max)
+        {
+          if (value &lt; min)
+            value = min;
+          else if (value &gt; max)
+            value = max;
+          return value;
+        }
+        this.__scrollLeft = normalizeValues(this.__scrollLeft, 0, this.getScrollMaxX());
+        this.__scrollTop  = normalizeValues(this.__scrollTop, 0, this.getScrollMaxY());
+      }
+      originalMethod.call(this, jobs);
+    }
+  }
+});</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

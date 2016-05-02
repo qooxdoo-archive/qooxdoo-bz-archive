@@ -1,0 +1,312 @@
+<bug>
+          <bug_id>2996</bug_id>
+          
+          <creation_ts>2009-10-27 15:45:00 +0100</creation_ts>
+          <short_desc>A possible error in qx.event.message.Bus.dispatch method</short_desc>
+          <delta_ts>2014-03-03 15:19:46 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>0.8.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Denis">nomus</reporter>
+          <assigned_to name="Christian Boulanger">info</assigned_to>
+          <cc>fabian.jakobs</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>13593</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2009-10-27 15:45:21 +0100</bug_when>
+            <thetext>Hello,
+
+It seems that “dispatch” method of qx.event.message.Bus class has an error (a typo) on the line #272. The line looks like:
+
+if (pos == 1 || key.substr(0, pos) == msgName.substr(0, pos))
+
+I suppose it should look like:
+
+if (pos === 0 || key.substr(0, pos) === msgName.substr(0, pos))
+
+Best regards,
+Denis</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13631</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2009-10-28 14:43:40 +0100</bug_when>
+            <thetext>Also it seems that “unsubscribe” method has an implementation error. Namely if the method is called with “subscriber” parameter value for which there is no subscription all subscriptions for the message will be deleted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13802</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-02 22:43:34 +0100</bug_when>
+            <thetext>Hi Christian, would you please have a look at those message bus issues (seem to be valid), thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13804</commentid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2009-11-02 23:09:01 +0100</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; Hello,
+&gt; 
+&gt; It seems that “dispatch” method of qx.event.message.Bus class has an error
+&gt; (a typo) on the line #272. The line looks like:
+&gt; 
+&gt; if (pos == 1 || key.substr(0, pos) == msgName.substr(0, pos))
+&gt; 
+&gt; I suppose it should look like:
+&gt; 
+&gt; if (pos === 0 || key.substr(0, pos) === msgName.substr(0, pos))
+&gt; 
+
+Sure, it should be 0 instead of 1. Thanks for reporting this bug.  However, why would we need strict comparison(===)? 
+
+(In reply to comment #1)
+&gt; Also it seems that “unsubscribe” method has an implementation error. Namely
+&gt; if the method is called with “subscriber” parameter value for which there
+&gt; is no subscription all subscriptions for the message will be deleted.
+
+Hi, I am not sure I understand. Can you supply a patch which corrects the wrong behavior, or give an example, then I&#39;ll get the idea.
+
+Thanks for reporting the issues,
+
+Christian </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13806</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2009-11-03 09:32:31 +0100</bug_when>
+            <thetext>Hello Christian,
+
+&gt; Sure, it should be 0 instead of 1. Thanks for reporting this bug.  However, why
+&gt; would we need strict comparison(===)? 
+
+Actually strict comparison (===) is not necessary but suggested. 
+See http://qooxdoo.org/documentation/general/javascript_best_practises#equality_versus_identity
+
+&gt; Hi, I am not sure I understand. Can you supply a patch which corrects the wrong
+&gt; behavior, or give an example, then I&#39;ll get the idea.
+
+The following example demonstrates the problem:
+
+function handler() {
+    alert(&quot;handler&quot;);
+}
+
+function anotherHandler() {
+}
+
+var messageBus = qx.event.message.Bus.getInstance();
+messageBus.subscribe(&quot;message&quot;, handler, this);
+messageBus.unsubscribe(&quot;message&quot;, anotherHandler, this);
+messageBus.dispatch(&quot;message&quot;);
+
+You will not see the message although it should be displayed.
+The following patch can be used to fix the problem:
+
+unsubscribe : function(message, subscriber, context)
+{
+    var sub = this.getSubscriptions();
+    var subscrList = sub[message];
+    if (subscrList) {
+        if (! context) {
+            context = null;
+        }
+        var i = subscrList.length;
+        var subscription;
+        do {
+            subscription = subscrList[--i];
+            if (subscription.subscriber === subscriber &amp;&amp; subscription.context === context) {
+                subscrList.splice(i, 1);
+                if (subscrList.length === 0) {
+                    sub[message] = null;
+                    delete sub[message];
+                }
+                return true;
+            }
+        } while (i);
+    }
+    return false;
+}
+
+
+Best regards,
+Denis</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13809</commentid>
+              <attachid>642</attachid>
+            <who name="Christian Boulanger">info</who>
+            <bug_when>2009-11-03 10:52:08 +0100</bug_when>
+            <thetext>Created attachment 642
+Patch tp fix the issues described
+
+This patch incorporates the posted patches and adds to tests to make sure they work. The patch has been tested against the current trunk.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13853</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-04 11:07:08 +0100</bug_when>
+            <thetext>Thanks to both of you: Denis for reporting/analyzing the problem and Christian for providing an excellent patch including add&#39;tl tests!
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13854</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-04 11:07:38 +0100</bug_when>
+            <thetext>Fixed in r20563.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13855</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-04 11:08:43 +0100</bug_when>
+            <thetext>Denis, would be great you could regularly VERIFY this fix.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14661</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:16:26 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36621</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:46 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>642</attachid>
+            <date>2009-11-03 10:52:00 +0100</date>
+            <delta_ts>2009-11-03 10:52:08 +0100</delta_ts>
+            <desc>Patch tp fix the issues described</desc>
+            <filename>qx.event.message.Bus.patch.txt</filename>
+            <type>text/plain</type>
+            <size>5238</size>
+            <attacher>info</attacher>
+            
+              <data encoding="base64">IyMjIEVjbGlwc2UgV29ya3NwYWNlIFBhdGNoIDEuMAojUCBxb294ZG9vLXRydW5rCkluZGV4OiBm
+cmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2V2ZW50L21lc3NhZ2UvQnVzLmpzCj09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0K
+LS0tIGZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvZXZlbnQvbWVzc2FnZS9CdXMuanMJKHJldmlz
+aW9uIDIwNTU3KQorKysgZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC9ldmVudC9tZXNzYWdlL0J1
+cy5qcwkod29ya2luZyBjb3B5KQpAQCAtMTYzLDggKzE2Myw3IEBACiAgICAgICBlbHNlCiAgICAg
+ICB7CiAgICAgICAgIC8vIGNyZWF0ZSBhIHN1YnNjcmlwdGlvbgotICAgICAgICBzdWJbbWVzc2Fn
+ZV0gPSBbCi0gICAgICAgIHsKKyAgICAgICAgc3ViW21lc3NhZ2VdID0gWyB7CiAgICAgICAgICAg
+c3Vic2NyaWJlciA6IHN1YnNjcmliZXIsCiAgICAgICAgICAgY29udGV4dCAgICA6IGNvbnRleHQg
+fHwgbnVsbAogICAgICAgICB9IF07CkBAIC0xODgsNyArMTg3LDcgQEAKICAgICB7CiAgICAgICB2
+YXIgc3ViID0gdGhpcy5nZXRTdWJzY3JpcHRpb25zKCk7CiAKLSAgICAgIGlmICghc3ViW21lc3Nh
+Z2VdIHx8IHN1YlttZXNzYWdlXS5sZW5ndGggPT0gMCkgeworICAgICAgaWYgKCFzdWJbbWVzc2Fn
+ZV0gfHwgc3ViW21lc3NhZ2VdLmxlbmd0aCA9PT0gMCkgewogICAgICAgICByZXR1cm4gZmFsc2U7
+CiAgICAgICB9CiAKQEAgLTE5Niw3ICsxOTUsNyBAQAogICAgICAgewogICAgICAgICBmb3IgKHZh
+ciBpPTA7IGk8c3ViW21lc3NhZ2VdLmxlbmd0aDsgaSsrKQogICAgICAgICB7Ci0gICAgICAgICAg
+aWYgKHN1YlttZXNzYWdlXVtpXS5zdWJzY3JpYmVyID09IHN1YnNjcmliZXIgJiYgc3ViW21lc3Nh
+Z2VdW2ldLmNvbnRleHQgPT0gKGNvbnRleHQgfHwgbnVsbCkpIHsKKyAgICAgICAgICBpZiAoc3Vi
+W21lc3NhZ2VdW2ldLnN1YnNjcmliZXIgPT09IHN1YnNjcmliZXIgJiYgc3ViW21lc3NhZ2VdW2ld
+LmNvbnRleHQgPT09IChjb250ZXh0IHx8IG51bGwpKSB7CiAgICAgICAgICAgICByZXR1cm4gdHJ1
+ZTsKICAgICAgICAgICB9CiAgICAgICAgIH0KQEAgLTIyMSwyOSArMjIwLDI5IEBACiAgICAgICov
+CiAgICAgdW5zdWJzY3JpYmUgOiBmdW5jdGlvbihtZXNzYWdlLCBzdWJzY3JpYmVyLCBjb250ZXh0
+KQogICAgIHsKLSAgICAgIHZhciBzdWIgPSB0aGlzLmdldFN1YnNjcmlwdGlvbnMoKTsKLQotICAg
+ICAgaWYgKCFzdWJbbWVzc2FnZV0pIHsKLSAgICAgICAgcmV0dXJuIGZhbHNlOwotICAgICAgfQot
+Ci0gICAgICBpZiAoc3Vic2NyaWJlcikKLSAgICAgIHsKLSAgICAgICAgZm9yICh2YXIgaT0wOyBp
+PHN1YlttZXNzYWdlXS5sZW5ndGg7IGkrKykKLSAgICAgICAgewotICAgICAgICAgIGlmIChzdWJb
+bWVzc2FnZV1baV0uc3Vic2NyaWJlciA9PSBzdWJzY3JpYmVyICYmIHN1YlttZXNzYWdlXVtpXS5j
+b250ZXh0ID09IChjb250ZXh0IHx8IG51bGwpKQotICAgICAgICAgIHsKLSAgICAgICAgICAgIHN1
+YlttZXNzYWdlXS5zcGxpY2UoaSwgMSk7Ci0gICAgICAgICAgICByZXR1cm4gdHJ1ZTsKLSAgICAg
+ICAgICB9Ci0gICAgICAgIH0KLSAgICAgIH0KLQotICAgICAgc3ViW21lc3NhZ2VdID0gbnVsbDsK
+LSAgICAgIHJldHVybiB0cnVlOworICAgICAgIHZhciBzdWIgPSB0aGlzLmdldFN1YnNjcmlwdGlv
+bnMoKTsKKyAgICAgICB2YXIgc3Vic2NyTGlzdCA9IHN1YlttZXNzYWdlXTsKKyAgICAgICBpZiAo
+c3Vic2NyTGlzdCkgeworICAgICAgICAgICBpZiAoISBjb250ZXh0KSB7CisgICAgICAgICAgICAg
+ICBjb250ZXh0ID0gbnVsbDsKKyAgICAgICAgICAgfQorICAgICAgICAgICB2YXIgaSA9IHN1YnNj
+ckxpc3QubGVuZ3RoOworICAgICAgICAgICB2YXIgc3Vic2NyaXB0aW9uOworICAgICAgICAgICBk
+byB7CisgICAgICAgICAgICAgICBzdWJzY3JpcHRpb24gPSBzdWJzY3JMaXN0Wy0taV07CisgICAg
+ICAgICAgICAgICBpZiAoc3Vic2NyaXB0aW9uLnN1YnNjcmliZXIgPT09IHN1YnNjcmliZXIgJiYg
+c3Vic2NyaXB0aW9uLmNvbnRleHQgPT09IGNvbnRleHQpIHsKKyAgICAgICAgICAgICAgICAgICBz
+dWJzY3JMaXN0LnNwbGljZShpLCAxKTsKKyAgICAgICAgICAgICAgICAgICBpZiAoc3Vic2NyTGlz
+dC5sZW5ndGggPT09IDApIHsKKyAgICAgICAgICAgICAgICAgICAgICAgc3ViW21lc3NhZ2VdID0g
+bnVsbDsKKyAgICAgICAgICAgICAgICAgICAgICAgZGVsZXRlIHN1YlttZXNzYWdlXTsKKyAgICAg
+ICAgICAgICAgICAgICB9CisgICAgICAgICAgICAgICAgICAgcmV0dXJuIHRydWU7CisgICAgICAg
+ICAgICAgICB9CisgICAgICAgICAgIH0gd2hpbGUgKGkpOworICAgICAgIH0KKyAgICAgICByZXR1
+cm4gZmFsc2U7CiAgICAgfSwKIAotCiAgICAgLyoqCiAgICAgICogZGlzcGF0Y2ggbWVzc2FnZSBh
+bmQgY2FsbCBzdWJzY3JpYmVkIGZ1bmN0aW9ucwogICAgICAqCkBAIC0yNjksNyArMjY4LDcgQEAK
+ICAgICAgICAgaWYgKHBvcyA+IC0xKQogICAgICAgICB7CiAgICAgICAgICAgLy8gdXNlIG9mIHdp
+bGRjYXJkCi0gICAgICAgICAgaWYgKHBvcyA9PSAxIHx8IGtleS5zdWJzdHIoMCwgcG9zKSA9PSBt
+c2dOYW1lLnN1YnN0cigwLCBwb3MpKQorICAgICAgICAgIGlmIChwb3MgPT09IDAgfHwga2V5LnN1
+YnN0cigwLCBwb3MpID09PSBtc2dOYW1lLnN1YnN0cigwLCBwb3MpKQogICAgICAgICAgIHsKICAg
+ICAgICAgICAgIHRoaXMuX19jYWxsU3Vic2NyaWJlcnMoc3ViW2tleV0sIG1zZyk7CiAgICAgICAg
+ICAgfQpAQCAtMjc3LDcgKzI3Niw3IEBACiAgICAgICAgIGVsc2UKICAgICAgICAgewogICAgICAg
+ICAgIC8vIGV4YWN0IG1hdGNoCi0gICAgICAgICAgaWYgKGtleSA9PSBtc2dOYW1lKQorICAgICAg
+ICAgIGlmIChrZXkgPT09IG1zZ05hbWUpCiAgICAgICAgICAgewogICAgICAgICAgICAgdGhpcy5f
+X2NhbGxTdWJzY3JpYmVycyhzdWJbbXNnTmFtZV0sIG1zZyk7ICAgICAgICAgICAgCiAgICAgICAg
+ICAgICByZXR1cm4gdHJ1ZTsKSW5kZXg6IGZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdGVzdC9l
+dmVudC9tZXNzYWdlL0J1cy5qcwo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Ci0tLSBmcmFtZXdvcmsvc291cmNlL2NsYXNz
+L3F4L3Rlc3QvZXZlbnQvbWVzc2FnZS9CdXMuanMJKHJldmlzaW9uIDIwNTU3KQorKysgZnJhbWV3
+b3JrL3NvdXJjZS9jbGFzcy9xeC90ZXN0L2V2ZW50L21lc3NhZ2UvQnVzLmpzCSh3b3JraW5nIGNv
+cHkpCkBAIC0xMDAsNiArMTAwLDU3IEBACiAgICAgICAKICAgICAgIGJ1cy5kaXNwYXRjaCgiTXlN
+ZXNzYWdlIiwgMTApOwogICAgICAgdGhpcy5hc3NlcnRFcXVhbHMoMiwgY2FsbHMsICJXcm9uZyBj
+YWxsYmFja3MhIik7CisgICAgfSwKKyAgICAKKyAgICAvLyBzZWUgaHR0cDovL2J1Z3ppbGxhLnFv
+b3hkb28ub3JnL3Nob3dfYnVnLmNnaT9pZD0yOTk2CisgICAgdGVzdFdpbGRjYXJkIDogZnVuY3Rp
+b24oKQorICAgIHsKKyAgICAgIHZhciBmbGFnMSA9IGZhbHNlOworICAgICAgdmFyIGZsYWcyID0g
+ZmFsc2U7CisgICAgICBmdW5jdGlvbiBoYW5kbGVyMSgpIHsKKyAgICAgICAgZmxhZzEgPSB0cnVl
+OworICAgICAgfQorICAgICAgZnVuY3Rpb24gaGFuZGxlcjIoKSB7CisgICAgICAgIGZsYWcyID0g
+dHJ1ZTsKKyAgICAgIH0KKyAgICAgIAorICAgICAgdmFyIG1lc3NhZ2VCdXMgPSBxeC5ldmVudC5t
+ZXNzYWdlLkJ1cy5nZXRJbnN0YW5jZSgpOworICAgICAgbWVzc2FnZUJ1cy5zdWJzY3JpYmUoIioi
+LCBoYW5kbGVyMSwgdGhpcyk7CisgICAgICBtZXNzYWdlQnVzLnN1YnNjcmliZSgibWVzcyoiLCBo
+YW5kbGVyMiwgdGhpcyk7CisgICAgICAKKyAgICAgIG1lc3NhZ2VCdXMuZGlzcGF0Y2goIm1lc3Nh
+Z2UiKTsKKyAgICAgIHRoaXMuYXNzZXJ0VHJ1ZShmbGFnMSwgIkhhbmRsZXIxIChmaWx0ZXIgJyon
+KSB3YXMgbm90IGNhbGxlZCBmb3IgbWVzc2FnZSAnbWVzc2FnZScuIik7CisgICAgICB0aGlzLmFz
+c2VydFRydWUoZmxhZzIsICJIYW5kbGVyMiAoZmlsdGVyICdtZXNzKicpIHdhcyBub3QgY2FsbGVk
+IGZvciBtZXNzYWdlICdtZXNzYWdlJy4iKTsKKyAgICAgIAorICAgICAgZmxhZzEgPSBmYWxzZTsK
+KyAgICAgIGZsYWcyID0gZmFsc2U7ICAgICAgCisgICAgICBtZXNzYWdlQnVzLmRpc3BhdGNoKCJt
+YXNzYWdlIik7CisgICAgICB0aGlzLmFzc2VydFRydWUoZmxhZzEsICJIYW5kbGVyMSAoZmlsdGVy
+ICcqJykgd2FzIG5vdCBjYWxsZWQgZm9yIG1lc3NhZ2UgJ21hc3NhZ2UnLiIpOworICAgICAgdGhp
+cy5hc3NlcnRGYWxzZShmbGFnMiwgIkhhbmRsZXIyIChmaWx0ZXIgJ21lc3MqJykgd2FzIHdyb25n
+bHkgY2FsbGVkIGZvciBtZXNzYWdlICdtYXNzYWdlJy4iKTsKKworICAgIH0sCisgICAgCisgICAg
+Ly8gc2VlIGh0dHA6Ly9idWd6aWxsYS5xb294ZG9vLm9yZy9zaG93X2J1Zy5jZ2k/aWQ9Mjk5Ngor
+ICAgIHRlc3RVbnN1YnNjcmliZSA6IGZ1bmN0aW9uKCkKKyAgICB7CisgICAgICAgIHZhciBmbGFn
+ID0gZmFsc2U7CisgICAgICAgIGZ1bmN0aW9uIGhhbmRsZXIoKSB7CisgICAgICAgICAgIGZsYWcg
+PSB0cnVlOyAKKyAgICAgICAgfQorICAgICAgICAKKyAgICAgICAgZnVuY3Rpb24gYW5vdGhlckhh
+bmRsZXIoKSB7CisgICAgICAgIH0KKyAgICAgICAgCisgICAgICAgIHZhciBtZXNzYWdlQnVzID0g
+cXguZXZlbnQubWVzc2FnZS5CdXMuZ2V0SW5zdGFuY2UoKTsKKyAgICAgICAgbWVzc2FnZUJ1cy5z
+dWJzY3JpYmUoIm1lc3NhZ2UiLCBoYW5kbGVyLCB0aGlzKTsKKyAgICAgICAgbWVzc2FnZUJ1cy51
+bnN1YnNjcmliZSgibWVzc2FnZSIsIGFub3RoZXJIYW5kbGVyLCB0aGlzKTsKKyAgICAgICAgbWVz
+c2FnZUJ1cy5kaXNwYXRjaCgibWVzc2FnZSIpOworICAgICAgICB0aGlzLmFzc2VydFRydWUoZmxh
+ZywgIkhhbmRsZXIgd2FzIG5vdCBjYWxsZWQuIik7CisgICAgICAgIGZsYWcgPSBmYWxzZTsKKyAg
+ICAgICAgbWVzc2FnZUJ1cy51bnN1YnNjcmliZSgibWVzc2FnZSIsIGhhbmRsZXIsIHRoaXMpOwor
+ICAgICAgICBtZXNzYWdlQnVzLmRpc3BhdGNoKCJtZXNzYWdlIik7CisgICAgICAgIHRoaXMuYXNz
+ZXJ0RmFsc2UoZmxhZywgIkhhbmRsZXIgd2FzIGNhbGxlZCBhbHRob3VnaCB1bnN1YnNjcmliZWQu
+Iik7CisKICAgICB9CiAgIH0KIH0pOwpcIE5vIG5ld2xpbmUgYXQgZW5kIG9mIGZpbGUK
+</data>
+
+          </attachment>
+      
+
+    </bug>

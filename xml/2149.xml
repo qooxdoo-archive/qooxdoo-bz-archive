@@ -1,0 +1,340 @@
+<bug>
+          <bug_id>2149</bug_id>
+          
+          <creation_ts>2009-03-23 19:28:00 +0100</creation_ts>
+          <short_desc>Tool Chain changes should invalidate the Cache</short_desc>
+          <delta_ts>2014-03-03 15:27:06 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Derrell Lipman">derrell.lipman</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>8829</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-03-23 19:28:38 +0100</bug_when>
+            <thetext>If an application formerly generated with 0.8.0 is then run with the 0.8.1 generator, a series of error messages are presented that give no indication of the problem. The problem is resolved by clearing the cache. If possible, have the generator either automatically invalidate the cache (aka &quot;The hard way&quot;) or at least, generate a message asking the user to clear the cache (&quot;The easier way&quot;).
+
+These are the errors current presented for this case:
+
+&gt;&gt;&gt; Resolving dependencies...
+Traceback (most recent call last):
+ File &quot;/home/derrell/ME/qooxdoo.git/trunk/qooxdoo/tool/bin/generator.py&quot;, line 141, in &lt;module&gt;
+ main()
+ File &quot;/home/derrell/ME/qooxdoo.git/trunk/qooxdoo/tool/bin/generator.py&quot;, line 136, in main
+ Generator(config, job, console).run()
+ File &quot;/home/derrell/ME/qooxdoo.git/trunk/qooxdoo/tool/pylib/generator/Generator.py&quot;, line 436, in run
+ classList = computeClassList(smartInclude, smartExclude, explicitInclude, explicitExclude, {})
+ File &quot;/home/derrell/ME/qooxdoo.git/trunk/qooxdoo/tool/pylib/generator/Generator.py&quot;, line 158, in computeClassList
+ classList = self._depLoader.getClassList(smartInclude, smartExclude, explicitInclude, explicitExclude, variants)
+ File &quot;/home/derrell/=/qooxdoo.git/trunk/qooxdoo/tool/pylib/generator/code/DependencyLoader.py&quot;, line 64, in getClassList
+ File &quot;/home/derrell/=/qooxdoo.git/trunk/qooxdoo/tool/pylib/generator/code/DependencyLoader.py&quot;, line 103, in resolveDependencies
+ File &quot;/home/derrell/=/qooxdoo.git/trunk/qooxdoo/tool/pylib/generator/code/DependencyLoader.py&quot;, line 127, in _resolveDependenciesRecurser
+ File &quot;/home/derrell/=/qooxdoo.git/trunk/qooxdoo/tool/pylib/generator/code/DependencyLoader.py&quot;, line 175, in getCombinedDeps
+KeyError: &#39;undef&#39;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8830</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-03-23 19:51:42 +0100</bug_when>
+            <thetext>@Thomas, isn&#39;t there already a similar entry for that problem? A clean cache is known to be a prerequisite for a successful migration. At least the docs should mention that explicitly (don&#39;t they already?),if it can&#39;t transparently be handled on a technical level.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8936</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-03-26 11:04:40 +0100</bug_when>
+            <thetext>1. Documentation: Both 0.8 migration documents (&quot;from 0.7&quot; and &quot;from 0.8&quot;) 
+advice to clear the cache during migration. 
+
+2. Migration Job: Clearing the cache is also the default for the interactive 
+dialog of the migration job during execution.
+
+My impression is that the bug reporter didn&#39;t run the migration job at all. 
+Derrell?!
+
+3. On a technical level:
+
+It might be worthwhile to improve cache invalidation while the generator runs. 
+There are cache objects that cannot be related to a concrete file on disk (e.g. 
+generated lists of resources), and therefore time stamp comparison of files 
+cannot be applied. For those, the generator could add a number to the cache 
+object (e.g. the SVN revision number of qooxdoo) and compare it to its own 
+number, to detect stale objects. An alternative would be scanning all the files 
+in the tool/ hierarchy and compare time stamps of cache object and newest tool 
+file, as it was done in 0.7.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8959</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-03-26 14:04:29 +0100</bug_when>
+            <thetext>&gt; My impression is that the bug reporter didn&#39;t run the migration job at all. Derrell?!
+
+Yeah, that&#39;s correct. It didn&#39;t even occur to me. For those of us who develop with &#39;trunk&#39; (and there seem to be an increasing and significant number of us), &quot;releases&quot; aren&#39;t really a consideration, so migrating from one release to another doesn&#39;t come into the normal thought pattern. That&#39;s particularly true when revisiting qooxdoo-contrib projects rather than one&#39;s own project that one is working on on a daily basis.
+
+My thought regarding this bug, though, is that as soon as I showed the output of the generator to Thomas, he immediately said, &quot;Oh, you need to clear the cache.&quot; Given that Thomas was so easily able to determine the problem, it would be nice if the generator could do similarly. Had the generator spit out this same series of errors it did, but then, at the end, said, &quot;Clearing your cache and re-running the generator will likely solve this problem&quot;, there would have been no issue. I don&#39;t know that it&#39;s necessary to actually invalidate the cache; just displaying a message telling the user how to fix the problem on their own would probably be quite adequate.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8962</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-03-26 15:17:25 +0100</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; &gt; My impression is that the bug reporter didn&#39;t run the migration job at all. 
+Derrell?!
+&gt; 
+&gt; Yeah, that&#39;s correct. It didn&#39;t even occur to me. 
+
+Ok, I get your argument. But maybe this experience enhances the idea that the 
+migration is a *tool* to help you in such situations (dealing with code of some 
+age), rather than a nuisance you are happy to get around.
+
+&gt; My thought regarding this bug, though, is that as soon as I showed the output 
+of the generator to Thomas, he 
+&gt; immediately said, &quot;Oh, you need to clear the cache.&quot;
+
+That was simply due to the fact that I was confronted with this error about 5 
+times within the team, so it&#39;s sort of easy to remember :-) .
+
+&gt; Given that Thomas was so easily able to determine the problem, it would be 
+nice if the generator could do 
+&gt; similarly. Had the generator spit out this same series of errors it did, but 
+then, at the end, said, &quot;Clearing your 
+&gt; cache and re-running the generator will likely solve this problem&quot;, there 
+would have been no issue. I don&#39;t 
+&gt; know that it&#39;s necessary to actually invalidate the cache; just displaying a 
+message telling the user how to fix 
+&gt; the problem on their own would probably be quite adequate.
+
+I think this is the point where you are mistaken. How would the generator know 
+this? On the one end of the spectrum the generator could spill out &quot;Clear your 
+cache!&quot; on every failure, just in case this might solve the problem (which 
+would probably be overshooting). On the other end we could try to extend the 
+generator into an expert system, with knowledge base and all, to analyze 
+failures and hint at probable solutions (which would be overshooting just as 
+well). 
+
+In between lies the actual problem where the generator used some data from the 
+cache that had become incompatible with the program logic (the data structure 
+had gotten a new key, namely &#39;undef&#39;). If the generator had a way of knowing 
+that this data did no longer comply with the algorithm, it would have simply 
+re-generated it (like it does with so many other cache items) and everything 
+would have been fine. No error, no message to the user, just a little bit more 
+computation for this run. Detecting stale cache objects would weed out this 
+whole class of issues, without ever having the user to clear-and-rerun 
+manually. And it is also much cheaper, since only one piece of data has to be 
+re-computed rather than all the items in the cache.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8963</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-03-26 15:30:53 +0100</bug_when>
+            <thetext>&gt;&gt; I don&#39;t know that it&#39;s necessary to actually invalidate the cache; just displaying a 
+message telling the user how to fix the problem on their own would probably be quite adequate.
+
+&gt; I think this is the point where you are mistaken. How would the generator know this?
+
+And that&#39;s really my question. What was it that you were so immediately able to identify upon seeing the series of error messages, that caused you to think to yourself, &quot;Oh, that idiot Derrell needs to clear his cache!&quot; :-) Whatever it was that you saw, can that be detected by the generator? Was it one particular message in that series? Was it this particular sequence of messages? Whatever it was that raised the flag in your head could be identified by the generator as well and cause it to output a warning message that it appears that the cache needs to be cleared.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8969</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-03-26 17:08:41 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; And that&#39;s really my question. What was it that you were so immediately able 
+to identify upon seeing the series 
+
+It was the last line (as usual with Python stack traces), the missing key 
+&#39;undef&#39; (this is not a key word in Python, but a name chosen for an entry in 
+the data structure).
+
+&gt; of error messages, that caused you to think to yourself, &quot;Oh, that idiot 
+Derrell needs to clear his cache!&quot; :-) 
+
+Naa, that was more of &quot;Sh*t, I should have fixed this cache thing...!&quot; ;-)
+
+&gt; Whatever it was that you saw, can that be detected by the generator? Was it 
+one particular message in that 
+&gt; series? Was it this particular sequence of messages?
+
+Python gives you the stack trace upside down, so the last frame and the 
+offending error appear at the end. That was enough to see, I didn&#39;t have to 
+read the whole trace.
+
+&gt; Whatever it was that raised the flag in your head could be 
+&gt; identified by the generator as well and cause it to output a warning message 
+that it appears that the cache 
+&gt; needs to be cleared.
+
+I could explicitly test for the existence of the &#39;undef&#39; key before accessing 
+it, and in its absence do what you suggest. But as I said before, once I detect 
+such a condition I could just as well re-generate the cached item and continue 
+with the (then) available &#39;undef&#39; key. No need to bother the user.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11593</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-08-26 19:12:46 +0200</bug_when>
+            <thetext>down prio for now</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11965</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-08 09:41:32 +0200</bug_when>
+            <thetext>moved from 0.8.3 to 0.9</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13179</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-14 14:25:56 +0200</bug_when>
+            <thetext>Changed summary, to stress the more general relevance.
+
+The issue is also relevant for people working with qooxdoo trunk, as changes to 
+the tool chain repeatedly lead to exceptions during build runs, if the contents 
+of cache items does not comply with a newer version of the tool chain. This is 
+irritating, and not easy to interpret for the normal user. The solution is 
+always to delete the cache.
+
+This behaviour was available in earlier qooxdoo versions (0.7?).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13180</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-14 14:36:38 +0200</bug_when>
+            <thetext>The strategy should be:
+
+- find the youngest file of the tool tree (with filetool.findYoungest())
+- check against a tool checkfile in the cache
+- if the file does not exisit, or exists and is older than the youngest tool 
+file, invalidate the cache
+- after the cache has been cleared, add an updated tool checkfile to the cache
+
+The best place to solve this would be tool/bin/generate.py. But there are 
+issues:
+
+- caches are always related to a specific job, and multiple jobs in a generator 
+run can specify different caches; so cache checking and invalidation should be 
+job-specific; but how do you add clearing the cache in the middle of a running 
+job?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13183</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-14 14:59:16 +0200</bug_when>
+            <thetext>Possible config key to control this behaviour:
+
+  &quot;cache&quot; : { &quot;invalidate-on-tool-change&quot; : (true|false) }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14404</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-11-24 12:59:44 +0100</bug_when>
+            <thetext>up prio - it&#39;s too often a problem for trunk-level developers</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14756</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:26:11 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0 (for issues with status &quot;NEW&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15118</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-11-30 19:10:32 +0100</bug_when>
+            <thetext>Implemented &quot;cache/invalidate-on-tool-change&quot; config key; cache check file 
+&quot;.../.cache_check_file&quot; is used as a test file, time stamp is matched against 
+youngest file from &#39;tool&#39;; if &#39;tool&#39; is younger, or .cache_check_file is 
+missing, compile cache files are deleted (Cache._cleanCompileCache), and 
+.cache_check_file re-created; the default of the config key is set to &#39;true&#39; in 
+base.json, as this will not hurt people using a released version (&#39;tool&#39; will 
+be stable), but benefit people working on trunk.
+
+With r20846.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15204</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-12-02 18:26:30 +0100</bug_when>
+            <thetext>Re-opened, as Andreas suggests this strategy of cache invalidation is too 
+aggressive, invalidating too often. 
+
+The alternative proposal is to
+a) restrict cache invalidation to a subset of the tool chain modules
+b) give the user more control over the cache deletion, by way of warning 
+messages and hints towards clearing the cache (e.g. in case of a generator 
+exception)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15225</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-12-03 10:46:58 +0100</bug_when>
+            <thetext>Switched to a different detection scheme for cache invalidation: Rather than 
+trying for better detection heuristics (e.g. checking for newer versions of a 
+specific set of modules that actually use the cache, like DependencyLoader, 
+TreeCompiler, ...), I made it a developer decision. The developer knows best 
+which changes to the tool chain invalidate the cache. This is now reflected by 
+a - manually maintained - incremental counter in the Cache class 
+(Cache._cache_revision), which is compared against a value stored in the cache 
+on disk. If the counter is bigger, the cache will be cleared. It&#39;s only 
+important to increment the counter when one makes changes to the tool chain 
+that are incompatible with existing caches.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15230</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-12-03 11:01:23 +0100</bug_when>
+            <thetext>Distclean leads to misleading error messages.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15258</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-12-03 16:04:34 +0100</bug_when>
+            <thetext>Better integration of &#39;clean&#39;, &#39;distclean&#39; jobs with the new cache checking.
+
+With r20898.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39345</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:06 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

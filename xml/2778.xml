@@ -1,0 +1,294 @@
+<bug>
+          <bug_id>2778</bug_id>
+          
+          <creation_ts>2009-09-10 15:49:00 +0200</creation_ts>
+          <short_desc>Make modelSelection bindable</short_desc>
+          <delta_ts>2009-11-24 20:15:30 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Martin Wittemann">martin.wittemann</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>elvanor</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>12176</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-09-10 15:49:44 +0200</bug_when>
+            <thetext>Currently, the modelSelection property is only bindable with a converter.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12177</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-09-10 15:51:37 +0200</bug_when>
+            <thetext>Christian added this mixin to get back the old value property for single selection widgets.
+
+/**
+*  A mixin for list-type widgets (List, SelectBox) that  
+reimplements the
+removed
+*  &quot;value&quot; property for single-selection form widgets (named
+&quot;selectedValue&quot;).
+*  This assumes that the including widget has been connected to a  
+model
+through  *  qx.data.controller.List and that the loaded model items  
+contain a
+&quot;value&quot;  *  property ( [ { label: &quot;My list item label&quot;, value :  
+&quot;myValue&quot; }, ... ]
+).  */
+qx.Mixin.define(&quot;qcl.ui.form.MSingleSelectionValue&quot;, {
+  /*
+*****************************************************************************
+   CONSTRUCTOR
+*****************************************************************************
+*/      /**
+ * Constructor, binds selection to value property
+ */
+construct : function()
+{
+  this.bind(&quot;selection&quot;,this,&quot;selectedValue&quot;,{
+    converter : this._convertSelectionToValue
+  });
+    },
+  /*
+*****************************************************************************
+   PROPERTIES
+*****************************************************************************
+*/      properties :   {
+  /**
+   * The value of the (single-selection) List / SelectBox      */
+  selectedValue :     {
+    apply: &quot;_applySelectedValue&quot;,
+    event: &quot;changeSelectedValue&quot;,
+    init: null,
+    nullable: true
+  }
+},
+/*
+*****************************************************************************
+   MEMBERS
+*****************************************************************************
+*/
+
+members :
+{
+  /**
+   * Sets the selection of the widget by examining the &quot;value&quot;  
+property
+   * of the bound model item.
+   *      * @param value
+   * @param old
+   * @return
+   */
+  _applySelectedValue : function( value, old )
+  {
+    this.getSelectables().forEach( function(item){
+      if ( item.getModel() &amp;&amp; item.getModel().getValue() == value )
+      {
+        this.setSelection( [item] );
+      }
+    },this);
+  },
+      /**
+   * Converts a seletion into a value
+   * @param selection {Array}
+   * @return {String}
+   */
+  _convertSelectionToValue : function( items )
+  {
+    if ( items.length )
+    {
+      if ( items[0].getModel() )
+      {
+        return items[0].getModel().getValue();
+      }
+      else
+      {
+        return null;
+      }
+    }
+    return null;
+  }
+}
+});
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12210</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-09-11 15:28:26 +0200</bug_when>
+            <thetext>Accept</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12373</commentid>
+            <who name="Jean-Noel Rivasseau">elvanor</who>
+            <bug_when>2009-09-16 20:02:08 +0200</bug_when>
+            <thetext>As pointed out in the ML, the requirement on the fact that the models in the lists should have a value property is overkill. If the model is a simple primitive value, it should be used as the value...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12376</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-09-17 08:44:39 +0200</bug_when>
+            <thetext>Have already committed a solution in trunk yesterday. (r20119)
+The binding is back to one line of code:
+
+controller.addTarget(selectbox, &quot;modelSelection[0]&quot;, &quot;zIndex&quot;, true);
+
+But that solution has a catch because we needed to change the type of the returned array by getModelSelection from a native JavaScript array to a data array.
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12380</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-09-17 10:15:45 +0200</bug_when>
+            <thetext>Nightly test were all ok.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12398</commentid>
+              <attachid>600</attachid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-09-17 16:04:24 +0200</bug_when>
+            <thetext>Created attachment 600
+Diff files to get the feature in 0.8.3</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14558</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:15:30 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>600</attachid>
+            <date>2009-09-17 16:04:00 +0200</date>
+            <delta_ts>2009-09-17 16:04:24 +0200</delta_ts>
+            <desc>Diff files to get the feature in 0.8.3</desc>
+            <filename>diffs.zip</filename>
+            <type>application/zip</type>
+            <size>5007</size>
+            <attacher>martin.wittemann</attacher>
+            
+              <data encoding="base64">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
+</data>
+
+          </attachment>
+      
+
+    </bug>

@@ -1,0 +1,362 @@
+<bug>
+          <bug_id>2632</bug_id>
+          
+          <creation_ts>2009-07-30 10:46:00 +0200</creation_ts>
+          <short_desc>Manage the &quot;open status&quot; of folders through the tree controller</short_desc>
+          <delta_ts>2009-11-30 09:16:08 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Benoît Collignon">b.collignon</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>11143</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2009-07-30 10:46:50 +0200</bug_when>
+            <thetext>Hello,
+
+I&#39;m still working on a tree that can be loaded on demand. What I expected happened: when I affect some new kids on a existing partial model, the targeted treefolders close. How could I auto-open some folders ?
+
+So, it could be useful to add OpenPath and OpenOptions in the properties of the Tree controller. I already coded it yesterday (it was easy). I tried first to work with a mixin and patch the main class (so the current code is kept) but I had to patch some private method, that is not allowed. So, I created a copy of the treecontroller class with my add-ons.
+
+Here are the importants parts to patch/add to the current class:
+
+construct : function(model, target, childPath, labelPath, openPath)  
+  {
+    this.base(arguments);
+    
+    // internal bindings reference
+    this.__bindings = {};
+    this.__boundProperties = [];
+
+    // reference to the child
+    this.__childrenRef = {};
+    
+    if (childPath != null) {
+      this.setChildPath(childPath);      
+    }
+    if (labelPath != null) {
+      this.setLabelPath(labelPath);      
+    }
+	// add-on
+	if (openPath != null) 
+	{
+		this.setOpenPath(openPath);
+	}
+	
+    if (model != null) {
+      this.setModel(model);      
+    }
+    if (target != null) {
+      this.setTarget(target);
+    }
+  },
+  members:
+{
+        __addBinding: function(modelNode, treeNode) 
+	{
+		var delegate = this.getDelegate();
+		// if a delegate for creating the binding is given, use it
+		if (delegate != null &amp;&amp; delegate.bindItem != null) 
+		{
+			delegate.bindItem(this, treeNode, modelNode);
+			// otherwise, try to bind the listItem by default
+		} 
+		else 
+		{
+			// label binding
+			this.bindProperty(this.getLabelPath(), &quot;label&quot;, this.getLabelOptions(), treeNode, modelNode);
+
+			// icon binding
+			if (this.getIconPath() != null) 
+			{
+				this.bindProperty(this.getIconPath(), &quot;icon&quot;, this.getIconOptions(), treeNode, modelNode);
+			}
+			
+			// add-on: open folder/file binding
+			if (this.getOpenPath() != null) 
+			{
+				this.bindProperty(this.getOpenPath(), &quot;open&quot;, this.getOpenOptions(), treeNode, modelNode);
+			}
+		}
+	},
+        _applyOpenPath: function(value, old) 
+	{
+		this.__renewBindings();
+	},
+	_applyOpenOptions: function(value, old) 
+	{
+		this.__renewBindings();
+	}
+  },
+  properties:
+{
+	openPath : 
+	{
+	  check: &quot;String&quot;,
+	  apply: &quot;_applyOpenPath&quot;,
+	  nullable: true
+	},
+	
+	openOptions :
+	{
+	  apply: &quot;_applyOpenOptions&quot;,
+	  nullable: true
+	}
+}
+
+Best,
+
+Benoît.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11162</commentid>
+            <who name="Benoît Collignon">b.collignon</who>
+            <bug_when>2009-07-31 14:14:46 +0200</bug_when>
+            <thetext>I forgot to add to following binding (as the open status of a tree folder can be modified in the two directions - a user can deploy or not it) in the __addBinding method: treeNode.bind(&#39;open&#39;, modelNode, this.getOpenPath());
+
+And it gives to following changes:
+
+__addBinding: function(modelNode, treeNode) 
+{
+        var delegate = this.getDelegate();
+        // if a delegate for creating the binding is given, use it
+        if (delegate != null &amp;&amp; delegate.bindItem != null) 
+        {
+               delegate.bindItem(this, treeNode, modelNode);
+               // otherwise, try to bind the listItem by default
+        } 
+        else 
+        {
+              // label binding
+              this.bindProperty(this.getLabelPath(), &quot;label&quot;,
+this.getLabelOptions(), treeNode, modelNode);
+
+              // icon binding
+              if (this.getIconPath() != null) 
+              {
+                      this.bindProperty(this.getIconPath(), &quot;icon&quot;,
+this.getIconOptions(), treeNode, modelNode);
+              }
+
+              // add-on: open folder/file binding
+              if (this.getOpenPath() != null) 
+              {
+                      this.bindProperty(this.getOpenPath(), &quot;open&quot;,
+this.getOpenOptions(), treeNode, modelNode);
+                      treeNode.bind(&#39;open&#39;, modelNode, this.getOpenPath());
+              }
+       }
+}
+
+
+
+(In reply to comment #0)
+&gt; Hello,
+&gt; 
+&gt; I&#39;m still working on a tree that can be loaded on demand. What I expected
+&gt; happened: when I affect some new kids on a existing partial model, the targeted
+&gt; treefolders close. How could I auto-open some folders ?
+&gt; 
+&gt; So, it could be useful to add OpenPath and OpenOptions in the properties of the
+&gt; Tree controller. I already coded it yesterday (it was easy). I tried first to
+&gt; work with a mixin and patch the main class (so the current code is kept) but I
+&gt; had to patch some private method, that is not allowed. So, I created a copy of
+&gt; the treecontroller class with my add-ons.
+&gt; 
+&gt; Here are the importants parts to patch/add to the current class:
+&gt; 
+&gt; construct : function(model, target, childPath, labelPath, openPath)  
+&gt;   {
+&gt;     this.base(arguments);
+&gt; 
+&gt;     // internal bindings reference
+&gt;     this.__bindings = {};
+&gt;     this.__boundProperties = [];
+&gt; 
+&gt;     // reference to the child
+&gt;     this.__childrenRef = {};
+&gt; 
+&gt;     if (childPath != null) {
+&gt;       this.setChildPath(childPath);      
+&gt;     }
+&gt;     if (labelPath != null) {
+&gt;       this.setLabelPath(labelPath);      
+&gt;     }
+&gt;         // add-on
+&gt;         if (openPath != null) 
+&gt;         {
+&gt;                 this.setOpenPath(openPath);
+&gt;         }
+&gt; 
+&gt;     if (model != null) {
+&gt;       this.setModel(model);      
+&gt;     }
+&gt;     if (target != null) {
+&gt;       this.setTarget(target);
+&gt;     }
+&gt;   },
+&gt;   members:
+&gt; {
+&gt;         __addBinding: function(modelNode, treeNode) 
+&gt;         {
+&gt;                 var delegate = this.getDelegate();
+&gt;                 // if a delegate for creating the binding is given, use it
+&gt;                 if (delegate != null &amp;&amp; delegate.bindItem != null) 
+&gt;                 {
+&gt;                         delegate.bindItem(this, treeNode, modelNode);
+&gt;                         // otherwise, try to bind the listItem by default
+&gt;                 } 
+&gt;                 else 
+&gt;                 {
+&gt;                         // label binding
+&gt;                         this.bindProperty(this.getLabelPath(), &quot;label&quot;,
+&gt; this.getLabelOptions(), treeNode, modelNode);
+&gt; 
+&gt;                         // icon binding
+&gt;                         if (this.getIconPath() != null) 
+&gt;                         {
+&gt;                                 this.bindProperty(this.getIconPath(), &quot;icon&quot;,
+&gt; this.getIconOptions(), treeNode, modelNode);
+&gt;                         }
+&gt; 
+&gt;                         // add-on: open folder/file binding
+&gt;                         if (this.getOpenPath() != null) 
+&gt;                         {
+&gt;                                 this.bindProperty(this.getOpenPath(), &quot;open&quot;,
+&gt; this.getOpenOptions(), treeNode, modelNode);
+&gt;                         }
+&gt;                 }
+&gt;         },
+&gt;         _applyOpenPath: function(value, old) 
+&gt;         {
+&gt;                 this.__renewBindings();
+&gt;         },
+&gt;         _applyOpenOptions: function(value, old) 
+&gt;         {
+&gt;                 this.__renewBindings();
+&gt;         }
+&gt;   },
+&gt;   properties:
+&gt; {
+&gt;         openPath : 
+&gt;         {
+&gt;           check: &quot;String&quot;,
+&gt;           apply: &quot;_applyOpenPath&quot;,
+&gt;           nullable: true
+&gt;         },
+&gt; 
+&gt;         openOptions :
+&gt;         {
+&gt;           apply: &quot;_applyOpenOptions&quot;,
+&gt;           nullable: true
+&gt;         }
+&gt; }
+&gt; 
+&gt; Best,
+&gt; 
+&gt; Benoît.
+&gt; 
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12687</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-09-28 09:15:38 +0200</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14290</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-11-23 11:50:00 +0100</bug_when>
+            <thetext>Accept</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14294</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-11-23 12:29:12 +0100</bug_when>
+            <thetext>Hi Benoît,
+thanks for the proposal. As you have recognized right, the controller only offers bindings for label, icon and children the default way. But I don&#39;t think that the open status is such a common scenario that we need to put that property on the same level as the already existing. 
+But there is a way of getting exactly your functionality without rewriting any of the controller code. Take a look at the following playground example:
+
+var data = 
+{
+  name: &quot;root&quot;,
+  open: true,
+  kids : [
+    {
+      name: &quot;kid1&quot;, 
+      open: false,
+      kids: [{name: &quot;kid1.1&quot;, open: true}]
+    },
+    {
+      name: &quot;Kid1&quot;,
+      open: true
+    }
+  ]
+};
+
+var model = qx.data.marshal.Json.createModel(data);
+
+var tree = new qx.ui.tree.Tree();
+this.getRoot().add(tree);
+
+var controller = new qx.data.controller.Tree(null, tree, &quot;kids&quot;, &quot;name&quot;);
+
+var delegate = {
+  bindItem : function(controller, item, id) {
+    controller.bindProperty(&quot;open&quot;, &quot;open&quot;, null, item, id);
+    controller.bindDefaultProperties(item, id);
+  }
+};
+controller.setDelegate(delegate);
+​controller.setModel(model);​
+
+You can always bind any additional property vie the delegate, as you see in the example.
+
+Therefore, I change the bug to &quot;WONTFIX&quot; as we will not introduce an additional parameter set for the open status as you suggested. But i hope you can live with the already available solution.
+Regards,
+Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15050</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2009-11-30 09:16:08 +0100</bug_when>
+            <thetext>CLOSED</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,276 @@
+<bug>
+          <bug_id>7806</bug_id>
+          
+          <creation_ts>2013-10-21 17:13:00 +0200</creation_ts>
+          <short_desc>Virtual Tree hides branches if showLeafs property set to false</short_desc>
+          <delta_ts>2014-12-16 08:07:19 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.tree</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          <keywords>FixIncluded</keywords>
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          <dependson>7501</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mustafa Sak">mustafa.sak</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>christian.hagendorn</cc>
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>34112</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2013-10-21 17:13:24 +0200</bug_when>
+            <thetext>If a branch has a valid child property set to null, virtual tree widget hides it. To fix it just changed asking hasChildren() to isNode().
+
+Further more visibility logic of open/close button moved to virtual tree item by Christian. This reduces re building of the hole tree.
+Currently the item implementation doesn&#39;t now about showLeaf property value. To fix that issue just provide the tree item widget with that value.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34113</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2013-10-21 17:13:35 +0200</bug_when>
+            <thetext>
+diff --git a/qooxdoo/framework/source/class/qx/ui/tree/VirtualTree.js b/qooxdoo/framework/source/class/qx/ui/tree/VirtualTree.js
+index 8b9a06d..f5c94f3 100644
+@@ -499,7 +499,7 @@ qx.Class.define(&quot;qx.ui.tree.VirtualTree&quot;,
+ 
+     // Interface implementation
+     isNode : function(item) {
+-      return qx.ui.tree.core.Util.hasChildren(item, this.getChildProperty());
++      return qx.ui.tree.core.Util.isNode(item, this.getChildProperty());
+     },
+ 
+ 
+@@ -573,6 +573,7 @@ qx.Class.define(&quot;qx.ui.tree.VirtualTree&quot;,
+     // property apply
+     _applyShowLeafs : function(value, old) {
+       this.buildLookupTable();
++      this._provider.setShowLeafs(value);
+     },
+ 
+ 
+diff --git a/qooxdoo/framework/source/class/qx/ui/tree/VirtualTreeItem.js b/qooxdoo/framework/source/class/qx/ui/tree/VirtualTreeItem.js
+index bba499d..dd7e83c 100644
+@@ -82,8 +82,7 @@ qx.Class.define(&quot;qx.ui.tree.VirtualTreeItem&quot;,
+       var model = this.getModel();
+       var childProperty = this.getUserData(&quot;cell.childProperty&quot;);
+       var showLeafs = this.getUserData(&quot;cell.showLeafs&quot;);
+-
+-      return qx.ui.tree.core.Util.hasChildren(model, childProperty, showLeafs);
++      return qx.ui.tree.core.Util.hasChildren(model, childProperty, !showLeafs);
+     },
+ 
+ 
+diff --git a/qooxdoo/framework/source/class/qx/ui/tree/core/MWidgetController.js b/qooxdoo/framework/source/class/qx/ui/tree/core/MWidgetController.js
+index 4e59bd7..d6889f7 100644
+@@ -95,6 +95,16 @@ qx.Mixin.define(&quot;qx.ui.tree.core.MWidgetController&quot;,
+       event: &quot;changeDelegate&quot;,
+       init: null,
+       nullable: true
++    },
++
++
++    /**
++     * Configures the tree to show also the leafs. When the property is set to
++     * &lt;code&gt;false&lt;/code&gt; *only* the nodes are shown.
++     */
++    showLeafs :
++    {
++      check: &quot;Boolean&quot;
+     }
+   },
+ 
+diff --git a/qooxdoo/framework/source/class/qx/ui/tree/provider/WidgetProvider.js b/qooxdoo/framework/source/class/qx/ui/tree/provider/WidgetProvider.js
+index 312cfb4..1cadb0d 100644
+@@ -80,7 +80,8 @@ qx.Class.define(&quot;qx.ui.tree.provider.WidgetProvider&quot;,
+       var widget = this._renderer.getCellWidget();
+       widget.setOpen(hasChildren &amp;&amp; this._tree.isNodeOpen(item));
+       widget.addListener(&quot;changeOpen&quot;, this.__onOpenChanged, this);
+-      widget.setUserData(&quot;cell.childProperty&quot;, this.getChildProperty())
++      widget.setUserData(&quot;cell.childProperty&quot;, this.getChildProperty());
++      widget.setUserData(&quot;cell.showLeafs&quot;, this.getShowLeafs());
+ 
+       if(this._tree.getSelection().contains(item)) {
+         this._styleSelectabled(widget);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34118</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2013-10-22 13:31:29 +0200</bug_when>
+            <thetext>This issue occurred due to the changes form bug #7501 . Therefore the bug only occurs with the master and not with the 3.0.x branch.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34166</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2013-10-29 11:51:39 +0100</bug_when>
+            <thetext>Example to reproduce issue:
+http://tinyurl.com/q99qq7t</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34169</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2013-10-29 13:14:08 +0100</bug_when>
+            <thetext>Fixed on master with 2e68893.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34271</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2013-11-11 11:41:42 +0100</bug_when>
+            <thetext>Reopended because the &quot;_applyModel&quot; on &quot;qx.ui.tree.VirtualTreeItem&quot; doesn&#39;t  consider the &quot;showLeafs&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34272</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2013-11-11 12:03:15 +0100</bug_when>
+            <thetext>Fixed on master with 9e22b0f.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34333</commentid>
+              <attachid>1290</attachid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2013-11-18 14:35:43 +0100</bug_when>
+            <thetext>Created attachment 1290
+Patch file to handle changing child model
+
+On changing child property models of the given model in virtual tree item, we have to call _updateIndent and care about added listeners.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34476</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-12-03 13:24:27 +0100</bug_when>
+            <thetext>Here is sample code to reproduce the issue:
+
+      tree = new qx.ui.tree.VirtualTree(null, &quot;name&quot;, &quot;children&quot;);
+      this.getRoot().add(tree);
+      tree.setShowLeafs(false);
+
+      var model = {name: &quot;root&quot;, children: [{name: &quot;#&quot;}, {name: &quot;a&quot;, children: null}, {name: &quot;b&quot;, children: [{name: &quot;b1&quot;, children: [{name: &quot;b11&quot;}]}]}]};
+      model = qx.data.marshal.Json.createModel(model, true);
+      tree.setModel(model);
+
+      setTimeout(function() {
+        console.log(&quot;add more&quot;);
+        var a = [{name: &quot;a1&quot;, children: [{name: &quot;a11&quot;, children: null}, {name: &quot;a12&quot;, children: null}]}];
+        a = qx.data.marshal.Json.createModel(a, true);
+
+        model.getChildren().getItem(1).setChildren(a);
+      }, 2000);
+
+If you run that code, you will see that after 2000ms a new children array will be added but the tree does not update itself to show the plus icon in front of the folder. As soon as you open the second folder, the tree gets rerendered and the plus-icon is shown.
+
+As a workaround, you can update the pane manually by adding the following line:
+tree.getPane().fullUpdate()
+
+As we have a workaround, I move the bug to the next release.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41959</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-12-16 08:07:19 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>1290</attachid>
+            <date>2013-11-18 14:35:00 +0100</date>
+            <delta_ts>2013-11-18 14:35:43 +0100</delta_ts>
+            <desc>Patch file to handle changing child model</desc>
+            <filename>0001-Depending-on-Bug-#7806-handling-of-children-property-on-virtual-tree-item-improved..patch</filename>
+            <type>text/plain</type>
+            <size>3633</size>
+            <attacher>mustafa.sak</attacher>
+            
+              <data encoding="base64">RnJvbSA0YzM4ZWFkZjg5ODFkYWQyMjRjNjBkNGI0NWZjYzJiZmM1ODVjNWE2IE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBNdXN0YWZhIFNhayA8bXVzdGFmYS5zYWtAMXVuZDEuZGU+CkRh
+dGU6IE1vbiwgMTggTm92IDIwMTMgMTQ6MzM6MDEgKzAxMDAKU3ViamVjdDogW1BBVENIXSBEZXBl
+bmRpbmcgb24gQnVnICM3ODA2IGhhbmRsaW5nIG9mIGNoaWxkcmVuIHByb3BlcnR5IG9uCiB2aXJ0
+dWFsIHRyZWUgaXRlbSBpbXByb3ZlZC4KCi0tLQogLi4uL3NvdXJjZS9jbGFzcy9xeC91aS90cmVl
+L1ZpcnR1YWxUcmVlSXRlbS5qcyAgICAgfCAgIDYzICsrKysrKysrKysrKysrKystLS0tCiAxIGZp
+bGUgY2hhbmdlZCwgNTIgaW5zZXJ0aW9ucygrKSwgMTEgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0
+IGEvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L3VpL3RyZWUvVmlydHVhbFRyZWVJ
+dGVtLmpzIGIvcW9veGRvby9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L3VpL3RyZWUvVmlydHVh
+bFRyZWVJdGVtLmpzCmluZGV4IGQ2YmFmN2MuLjkzYzZiNTcgMTAwNjQ0Ci0tLSBhL3Fvb3hkb28v
+ZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS90cmVlL1ZpcnR1YWxUcmVlSXRlbS5qcworKysg
+Yi9xb294ZG9vL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkvdHJlZS9WaXJ0dWFsVHJlZUl0
+ZW0uanMKQEAgLTkzLDE4ICs5Myw1OCBAQCBxeC5DbGFzcy5kZWZpbmUoInF4LnVpLnRyZWUuVmly
+dHVhbFRyZWVJdGVtIiwKICAgICAgIHZhciBjaGlsZFByb3BlcnR5ID0gdGhpcy5nZXRVc2VyRGF0
+YSgiY2VsbC5jaGlsZFByb3BlcnR5Iik7CiAgICAgICB2YXIgc2hvd0xlYWZzID0gdGhpcy5nZXRV
+c2VyRGF0YSgiY2VsbC5zaG93TGVhZnMiKTsKIAotICAgICAgaWYgKHZhbHVlICE9IG51bGwgCi0g
+ICAgICAgICYmIHF4LnVpLnRyZWUuY29yZS5VdGlsLmlzTm9kZSh2YWx1ZSwgY2hpbGRQcm9wZXJ0
+eSkKLSAgICAgICAgJiYgcXgudWkudHJlZS5jb3JlLlV0aWwuaGFzQ2hpbGRyZW4odmFsdWUsIGNo
+aWxkUHJvcGVydHksICFzaG93TGVhZnMpCi0gICAgICApIHsKLSAgICAgICAgdmFsdWUuZ2V0KGNo
+aWxkUHJvcGVydHkpLmFkZExpc3RlbmVyKCJjaGFuZ2VMZW5ndGgiLCB0aGlzLl9vbkNoYW5nZUxl
+bmd0aCwgdGhpcyk7CisgICAgICBpZiAodmFsdWUgJiYgcXgudWkudHJlZS5jb3JlLlV0aWwuaXNO
+b2RlKHZhbHVlLCBjaGlsZFByb3BlcnR5KSkgeworICAgICAgICB2YXIgY2hpbGRyZW4gPSB2YWx1
+ZS5nZXQoY2hpbGRQcm9wZXJ0eSk7CisKKyAgICAgICAgLy8gY2hpbGRyZW4gbW9kZWwgZXhpc3Rz
+LCBkaXJlY3RseSBhZGQgbGlzdGVuZXIgdG8gJ2NoYW5nZScgZXZlbnQKKyAgICAgICAgaWYgKGNo
+aWxkcmVuKXsKKyAgICAgICAgICB0aGlzLl9fY2hpbGRyZW5Nb2RlbENoYW5nZUlkID0gY2hpbGRy
+ZW4uYWRkTGlzdGVuZXIoImNoYW5nZSIsIHRoaXMuX29uQ2hpbGRyZW5Nb2RlbENoYW5nZSwgdGhp
+cyk7CisgICAgICAgIH0KKworICAgICAgICAvLyBsaXN0ZW4gdG8gY2hpbGRyZW4gcHJvcGVydHkg
+Y2hhbmdlCisgICAgICAgIHRoaXMuX19tb2RlbENoYW5nZUNoaWxkcmVuRXZlbnRJZCA9IHZhbHVl
+LmFkZExpc3RlbmVyKHRoaXMuX19nZXRFdmVudEZvclByb3BlcnR5KHZhbHVlLCBjaGlsZFByb3Bl
+cnR5KSwgdGhpcy5fb25DaGFuZ2VDaGlsZFByb3BlcnR5LCB0aGlzKTsKKyAgICAgIH0KKworICAg
+ICAgaWYgKG9sZCAmJiB0aGlzLl9fbW9kZWxDaGFuZ2VDaGlsZHJlbkV2ZW50SWQpIHsKKyAgICAg
+ICAgLy8gcmVtb3ZlIGNoaWxkcmVuIHByb3BlcnR5IGNoYW5nZSBldmVudCBsaXN0ZW5lcgorICAg
+ICAgICBvbGQucmVtb3ZlTGlzdGVuZXJCeUlkKHRoaXMuX19tb2RlbENoYW5nZUNoaWxkcmVuRXZl
+bnRJZCk7CisgICAgICAgIHRoaXMuX19tb2RlbENoYW5nZUNoaWxkcmVuRXZlbnRJZCA9IG51bGw7
+CisKKyAgICAgICAgLy8gcmVtb3ZlICdjaGFuZ2UnIGV2ZW50IGxpc3RlbmVyIG9mIGNoaWxkIG1v
+ZGVsCisgICAgICAgIHZhciBvbGRDaGlsZHJlbiA9IG9sZC5nZXQoY2hpbGRQcm9wZXJ0eSk7Cisg
+ICAgICAgIGlmIChvbGRDaGlsZHJlbiAmJiB0aGlzLl9fY2hpbGRyZW5Nb2RlbENoYW5nZUlkKSB7
+CisgICAgICAgICAgb2xkQ2hpbGRyZW4ucmVtb3ZlTGlzdGVuZXJCeUlkKHRoaXMuX19jaGlsZHJl
+bk1vZGVsQ2hhbmdlSWQpOworICAgICAgICAgIHRoaXMuX19jaGlsZHJlbk1vZGVsQ2hhbmdlSWQg
+PSBudWxsOworICAgICAgICB9CiAgICAgICB9CisgICAgfSwKKworICAgIF9fZ2V0RXZlbnRGb3JQ
+cm9wZXJ0eSA6IGZ1bmN0aW9uKHNvdXJjZU9iamVjdCwgc291cmNlUHJvcGVydHkpIAorICAgIHsK
+KyAgICAgIC8vIGdldCB0aGUgZXZlbnQgbmFtZQorICAgICAgdmFyIHByb3BlcnRpZURlZmluaXRp
+b24gPSAgcXguQ2xhc3MuZ2V0UHJvcGVydHlEZWZpbml0aW9uKAorICAgICAgICBzb3VyY2VPYmpl
+Y3QuY29uc3RydWN0b3IsIHNvdXJjZVByb3BlcnR5CisgICAgICApOwogCi0gICAgICBpZiAob2xk
+ICE9IG51bGwgCi0gICAgICAgICYmIHF4LnVpLnRyZWUuY29yZS5VdGlsLmlzTm9kZShvbGQsIGNo
+aWxkUHJvcGVydHkpCi0gICAgICAgICYmIHF4LnVpLnRyZWUuY29yZS5VdGlsLmhhc0NoaWxkcmVu
+KG9sZCwgY2hpbGRQcm9wZXJ0eSwgIXNob3dMZWFmcykKLSAgICAgICkgewotICAgICAgICBvbGQu
+Z2V0KGNoaWxkUHJvcGVydHkpLnJlbW92ZUxpc3RlbmVyKCJjaGFuZ2VMZW5ndGgiLCB0aGlzLl9v
+bkNoYW5nZUxlbmd0aCwgdGhpcyk7CisgICAgICBpZiAocHJvcGVydGllRGVmaW5pdGlvbiA9PSBu
+dWxsKSB7CisgICAgICAgIHJldHVybiBudWxsOworICAgICAgfQorICAgICAgcmV0dXJuIHByb3Bl
+cnRpZURlZmluaXRpb24uZXZlbnQ7CisgICAgfSwKKworCisgICAgX29uQ2hhbmdlQ2hpbGRQcm9w
+ZXJ0eSA6IGZ1bmN0aW9uKGUpCisgICAgeworICAgICAgdmFyIHZhbHVlID0gZS5nZXREYXRhKCk7
+CisgICAgICB2YXIgb2xkID0gZS5nZXRPbGREYXRhKCk7CisgICAgICBpZiAodmFsdWUpIHsKKyAg
+ICAgICAgdGhpcy5fX2NoaWxkcmVuTW9kZWxDaGFuZ2VJZCA9IHZhbHVlLmFkZExpc3RlbmVyKCJj
+aGFuZ2UiLCB0aGlzLl9vbkNoaWxkcmVuTW9kZWxDaGFuZ2UsIHRoaXMpOworICAgICAgICB0aGlz
+Ll91cGRhdGVJbmRlbnQoKTsKKyAgICAgIH0KKworICAgICAgaWYgKG9sZCAmJiB0aGlzLl9fY2hp
+bGRyZW5Nb2RlbENoYW5nZUlkKSB7CisgICAgICAgIG9sZC5yZW1vdmVMaXN0ZW5lckJ5SWQodGhp
+cy5fX2NoaWxkcmVuTW9kZWxDaGFuZ2VJZCk7CisgICAgICAgIHRoaXMuX19jaGlsZHJlbk1vZGVs
+Q2hhbmdlSWQgPSBudWxsOwogICAgICAgfQogICAgIH0sCiAKQEAgLTExMiw3ICsxNTIsOCBAQCBx
+eC5DbGFzcy5kZWZpbmUoInF4LnVpLnRyZWUuVmlydHVhbFRyZWVJdGVtIiwKICAgICAvKioKICAg
+ICAgKiBIYW5kbGVyIHRvIHVwZGF0ZSBvcGVuL2Nsb3NlIGljb24gd2hlbiBtb2RlbCBsZW5ndGgg
+Y2hhbmdlZC4KICAgICAgKi8KLSAgICBfb25DaGFuZ2VMZW5ndGggOiBmdW5jdGlvbigpIHsKKyAg
+ICBfb25DaGlsZHJlbk1vZGVsQ2hhbmdlIDogZnVuY3Rpb24oKQorICAgIHsKICAgICAgIHRoaXMu
+X3VwZGF0ZUluZGVudCgpOwogICAgIH0KICAgfQotLSAKMS43LjkuNQoK
+</data>
+
+          </attachment>
+      
+
+    </bug>

@@ -1,0 +1,149 @@
+<bug>
+          <bug_id>4780</bug_id>
+          
+          <creation_ts>2011-03-15 20:57:00 +0100</creation_ts>
+          <short_desc>Catch runtime errors in rpc callback</short_desc>
+          <delta_ts>2014-03-03 08:46:02 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io.remote</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          <votes>10</votes>
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Fritz Zaucker">fritz.zaucker</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>23300</commentid>
+            <who name="Fritz Zaucker">fritz.zaucker</who>
+            <bug_when>2011-03-15 20:57:19 +0100</bug_when>
+            <thetext>The following scenario seems more difficult to debug than it could be:
+
+   I have rpcAsync call that returns without error from the backend, e.g.
+   exc is NULL.
+
+   Within the callback of this rpcAsync() call I had a runtime error
+   (trying to call some method on an undefined variable):
+
+    myHandler: function(dataNew,exc,id) {
+       if (exc == null) {
+           var test;
+           test.setValue(5);  // runtime error from this
+       }
+       else {
+           alert(exc);
+       }
+
+The result was, I believe, that myHandler was called again, this time with
+exc set and resulting in something along the line &quot;Local error 2&quot;.
+
+I don&#39;t quite understand was is going on, but to the unsuspecting user (as
+myself) it looked as if the backend did return an error (which it didn&#39;t).
+
+I think it would be helpful if runtime errors in the callback would be more
+easily be detectable (for example, by including a stack trace). At a minimum, the error message being generated in qx/io/remote/Rpc.js should be more explicit, telling the developer to look in his frontend code rather than in the backend.
+
+
+Derrell&#39;s comment on my mailing list posting: This has come up a number of times. Having thought about it, I believe it should be easy to fix with a try/catch block around the call to the user&#39;s callback.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23313</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-16 09:40:11 +0100</bug_when>
+            <thetext>Sorry Fritz, but don&#39;t think we have the manpower to included that into the release. Maybe if we have some time but I don&#39;t plan that to happen.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23318</commentid>
+            <who name="Fritz Zaucker">fritz.zaucker</who>
+            <bug_when>2011-03-16 11:31:24 +0100</bug_when>
+            <thetext>(In reply to comment #1)
+Hallo Martin,
+
+as Derrell said, it&#39;s probably simply adding a try/catch at the right place in Rpc.js. I am just not sure where, but it could be some thing like the following inside _callInternal:
+
+ ...
+
+ var handleRequestFinished = function(eventType, eventTarget)
+ {
+   switch(callType)
+   {
+      case 0: // sync
+        break;
+
+      case 1: // async with handler function
+         try
+         {
+           handler(result, ex, id);
+         }
+         catch(err) {
+           alert(&#39;The handler for &#39;+whichMethod+&#39; failed.);
+         } 
+         break;
+   ...
+
+Or you could at least change the error message a few lines below to something like
+
+   case qx.io.remote.Rpc.origin.local:
+     return &quot;Local error &quot; + obj.code + &quot;in handler for method&quot; 
+                           + whichMethod + &quot;: &quot; + obj.message;
+
+(or &quot;possibly in handler for method&quot; ... if there might be other reasons leading to the same error.
+
+So, perhaps something like that could make it into 1.4. Not my personal worry anymore, as I now will know where to look if I get such errors, but I think it is worthwhile to help the developers as much as possible in this area.
+ 
+Cheers,
+Fritz</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23343</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-17 08:40:43 +0100</bug_when>
+            <thetext>Totally agree Fritz. But to do a proper testing and understanding of the issue, I would need to gain some knowledge of RPC in general, set up a test environment on my machine and so on. That would take me some time I currently don&#39;t have. I&#39;m not saying that it should not be included, I&#39;m just saying we don&#39;t have enough time to do so. :(</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30922</commentid>
+            <who name="Fritz Zaucker">fritz.zaucker</who>
+            <bug_when>2012-10-11 14:38:48 +0200</bug_when>
+            <thetext>Well, this bug caught me again ... fortunately, after resorting to Google I found my own bug report again.
+
+I think the fix Derrell proposed is really straight forward ...
+
+And no, I don&#39;t think it is an enhancement, the error message can be totally misleading.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35386</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:46:02 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

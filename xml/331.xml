@@ -1,0 +1,259 @@
+<bug>
+          <bug_id>331</bug_id>
+          
+          <creation_ts>2007-03-12 12:01:00 +0100</creation_ts>
+          <short_desc>Pretty print messes up } after return {key:value}</short_desc>
+          <delta_ts>2008-06-05 14:37:48 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.migration</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Hugh Gibson">hgibson</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>1018</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2007-03-12 12:01:30 +0100</bug_when>
+            <thetext>Migrating with command line:
+
+--from-version=0.6.5 --input &lt;snip&gt; --pretty-print-indent-string=&quot;   &quot; --pretty-print-newline-before-open-curly=A --pretty-print-indent-before-open-curly --pretty-print-indent-align-block-with-curlies
+
+changes this code:
+
+   var dThemeMods = {
+      &quot;abling-system-background&quot; :
+         {
+         setup : function() 
+                     {
+                     this.colorBackground = new qx.renderer.color.Color(&quot;#edeadb&quot;);
+                     },
+         initial : function(vTheme) 
+                     {
+                     return {backgroundColor : this.colorBackground}
+                     }
+         },
+
+into this code:
+
+      var dThemeMods =
+         {
+         &quot;abling-system-background&quot; :
+            {
+            setup : function()
+               {
+               this.colorBackground = new qx.renderer.color.Color(&quot;#edeadb&quot;);
+               },
+
+            initial : function(vTheme)
+               {
+               return { backgroundColor : this.colorBackground };
+            }
+         },
+
+Note additional dedent after the return statement.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1019</commentid>
+              <attachid>134</attachid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2007-03-12 12:06:05 +0100</bug_when>
+            <thetext>Created attachment 134
+Patch for this issue.
+
+Note that extra dedent means all further lines in file are at wrong indent level.
+
+This patch fixes it - copying the code from map open in compileNode().
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1028</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2007-03-13 10:28:22 +0100</bug_when>
+            <thetext>Code is fixed (it was a typo in the original code).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1032</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2007-03-13 14:43:53 +0100</bug_when>
+            <thetext>This is not fixed. For command line options of  
+
+--pretty-print-indent-string=&quot;   &quot; --pretty-print-newline-before-open-curly=A --pretty-print-indent-before-open-curly --pretty-print-indent-align-block-with-curlies
+
+and this code:
+
+qx.OO.defineClass(&quot;abling.ui.frame.CAblingClient&quot;, abling.ui.frame.CBase, function()
+   {
+   //
+   // Set up font objects that will be used.
+   // Note that we are using FontObjects even though they are seriously broken.
+   // We might fix them ourselves in future...
+   //
+   this._m_sFontClass = &#39;&quot;Segoe UI&quot;, Corbel, Calibri, Tahoma, &quot;Lucida Sans Unicode&quot;, sans-serif&#39;;
+   this._m_dFonts = {};                         // all the fonts we use
+   this._m_dFonts.h1 = new qx.renderer.font.FontObject(24, this._m_sFontClass);
+   this._m_dFonts.h2 = new qx.renderer.font.FontObject(18, this._m_sFontClass);
+   this._m_dFonts.h3 = new qx.renderer.font.FontObject(14, this._m_sFontClass);
+   this._m_dFonts.normal = new qx.renderer.font.FontObject(11, this._m_sFontClass);
+   });
+
+I get:
+
+   construct : function()
+      {
+      //
+      // Set up font objects that will be used.
+      // Note that we are using FontObjects even though they are seriously broken.
+      // We might fix them ourselves in future...
+      //
+      this._m_sFontClass = &#39;&quot;Segoe UI&quot;, Corbel, Calibri, Tahoma, &quot;Lucida Sans Unicode&quot;, sans-serif&#39;;
+      this._m_dFonts =
+         {};                                    // all the fonts we use
+         this._m_dFonts.h1 = new qx.renderer.font.FontObject(24, this._m_sFontClass);
+         this._m_dFonts.h2 = new qx.renderer.font.FontObject(18, this._m_sFontClass);
+         this._m_dFonts.h3 = new qx.renderer.font.FontObject(14, this._m_sFontClass);
+         this._m_dFonts.normal = new qx.renderer.font.FontObject(11, this._m_sFontClass);
+         },
+
+Note extra level of indent at end. Also shows up on properties:
+
+//
+/** Configuration */
+//
+qx.OO.addProperty({name : &quot;configuration&quot;, type : &quot;object&quot;, defaultValue : {}});
+//
+/** The index tree */
+//
+qx.OO.addProperty({name : &quot;indexTree&quot;, type : &quot;object&quot;, instance : &quot;abling.ui.indextree.CTree&quot;, defaultValue : null});
+
+becomes:
+
+         //
+         /** Configuration */
+         //
+         configuration :
+            {
+            _legacy      : true,
+            type         : &quot;object&quot;,
+            defaultValue :
+               {}
+               },
+
+            //
+            /** The index tree */
+            //
+            indexTree :
+               {
+               _legacy      : true,
+               type         : &quot;object&quot;,
+               instance     : &quot;abling.ui.indextree.CTree&quot;,
+               defaultValue : null
+               },
+
+Note extra indent at end of Configuration property.
+
+      &quot;abling-CWikiPage-header&quot; :               // header bar for WikiPage
+         {
+         base     : &quot;abling-system-background&quot;,
+         extra    : {verticalChildrenAlign : &quot;middle&quot;}
+         },
+
+becomes:
+
+                     &quot;abling-CWikiPage-header&quot; :
+                        {
+                        base  : &quot;abling-system-background&quot;,
+                        extra :
+                           { verticalChildrenAlign : &quot;middle&quot; }
+                           },                   // header bar for WikiPage
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1034</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2007-03-13 15:49:24 +0100</bug_when>
+            <thetext>&lt;assign bug to me&gt;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1035</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2007-03-13 15:51:04 +0100</bug_when>
+            <thetext>&lt;accepted bug&gt;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1036</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2007-03-13 17:06:14 +0100</bug_when>
+            <thetext>A new fix is on SVN (r6875), aligning map handling more with block handling, and taking care of return statements on closing (as suggested by the patch).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1038</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2007-03-13 17:08:59 +0100</bug_when>
+            <thetext>&gt; A new fix is on SVN (r6875), 
+
+That fixes my test file here. No problems now (apart from misplaced comments, see bug 333).
+
+Hugh</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>134</attachid>
+            <date>2007-03-12 12:06:00 +0100</date>
+            <delta_ts>2007-03-12 12:06:05 +0100</delta_ts>
+            <desc>Patch for this issue.</desc>
+            <filename>qxBug331.patch</filename>
+            <type>application/octet-stream</type>
+            <size>571</size>
+            <attacher>hgibson</attacher>
+            
+              <data encoding="base64">SW5kZXg6IGNvbXBpbGVyLnB5DQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09DQotLS0gY29tcGlsZXIucHkJKHJldmlzaW9u
+IDY4NDUpDQorKysgY29tcGlsZXIucHkJKHdvcmtpbmcgY29weSkNCkBAIC0xMjI0LDggKzEyMjQs
+MTAgQEANCiAgICAgICAgIHdyaXRlKCJ9IikKIAogICAgICAgICBpZiBwcmV0dHk6Ci0gICAgICAg
+ICAgICAgICAgaWYgbm9kZS5pc0NvbXBsZXggYW5kIG9wdG5zLnByZXR0eXBPcGVuQ3VybHlJbmRl
+bnRCZWZvcmU6Ci0gICAgICAgICAgICAgICAgICAgIGRlY19pbmRlbnQoKQorICAgICAgICAgICAg
+aWYgbm9kZS5oYXNQYXJlbnQoKSBhbmQgbm9kZS5wYXJlbnQudHlwZSA9PSAiZXhwcmVzc2lvbiIg
+YW5kIG5vZGUucGFyZW50LnBhcmVudC50eXBlID09ICJyZXR1cm4iOgorICAgICAgICAgICAgICAg
+IHBhc3MKKyAgICAgICAgICAgIGVsaWYgbm9kZS5pc0NvbXBsZXggYW5kIG9wdG5zLnByZXR0eXBP
+cGVuQ3VybHlJbmRlbnRCZWZvcmU6CisgICAgICAgICAgICAgICAgZGVjX2luZGVudCgpCiAKIAog
+Cg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

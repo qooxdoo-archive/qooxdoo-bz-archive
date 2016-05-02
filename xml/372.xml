@@ -1,0 +1,90 @@
+<bug>
+          <bug_id>372</bug_id>
+          
+          <creation_ts>2007-04-16 10:58:00 +0200</creation_ts>
+          <short_desc>tr() not working correctly on ComboBox widgets</short_desc>
+          <delta_ts>2007-05-29 12:10:09 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>0.6.6</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Daniel Haferkorn">daniel.haferkorn</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>1193</commentid>
+            <who name="Daniel Haferkorn">daniel.haferkorn</who>
+            <bug_when>2007-04-16 10:58:54 +0200</bug_when>
+            <thetext>When creating ListItems for the ComboBox widget with the test of the Listitem marked for translation with the tr() method like this
+var noItem = new qx.ui.form.ListItem(this.tr(&quot;No&quot;));
+, trying to select the ListItem entry during runtime results in the following error message:
+&quot;012786 ERROR: qx.ui.form.ComboBox[847]: Attention! The value &quot;No&quot; is an
+invalid value for the property &quot;value&quot; which must be typeof &quot;string&quot; but is
+typeof &quot;object&quot;!&quot;
+
+A workaround is to change the following part in qx.ui.form.ComboBox:
+(changes marked by /* ps+- */)
+-------------------------
+[...]
+qx.Proto._modifySelected = function(propValue, propOldValue, propData)
+{
+  this._fromSelected = true;
+
+  // only do this if we called setSelected seperatly
+  // and not from the property &quot;value&quot;.
+  if (!this._fromValue) {
+
+/* ps+ */
+    this.setValue(propValue ? propValue.getLabel().toString() : &quot;&quot;);
+/* ps- */
+  }
+, thus forcing the Label to a String object.
+
+The downside is that, while the ListItems can now be selectable and translated during runtime, the test in the comboBox field won&#39;t be translated.
+A workaround for this is to manually change the selection of the ComboBox to another item before the language change and back again afterwards, like this:
+function() {
+	var comboSel = combo.getList().getSelectedItem(); 
+	combo.setSelected(combo.getList().getFirstChild());			
+	qx.locale.Manager.getInstance().setLocale(le.getData().getUserData(&quot;locale&quot;));	
+	combo.setSelected(comboSel);
+}</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1435</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-05-29 12:10:09 +0200</bug_when>
+            <thetext>I think Fabian has fixed this in SVN.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

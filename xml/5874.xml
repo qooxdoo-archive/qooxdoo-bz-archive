@@ -1,0 +1,141 @@
+<bug>
+          <bug_id>5874</bug_id>
+          
+          <creation_ts>2011-12-02 14:33:00 +0100</creation_ts>
+          <short_desc>Form reset sets tri-state checkbox to false</short_desc>
+          <delta_ts>2012-01-24 08:12:13 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://tinyurl.com/cj5afyz</bug_file_loc>
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.6.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="saaj">id</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>27787</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2011-12-02 14:33:39 +0100</bug_when>
+            <thetext>I guess the expected result is reset back to &quot;undetermined&quot;. So now it&#39;s required to set null explicitly to reset the widget, whereas &quot;model.resetTest()&quot; behaves as  expected.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27792</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-12-05 08:10:54 +0100</bug_when>
+            <thetext>Thanks for the report.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27795</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2011-12-05 09:14:04 +0100</bug_when>
+            <thetext>Not at all, it feels like a perfectionist approach, reporting a bug to such quality piece of software qooxdoo is ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>27854</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-12-07 08:30:30 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; Not at all, it feels like a perfectionist approach, reporting a bug to such
+&gt; quality piece of software qooxdoo is ;-)
+
+We can always do better. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28101</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-12-22 10:12:09 +0100</bug_when>
+            <thetext>I just checked our code and it seemed that everything worked as expected. Then I checked your sample and saw whats going on (in the comments):
+
+var form  = new qx.ui.form.Form();
+var model = qx.data.marshal.Json.createModel({&quot;test&quot; : null});
+
+// a new checkbox is created, the initial value is &#39;false&#39;
+var test = new qx.ui.form.CheckBox();
+// setting the box to tristate does not change the value --&gt; still false
+test.setTriState(true);
+// adding the box to the form initializes a save of the current value for resetting --&gt; &#39;false&#39; is stored
+form.add(test, &quot;Test&quot;, null, &quot;test&quot;);
+
+var reset = new qx.ui.form.Button(&quot;Reset&quot;);
+reset.addListener(&quot;execute&quot;, form.reset, form);
+form.addButton(reset);
+
+// setting up the binding syncs the initial value from the model, value will be &#39;null&#39;
+var controller = new qx.data.controller.Form(model, form);
+
+this.getRoot().add(new qx.ui.form.renderer.Single(form));
+
+
+As you can see in the comments, the code is exactly doing what its suposed to be. Its just looks wrong at first. Fixing this is easy by just redefining the reset values as soon as you have created and set up the bindings via controller:
+
+form.redefineResetter();
+
+So I set the bug to wontfix because I don&#39;t see currently anything broken. But feel free to reopen if you think different. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28103</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2011-12-22 10:55:55 +0100</bug_when>
+            <thetext>Well... this is a little more complicated from what it seems at the first sight. And your explanation is quite reasonable. 
+
+But when I&#39;ve set up a binding between form and model I expect it to be coherent. When I change a value of a field corresponding property changes, when I change a value of a property field changes. So the same I expect from form.reset() and model.reset(), to be coherent. But it&#39;s not, where form has an extra &quot;model&quot; for the empty state, the resetter, which form prefers to bound model.
+
+But as you&#39;ve said, semantically-wise API is correct. And dealing with the issue is thinking about whether initial value of model should be value of form resetter, what is null value for non-tri-state checkbox and so forth, considering selectable form widgets and other complexities which didn&#39;t yet rise to the consideration. 
+
+So I better adopt the minimal way. Knowing this extra background of resetter I can set null to a checkbox value at creation time, or redefine resetter. So if you think it&#39;s OK I agree.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28108</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-12-22 11:47:50 +0100</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; But as you&#39;ve said, semantically-wise API is correct. And dealing with the
+&gt; issue is thinking about whether initial value of model should be value of form
+&gt; resetter, what is null value for non-tri-state checkbox and so forth,
+&gt; considering selectable form widgets and other complexities which didn&#39;t yet
+&gt; rise to the consideration. 
+You are right. Thats the way we should think there. I talked to my colleagues here in the office and we agreed on the point, that if someone starts working with a model and controller, he is usually not interested in the default values of the widgets because he overrides the defaults be the defaults of his model. So redefining the values of the resetter in the controller seems to be a good idea to get that behavior the right way. So thats what I did. :)
+
+master: 28d3c9200b102bacf8f7fc51db9a1ea79fa9c635
+1.6.x: d0ca451346ecbf23086e44d4dd0e9e34894b46fb</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28110</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2011-12-22 14:28:23 +0100</bug_when>
+            <thetext>Oh, the bright future of DVCSes, which didn&#39;t come to my tools, yet. Though fortunately after 0.7 era I have cygwin ;-)
+
+https://github.com/qooxdoo/qooxdoo/commit/28d3c9200b102bacf8f7fc51db9a1ea79fa9c635 after this master looks quite coherent against the example :-)</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

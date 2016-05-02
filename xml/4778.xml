@@ -1,0 +1,131 @@
+<bug>
+          <bug_id>4778</bug_id>
+          
+          <creation_ts>2011-03-15 16:17:00 +0100</creation_ts>
+          <short_desc>Silent &quot;error&quot; with trigger in wrong place of config.json</short_desc>
+          <delta_ts>2013-12-16 12:45:51 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.config</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          <dependson>4784</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Andersson">dev</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          <cc>richard.sternagel</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>23296</commentid>
+            <who name="Stefan Andersson">dev</who>
+            <bug_when>2011-03-15 16:17:07 +0100</bug_when>
+            <thetext>This config (by mistake) does not generate error or any message at all:
+
+  &quot;jobs&quot; :
+  {
+    &quot;common&quot; :
+    {
+      &quot;extend&quot; : [&quot;modules&quot;],
+
+      &quot;packages&quot; :
+      {
+        &quot;loader-with-boot&quot; : false,
+        &quot;i18n-with-boot&quot; : false,
+        &quot;parts&quot; :
+        {
+          &quot;boot&quot;:
+          {
+            &quot;include&quot; : [&quot;${QXTHEME}&quot;, &quot;co.p.c.er.Application&quot;]
+          }
+        },
+        &quot;sizes&quot; :
+        {
+          &quot;min-package&quot; : 20,
+          &quot;min-package-unshared&quot;  : 10
+        },
+
+        &quot;copy-files&quot; :
+        {
+          &quot;files&quot;  : [ &quot;countries&quot; ],
+          &quot;source&quot; : &quot;../cm/source/resource/co/p/c/locale/&quot;,
+          &quot;target&quot; : &quot;source/resource/co/p/c/locale/&quot;
+        }
+      }
+    }
+  }
+}
+
+which it should! Nothing happens here!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23309</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-03-16 09:34:55 +0100</bug_when>
+            <thetext>Thomas, could you check that?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23336</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-16 18:21:45 +0100</bug_when>
+            <thetext>There is currently no deep checking of job key values. On the levels above (job and file level), unknown keys are warned about. But beneath the individual config key (like &quot;packages&quot; here), there is no general checking. This is in the absence of a more general Json schema checking for our config files, which would be desirable (bug#4784).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32472</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2013-03-18 15:52:14 +0100</bug_when>
+            <thetext>I&#39;ve added JSON Schema checking for the Config (see bug 5426), but I can&#39;t identify the problem here. What error (message) is expected? Maybe the package spec has also changed:
+
+http://manual.qooxdoo.org/2.2/pages/tool/generator/generator_config_ref.html#packages</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32479</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-03-19 09:50:15 +0100</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; I&#39;ve added JSON Schema checking for the Config (see bug 5426), but I can&#39;t
+&gt; identify the problem here. What error (message) is expected? Maybe the package
+&gt; spec has also changed:
+&gt; 
+&gt; http://manual.qooxdoo.org/2.2/pages/tool/generator/generator_config_ref.html#packages
+
+The issue is the &quot;copy-files&quot; key, which is a job-level key but is here nested as a sub-key of &quot;packages&quot;. The schema checker should just complain to find an unknown sub-key.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32506</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2013-03-22 15:55:46 +0100</bug_when>
+            <thetext>&#39;./generate.py validate-config&#39; produces now:
+
+&gt;&gt;&gt; Warning: Errors found in /Users/rsternagel/workspace/desktopAppSample/config.json:
+  - Warning: Additional properties are not allowed (&#39;loader-with-boot&#39;, &#39;i18n-with-boot&#39;, &#39;copy-files&#39; were unexpected) in &#39;/jobs/common/packages&#39;.
+&gt;&gt;&gt; Done (0m00.70)</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,129 @@
+<bug>
+          <bug_id>8320</bug_id>
+          
+          <creation_ts>2014-05-09 16:57:00 +0200</creation_ts>
+          <short_desc>Abstract class extended from abstract class implementing an interface</short_desc>
+          <delta_ts>2015-06-02 07:53:36 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.oo</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Michael Wieland">qooxdoo</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>admin</cc>
+    
+    <cc>alexander.steitz</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>40178</commentid>
+            <who name="Michael Wieland">qooxdoo</who>
+            <bug_when>2014-05-09 16:57:41 +0200</bug_when>
+            <thetext>I want to implement an interface (InterfaceA) into an abstract class (AbstractClassA). This class is extended by another abstract class (AbstractClassB).
+
+In this case I get the following error in the browser:
+
+Implementation of method &quot;methodA&quot; is missing in class &quot;my.package.AbstractClassB&quot; required by interface &quot;my.package.InterfaceA&quot;
+
+Example in playground:
+
+http://demo.qooxdoo.org/devel/playground/#%7B%22code%22%3A%22qx.Interface.define(%2522my.package.InterfaceA%2522%252C%250A%257B%250A%2520%2520members%2520%253A%250A%2520%2520%257B%250A%2520%2520%2520%2520methodA%2520%253A%2520function()%2520%257B%257D%250A%2520%2520%257D%250A%257D)%253B%250A%250Aqx.Class.define(%2522my.package.AbstractClassA%2522%252C%250A%257B%250A%2520%2520extend%2520%253A%2520qx.core.Object%252C%250A%2520%2520%250A%2520%2520implement%2520%253A%2520%255Bmy.package.InterfaceA%255D%252C%250A%2520%2520%250A%2520%2520type%2520%253A%2520%2522abstract%2522%250A%257D)%253B%250A%250Aqx.Class.define(%2522my.package.AbstractClassB%2522%252C%250A%257B%250A%2520%2520extend%2520%253A%2520my.package.AbstractClassA%252C%250A%2520%2520%250A%2520%2520type%2520%253A%2520%2522abstract%2522%250A%257D)%253B%250A%250Aqx.Class.define(%2522my.package.ClassC%2522%252C%250A%257B%250A%2520%2520extend%2520%253A%2520my.package.AbstractClassB%252C%250A%2520%2520%250A%2520%2520members%2520%253A%250A%2520%2520%257B%250A%2520%2520%2520%2520methodA%2520%253A%2520function()%250A%2520%2520%2520%2520%257B%250A%2520%2520%2520%2520%257D%250A%2520%2520%257D%250A%257D)%253B%22%2C%20%22mode%22%3A%22ria%22%7D</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40181</commentid>
+            <who name="Patrick Fischer">admin</who>
+            <bug_when>2014-05-09 18:00:24 +0200</bug_when>
+            <thetext>i think you are right. on the other side you say AbstractClassA implements InterfaceA but it does not, only the inheriting class does. it&#39;s a lie, so the error is right too.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40184</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-05-12 09:09:25 +0200</bug_when>
+            <thetext>I have to agree, the error is right. The class implementing the interface has to offer all methods, no matter if its an abstract class or not. If there would be no error in your sample, someone could extend from AbstractClassB without supplying methodA. That way, the interface would no be implemented but the superclass already marked it as implemented.
+The interface checks are based on the classes not the instances, which means the classes need to be self-contained. But adding an empty method stub to AbstractClassA could fix the issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40188</commentid>
+            <who name="Michael Wieland">qooxdoo</who>
+            <bug_when>2014-05-12 10:42:48 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; If there would be no error in your sample, someone could extend from AbstractClassB without supplying methodA.
+
+And what about that: Only non-abstract classes have to implement methods?
+
+In that case AbstractClassA and AbstractClassB don&#39;t have to implement any methods from the interface. But any extending class (direct or indirect from AbstractClassA) have to implement the methods which are not implemented yet.
+
+An example for this could be qx.ui.core.Widget. That class could be an abstract class providing basic stuff for all widgets and requires some methods to be implemented by the extending widget classes. Then the Widget class is extended by another abstract class (e.g. qx.ui.form.Form) which could be the base class for all form widgets and maybe requires some additional methods to be defined in the extending class. And then there is the normal extending class (e.g. qx.ui.form.Button) which has to implement all required methods of the first abstract class (e.g. qx.ui.core.Widget) and the extending abstract class (e.g. qx.ui.form.Form).
+
+
+In my case I had the following (Classes for a wizard dialog):
+
+I have an abstract class &quot;my.package.wizard.AbstractPage&quot; which requires some methods (e.g. show(), getTitle()).
+
+This class is extended by another abstract class &quot;my.package.mywizard.AbstractPage&quot;. And that class is extended by the pages of the wizard (e.g. my.package.mywizard.Options). All the pages have to implement the methods required by the first abstract class.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40189</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-05-12 11:05:01 +0200</bug_when>
+            <thetext>Just gave it a try in Java:
+
+public class HelloWorld{
+
+    public static void main(String []args){
+        System.out.println(&quot;Hello World&quot;);
+    }
+     
+    public interface I {
+        public void methodA();
+    }     
+    
+    public abstract class A implements I {}
+
+    public class B extends A {
+        public void methodA() {}
+    }
+    
+    // does not work
+    // public class C extends A {}
+}
+
+Seems like its working there as you described. That would shift the interface detection from class definition time to instance creation time. I will have a word with the whole team and get back to you.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43363</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-06-02 07:53:36 +0200</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,172 @@
+<bug>
+          <bug_id>1822</bug_id>
+          
+          <creation_ts>2009-01-07 18:49:00 +0100</creation_ts>
+          <short_desc>Table Cell Editing (TreeVirtual)</short_desc>
+          <delta_ts>2014-03-03 15:21:07 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.treevirtual</component>
+          <version>0.8.1</version>
+          <rep_platform>Firefox 2.0</rep_platform>
+          <op_sys>Linux</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Pat Paskvan">patrick.paskvan</reporter>
+          <assigned_to name="Derrell Lipman">derrell.lipman</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>2</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>7258</commentid>
+            <who name="Pat Paskvan">patrick.paskvan</who>
+            <bug_when>2009-01-07 18:49:16 +0100</bug_when>
+            <thetext>In 0.7.3, I had a treevirtual control with a couple of editable
+columns.  I just got around to testing that part of the app in 0.8
+(and 0.8.1), and the editable columns aren&#39;t editable any longer.
+Using the playground, I set up this sample:
+
+*********** START SAMPLE **************
+var tv = new qx.ui.treevirtual.TreeVirtual([
+ &quot;Column 1&quot;,
+ &quot;Column 2&quot;
+ ]);
+tv.setWidth(400);
+tv.setHeight(300);
+tv.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.SINGLE);
+tv.getDataModel().setColumnEditable(1, true);
+
+var dm = tv.getDataModel();
+var root = dm.addBranch(null, &quot;Root&quot;, true);
+for (var i=0; i&lt;3; i++)
+{
+ var b = dm.addBranch(root, &quot;Branch_&quot;+i, true);
+ for (var j=0; j&lt;3; j++)
+ {
+   var l = dm.addLeaf(b, &quot;Leaf_&quot;+i+&quot;_&quot;+j);
+   dm.setColumnData(l, 1, &quot;value_&quot;+i+&quot;_&quot;+j);
+ }
+}
+dm.setData();
+this.getRoot().add(tv);
+***************** END SAMPLE *************
+
+In 0.7.3, setting the second column as editable was enough to trigger
+editing when the user selected the row, then double-clicked in the
+cell.  In 0.8, no amount of clicking triggers editing.  I plugged this
+sample code into a 0.7.3 skeleton just to be sure, and it does work.
+
+I have only tested this against FireFox 2/Linux.  Please let me know if you need more information.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7259</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-01-07 19:11:21 +0100</bug_when>
+            <thetext>This appears to be a bug in Table, on which TreeVirtual is based.  The code to create the cell editor is being called, but it&#39;s retrieving this.__focusIndicator.getInnerSize() which yields a size of (-4, -4).  Clearly wrong.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7376</commentid>
+            <who name="Pat Paskvan">patrick.paskvan</who>
+            <bug_when>2009-01-15 20:22:34 +0100</bug_when>
+            <thetext>I stumbled on a old thread from the mailing list that points out that showFocusIndicator should be set to true in order to enable editing in a table (at least in 0.7.2).
+
+http://www.nabble.com/Editable-Tables-with-setShowCellFocusIndicator%28false%29-not-working-%280.7.2%29-td15693972.html#a15704492
+
+I don&#39;t know if editing and the cell focus indicator have been decoupled since that post, but it&#39;s not a problem to display it in our app.  In my 0.7.3 code, I was not setting this explicitly, since true was the default.  The 0.8 TreeVirtual constructor sets this to false.   So, maybe just enabling the cell focus indicator would to the trick?
+
+Almost!  If you add this to the sample above (in 0.8.1 playground), clicking on a cell in column 2 does put it into edit mode and the value may be edited.  Hitting return will advance the cell focus indicator to the next row, same column with the corresponding value in edit mode.  However, clicking on another row in the same column does not remove focus or edit status from a cell that is currently being edited.  Hitting return to the bottom of the column will finally allow another cell to be selected by mouse, but that&#39;s probably not the intended behavior.
+
+Thanks,
+Pat</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12301</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-15 11:10:55 +0200</bug_when>
+            <thetext>Derrell, assigned to you to have a look at Pat&#39;s updates. Please comment, so that we could decide how to proceed with this issue if still valid (maybe still being Table-related as you indicated?). If it is not limited to FF2/Linux, please also relax attributes.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12322</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-09-15 15:33:28 +0200</bug_when>
+            <thetext>The problem does, in fact, seem to be specific to TreeVirtual, and has to do with TreeVirtual&#39;s unique selection manager. Commenting out the code in TreeVirtual that specifies its own SelectionManager produces the correct &quot;stop editing&quot; result when selecting a different row.
+
+I&#39;ll leave the status as &quot;New&quot; since I don&#39;t know when I&#39;ll have time to work on it. If someone else wants to try to track this down, knowing, now, that it pertains to the selection manager, it might get fixed faster than waiting for me to have the time to look into it. I&#39;ll also keep it on my todo list in case I have some spare cycles.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13754</commentid>
+            <who name="Alexandru Ulici">ulixu</who>
+            <bug_when>2009-10-31 22:07:54 +0100</bug_when>
+            <thetext>I used showFocusIndicator(true) and commented out the lines:
+        if (focusedCol != treeCol)
+        {
+          // ... then start the editor for the cell (if one is defined)
+          tree.startEditing();
+          return false;
+        }
+in class/qx/ui/treevirtual/SelectionManager.js and seems to be ok.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14732</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:25:54 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0 (for issues with status &quot;NEW&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18508</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-05-27 16:17:20 +0200</bug_when>
+            <thetext>accept</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18509</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-05-27 16:17:40 +0200</bug_when>
+            <thetext>fixed with r22275
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18510</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-05-27 16:17:58 +0200</bug_when>
+            <thetext>fixed with r22275
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37161</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:07 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

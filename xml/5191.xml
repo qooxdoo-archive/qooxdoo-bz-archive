@@ -1,0 +1,223 @@
+<bug>
+          <bug_id>5191</bug_id>
+          
+          <creation_ts>2011-06-03 21:01:00 +0200</creation_ts>
+          <short_desc>qx.io.remote.Rpc fails due to json string not yet being parsed.</short_desc>
+          <delta_ts>2011-07-25 09:53:50 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io.remote</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.5</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Jeremiah Dodds">jeremiah.dodds</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          <cc>greg</cc>
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>24851</commentid>
+              <attachid>994</attachid>
+            <who name="Jeremiah Dodds">jeremiah.dodds</who>
+            <bug_when>2011-06-03 21:01:47 +0200</bug_when>
+            <thetext>Created attachment 994
+stack-default is from the browser, stack-qx from getStackTrace()
+
+The change introduced in rev 27471 (git commit 5bd3a091ca358ca12cf1f118e5ebd025ba50a9b5) seems to make it so that requests that return JSON from the server always throws a JSON.parse error. Attached are the stack traces given by default, and by qx.dev.StackTrace.getStackTrace() in firefox in the calling code. You can also view them at http://pastebin.com/e0UyS76H and http://pastebin.com/rZTZADvE respectively. They are generated off of the current git master branch as of today (rev 27506 git commit c19ad689f2076743a695688ec0b17af7cad90dbb).
+
+Here&#39;s (part of) the problem:
+
+At the line setting result in the snippet below, &quot;response&quot; is still a string that hasn&#39;t been parsed, so we just get nothing back, which throws an error. Setting req.setParseJson(true) in the code below doesn&#39;t change the behavior afaict.
+
+io/remote/Rpc.js
+@@ -605,8 +618,17 @@ qx.Class.define(&quot;qx.io.remote.Rpc&quot;,
+         }
+         else
+         {
++
++          // Response as JSON string
+           result = response[&quot;result&quot;];
+ 
++          // Parse
++          if (self._isConvertDates()) {
++            result = result &amp;&amp; result.length &gt; 0 ? eval(&#39;(&#39; + result + &#39;)&#39;) : null;
++          } else {
++            result = qx.lang.Json.parse(result);
++          }
++
+           if (refreshSession)
+           {
+             result = eval(&quot;(&quot; + result + &quot;)&quot;);
+
+@@ -640,6 +685,9 @@ qx.Class.define(&quot;qx.io.remote.Rpc&quot;,
+         req.setRequestHeader(&quot;Content-Type&quot;, &quot;application/json&quot;);
+       }
+ 
++      // Do not parse as JSON. Later done conditionally.
++      req.setParseJson(false);
++
+       req.send();
+ 
+       if (callType == 0)
+
+
+
+I found this commit using git bisect, it&#39;s the first commit in which the behavior is displayed. Let me know if this doesn&#39;t happen for you, or if you need some more info or whatnot.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24853</commentid>
+            <who name="Greg Beaver">greg</who>
+            <bug_when>2011-06-04 06:05:09 +0200</bug_when>
+            <thetext>Confirmed the same problem.
+
+Unfortunately, this commit needs to be reverted, as it is incorrect.  There is no way to partially parse json that contains the old date formats from an rpc response.
+
+I just attached a proper fix to bug 4294, which also fixes this bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24863</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-06 07:34:34 +0200</bug_when>
+            <thetext>Thank you very much for your efforts in debugging this.
+
+That&#39;s right, JavaScript that contains the legacy date format is no valid JSON and therefore cannot be parsed with qx.lang.Json.parse.
+
+As mentioned in bug 4294, the legacy date conversion is configured with qx.io.remote.Rpc.CONVERT_DATES. When true, eval is used instead of qx.lang.Json.parse.
+
+// qx.io.remote.Rpc#_callInternal
+// …
+// Parse
+if (self._isConvertDates()) {
+  result = result &amp;&amp; result.length &gt; 0 ? eval(&#39;(&#39; + result + &#39;)&#39;) : null;
+} else {
+  result = qx.lang.Json.parse(result);
+}
+
+Before, we parsed the response with the (now deprecated) qx.util.Json which basically did an eval no matter if the response was valid JSON or JSON-like.
+
+Did you try to set qx.io.remote.Rpc.CONVERT_DATES = true?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>24873</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-06-06 09:45:16 +0200</bug_when>
+            <thetext>The response was considered a JavaScript object before the parsing was done. Unfortunately, our tests provided a JavaScript object as the response (instead of a JSON string) so the error did not show up.
+
+Moved parsing to top of completed handler.
+
+Fixed with r27529 on trunk.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>994</attachid>
+            <date>2011-06-03 21:01:00 +0200</date>
+            <delta_ts>2011-06-03 21:01:47 +0200</delta_ts>
+            <desc>stack-default is from the browser, stack-qx from getStackTrace()</desc>
+            <filename>traces.tar.gz</filename>
+            <type>application/x-gzip</type>
+            <size>4096</size>
+            <attacher>jeremiah.dodds</attacher>
+            
+              <data encoding="base64">c3RhY2stZGVmYXVsdAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAwMDY0NCAAMDAwNzY2
+IAAwMDAwMjQgADAwMDAwMDAxNTAxIDExNTcyMjI3MDM0IDAxNDQ2MAAgMAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB1c3RhcgAwMGplcmVtaWFoAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAc3RhZmYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwMDAwMDAgADAwMDAw
+MCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAw
+Mjg0MTggcXguaW8ucmVtb3RlLlJlcXVlc3RRdWV1ZVs2Nl06IFJlcXVlc3QgcXguaW8ucmVtb3Rl
+LlJlcXVlc3RbNjVdIGhhbmRsZXIgX29uY29tcGxldGVkIHRocmV3IGFuIGVycm9yOiAgU3ludGF4
+RXJyb3I6IEpTT04ucGFyc2UKcXguaW8ucmVtb3RlLlJwYzo2MjksCnF4LmV2ZW50LmRpc3BhdGNo
+LkRpcmVjdDoxMzQsCnF4LkludGVyZmFjZTo0NTEsCnF4LmV2ZW50Lk1hbmFnZXI6ODYxLApxeC5l
+dmVudC5SZWdpc3RyYXRpb246Mjc5LApxeC5jb3JlLk9iamVjdDo0NDUsCnF4LmlvLnJlbW90ZS5S
+ZXF1ZXN0OjU0NywKcXguZXZlbnQuR2xvYmFsRXJyb3I6MTMxLApxeC5pby5yZW1vdGUuUmVxdWVz
+dDo2MTIsCnF4LmlvLnJlbW90ZS5SZXF1ZXN0UXVldWU6MzQ1LApxeC5ldmVudC5kaXNwYXRjaC5E
+aXJlY3Q6MTM0LApxeC5JbnRlcmZhY2U6NDUxLApxeC5ldmVudC5NYW5hZ2VyOjg2MSwKcXguZXZl
+bnQuUmVnaXN0cmF0aW9uOjI3OSwKcXguY29yZS5PYmplY3Q6NDQ1LApxeC5pby5yZW1vdGUuRXhj
+aGFuZ2U6MTAyNSwKcXguY29yZS5Qcm9wZXJ0eTo2ODIsCnF4LmlvLnJlbW90ZS5FeGNoYW5nZTo4
+MTUsCnF4LmV2ZW50LmRpc3BhdGNoLkRpcmVjdDoxMzQsCnF4LkludGVyZmFjZTo0NTEsCnF4LmV2
+ZW50Lk1hbmFnZXI6ODYxLApxeC5ldmVudC5SZWdpc3RyYXRpb246MzEwLApxeC5jb3JlLk9iamVj
+dDo0NjUsCnF4LmlvLnJlbW90ZS50cmFuc3BvcnQuWG1sSHR0cDo5MzEsCnF4LmNvcmUuUHJvcGVy
+dHk6NjgyLApxeC5pby5yZW1vdGUudHJhbnNwb3J0LlhtbEh0dHA6NDY3LApxeC5ldmVudC5HbG9i
+YWxFcnJvcjoxMzEsCnF4LmxhbmcuRnVuY3Rpb246Mjg3CgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAc3Rh
+Y2stcXgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAwMDY0NCAAMDAwNzY2IAAw
+MDAwMjQgADAwMDAwMDAxNTUyIDExNTcyMjI2NTQ2IDAxMzUwMQAgMAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB1c3RhcgAwMGplcmVtaWFoAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAc3RhZmYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwMDAwMDAgADAwMDAwMCAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwCSJv
+dXIuY2FsbGVyOjEwNiIKMQkicXgubGFuZy5GdW5jdGlvbjoyODciCjIJInF4LmlvLnJlbW90ZS5S
+cGM6NDk5IgozCSJxeC5pby5yZW1vdGUuUnBjOjU5MSIKNAkicXguZXZlbnQuZGlzcGF0Y2guRGly
+ZWN0OjEzNCIKNQkicXguSW50ZXJmYWNlOjQ1MSIKNgkicXguZXZlbnQuTWFuYWdlcjo4NjEiCjcJ
+InF4LmV2ZW50LlJlZ2lzdHJhdGlvbjoyNzkiCjgJInF4LmNvcmUuT2JqZWN0OjQ0NSIKOQkicXgu
+aW8ucmVtb3RlLlJlcXVlc3Q6NTQ3IgoxMAkicXguZXZlbnQuR2xvYmFsRXJyb3I6MTMxIgoxMQki
+cXguaW8ucmVtb3RlLlJlcXVlc3Q6NjMxIgoxMgkicXguaW8ucmVtb3RlLlJlcXVlc3RRdWV1ZToz
+NjEiCjEzCSJxeC5ldmVudC5kaXNwYXRjaC5EaXJlY3Q6MTM0IgoxNAkicXguSW50ZXJmYWNlOjQ1
+MSIKMTUJInF4LmV2ZW50Lk1hbmFnZXI6ODYxIgoxNgkicXguZXZlbnQuUmVnaXN0cmF0aW9uOjI3
+OSIKMTcJInF4LmNvcmUuT2JqZWN0OjQ0NSIKMTgJInF4LmlvLnJlbW90ZS5FeGNoYW5nZToxMDI1
+IgoxOQkicXguY29yZS5Qcm9wZXJ0eTo2ODIiCjIwCSJxeC5pby5yZW1vdGUuRXhjaGFuZ2U6ODE1
+IgoyMQkicXguZXZlbnQuZGlzcGF0Y2guRGlyZWN0OjEzNCIKMjIJInF4LkludGVyZmFjZTo0NTEi
+CjIzCSJxeC5ldmVudC5NYW5hZ2VyOjg2MSIKMjQJInF4LmV2ZW50LlJlZ2lzdHJhdGlvbjozMTAi
+CjI1CSJxeC5jb3JlLk9iamVjdDo0NjUiCjI2CSJxeC5pby5yZW1vdGUudHJhbnNwb3J0LlhtbEh0
+dHA6OTMxIgoyNwkicXguY29yZS5Qcm9wZXJ0eTo2ODIiCjI4CSJxeC5pby5yZW1vdGUudHJhbnNw
+b3J0LlhtbEh0dHA6NDY3IgoyOQkicXguZXZlbnQuR2xvYmFsRXJyb3I6MTMxIgozMAkicXgubGFu
+Zy5GdW5jdGlvbjoyODciAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+</data>
+
+          </attachment>
+      
+
+    </bug>

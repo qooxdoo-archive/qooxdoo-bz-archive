@@ -1,0 +1,186 @@
+<bug>
+          <bug_id>8562</bug_id>
+          
+          <creation_ts>2014-08-29 08:37:00 +0200</creation_ts>
+          <short_desc>References to disposed objects in class qx.html.Element</short_desc>
+          <delta_ts>2015-02-25 09:21:30 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.html</component>
+          <version>4.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Maxim Fedyashev">mfedyashev</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>selverr</cc>
+          <qa_contact name="Alexander Steitz">alexander.steitz</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>41082</commentid>
+            <who name="Maxim Fedyashev">mfedyashev</who>
+            <bug_when>2014-08-29 08:37:55 +0200</bug_when>
+            <thetext>Maps _modified and _scroll from class qx.html.Element contain references on objects. But after dispose objects these maps are not cleared. It can be reason for memory leak.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41091</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-09-01 08:04:47 +0200</bug_when>
+            <thetext>Thanks for the report. Do you have a sample where such a reference leads to a memory leak? As far as I understand the garbage collection algorithms of the browsers, outgoing references (as in this case) should not be a problem because this does not change the reachability of the object either from the global or any local scope.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41132</commentid>
+            <who name="Maxim Fedyashev">mfedyashev</who>
+            <bug_when>2014-09-05 12:27:29 +0200</bug_when>
+            <thetext>I just tested our project on a memory leak with the tool JSLeakSearcher. And found many references on disposed objects in these maps.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41133</commentid>
+              <attachid>1344</attachid>
+            <who name="Maxim Fedyashev">mfedyashev</who>
+            <bug_when>2014-09-05 12:28:26 +0200</bug_when>
+            <thetext>Created attachment 1344
+JSLeakSearcher</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41141</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-09-08 09:02:47 +0200</bug_when>
+            <thetext>Just checked it using the chrome debugger and it seems in deed strange and leaky.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42638</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-02-25 09:21:30 +0100</bug_when>
+            <thetext>Just checked the code in detail and saw the issue right away. The to mentioned maps are static and therefore always in the global scope. Objects referenced there can ne be collected by the garbage collector. Removing the references on dispose should solve the problem.
+
+master: 766df4f7a0ddefa7c0a2b9e8d864fce4e8cefd5c
+4.1.x: ad8dcd1db3ab3f2ed8400e04d7437baffaec3ed1</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1344</attachid>
+            <date>2014-09-05 12:28:00 +0200</date>
+            <delta_ts>2014-09-05 12:28:26 +0200</delta_ts>
+            <desc>JSLeakSearcher</desc>
+            <filename>JSLeakSearcher.js</filename>
+            <type>application/octet-stream</type>
+            <size>4852</size>
+            <attacher>mfedyashev</attacher>
+            
+              <data encoding="base64">LyoKICogVGhpcyBjbGFzcyB0cmF2ZXJzZXMgdGhlIHdob2xlIE9iamVjdC1HcmFwaCBpbiB0aGUg
+cXgtbmFtZXNwYWNlLCBmaW5kaW5nIGFueSBKU09iamVjdCB0aGF0IHdvbid0IGJlCiAqIGdhcmJh
+Z2UgY29sbGVjdGVkIGR1ZSB0byBvdGhlciBKUy1yZWZlcmVuY2VzLgogKgogKiBOb3RlIHRoYXQg
+KGN1cnJlbnRseSkgYW4gaW5zdGFuY2Ugb2YgdGhlIGNsYXNzIGNhbiBvbmx5IGJlIHVzZWQgZm9y
+IE9ORSBjYWxsIHRvIHRoZSBsZWFrU2VhcmNoIGZ1bmN0aW9uLgogKiBEdXBsaWNhdGUgY2FsbHMg
+d2lsbCByZXN1bHQgaW4gdW5kZWZpbmVkIGJlaGF2aW91ciBzbyBqdXN0IGNyZWF0ZSBhIG5ldyBp
+bnN0YW5jZSBmb3IgZXZlcnkgbGVhay1zZWFyY2guCiAqICAKICogQ3VycmVudGx5IGV2ZXJ5IGZv
+dW5kIE9iamVjdCBpcyBjb3VudGVkIGFuZCBqdXN0IHByaW50ZWQgdG8gdGhlIGRlYnVnIGxvZyBp
+biB0d28gY2F0ZWdvcmllczoKICogLSBub3JtYWwgcXgtT2JqZWN0cyB3aGljaCBoYXZlbid0IGJl
+ZW4gZGlzcG9zZWQgeWV0ICAoc2VlIG1lbWJlciAncmVmZXJlbmNlZE9iamVjdHMnKQogKiAtIGRp
+c3Bvc2VkIG9iamVjdHMsIHdoaWNoIHN0aWxsIGhhdmUgcmVmZXJlbmNlcyBvbiB0aGVtLiAoc2Vl
+IG1lbWJlciAncmVmZXJlbmNlZERpc3Bvc2VkT2JqZWN0cycpCiAqCiAqIFRoZSBmaXJzdCBjYXRl
+Z29yeSBtaWdodCBiZSBwb2ludGluZyB0byBwcm9ncmFtbWluZyBlcnJvcnMsIGlmIHRoZSBjb3Vu
+dCBjb25zdGFudGx5IGluY3JlYXNlcy4gU29tZSBvYmplY3QKICogZGlzcG9zYWxzIG1pZ2h0IGJl
+IG1pc3NpbmcuCiAqIFRoZSBzZWNvbmQgY2F0ZWdvcnkgaXMgYWx3YXlzIHBvaW50aW5nIHRvIHBy
+b2dyYW1taW5nIGVycm9ycyAtIGRpc3Bvc2VkIG9iamVjdHMgc2hvdWxkIG5ldmVyIGJlIHJlZmVy
+ZW5jZWQKICogYnkgYW55IG90aGVyIG9iamVjdHMgYW55IG1vcmUuCiAqCiAqIEFzIGEgdGhpcmQg
+Y2F0ZWdvcnkgYWxzbyBhbGwgbGlua3MgaW50byB0aGUgQnJvd3Nlci1ET00gYXJlIHByaW50ZWQu
+IEluIGEgbm9ybWFsIGFwcGxpY2F0aW9uIHRoaXMgc2hvdWxkbid0CiAqIGluY3JlYXNlIGFzIHdl
+bGwgb3ZlciB0aW1lLgogKgogKgogKiBGdXJ0aGVyIGlkZWFzIGZvciB0aGlzIGNsYXNzOiBKdXN0
+IGNvdW50aW5nIGFuZCB3cml0aW5nIHRvIHRoZSBsb2cgaXMgZ29vZCBlbm91Z2ggZm9yIFVuaXQt
+VGVzdGluZyB3aGVyZSB5b3UKICogbWFrZSBhICdiZWZvcmUnIGFuZCAnYWZ0ZXInIHNuYXBzaG90
+IG9mIGEgZml4dHVyZSB0aGF0IGNyZWF0ZXMgYW5kIGRlc3Ryb3lzIHNvbWUgb2JqZWN0cy4KICog
+QWxzbyBmaW5kaW5nIGxlYWtzIGluIHRoZSBsb2cgaXMgbm90IHRvbyBkaWZmaWN1bHQsIGFzIGxl
+YWtpbmcgcmVmZXJlbmNlcyB0ZW5kIHRvIGFjY3VtdWxhdGUgYXQgb25lIHNwb3Qgd2hpY2gKICog
+dGhlIGV5ZSBjYW4gc3BvdCBxdWl0ZSBmYXN0LgogKgogKiBUaGlzIGNsYXNzIGNvdWxkIGVhc2ls
+eSBiZSBleHRlbmRlZCB0byBjcmVhdGUgYSBoaXN0b2dyYW0gb2YgYWN0aXZlIGNsYXNzZXMgZm9y
+IGRlYnVnZ2luZyBsYXJnZXIgYXBwbGljYXRpb25zCiAqIGFuZCBzcG90dGluZyBwb3RlbnRpYWwg
+bWlzc2luZyBkaXNwb3NhbHMuCiAqCiAqLwoKcXguQ2xhc3MuZGVmaW5lKCJKU0xlYWtTZWFyY2hl
+ciIsCnsKICBleHRlbmQgOiBxeC5jb3JlLk9iamVjdCwKCiAgY29uc3RydWN0IDogZnVuY3Rpb24o
+KQogIHsKICAgIHRoaXMuYmFzZShhcmd1bWVudHMpOwogICAgdGhpcy5fX3JlY3Vyc2lvbkluZm8g
+PSBbXTsKICB9LAoKICBtZW1iZXJzIDoKICB7CiAgICByZWZlcmVuY2VkT2JqZWN0czogMCwKICAg
+IHJlZmVyZW5jZWREaXNwb3NlZE9iamVjdHM6IDAsCiAgIAogICAgLyogY3VycmVudCBjYWxsLXN0
+YWNrICovCiAgICBfX3JlY3Vyc2lvbkluZm86IG51bGwsCiAgICAgICAKICAgIC8qIENyZWF0ZXMg
+YSBzdHJpbmctcmVwcmVzZW50YXRpb24gb2YgdGhlIHJlY3Vyc2lvbiBwYXRoLiAgKi8KICAgIF9f
+cmVjdXJzaW9uSW5mb1RvU3RyaW5nIDogZnVuY3Rpb24oKSB7CiAgICAgIHZhciByZWN1cnNpb25J
+bmZvU3RyaW5nPSIiOwogICAgICBmb3IgKHZhciBpPTA7aTx0aGlzLl9fcmVjdXJzaW9uSW5mby5s
+ZW5ndGg7IGkrKykKICAgICAgewogICAgICAgIHJlY3Vyc2lvbkluZm9TdHJpbmcrPSItPiIrdGhp
+cy5fX3JlY3Vyc2lvbkluZm9baV07CiAgICAgIH0KICAgICAgcmV0dXJuIHJlY3Vyc2lvbkluZm9T
+dHJpbmc7CiAgICB9LAoKICAgIC8qIHN0YXJ0cyBhIGxlYWstc2VhcmNoIGluIHRoZSBxeC1uYW1l
+c3BhY2UgKi8KICAgIGxlYWtTZWFyY2ggOiBmdW5jdGlvbigpIHsKICAgICAgdGhpcy5fX2xlYWtT
+ZWFyY2god2luZG93LnF4LCAicXgiKTsKICAgIH0sCgogICAgLyogaW50ZXJuYWwgbGVhay1zZWFy
+Y2gtZnVuY3Rpb24uIFdpbGwgYmUgY2FsbGVkIHJlY3Vyc2l2ZWx5ICovCiAgICBfX2xlYWtTZWFy
+Y2ggOiBmdW5jdGlvbihvYmosIGN1cnJlbnRQYXRoKQogICAgewogICAgICAvLyBhdm9pZCB0cmF2
+ZXJzaW5nIGN5Y2xlcywgc28gZG9uJ3QgZm9sbG93IGFueSBqcy1vYmplY3QsIHRoYXQgaXMgYWxy
+ZWFkeU1hcmtlZC4KICAgICAgLy8gSW5zdGVhZCBqdXN0IGluY3JlYXNlIHJlZmVyZW5jZS1jb3Vu
+dAogICAgICB2YXIgbWFya2VyPSckJCRsZWFrU2VhcmNoZXJfcmVmQ291bnRfJyt0aGlzLiQkaGFz
+aDsKICAgICAgaWYgKG9ialttYXJrZXJdKQogICAgICB7CiAgICAgICAgb2JqW21hcmtlcl0rKzsg
+ICAgICAKICAgICAgfSBlbHNlIHsKICAgICAgICAvLyBtYXJrIG9iamVjdCB0byBhdm9pZCB0cmF2
+ZXJzaW5nIGluIGN5Y2xlcwogICAgICAgIG9ialttYXJrZXJdPTE7CiAgICAgCiAgICAgICAgdGhp
+cy5fX3JlY3Vyc2lvbkluZm8ucHVzaChjdXJyZW50UGF0aCk7CiAgICAgCiAgICAgICAgdGhpcy5f
+X3VwZGF0ZVN0YXRpc3RpY3Mob2JqKTsKIAogICAgICAgIC8vIEFycmF5cyBhcmUganVzdCB0cmF2
+ZXJzZWQgZm9yIGVhY2ggZW50cnkKICAgICAgICBpZiAob2JqIGluc3RhbmNlb2YgQXJyYXkpCiAg
+ICAgICAgewogICAgICAgICAgdGhpcy5fX2xlYWtTZWFyY2hBcnJheUVsZW1lbnRzKG9iaik7CiAg
+ICAgICAgfQogICAgICAgIC8vIE9iamVjdHMgYXJlIHRyYXZlcnNlZCBmb3IgZWFjaCBvZiB0aGVp
+ciBrZXlzCiAgICAgICAgZWxzZSBpZiAob2JqIGluc3RhbmNlb2YgT2JqZWN0KQogICAgICAgIHsK
+ICAgICAgICAgIHRoaXMuX19sZWFrU2VhcmNoT2JqZWN0UmVmZXJlbmNlcyhvYmopOwogICAgICAg
+IH0KICAgICAKICAgICAgICB0aGlzLl9fcmVjdXJzaW9uSW5mby5wb3AoKTsKICAgICAgfQogICAg
+fSwKICAgCiAgICBfX3VwZGF0ZVN0YXRpc3RpY3M6IGZ1bmN0aW9uKG9iaikgewogICAgICAvLyBm
+b3VuZCBhIHJlZmVyZW5jZSB0byBhIHFvb3hkb28gb2JqZWN0IC4uLgogICAgICAvLyBEZXBlbmRp
+bmcgb24gdGhlIGRpc3Bvc2Utc3RhdGUgaXNzdWUgYSBzaW1wbGUgbG9nIG9yIGFuIGVycm9yIGxv
+Zy4KICAgICAgaWYgKG9iaiBpbnN0YW5jZW9mIHF4LmNvcmUuT2JqZWN0KQogICAgICB7CiAgICAg
+ICAgaWYgKG9iai5pc0Rpc3Bvc2VkKCkpCiAgICAgICAgewogICAgICAgICAgdGhpcy5lcnJvcigi
+Rm91bmQgZGlzcG9zZWQgYnV0IHN0aWxsIHJlZmVyZW5jZWQgT2JqICciICsgb2JqLmNsYXNzbmFt
+ZSArICInICwgaGFzaCAnIiArIG9iai4kJGhhc2grIicsIHBhdGg6ICciK3RoaXMuX19yZWN1cnNp
+b25JbmZvVG9TdHJpbmcoKSsiJyIpOwogICAgICAgICAgdGhpcy5yZWZlcmVuY2VkRGlzcG9zZWRP
+YmplY3RzKys7CiAgICAgICAgfSBlbHNlIHsKICAgICAgICAgIHRoaXMuaW5mbygiRm91bmQgbGl2
+aW5nIE9iaiAnIiArIG9iai5jbGFzc25hbWUgKyAiJyAsIGhhc2ggJyIgKyBvYmouJCRoYXNoKyIn
+LCBwYXRoOiAnIit0aGlzLl9fcmVjdXJzaW9uSW5mb1RvU3RyaW5nKCkrIiciKTsKICAgICAgICAg
+IHRoaXMucmVmZXJlbmNlZE9iamVjdHMrKzsgICAgICAgICAgICAKICAgICAgICB9CiAgICAgIH0K
+ICAgIH0sCiAgIAogICAgX19sZWFrU2VhcmNoQXJyYXlFbGVtZW50czogZnVuY3Rpb24oYXJyYXkp
+IHsKICAgICAgZm9yICh2YXIgaT0wLCBsPWFycmF5Lmxlbmd0aDsgaTxsOyBpKyspCiAgICAgIHsK
+ICAgICAgICB2YXIgZW50cnkgPSBhcnJheVtpXTsKCiAgICAgICAgaWYgKGVudHJ5ID09IG51bGwg
+fHwgISh0eXBlb2YgZW50cnk9PSAib2JqZWN0IikpCiAgICAgICAgewogICAgICAgICAgY29udGlu
+dWU7CiAgICAgICAgfQoKICAgICAgICB0aGlzLl9fbGVha1NlYXJjaChlbnRyeSwgIlsiK2krIl0i
+KTsKICAgICAgfQogICAgfSwKICAgCiAgICBfX2xlYWtTZWFyY2hPYmplY3RSZWZlcmVuY2VzOiBm
+dW5jdGlvbihvYmopIHsKICAgICAgLy8gZG9uJ3QgZm9sbG93IHJlZmVyZW5jZXMgaW50byB0aGUg
+RE9NCiAgICAgIGlmIChxeC5kb20uTm9kZS5pc0VsZW1lbnQob2JqKSB8fCBxeC5kb20uTm9kZS5p
+c1dpbmRvdyhvYmopIHx8IHF4LmRvbS5Ob2RlLmlzRG9jdW1lbnQob2JqKSkKICAgICAgewogICAg
+ICAgIHRoaXMuaW5mbygiU3RvcHBlZCBhdCBsaW5rIHRvIERPTSwgcGF0aDogJyIgKyB0aGlzLl9f
+cmVjdXJzaW9uSW5mb1RvU3RyaW5nKCkgKyAiJyIpOwogICAgICB9IGVsc2UgewogICAgICAgIGZv
+ciAodmFyIGtleSBpbiBvYmopCiAgICAgICAgewogICAgICAgICAgaWYgKG9ialtrZXldID09IG51
+bGwgfHwgIW9iai5oYXNPd25Qcm9wZXJ0eShrZXkpIHx8IGtleT09J3Byb3RvdHlwZScpCiAgICAg
+ICAgICB7CiAgICAgICAgICAgIGNvbnRpbnVlOwogICAgICAgICAgfQogCiAgICAgICAgICB0aGlz
+Ll9fbGVha1NlYXJjaChvYmpba2V5XSwga2V5KTsKICAgICAgICB9CiAgICAgIH0KCiAgICB9ICAK
+ICB9Cn0pOw==
+</data>
+
+          </attachment>
+      
+
+    </bug>

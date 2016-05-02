@@ -1,0 +1,543 @@
+<bug>
+          <bug_id>1455</bug_id>
+          
+          <creation_ts>2008-10-08 09:34:00 +0200</creation_ts>
+          <short_desc>Class instances in statics fails in 0.8</short_desc>
+          <delta_ts>2014-03-03 15:26:41 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>0.8</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.3</target_milestone>
+          <dependson>2426</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Gaëtan de Menten">ged</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>derrell.lipman</cc>
+    
+    <cc>fabian.jakobs</cc>
+    
+    <cc>qooxdoo</cc>
+    
+    <cc>thron7</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>5755</commentid>
+            <who name="Gaëtan de Menten">ged</who>
+            <bug_when>2008-10-08 09:34:30 +0200</bug_when>
+            <thetext>For example, a dateFormat instance produce the following error:
+
+qx.locale.Manager is undefined    DateFormat.js (line 47)
+   this.__locale = qx.locale.Manager.getInstance().getLocale();
+
+See attached test script (which worked fine in 0.7.x).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5756</commentid>
+              <attachid>360</attachid>
+            <who name="Gaëtan de Menten">ged</who>
+            <bug_when>2008-10-08 09:35:41 +0200</bug_when>
+            <thetext>Created attachment 360
+Test script demonstrating the problem</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5782</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-10-08 14:52:13 +0200</bug_when>
+            <thetext>If instantiation is used to initialize a static member, the generator in 0.8 
+sorts the instantiated class before the referencing class correctly, but 
+doesn&#39;t try to recurse on run-time class dependencies of the referenced class. 
+In 0.7 this was tried and worked for many cases, but could also end in circular 
+references in others, where a partial order for loading classes could no longer 
+be established. Therefore, the strategy was abandoned for 0.8 and the current 
+policy is to not use &#39;new&#39; or static method calls to initialize static members. 
+(The scope of this policy stretches even further and includes other forms of 
+&quot;requiring&quot; like the &#39;defer&#39; section of a class; see the new section of the 
+Anti-Patterns wiki page 
+http://qooxdoo.org/documentation/0.8/antipatterns#abundandly_requiring_other_classes). 
+So the current answer to the mail list posting is, yes, this idiom is not 
+supported in 0.8.
+
+We will re-evaluate the older strategy of &quot;going-as-far-as-possible&quot; to see if 
+it makes sense to re-establish it in the 0.8.x line of code. Still, the 
+recommendation to avoid requiring classes, as expressed on the wiki page, will 
+remain valid nevertheless, since there can always be cases where the dependency 
+relation cannot be solved completely, and automatic dependency resolution might 
+affect parts/package building negatively.
+
+@Thomas: Check the implementation of re-prioritizing run-time dependencies in 
+required classes in 0.7. After that, the bug has to be re-evaluated.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7900</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-02-18 12:06:55 +0100</bug_when>
+            <thetext>Untarget 0.8.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8431</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-03-09 15:09:52 +0100</bug_when>
+            <thetext>to 0.8.3</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9368</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-17 19:24:05 +0200</bug_when>
+            <thetext>*** Bug 2249 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9370</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-17 19:44:05 +0200</bug_when>
+            <thetext>There is currently no general solution (more on this later), but there seems to 
+be a work-around.
+
+Here are the steps to reproduce the problem in a standard &#39;gui&#39; skeleton:
+
+    - config.json:
+        &quot;build-script&quot;:
+          &quot;include&quot;  : [&quot;qx.lang.Object&quot;],
+          &quot;variants&quot; : { &quot;=qx.debug&quot; : [&quot;on&quot;]}
+    - generate.py build
+
+qx.debug=on will trigger many code snippets where statics of qx.core.Assert are 
+called. qx.lang.Object is a class that has such code snippets.
+
+By listing qx.lang.Object in &quot;include&quot;, it will be prepended to the &quot;include&quot; 
+that comes from base.json. The result looks like this:
+
+  &quot;include&quot; : [&quot;qx.lang.Object&quot;, &quot;gui.theme.Theme&quot;, &quot;gui.Application&quot; ]
+
+This causes a re-ordering of qx.lang.Object (which would be included anyway!) 
+in the resulting output, together with other classes that actually call 
+qx.lang.Object methods as static initializers (e.g. qx.lang.Core), which 
+triggers the problem.
+
+The work-around is to re-order the &quot;include&quot; key. To overcome the standard 
+prepending of arrays during job merges, the entire list of include entries 
+should be given in the config.json (overriding the base.json key):
+
+    - config.json:
+        &quot;build-script&quot;:
+          &quot;=include&quot;  : [&quot;gui.theme.Theme&quot;, &quot;gui.Application&quot;, 
+&quot;qx.lang.Object&quot;],
+
+(Mind the leading &quot;=&quot; in front of the &quot;include&quot; key).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9494</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-22 17:01:03 +0200</bug_when>
+            <thetext>I have written an initial version of a method that follows dependencies of a 
+static method if it is called as an initializer 
+(DependencyLoader.getMethodDeps()). This method does not follow the qooxdoo 
+class inheritence yet, to resolve methods.
+
+Still, we cannot put this method into production, since even with this simple 
+implementation the framework doesn&#39;t compile anymore. It quickly hits circular 
+dependencies among framework classes. For example: qx.lang.Object uses 
+qx.core.Variant.select for initialisation, as in
+
+  isEmpty : qx.core.Variant.select(&quot;qx.client&quot;, ...
+
+But qx.core.Variant.select calls out to a qx.lang.Object methods, as in
+
+  throw new Error(&#39;No match for variant &quot;&#39; + key + &#39;&quot; in variants [&#39; + 
+qx.lang.Object.getKeysAsString(variantFunctionMap) + ...
+
+So the framework dependencies have to be cleaned-up first, before we can 
+procede with this extended dependency analysis.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9767</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-04-30 19:09:25 +0200</bug_when>
+            <thetext>In order to better support refactoring of class dependencies, I have worked on 
+improved reporting on those.
+
+- In generator.Generator, renamed some methods to have a more unified naming 
+scheme for reporting functionality under the &#39;log&#39; banner:
+  - renamed runDependencyDebug -&gt; runLogDependencies
+  - renamed runUnusedClasses -&gt; runLogUnusedClasses
+
+- Made the &#39;log&#39; config key an action trigger for the main run() routine, so it 
+can appear alone in a job.
+
+- In runLogDependencies, add logging of both &#39;using&#39; or &#39;used-by&#39; dependencies 
+for classes.
+
+- Enhanced runLogDependencies to either make console print-outs of 
+dependencies, or create a dependency graph as a .dot file (currently for 
+&#39;using&#39; dependencies only).
+
+With r18978.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10443</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-06-17 19:53:26 +0200</bug_when>
+            <thetext>DependencyLoader.py:
+I have added an extended version of getMethodDeps(), getMethodDeps1(), which 
+follows the qooxdoo inheritance chain (both super classes and mixins) when 
+looking up method definitions. The found method definitions are then exploited 
+for further dependencies. The biggest issue I still see here is probably the 
+cycle check, which tests against the signatures (class id and method name) seen 
+so far, which might depend on the signature with which we started. This would 
+mean the dependencies calculated for some downstream signature could get wrong, 
+and cached wrongly. Not sure how to resolve this.
+
+The consuming function, DependencyLoader._analyzeClassDepsNode, still only uses 
+the class names for dependency tracking, not the method names, but this could 
+be exploited at a later time.
+
+Config:
+To activate the use of getMethodDeps/getMethodDeps1, the config key 
+&#39;dependencies/follow-static-initializers&#39; : true has to be used. But the whole 
+thing is still highly experimental, and hits at the circular dependencies among 
+framework classes, as mentioned in an earlier comment. So it is not usable for 
+production.
+
+With r19361.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11602</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-08-26 19:22:41 +0200</bug_when>
+            <thetext>down prio for now. the bug basically depends on the framework clean-up (#2426).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11960</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-08 09:41:30 +0200</bug_when>
+            <thetext>moved from 0.8.3 to 0.9</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13071</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-12 11:59:34 +0200</bug_when>
+            <thetext>down prio, as there seems little activity in the framework</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14719</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:25:48 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0 (for issues with status &quot;NEW&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15016</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-11-27 10:56:46 +0100</bug_when>
+            <thetext>to 1.0.1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16533</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-27 16:31:13 +0100</bug_when>
+            <thetext>moved to target 1.0.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20510</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-10-06 12:36:37 +0200</bug_when>
+            <thetext>Commited a working version that solves the sample application issue (see 
+qooxdoo-contrib/Bugs/1455), using the follow-static-initializer config setting.
+
+No circular dependencies in the framework are hit by this app, good. Have to 
+test the other apps for that.
+
+Also, there are no optimizations done for this solution. Esp. cache adaption 
+has to be done.
+
+With r23455.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20706</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-10-14 16:22:07 +0200</bug_when>
+            <thetext>I&#39;m closing this. The current implementation follows recursively static 
+initializers and other occasions where immediate function application &quot;lifts&quot; 
+run-time dependencies to load-time dependencies. The cache invalidation of this 
+information has been enhanced to account for changes in class files that have 
+been added as such recursive dependencies. The performance is quite good, 
+although the transitive load dependencies are calculated traversing parse 
+trees. The only thing here to watch out for is recursion depth.
+
+I had a shot at an alternative implementation (Class.dependencies1, under the 
+&quot;New interface&quot; heading), but it turned out to be awefully slow (2x slower on 
+empty cache, but in the range of 30x slower on full cache!). The idea was to 
+cache only &quot;shallow&quot; dependencies for each class (dependencies that are 
+immediately apparent in its source code). But not in the form of a few lists, 
+as it is now (&#39;load&#39;, &#39;run&#39;, &#39;ignore&#39;, ...), but in a more structured way that 
+allows you to access the dependencies of an individual class feature (like a 
+method), rather than just on the summary level. These shallow dependencies 
+would be easy to validate in the cache (freshness just depends on the 
+corresponding class file). When calculating transitive load dependencies, only 
+the shallow dependencies of each involved class have to be inspected, picking 
+the ones for the specific method I am interested in, and then follow those 
+dependencies. This way, transitive load dependencies would be generated 
+everytime afresh, which I thought would be a minor overhead given the 
+structured cache objects available for each class. 
+
+Unfortunately, I was wrong. I might do some profiling on this implementation if 
+I find time.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20707</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-10-14 16:22:46 +0200</bug_when>
+            <thetext>With r23524.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20942</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-10-28 15:37:19 +0200</bug_when>
+            <thetext>I&#39;m re-opening this, as I found a couple of issues:
+
+- The &#39;defer&#39; section was not included at all, in the transitive deps tracking; 
+this has been fixed. Thanks to the added &#39;defer&#39; tracking, other issues 
+surfaced.
+
+- When looking up class parents, the &#39;include&#39; member might be wrapped in a 
+qx.core.Variant.select call; this is now handled.
+
+- When tracing recursive dependencies, references to methods were always 
+followed, even if the method was not called (e.g only passed as a parameter); 
+method dependencies are now only included if the method is actually called. (Of 
+course this misses the case if the passed method is called in the function 
+where it is passed to, but that&#39;s a completely separate story, in terms of 
+tracking this).
+
+The current version fails to cache results of recursive deps tracking, as this 
+has to be re-thought. You cannot just cache results for e.g. a method when 
+those deps are treated differently depending on whether the method reference 
+was actually a call or not.
+
+The current version also spits out a lot of &quot;Skipping unknown class 
+dependency:...&quot; messages. Ignore this for now, I will tend to that soon.
+
+With r23616.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21019</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-02 17:17:58 +0100</bug_when>
+            <thetext>The current implementation does not cover these use cases:
+
+- Properties:
+This affects setter/getter in general, but particularly dependencies in &quot;apply&quot; 
+methods of a property setter which are not being picked up.
+
+- Features added in the constructor:
+Features not being present in the class map, but added in the constructor with 
+&#39;this.&lt;feature&gt; = &lt;value&gt;&#39; are not being picked up. This is particularly 
+relevant when &lt;value&gt; introduces further dependencies (e.g. is a function 
+definition or class instantiation), and a derived class uses &lt;feature&gt; in a 
+context that needs recursion (e.g. static initializer). Then the dependencies 
+of &lt;feature&gt; would be missed.
+
+Those cases might lead to unfullfilled dependencies showing up at load time in 
+the client.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21020</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-02 17:38:37 +0100</bug_when>
+            <thetext>(In reply to comment #20)
+&gt; The current implementation does not cover these use cases:
+&gt; 
+&gt; - Properties:
+&gt; This affects setter/getter in general, but particularly dependencies in 
+&quot;apply&quot;  methods of a property setter which are not being picked up.
+
+An example of this is qx.data.controller.Form, which uses setter methods in its 
+constructor. Both, setModel and setTarget, run through apply methods.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21027</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-03 10:29:11 +0100</bug_when>
+            <thetext>Closing this bug again, as the remaining issues seem to be settled now.
+
+With r23645.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21346</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-16 15:15:44 +0100</bug_when>
+            <thetext>Implementation note: Class-level dependencies
+
+The current implementation of the recursive analysis only includes the function 
+body dependencies of remote methods. But it is clear that a remote method (ie. 
+method not implemented by the current class) also requires the 
+load-dependencies of the remote *class itself* (ie. dependencies from static 
+initializers, defer section, asf.).
+
+In the current implementation, this omission is feasible. Method dependencies 
+are projected to class dependencies, so whenever a method requires a remote 
+method, the remote class will be required. When the remote class is later 
+included in the class sorting, its load dependencies are automatically honored, 
+so they don&#39;t have to be in the require list of the using class. Important for 
+the recursive analysis is the &quot;lifting&quot; of dependencies that were run-time 
+deps, to load-time deps, not load-time deps that already classified as such.
+
+There might be circumstances in the future where this changes. Maybe at one 
+point these class-level dependencies have to be included explicitly in the 
+recursive method analysis, to make sure all these deps are treated. I don&#39;t 
+think that static method removal (bug#4028) will require that already, as in 
+this case still the entire class is loaded, modulo some unused static methods, 
+so the automatic treatment of class-level deps still suffices.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21348</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-11-16 15:22:36 +0100</bug_when>
+            <thetext>Thomas, I&#39;m not sure if my question is relevant to this issue, but seems related...
+
+Let&#39;s say there&#39;s a large class A with many methods and statics. Now we have a method of some unrelated class B. The method of class B does not instantiate a Class A object, but does access one of Class A&#39;s static members. It seems that ideally that should cause the inclusion of the needed, single static definition from A into the build, but exclude all of the methods (and other statics) from A. 
+
+(This seems somewhat of the reverse of what you&#39;re discussing.)
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21351</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-16 15:51:22 +0100</bug_when>
+            <thetext>(In reply to comment #24)
+
+Derrell,
+
+&gt; Let&#39;s say there&#39;s a large class A with many methods and statics. Now we have a
+&gt; method of some unrelated class B. The method of class B does not instantiate a
+&gt; Class A object, but does access one of Class A&#39;s static members. It seems that
+&gt; ideally that should cause the inclusion of the needed, single static definition
+&gt; from A into the build, but exclude all of the methods (and other statics) from
+&gt; A. 
+
+I think this is what bug#4028 is all about. If this particular static member you are talking about were all that is ever used from class A throughout the application, you would still need to include the static with an enclosing class, as we cannot currently handle bare class features on their own, but only classes. So you would still have a &#39;qx.Class.define&#39; above it, and the recursive dependencies of the static, and prob. the defer section and its dependencies, as it is hard to guess what the defer is good for. So you are basically talking about taking the original class A and remove features that turn out to be unused. bug#4028 addresses this with some &#39;mark-and-sweep&#39; approach, marking all statics that are used throughout the application, and removing the remaining. The real difficulty lies in finding out what is really used :).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23000</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-02-28 15:08:52 +0100</bug_when>
+            <thetext>We discovered an additional case where run time dependencies are &quot;lifted&quot; to 
+load time dependencies, besides initializing class map members and the &#39;defer&#39; 
+section:
+
+- Event handlers, whos event is fired before all classes are loaded.
+
+Event handlers are mostly methods, so they only generate run-time dependencies. 
+If an event handler gets registered early and the corresponding event is fired 
+before all classes are loaded, run-time dependencies of such handler might not 
+be loaded yet. They are lifted to &quot;quasi-load-time deps&quot;. The issue largely 
+depends on *when* the corresponding event is fired, which in turn can largely 
+depend on the browser.
+
+Unfortunately, there are cases where the registration of such an event handler 
+is totally opaque for the generator, e.g. in the case of 
+qx.event.handler.Window, which registers a native load handler through its 
+constructor. But the constructor is called in event.Manager, looping through  
+an internal list of registered handler classes using &quot;new clazz(this)&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23232</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-11 14:45:45 +0100</bug_when>
+            <thetext>It appears that I&#39;ve overlooked method calls in top-level position (like the 
+very obvious qx.Class.define(...);) as load time references that require 
+recursive dependency analysis.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23233</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-11 14:54:19 +0100</bug_when>
+            <thetext>Added checking of top-level function calls to the recursive load deps analysis.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23327</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-03-16 15:58:51 +0100</bug_when>
+            <thetext>The recursive checking of top-level function calls incures a time penalty that 
+is most visible when building Demobrowser.
+
+There is a mild time penalty (~12%) when calculating the dependencies (cache 
+misses), due to more occurrences that are now being checked.
+
+But a more severe penalty shows up afterwards, on reading the cached dependency 
+information from cache (cache hits). It appears that (un)pickling the larger 
+amount of DependencyItem() class instances is responsible for the addtional 
+time. The number of DepsItems per application is roughly 4-fold, as is the time 
+spent in cache reads.
+
+This shows in Demobrowser, where building a demo (that nearly always gets its 
+deps from cache hits), takes approx. 0.4 secs longer on my machine. Given 
+roughly 750 demo apps to build, this amounts to 5min it takes longer in total, 
+which is like 55% slower for me. This goes on top of the initial 12%.
+
+I&#39;m leaving it at that for the moment, as I don&#39;t see a good way to work around 
+that. I need the information in the DepsItems (especially with regard to future 
+method pruning). I don&#39;t think it is of any gain to do the (de)serializing by 
+hand, so that the classInfo map would only contain strings (which would 
+probably be faster for Pickle); I would re-instantiate the DepsItem objects 
+myself, just what Pickle does, and Pickle does it in C.
+
+With r25725</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39200</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:41 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>360</attachid>
+            <date>2008-10-08 09:35:00 +0200</date>
+            <delta_ts>2008-10-08 09:35:41 +0200</delta_ts>
+            <desc>Test script demonstrating the problem</desc>
+            <filename>Application.js</filename>
+            <type>application/x-javascript</type>
+            <size>465</size>
+            <attacher>ged</attacher>
+            
+              <data encoding="base64">cXguQ2xhc3MuZGVmaW5lKCJ0ZXN0cXguQXBwbGljYXRpb24iLAp7CiAgZXh0ZW5kIDogcXguYXBw
+bGljYXRpb24uU3RhbmRhbG9uZSwKCiAgc3RhdGljczogewogICAgSVNPXzg2MDFfRk9STUFUOiBu
+ZXcgcXgudXRpbC5mb3JtYXQuRGF0ZUZvcm1hdCgieXl5eS1NTS1kZCIpCiAgfSwKCiAgbWVtYmVy
+cyA6CiAgewogICAgbWFpbiA6IGZ1bmN0aW9uKCkKICAgIHsKICAgICAgdGhpcy5iYXNlKGFyZ3Vt
+ZW50cyk7CgovLyAgICAgIHZhciBkYXRlX2Zvcm1hdCA9IG5ldyBxeC51dGlsLmZvcm1hdC5EYXRl
+Rm9ybWF0KCJ5eXl5LU1NLWRkIik7CiAgICAgIHZhciBkYXRlX2Zvcm1hdCA9IHRoaXMuc2VsZihh
+cmd1bWVudHMpLklTT184NjAxX0ZPUk1BVDsKCiAgICAgIHRoaXMuZ2V0Um9vdCgpLmFkZChuZXcg
+cXgudWkuZm9ybS5CdXR0b24oIkJ1dHRvbiIpLCB7bGVmdDogMTAwLCB0b3A6IDUwfSk7CiAgICB9
+CiAgfQp9KTsK
+</data>
+
+          </attachment>
+      
+
+    </bug>

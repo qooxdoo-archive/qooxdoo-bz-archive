@@ -1,0 +1,137 @@
+<bug>
+          <bug_id>9256</bug_id>
+          
+          <creation_ts>2016-03-11 12:30:00 +0100</creation_ts>
+          <short_desc>qx.data.controller.Object binding breaks</short_desc>
+          <delta_ts>2016-03-11 12:30:37 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>UNCONFIRMED</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          
+          <reporter name="Patrick Fischer">admin</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>43715</commentid>
+            <who name="Patrick Fischer">admin</who>
+            <bug_when>2016-03-11 12:30:37 +0100</bug_when>
+            <thetext>I tooks hours to catch a stupid bug inside object controller:
+Using propertyChains like &#39;target.modelSelection[0]&#39; in the controller could break down you application when the controller property &#39;model&#39; becomes &#39;null&#39; value. 
+
+Maybe related to these SingleValueBinding class changes:
+https://github.com/qooxdoo/qooxdoo/commit/3591cec4f3831b79b36bba844f41b9124c2aa2ff
+https://github.com/qooxdoo/qooxdoo/commit/0249bd9f6f2b4b7bbe7df4fc1a5b062ea968a92b
+
+Example for playground (shorten url doesnt work):
+
+var doc = this.getRoot();
+
+// data
+var listData = [
+  { animal : &#39;cat&#39;, extremities : &#39;4-0&#39; },
+  { animal : &#39;dog&#39;, extremities : &#39;4-0&#39; },
+  { animal : &#39;human&#39;, extremities : &#39;2-2&#39; },
+  { animal : &#39;spider&#39;, extremities : &#39;8-0&#39; }
+];
+
+// data =&gt; model
+var listModel = qx.data.marshal.Json.createModel(listData);
+
+// list with model data
+var list = new qx.ui.list.List(listModel).set({
+  labelPath : &#39;animal&#39;,
+  height : 120,
+  width : 180
+});
+doc.add(list, { left:10, top:10 });
+
+// btn to empty selection of list
+var btn = new qx.ui.form.Button(&quot;empty list selection&quot;);
+doc.add(btn, { left:10, top:140 });
+btn.addListener(&#39;execute&#39;, function() {
+var selArr = this.getSelection();
+selArr.removeAll();
+this.setSelection(selArr);
+}, list);
+
+// object controller holds list selection
+var objectCntr = new qx.data.controller.Object();
+list.bind(&quot;selection[0]&quot;, objectCntr, &quot;model&quot;);
+
+// data
+var boxData = [
+  { name : &#39;2 legs and 2 arms&#39;, extremities : &#39;2-2&#39; },
+  { name : &#39;4 legs&#39;, extremities : &#39;4-0&#39; },
+  { name : &#39;8 legs&#39;, extremities : &#39;8-0&#39; }
+]
+
+// data =&gt; model
+boxModel = qx.data.marshal.Json.createModel(boxData);
+    
+// list controller for selectBox
+var listCntr = new qx.data.controller.List(boxModel, null).set({
+  delegate : {
+    bindItem : function(controller, item, id) {
+      controller.bindProperty(&quot;name&quot;, &quot;label&quot;, null, item, id);
+      controller.bindProperty(&quot;extremities&quot;, &quot;model&quot;, null, item, id);
+    }
+  }
+});
+
+// display and change &#39;name&#39; value of selected list entry
+var field = new qx.ui.form.TextField().set({
+  liveUpdate : true,
+  width : 180
+});
+doc.add(field, { left:10, top:180 }); 
+objectCntr.bind(&quot;model&quot;, field, &quot;enabled&quot;, { converter : function(value) {  return !!value; } } );
+objectCntr.addTarget(field, &quot;value&quot;, &quot;animal&quot;, true);
+
+// display and change &#39;data&#39; value of selected list entry
+var box = new qx.ui.form.SelectBox().set({
+  enabled : false,
+  width : 180
+});
+doc.add(box, { left:10, top:210 });
+objectCntr.bind(&quot;model&quot;, box, &quot;enabled&quot;, { converter : function(value) {  return !!value; } } );
+listCntr.setTarget(box);
+
+// ==&gt; works
+objectCntr.addTarget(box, &quot;modelSelection[0]&quot;, &quot;extremities&quot;, true);
+
+// ==&gt; doesnt works
+//objectCntr.addTarget(listCntr, &quot;target.modelSelection[0]&quot;, &quot;extremities&quot;, true);</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

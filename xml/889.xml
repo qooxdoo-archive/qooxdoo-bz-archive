@@ -1,0 +1,208 @@
+<bug>
+          <bug_id>889</bug_id>
+          
+          <creation_ts>2008-05-28 12:30:00 +0200</creation_ts>
+          <short_desc>Unable to completely deselect selected rows of a table</short_desc>
+          <delta_ts>2014-03-03 15:24:20 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>0.7.4</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Dietrich Streifert">dietrich.streifert</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>3076</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2008-05-28 12:30:59 +0200</bug_when>
+            <thetext>It is not possible to completely deselect all selected rows in a 
+qx.ui.table.Table so the table forgets all information of a previous 
+selection.
+
+Calling qx.ui.table.Table deselction by using this.getSelectionModel().clearSelection() still leaves the previous selected row in the &quot;selected but not focused&quot; state.
+
+The information about the selected row is spread over four classes  :-( 
+
+qx.ui.table.Table
+qx.ui.table.selection.Manager
+qx.ui.table.pane.Pane
+qx.ui.table.pane.Scroller
+
+The following code parts should reset the selection information to the 
+initial state:
+
+1. qx.ui.table.Table: the constructor contains the following initial code:
+
+    this._focusedCol = 0;
+    this._focusedRow = 0;
+
+2. qx.ui.table.selection.Manager: the clearSelection method call should 
+be sufficient.
+
+3. qx.ui.table.pane.Pane: the _focusedCol and _focusedRow attributes are 
+uninitialized so we have to delete them.
+
+4. qx.ui.table.pane.Scroller: : the _focusedCol and _focusedRow 
+attributes are uninitialized so we have to delete them.
+
+The design should be optimised as follows:
+
+1. Just have one location where focused row information ist stored.
+2. Make it possible to clear the focused row easily!
+3. Disable keyboard handling of left/right key if focused row isn&#39;t shown.
+
+This should be discussed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3077</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2008-05-28 12:33:07 +0200</bug_when>
+            <thetext>As a workarround the following method should be implemented in qx.ui.table.Table:
+
+    /**
+     * Clear the selection state of the table
+     *
+     * @type member
+     * @return {void} 
+     */
+    clearSelection : function()
+    {
+      var selectionModel = this.getSelectionModel();
+      
+      if(selectionModel.isSelectionEmpty()) return;
+      
+      this._focusedCol = 0;
+      this._focusedRow = 0;
+
+      var scrollerArr = this._getPaneScrollerArr();
+
+      for (var i = 0; i &lt; scrollerArr.length; i++) {
+        delete scrollerArr[i]._focusedRow;
+        delete scrollerArr[i]._focusedCol;
+
+        delete scrollerArr[i]._tablePane._focusedRow;
+        delete scrollerArr[i]._tablePane._focusedCol;
+      }
+
+      selectionModel.clearSelection();
+    },
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3833</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-07-11 15:22:56 +0200</bug_when>
+            <thetext>This is mainly an enhancement. Out of the timeframe of 0.8.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3917</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-07-17 13:00:31 +0200</bug_when>
+            <thetext>I don&#39;t think this is an enhancement. It causes serious problems when reloading a table with new data, re-using instances. A deep knowledge of the internals of qooxdoo is required to de-select an old instance.
+
+See the original posting at http://www.nabble.com/How-do-I-completely-deselect-all-rows-of-aa-table--tt17493312.html#a17493312
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3918</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2008-07-17 13:06:27 +0200</bug_when>
+            <thetext> (In reply to comment #3)
+&gt; I don&#39;t think this is an enhancement. It causes serious problems when reloading
+&gt; a table with new data, re-using instances. A deep knowledge of the internals of
+&gt; qooxdoo is required to de-select an old instance.
+
+Yes, this should be handled as a bug.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4162</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-08-05 11:14:21 +0200</bug_when>
+            <thetext>At one point I really would like to move the information about the focused row into the selection manager. Right now we have some really ugly places in the table where one code path goes through the selection manager, fires a change event and updates the UI and the other code path update the position of the focused cell directly.
+
+As an intermediate solution I don&#39;t want to mangle focus and selection as in the proposed patch because right now both concepts are totally unrelated in the table. I suggest to add something like &quot;resetCellFocus&quot; method. Together with &quot;selectionModel.clearSelection();&quot; this would completely reset focus and selection.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4165</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2008-08-05 11:18:49 +0200</bug_when>
+            <thetext> (In reply to comment #5)
+&gt; I suggest to add something like &quot;resetCellFocus&quot; method. Together with
+&gt; &quot;selectionModel.clearSelection();&quot; this would completely reset focus and
+&gt; selection.
+
+This solution is good. Anyway: please consider creating the method clearSelection in qx.ui.table.Table. It&#39;s named what it&#39;s doing: clear the selection.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4212</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-08-07 11:00:54 +0200</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4213</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-08-07 12:00:55 +0200</bug_when>
+            <thetext>fixed 0.8 trunk in rev. 15310 </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4214</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2008-08-07 12:02:38 +0200</bug_when>
+            <thetext>@Fabian: Please consider backporting this to legacy_0_7_x. That would be great!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4225</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-08-07 15:38:17 +0200</bug_when>
+            <thetext>I have backported the fix. Dietrich can you please verify that it is working as expected?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>4227</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2008-08-07 15:50:32 +0200</bug_when>
+            <thetext>Thank you Fabian. It works perfekt!
+
+Verified for legacy_0_7_x.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38350</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:20 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

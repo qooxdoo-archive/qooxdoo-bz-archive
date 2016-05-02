@@ -1,0 +1,95 @@
+<bug>
+          <bug_id>1560</bug_id>
+          
+          <creation_ts>2008-11-07 23:16:00 +0100</creation_ts>
+          <short_desc>Filtered Table Model does not Restore values more than once.</short_desc>
+          <delta_ts>2008-12-01 15:56:22 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>0.8.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://demo.qooxdoo.org/current/demobrowser/#table~Table_Filtered_Model.html</bug_file_loc>
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Dan Hummon">hummon+qooxdoo</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>christian.hagendorn</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>6178</commentid>
+            <who name="Dan Hummon">hummon+qooxdoo</who>
+            <bug_when>2008-11-07 23:16:00 +0100</bug_when>
+            <thetext>In the filtered table model, if you hide rows, show all rows, and hide rows a second time, the second time you press the show all button, the table rows do not reset for some reason. Firebug does not give an error, the rows simply do not display. I have tested in Safari and Firefox 3.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6231</commentid>
+            <who name="Dan Hummon">hummon+qooxdoo</who>
+            <bug_when>2008-11-11 10:26:51 +0100</bug_when>
+            <thetext>I think what&#39;s happening with this bug is:
+
+(1) The full table data is being saved into the this.__fullArr array when the table is created.
+(2) Values are hidden.
+(3) All rows are restored by this.setData(this.__fullArr); on line 356 of Filtered.js
+(!) This sets the master array to this.__fullArr instead of what it should be, a copy.
+(4) More values are hidden, actually removing them from this.__fullArr instead of from a copy.
+(5) Additional requests to reset the table value fail because the full array has been altered.
+
+I suggest changing line 356 from:
+this.setData(this.__fullArr);
+to:
+this.setData(this.__fullArr.slice());
+
+This way the this.__fullArr array is always preserved. I think the setData method may also need to be overridden something like this to make sure filters are cleared properly:
+
+    setData : function(rowArr, clearSorting)
+    {
+      this.__fullArr = rowArr.slice();
+      this.Filters = [];
+      this.base(arguments, rowArr, clearSorting);
+    }
+
+Let me know if you need any more info from me.
+
+-Dan</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6235</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-11-11 10:54:02 +0100</bug_when>
+            <thetext>fixed in trunk (rev. 16637) and legacy 0.7 (16638).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6564</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-12-01 15:56:22 +0100</bug_when>
+            <thetext>*** Bug 1565 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

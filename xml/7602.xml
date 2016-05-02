@@ -1,0 +1,182 @@
+<bug>
+          <bug_id>7602</bug_id>
+          
+          <creation_ts>2013-07-29 09:52:00 +0200</creation_ts>
+          <short_desc>generator does &quot;lowercase&quot; image-ids / paths</short_desc>
+          <delta_ts>2014-03-03 15:28:00 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>3.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>3.0.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Peter Schneider">schnepe2</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>qooxdoo</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>33495</commentid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2013-07-29 09:52:31 +0200</bug_when>
+            <thetext>When running &quot;generate images&quot; with a migrated qooxdoo 3.0, the generated
+meta-file seems to contain only lowercase file-names.
+
+This wasn&#39;t the case before and I think it might be problematic on *NIX
+Systems.
+
+For example one entry in &quot;tree.meta&quot; was:
+&quot;app/tree/driverGroup-1.png&quot;: [16, 16, &quot;png&quot;, &quot;app/combined/tree.png&quot;, -64, 0]
+but is now:
+&quot;app/tree/drivergroup-1.png&quot;: [16, 16, &quot;png&quot;, &quot;app/combined/tree.png&quot;, -64, 0]
+          ^^^^^^^^^^^^^--- note the case-change here!
+
+*All* my @asset() hints are in CamelCase [ @asset(app/tree/driverGroup-1.png)
+                                           in our example case]</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33496</commentid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2013-07-29 09:55:54 +0200</bug_when>
+            <thetext>The according part of the config.json looks like this:
+
+------------------------------------------------------------------------------
+{
+  &quot;export&quot; : [ &quot;image-combine&quot; ],
+  &quot;let&quot; :
+  {
+    &quot;RESPATH&quot; : &quot;source/resource&quot;,         // resource path
+    &quot;COMBINED&quot; : &quot;${RESPATH}/app/combined&quot; // common output path
+  },
+  &quot;jobs&quot; :
+  {
+    &quot;image-combine&quot; :
+    {
+      &quot;extend&quot; : [ &quot;local-common&quot; ],
+      &quot;combine-images&quot; :
+      {
+        &quot;montage-cmd&quot; : &quot;montage @%(tempfile)s -geometry +0+0 -gravity NorthWest -tile %(orientation)s -background None %(combinedfile)s&quot;,
+
+        &quot;images&quot; :
+        {
+          // ...
+
+          &quot;${COMBINED}/tree.png&quot; :
+          {
+            &quot;prefix&quot; : [ &quot;${RESPATH}&quot; ],
+            &quot;input&quot; :
+            [
+              {
+                &quot;prefix&quot; : [ &quot;${RESPATH}&quot; ],
+                &quot;files&quot; : [ &quot;${RESPATH}/app/tree/*.png&quot; ]
+              }
+            ]
+          },
+
+          // ...
+
+        }
+      }
+    },
+
+    &quot;local-common&quot; : {
+      &quot;cache&quot; : {
+        &quot;compile&quot; : &quot;${CACHE}&quot;
+      }
+    }
+  }
+}
+------------------------------------------------------------------------------</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33578</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-08-07 11:15:44 +0200</bug_when>
+            <thetext>Please run a ./generate.py info in your project and post the output here.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33580</commentid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2013-08-07 13:33:28 +0200</bug_when>
+            <thetext>
+----------------------------------------------------------------------------
+    Initializing: frontend2
+----------------------------------------------------------------------------
+&gt;&gt;&gt; Processing configuration
+
+----------------------------------------------------------------------------
+    Executing: info
+----------------------------------------------------------------------------
+&gt;&gt;&gt; Environment information
+  - Platform: Windows 7 6.1.7601 SP1
+  - Python version: 2.7.2 (default, Jun 24 2011, 12:22:14) [MSC v.1500 64 bit (AMD64)]
+  - qooxdoo path: d:\psv3\infoDesk\infoDesk30\05-WEB\frontend2\qooxdoo
+  - Framework version: 3.0.1
+  - Kit looks OK: True
+  - Looking for generated versions...
+    - Build version generated: True
+    - Source version generated: True
+  - Cache settings
+    - Compile cache path is: c:\users\ps8821~1.lyn\appdata\local\temp/qx3.0.1/cache
+      - Existing directory: True
+      - Cache file revision: 200389062
+      - Elements in cache: 4411
+    - Download cache path is: c:\users\ps8821~1.lyn\appdata\local\temp/qx3.0.1/cache/downloads
+      - Existing directory: False
+&gt;&gt;&gt; Done (0m00.07)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33581</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-08-07 13:59:20 +0200</bug_when>
+            <thetext>The issue was actually Windows-specific so didn&#39;t affect Posix platforms. The 
+Generator is now more careful when comparing paths under Windows to do this 
+case-insensitively but only for the compare operations, and when returning 
+results to stick to the original capitalization. Please check on your side.
+
+master:   3a3158d99e0098f1516888fd979d9c625e87da81
+3.0.x:    dcb861a0853e8d501fdad5eae7cb4285233d8989</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33585</commentid>
+            <who name="Peter Schneider">schnepe2</who>
+            <bug_when>2013-08-07 17:56:30 +0200</bug_when>
+            <thetext>&gt; Please check on your side.
+
+Done! Works! Thanks!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39662</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:28:00 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

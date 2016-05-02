@@ -1,0 +1,179 @@
+<bug>
+          <bug_id>3843</bug_id>
+          
+          <creation_ts>2010-07-07 11:56:00 +0200</creation_ts>
+          <short_desc>qx.data.marshal.Json has possibly recursion problem</short_desc>
+          <delta_ts>2010-08-23 08:35:48 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.databinding</component>
+          <version>1.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>DUPLICATE</resolution>
+          <dup_id>3883</dup_id>
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Erol Demircan">edemircan</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>19167</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2010-07-07 11:56:26 +0200</bug_when>
+            <thetext>When I want to make a object &quot;t2&quot; with a reference to another object &quot;t1&quot; in it as a value for a property I see internal errors on my browser.
+
+Try the following situation plz.
+
+
+var t1 = qx.data.marshal.Json.createModel({prop1 : &quot;test string&quot;});
+var t2 = qx.data.marshal.Json.createModel({prop2 : t1});
+
+Result of this is a InternalError with too much recursion and no creation of object t2.
+
+It would not be an problem in &quot;normal&quot; use with only from json to object without any qooxdoo objects in it, but in my case i want to make a simple temporary object with a custom label and 2 data objects in it for the datacontroller of a list.
+
+
+Best regards,
+Erol Demircan</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19178</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-07-08 11:08:06 +0200</bug_when>
+            <thetext>Hello Erol,
+thanks for the report. I don&#39;t think thats an error of the marshaler itself, its just an wrong usage. Let me explain what your code is doing and why this is happening.
+
+First, you create the temporary object t1: The marshaler takes the given JavaScript object and creates a class for it, containing a property names prop1. After the class creation, it creates an instance of it and returns that. The instance of this qooxdoo class is a qooxdoo object which is, of course, also a javascript object but having a lot of additional information attached. 
+Your next step is to add this qooxdoo object to your new JavaScript object and convert this again to an qooxdoo class and instance of it. The marshaler now marshals the qooxdoo object including all its additional information to qooxdoo classes and instance which is just too much and ends in an error as you described.
+
+So if you want to have that t1 object for example in more than one other object, create the other object with null in that spot and set it manually.
+
+var t1 = qx.data.marshal.Json.createModel({prop1 : &quot;test string&quot;});
+var t2 = qx.data.marshal.Json.createModel({prop2 : null});
+t2.setProp2(t1);
+
+I guess thats the thing you tried to do?
+Regards,
+Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19180</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2010-07-08 14:08:46 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Hello Erol,
+&gt; thanks for the report. I don&#39;t think thats an error of the marshaler itself,
+&gt; its just an wrong usage. Let me explain what your code is doing and why this is
+&gt; happening.
+&gt; 
+&gt; First, you create the temporary object t1: The marshaler takes the given
+&gt; JavaScript object and creates a class for it, containing a property names
+&gt; prop1. After the class creation, it creates an instance of it and returns that.
+&gt; The instance of this qooxdoo class is a qooxdoo object which is, of course,
+&gt; also a javascript object but having a lot of additional information attached. 
+&gt; Your next step is to add this qooxdoo object to your new JavaScript object and
+&gt; convert this again to an qooxdoo class and instance of it. The marshaler now
+&gt; marshals the qooxdoo object including all its additional information to qooxdoo
+&gt; classes and instance which is just too much and ends in an error as you
+&gt; described.
+&gt; 
+&gt; So if you want to have that t1 object for example in more than one other
+&gt; object, create the other object with null in that spot and set it manually.
+&gt; 
+&gt; var t1 = qx.data.marshal.Json.createModel({prop1 : &quot;test string&quot;});
+&gt; var t2 = qx.data.marshal.Json.createModel({prop2 : null});
+&gt; t2.setProp2(t1);
+&gt; 
+&gt; I guess thats the thing you tried to do?
+&gt; Regards,
+&gt; Martin
+
+:) Yes it was, and I know that the qooxdoo object has a lot of information and especially a specific information attached to it an that that is the cause for the error. But that shouldn&#39;t be the reason why not to use it this way, the qooxdoo object could also be another object with a lot&#39;s of extra information in it, what&#39;s going to happen then?
+
+Setting it after wards is fine by me and I already used that yesterday but I would really like if this also could be possible.
+
+I looked at the Json.js file and it&#39;s easy to rewrite it so it could work. 
+
+I&#39;ve made a patch file could you look at it plz. It works for me and maybe you could apply it to so that others can use it as well.
+
+I will attach the file Json.patch as soon as over a minute.
+
+Regards,
+Erol</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19181</commentid>
+              <attachid>763</attachid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2010-07-08 14:09:56 +0200</bug_when>
+            <thetext>Created attachment 763
+It&#39;s a patch proposal</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19411</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-07-22 14:44:02 +0200</bug_when>
+            <thetext>Already fixed this issue with #3883.
+
+*** This bug has been marked as a duplicate of bug 3883 ***</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>763</attachid>
+            <date>2010-07-08 14:09:00 +0200</date>
+            <delta_ts>2010-07-08 14:09:56 +0200</delta_ts>
+            <desc>It&#39;s a patch proposal</desc>
+            <filename>Json.patch</filename>
+            <type>text/plain</type>
+            <size>1041</size>
+            <attacher>edemircan</attacher>
+            
+              <data encoding="base64">IyMjIEVjbGlwc2UgV29ya3NwYWNlIFBhdGNoIDEuMA0KI1AgUW9veGRvbw0KSW5kZXg6IFdlYkNv
+bnRlbnQvcW9veGRvby0xLjEtc2RrL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvZGF0YS9tYXJz
+aGFsL0pzb24uanMNCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT0NCi0tLSBXZWJDb250ZW50L3Fvb3hkb28tMS4xLXNkay9m
+cmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2RhdGEvbWFyc2hhbC9Kc29uLmpzCShyZXZpc2lvbiAx
+MTA1KQ0KKysrIFdlYkNvbnRlbnQvcW9veGRvby0xLjEtc2RrL2ZyYW1ld29yay9zb3VyY2UvY2xh
+c3MvcXgvZGF0YS9tYXJzaGFsL0pzb24uanMJKHdvcmtpbmcgY29weSkNCkBAIC0xMDIsNiArMTAy
+LDEwIEBADQogICAgICAqICAgdGhlIGJ1YmJsaW5nIG9mIGNoYW5nZSBldmVudHMgb3Igbm90Lg0K
+ICAgICAgKi8NCiAgICAgdG9DbGFzczogZnVuY3Rpb24oZGF0YSwgaW5jbHVkZUJ1YmJsZUV2ZW50
+cykgew0KKw0KKyAgICAgIC8vSWYgaXQncyBhIHFvb3hkb28gb2JqZWN0IGl0IGhhcyB0byBoYXZl
+IGEgY2xhc3MgOikgZG9lc24ndCBuZWVkIHRvIG1ha2UgYSBuZXcgb25lDQorICAgICAgaWYoZGF0
+YSBpbnN0YW5jZW9mIHF4LmNvcmUuT2JqZWN0KSByZXR1cm47DQorICAgICAgDQogICAgICAgLy8g
+YnJlYWsgb24gYWxsIHByaW1pdGl2ZSBqc29uIHR5cGVzDQogICAgICAgaWYgKA0KICAgICAgICAg
+cXgubGFuZy5UeXBlLmlzTnVtYmVyKGRhdGEpDQpAQCAtMjI1LDYgKzIyOSw3IEBADQogICAgICAq
+IEByZXR1cm4ge3F4LmNvcmUuT2JqZWN0fSBUaGUgY3JlYXRlZCBtb2RlbCBvYmplY3QuDQogICAg
+ICAqLw0KICAgICB0b01vZGVsOiBmdW5jdGlvbihkYXRhKSB7DQorICAgICAgaWYoZGF0YSBpbnN0
+YW5jZW9mIHF4LmNvcmUuT2JqZWN0KSByZXR1cm4gZGF0YTsNCiAgICAgICBpZiAoDQogICAgICAg
+ICBxeC5sYW5nLlR5cGUuaXNOdW1iZXIoZGF0YSkNCiAgICAgICAgIHx8IHF4LmxhbmcuVHlwZS5p
+c1N0cmluZyhkYXRhKQ0K
+</data>
+
+          </attachment>
+      
+
+    </bug>

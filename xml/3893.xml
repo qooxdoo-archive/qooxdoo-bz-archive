@@ -1,0 +1,135 @@
+<bug>
+          <bug_id>3893</bug_id>
+          
+          <creation_ts>2010-07-28 14:26:00 +0200</creation_ts>
+          <short_desc>Using static methods in interfaces not possible. Contradicts documentation.</short_desc>
+          <delta_ts>2010-07-30 08:44:52 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>1.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="marius123">marius-a</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          <cc>martin.wittemann</cc>
+    
+    <cc>qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>19465</commentid>
+            <who name="marius123">marius-a</who>
+            <bug_when>2010-07-28 14:26:15 +0200</bug_when>
+            <thetext>It is not possible to define static methods inside an interface, although it should be possible according to the Qooxdoo documentation.
+
+Example:
+
+qx.Interface.define(&quot;tt.IMyInterface&quot;, {
+  members: {	
+    someMethod: function() {}
+  },
+
+  statics: {
+    staticMethod: function(p) {}
+  }
+});
+
+This leads to the following error in Firebug:
+&quot;Invalid key &quot;staticMethod&quot; in interface &quot;tt.IMyInterface&quot;! Static constants must be all uppercase.&quot;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19471</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-07-28 15:37:49 +0200</bug_when>
+            <thetext>I suggest to correct the documentation. As the implementation shows, the intention was to only allow static fields (&quot;constants&quot;) not static methods to be part of an interface.
+
+Actually, that is exactly Java&#39;s behavior. For Java, I guess, that is merely a language design decision. In qooxdoo&#39;s case I could well imagine to allow static methods in an interface (think: contract). Don&#39;t see technical reasons that would prohibit that. 
+
+Of course, if this enhancement would be made for qooxdoo, the static methods would still be body-less, i.e. without implementation (unlike mixins would support). We&#39;d have to open a separate bug report for such an enhancement. CC&#39;d Martin, comments?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19496</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-07-29 08:36:56 +0200</bug_when>
+            <thetext>It&#39;s an interesting idea to have the static methods bodyless. Haven&#39;t thought of that ... 
+But having that could lead to problems with inheritance. Lets say an interface &#39;A&#39; demands an implementation of a static method named &#39;a&#39;. A Class &#39;B&#39; implementing &#39;A&#39; which means having a static method &#39;a&#39;. If a new class &#39;C&#39; subclasses &#39;B&#39;, &#39;C&#39; does not have the static method &#39;a&#39; which will break the contract of the interface &#39;A&#39; which &#39;C&#39; not even included.
+--&gt; not a good idea
+
+And what about having a static function with a body? It breaks the idea of &quot;contract&quot; as Andreas said. But my main reason not voting in favor of it is that I can&#39;t imagine a good use case where it could be helpful to have a method on the interface and exactly on the interface and not on a helper or an abstract baseclass. If something is needed, maybe an interface is the wrong construct.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19497</commentid>
+            <who name="marius123">marius-a</who>
+            <bug_when>2010-07-29 09:31:34 +0200</bug_when>
+            <thetext>Hi Martin,
+I can&#39;t follow your argument here. You said:
+&quot;If a new class &#39;C&#39; subclasses &#39;B&#39;, &#39;C&#39; does not have the static method &#39;a&#39;&quot;. 
+Why not? If &#39;C&#39; is a subclass of &#39;B&#39; it also inherits the static method &#39;a&#39; from &#39;B&#39;. Additionally, if &#39;B&#39; implements &#39;A&#39;, &#39;C&#39; must implement &#39;A&#39; because &#39;C&#39; is just a more specific &#39;B&#39;.
+So I think there are no conceptual things that would disallow static methods in interfaces but rather technical issues.
+
+You can find an interesting discussion on that matter here:
+http://www.jguru.com/faq/view.jsp?EID=88225
+Just scroll down to the comment of Alex Kinneer, which is very good, and forget the rest.
+
+(In reply to comment #2)
+&gt; It&#39;s an interesting idea to have the static methods bodyless. Haven&#39;t thought
+&gt; of that ... 
+&gt; But having that could lead to problems with inheritance. Lets say an interface
+&gt; &#39;A&#39; demands an implementation of a static method named &#39;a&#39;. A Class &#39;B&#39;
+&gt; implementing &#39;A&#39; which means having a static method &#39;a&#39;. If a new class &#39;C&#39;
+&gt; subclasses &#39;B&#39;, &#39;C&#39; does not have the static method &#39;a&#39; which will break the
+&gt; contract of the interface &#39;A&#39; which &#39;C&#39; not even included.
+&gt; --&gt; not a good idea
+&gt; 
+&gt; And what about having a static function with a body? It breaks the idea of
+&gt; &quot;contract&quot; as Andreas said. But my main reason not voting in favor of it is
+&gt; that I can&#39;t imagine a good use case where it could be helpful to have a method
+&gt; on the interface and exactly on the interface and not on a helper or an
+&gt; abstract baseclass. If something is needed, maybe an interface is the wrong
+&gt; construct.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19498</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2010-07-29 10:11:28 +0200</bug_when>
+            <thetext>Due to some svn checks I saw that a static method definition was never destined, so this behavior is by design.
+
+I talked also with Andreas and Martin, we think that we will keep the current implementation, because the behavior was based on the Java implementation.
+-&gt; I will correct the manual</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19510</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2010-07-29 16:14:21 +0200</bug_when>
+            <thetext>Corrected documentation.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

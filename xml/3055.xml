@@ -1,0 +1,167 @@
+<bug>
+          <bug_id>3055</bug_id>
+          
+          <creation_ts>2009-11-13 16:46:00 +0100</creation_ts>
+          <short_desc>Performance: Deprecate &quot;_disposeFields&quot;</short_desc>
+          <delta_ts>2009-11-24 20:16:36 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Fabian Jakobs">fabian.jakobs</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          <cc>info</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>14106</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-13 16:46:22 +0100</bug_when>
+            <thetext>The &quot;_disposeFields&quot; method is called a lot when disposing objects. This can be avoided by assigning directly to null:
+
+Instead of:
+
+this._disposeFields(&quot;foo&quot;, &quot;bar&quot;);
+
+we should ismply use
+
+this.foo = this.bar = null;
+
+
+This is way faster and more expressive than the function call. We should deprecate the &quot;qx.core.Object._disposeFields&quot; and &quot;qx.util.DisposeUtil.disposeFields&quot; and clean up the whole framework.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14107</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-11-13 16:59:57 +0100</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14108</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-11-13 17:57:03 +0100</bug_when>
+            <thetext>It might be interesting to say what&#39;s the issue here: Too many function calls. And function calls are expensive. 
+
+The negative effect might be that it&#39;s not optimal regarding size. I have seen a nice solution for better optimization lately where one creates a alias for &quot;this&quot; e.g. &quot;var self=this;&quot; This would be optimize compression when disposing a lot of fields.
+
+Another thing which might be interesting is if it&#39;s needed at all. I have the feeling that most of them are pretty useless. Maybe one should really do again some cases which stuff really needs to get disposed. Basically it&#39;s just true for DOM references. When reworking these things it might be good to reevaluate some of them. Especially in highly-frequented classes like Widget, and qx.html.Element etc.
+
+BTW: are you sure about not removing _disposeObjects as well. This is not so commonly used and the additional call to dispose() might also not be too complicated.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14109</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-13 18:50:44 +0100</bug_when>
+            <thetext>Sebastian, I share your doubts that most of the disposeFields calls are useless. The garbage collector should be able to release referenced arrays and maps automatically.
+
+Getting rid of disposeObjects seems to be a good idea as well. At least if only one or two objects have to be disposed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14111</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-14 09:57:31 +0100</bug_when>
+            <thetext>@chris
+
+please search for _disposeObjects calls with 1-3 arguments and replace them with separate dispose calls.
+
+Replace
+
+this._disposeObjects(&quot;foo&quot;, &quot;bar&quot;);
+
+with
+
+this.foo.dispose();
+this.bar.dispose();
+this.foo = this.bar = null;
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14112</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-14 10:00:50 +0100</bug_when>
+            <thetext>@sebastian:
+
+In qx.core.Object.dispose (line754ff) is a code block, which resets user values of all properties:
+
+      // remove all property references
+      var properties = qx.Class.getProperties(this.constructor);
+      for (var i = 0, l = properties.length; i &lt; l; i++) {
+        delete this[&quot;$$user_&quot; + properties[i]];
+      }
+      
+ In my profiling session this accounts for about 20% of the dispose time. Is this really needed? Wouldn&#39;t it be better to let the user dispose critical properties manually. I don&#39;t think there are many (if any) properties, which contain references to the DOM and only those have to be cleaned up. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14114</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-11-15 23:52:05 +0100</bug_when>
+            <thetext>I think you are right, Fabian. Not sure how to deal with it. Another performance tweak may be to use &quot;foo=null&quot; instead of &quot;delete&quot; which should be quite enough here. Maybe the deleting of the keys is already the most problematic thing. Not sure how to further optimize this afterwards. Maybe you can try to use the relatively fast typeof operator. This way it might be enough to only decouple typeof &quot;object&quot; values which may still be a few too much, but much better than at the moment.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14121</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-11-16 12:18:12 +0100</bug_when>
+            <thetext>@Chris:
+
+While changing the code, might you look at the data stored behind the variables as well. It might be the case that a lot of them are useless at all.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14142</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-11-16 19:17:23 +0100</bug_when>
+            <thetext>Deprecated _disposeFields and improved the destructors on trunk with rev. 20666.
+
+Fabian, should we open a separate bug report for _disposeObjects?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14248</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-11-20 13:57:26 +0100</bug_when>
+            <thetext>The _disposeObjects method has an optimization, which only dispose the passed objects, if the application is not in the shutdown phase. Due to we decided only to replace the _disposeFields methods.
+
+As discuss with Fabian -&gt; set to fixed. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14387</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-11-24 09:03:21 +0100</bug_when>
+            <thetext>-&gt; CLOSED</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14684</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:16:36 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

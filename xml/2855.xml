@@ -1,0 +1,125 @@
+<bug>
+          <bug_id>2855</bug_id>
+          
+          <creation_ts>2009-09-28 12:00:00 +0200</creation_ts>
+          <short_desc>Add support for \escapes in tr() and .po files</short_desc>
+          <delta_ts>2014-03-03 15:26:42 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>0.8.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P5</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0-beta1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>12692</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-09-28 12:00:50 +0200</bug_when>
+            <thetext>Backslash escapes are an important part of int&#39;lized strings. While the default 
+should be true unicode/utf-8 encoded strings both in JS sources and .po files, 
+you wouldn&#39;t want to prohibit backslash-escaped sequences embedded in strings. 
+E.g. you want both developers and translators to be able to enter hard-to-type 
+characters in Unicode escapes, like &quot;\u00ae&quot; for the &quot;Registered&quot; (r-in-cycle) 
+character, or to use \&quot; to embed a double-quoted string. Both is not possible 
+currently, as backslashes are doubled in .po files.
+
+This concerns both the reading of tr() string literals from the JS source, as 
+well as reading and writing msg id&#39;s and strings from and to .po files.
+
+This mainly affects polib and simplejson, which both treat \escapes. I think a 
+good strategy would be to *parse* i18n strings read from .js or .po files into 
+internal Python strings. This would translate esp. \uXXXX escapes into internal 
+unicode representations. On write, these characters would be properly UTF-8 
+encoded, rather than backslash-escaped, and both simplejson and polib would 
+have to mess with them (This would mean that both keys and translations in the 
+.po files would change!).
+
+[Ref. internal bug #5829]</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12791</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-01 13:54:44 +0200</bug_when>
+            <thetext>The solution now actually retains \escapes, rather than transforming them into 
+genuin Unicode characters. Backslash escape sequences are read in from both .js 
+and .po files, and reproduced on output (generated script.js and .po files). 
+This is to better support editors/translators, which might want to manage 
+\escaped strings, and to comply with the principle of least surprise.
+
+In order to achieve that I 
+- patched polib
+- post-process simplejson.dumps output
+
+I removed handling of &#39;\&#39; and &#39;&quot;&#39; characters in polib. It tried post-processing 
+here, too, but got weird results, as msgid&#39;s and msgstr&#39;s differed in their use 
+of additional \escapes (!). Removing these characters from the 
+&quot;escape()&quot;/&quot;unescape()&quot; functions of polib solved that. I wrote David (polib 
+maintainer) about it, but haven&#39;t heard back so far. There was no corresponding 
+bug in the polib bug tracker so far, and I might open one later.
+
+simplejson.dumps() recovery could be done on the returned string, so I didn&#39;t 
+have to change the module. Similar to polib, backslashes are escaped, as are 
+double-quotes, so &#39;\&quot;&#39; turned into &#39;\\\&quot;&#39; which had to be undone. Both simple 
+escape sequences like &#39;\x...&#39; or &#39;\u...&#39;  as well as &#39;\&quot;&#39; are now working.
+
+There might still be cases I haven&#39;t thought of, will have to see what comes up.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13088</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-12 12:28:09 +0200</bug_when>
+            <thetext>down prio, as the implementation seems to work fine, but left open as part of 
+this implementation are (hackish) changes to polib; i wrote to Daniel about it, 
+but haven&#39;t heard back, but would like to clarify this before closing this bug</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13370</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-10-20 16:37:28 +0200</bug_when>
+            <thetext>Resolving this one, and passing the polib issue to its own bug (#2958).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14598</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:15:51 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0-beta1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39206</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:42 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

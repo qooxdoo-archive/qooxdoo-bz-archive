@@ -1,0 +1,186 @@
+<bug>
+          <bug_id>3182</bug_id>
+          
+          <creation_ts>2009-12-04 16:05:00 +0100</creation_ts>
+          <short_desc>The property qx.$$packageData[&#39;...&#39;] of a subpart repeats all the qx resources that are already contained in the boot part</short_desc>
+          <delta_ts>2010-08-19 08:14:34 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>app</component>
+          <version>1.0-beta1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          <keywords>Performance</keywords>
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>15313</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2009-12-04 16:05:42 +0100</bug_when>
+            <thetext>I have defined two parts for my qooxdoo application:
+- a &quot;boot&quot; part that contains all the qooxdoo classes
+- and a &quot;widget&quot; part that only contains the widget classes
+
+The script &quot;generate.py build&quot; now generates two javascript files.
+The java script file for the widget part contains the following line, that is about 40.000 characters long:
+qx.$$packageData[&#39;165c69e0c40a&#39;]={&quot;resources&quot;:{&quot;qx/decoration/Modern/arrows/forward.png&quot;:...
+
+I am now wondering why javascript file for the part &quot;widget&quot; contains all the qooxdoo ressources that are already contained in the boot part.
+Because there are so many qooxdoo resources, the javascript file for the widget part is 45 KBytes large; without these duplicate resources, the javascript file would only have a size of 2 KBytes.
+
+Why do we need these duplicate 40 KBytes? Is there a way to remove the duplicate data?
+
+The file config.json contains the following lines:
+  &quot;jobs&quot; :
+  {
+    &quot;build-script&quot; :
+    {
+      &quot;packages&quot; :
+		  {
+		    &quot;parts&quot;  :
+		    {
+          &quot;boot&quot;     : { &quot;include&quot;: [&quot;qx.ui.*&quot;, &quot;qx.theme.modern.Appearance&quot;, &quot;qx.application.Standalone&quot;] },
+          &quot;widget&quot;     : { &quot;include&quot;: [&quot;external_widget.*&quot;], 
+                            &quot;packages&quot; : [&quot;boot&quot;], &quot;expected-load-order&quot;: 2 }
+		    }
+		  }
+    }
+  }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15382</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-12-07 16:24:56 +0100</bug_when>
+            <thetext>Thomas, this probably isn&#39;t by intention? I&#39;m targeting 1.0 for now, but if this is rather an uncritical enhancement we&#39;d address and ship after the final, you may move this to a future target.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15394</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-12-07 18:28:17 +0100</bug_when>
+            <thetext>&gt; I am now wondering why javascript file for the part &quot;widget&quot; contains all the 
+qooxdoo ressources that are already 
+&gt; contained in the boot part.
+
+Well, it&#39;s sort of by design. Resources needed by a package are registered with 
+that package. If two packages need the same resource, it is registered in each 
+of them. There is currently no attempt made to deal with resources used across 
+multiple packages during the generation process, which would be fragile in 
+general as it needed to rely on the load order (There could be made an 
+exception for the &#39;boot&#39; part, as it is always loaded first, but see further).
+
+&gt; Because there are so many qooxdoo resources, the javascript file for the 
+widget part is 45 KBytes large; without 
+&gt; these duplicate resources, the javascript file would only have a size of 2 
+KBytes.
+
+In that particular case it looks like either poor part design, or gratuitously 
+requiring resources in different classes with #asset.
+
+&gt; Is there a way to remove the duplicate data?
+
+You mean other than by hand ;-). Yes: clean up parts and classes (see further):
+
+&gt;  &quot;jobs&quot; :
+&gt;  {
+&gt;     &quot;build-script&quot; :
+&gt;     {
+&gt;       &quot;packages&quot; :
+&gt;       {
+&gt;         &quot;parts&quot;  :
+&gt;         {
+&gt;              &quot;boot&quot;     : { &quot;include&quot;: [&quot;qx.ui.*&quot;, 
+&quot;qx.theme.modern.Appearance&quot;, &quot;qx.application.Standalone&quot;] },
+
+You shouldn&#39;t inlcude &quot;qx.ui.*&quot;. In fact, other than a theme class you should 
+never reference framework classes directly in parts. Classes from the qx name 
+space should be added automatically by the dependency analysis, else you are 
+overloading the part with unnecessary classes, or necessary classes are 
+missing. The appearance class is ok, although you might want to use the meta 
+theme, &quot;qx.theme.Modern&quot;. I don&#39;t know why you are including 
+qx.application.Standalone, but what&#39;s entirely missing is your application 
+class (something like &quot;myapp.Application&quot;).
+
+In general, use application classes to partition your application, not 
+framework classes.
+
+&gt;              &quot;widget&quot;  : { &quot;include&quot;: [&quot;external_widget.*&quot;], 
+
+The problem lies probably with this &quot;external_widget.*&quot;. Is this class pattern 
+including a class that does something like &quot;#asset(qx/decoration/modern/*)&quot;?! 
+Then it takes no wonder why this part would be overloaded with resource info. 
+You should never require resources in a custom class that are already included 
+by a framework class. If you have your own theme, inherit from e.g  
+qx.theme.Modern without #asset&#39;ing any resources. If you are doing an entirely 
+new theme and whant to re-use the framework resources, #asset them but *don&#39;t* 
+inherit from qx.theme.Modern. - In short: There is no sensible need to #asset 
+resources twice (in framework and in custom code), so don&#39;t do it.
+
+&gt;                                &quot;packages&quot; : [&quot;boot&quot;], 
+
+This (&quot;packages&quot; : [&quot;boot&quot;]), btw, is a weird entry in this key. I think you 
+should remove it.
+
+&gt;                                &quot;expected-load-order&quot;: 2 
+
+It doesn&#39;t make much sense to assign an expected-load-order:2 when there is no 
+part with expected-load-order:1 (although it doesn&#39;t hurt). The &#39;boot&#39; part has 
+implicitly load-order:0, and since there is only this other part, its load 
+order is pretty clear :-).
+
+&gt;                              }
+&gt;         }
+&gt;      }
+&gt;   }
+&gt; }</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15721</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-12-11 11:31:27 +0100</bug_when>
+            <thetext>mass move to 1.0.1</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16478</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-27 16:30:38 +0100</bug_when>
+            <thetext>moved to target 1.0.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19895</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2010-08-18 14:31:09 +0200</bug_when>
+            <thetext>This bug report was associated to a 8 months old qooxdoo-version (pre-1.0).
+We did not get the information that the bug was fixed, but this problem did not occur after we have updated to the newest qooxdoo version.
+Therefore I recommend to make this issue obsolete.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,117 @@
+<bug>
+          <bug_id>1651</bug_id>
+          
+          <creation_ts>2008-11-27 17:15:00 +0100</creation_ts>
+          <short_desc>Socket error in generator.py when using Windows Vista.</short_desc>
+          <delta_ts>2014-03-03 15:22:51 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>0.8</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christian Hagendorn">christian.hagendorn</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>6534</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-11-27 17:15:56 +0100</bug_when>
+            <thetext>If the Python version isn&#39;t  installed for &quot;all User&quot;. The script stopped with an error.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6535</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-11-27 17:27:43 +0100</bug_when>
+            <thetext>Traceback (most recent call last):
+  File &quot;C:\qooxdoo-0.8-sdk\tool\bin\generator.py&quot;, line 25, in &lt;module&gt;
+    from generator.Generator import Generator
+  File &quot;C:\qooxdoo-0.8-sdk\tool\pylib\generator\Generator.py&quot;, line 23, in &lt;modu
+le&gt;
+    import urllib
+  File &quot;C:\Python26\lib\urllib.py&quot;, line 26, in &lt;module&gt;
+    import socket
+  File &quot;C:\Python26\lib\socket.py&quot;, line 46, in &lt;module&gt;
+    import _socket
+ImportError: DLL load failed: The application has failed to start because its si
+de-by-side configuration is incorrect. Please see the application event log for
+more detail.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6536</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2008-11-27 17:34:35 +0100</bug_when>
+            <thetext>The problem pertains to permission issues when importing urllib (which in turn
+imports _socket, which seems to be the real issue).
+
+So a way of working around that and to ensure graceful degradation is to work
+around using urllib in the generator.
+
+There are only two places where urllib is used. The more important is in
+ContribLoader.py. This could be fixed with the following code in
+Config._download_contrib():
+
+        try:
+            import urllib    # check if we can load urllib, this might be an
+issue under Vista
+        except ImportError:
+            raise RuntimeError, &quot;There is an issue with your Python
+installation. You will not be able to use &#39;contrib://&#39;-style libraries&quot;
+
+        # if this goes through, we can safely import and use ContribLoader
+        from generator.action.ContribLoader import ContribLoader
+
+The other occurence is Generator.generateLibInfoCode(), which just uses
+urllib.quote to properly url-encode URIs. Selective import doesn&#39;t help,
+_socket is tried anyway (&quot;from urllib import quote&quot;).
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7878</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-02-17 19:30:53 +0100</bug_when>
+            <thetext>This seems only to be a problem for the Windows Python distribution from http://python.org . After this original bug has been filed, it is now recommended to use the excellent ActivePython distribution for Windows. This is the Python package for Windows that is the supported by default. It also includes a trivial setup wizard that automatically creates the appropriate environment (i.e. PATH variable, etc.).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>13872</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-04 23:18:00 +0100</bug_when>
+            <thetext>mass correction: set previously unspecified target milestone to 0.8.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37831</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:51 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

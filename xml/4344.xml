@@ -1,0 +1,89 @@
+<bug>
+          <bug_id>4344</bug_id>
+          
+          <creation_ts>2010-11-18 15:37:00 +0100</creation_ts>
+          <short_desc>List does not scroll selected item into view under some circumstances</short_desc>
+          <delta_ts>2011-06-21 07:21:41 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>1.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.3.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Daniel Wagner">daniel.wagner</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21404</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-11-18 15:37:49 +0100</bug_when>
+            <thetext>If a ListItem is removed from a ui.form.List and then added to another list (or even the original list), selecting it does not cause the list to scroll it into view.
+
+This Playground code illustrates the problem:
+
+var list = new qx.ui.form.List();
+this.getRoot().add(list);
+for (var i=0; i&lt;11; i++) {
+  list.add(new qx.ui.form.ListItem(&quot;Item &quot; + i));
+}
+this.list = list;
+
+var btn = new qx.ui.form.Button(&quot;Test&quot;);
+this.getRoot().add(btn, {left: 200});
+btn.addListener(&quot;execute&quot;, function() {
+  var item = this.list.getChildren()[0];
+  this.list.remove(item);
+  this.list.add(item);
+  //qx.ui.core.queue.Manager.flush();
+  this.list.setSelection([item]);
+}, this);
+
+This might be a problem with the layout queue, since flushing it before selecting the added item avoids the issue. Also, creating a new list item instead of reusing the old one does not cause the problem.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>22439</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-01-26 15:39:07 +0100</bug_when>
+            <thetext>A direct scroll was attempted and the position computed based on the current DOM. The DOM however did not yet reflect the new order of items, since these changes are queued. Fixed this bug by switching to lazy scrolling. Lazy scrolling is executed right after the changes have been applied to the DOM.
+
+For every widget, always lazy scroll child into view if either
+- the child
+- its layout parent
+- its siblings
+have layout changes scheduled.
+
+Note these checks are not done for regular (i.e. user caused) scrolling and should therefore not affect scroll performance.
+
+Fixed with r24682 on trunk and r24686 on branch_1_3_x.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

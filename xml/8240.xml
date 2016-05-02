@@ -1,0 +1,111 @@
+<bug>
+          <bug_id>8240</bug_id>
+          
+          <creation_ts>2014-04-07 11:51:00 +0200</creation_ts>
+          <short_desc>qx.bom.Attribute.get() always returns &#39;false&#39; for the attribute &#39;disabled&#39;</short_desc>
+          <delta_ts>2014-04-17 09:02:33 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>website.bom</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Andreas Parusel">andreas.parusel</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>39892</commentid>
+            <who name="Andreas Parusel">andreas.parusel</who>
+            <bug_when>2014-04-07 11:51:19 +0200</bug_when>
+            <thetext>The problem lies in the assignment in line 258:
+
+ else if (hints.property[name])
+   {
+   value = element[name];
+...
+
+The code suggests, that &#39;disabled&#39; is a property on an HTML-element (see __hints.property.disabled), but as I see it, it is not (tested in Chrome and FF). This value becomes undefined.
+
+Together with this issue, qx.ui.website.Widget.getEnabled() should also be adapted, as the implementation also relies on &#39;disabled&#39; being a property</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39896</commentid>
+            <who name="Andreas Parusel">andreas.parusel</who>
+            <bug_when>2014-04-08 08:40:21 +0200</bug_when>
+            <thetext>I implemented a quick-fix for q.ui.website.Widget using native JS with commit 720f736f69ab88dfad1401e4ed30846a80ee5172.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39958</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-04-14 14:24:16 +0200</bug_when>
+            <thetext>The spec says that disabled is an attribute:
+http://www.w3.org/TR/html5/forms.html#attr-fe-disabled
+
+To get to the root of the problem, I wrote a plain HTML demo to see the differences between the attribute and the property.
+
+The following browsers treat them equal (return an empty string for the set attribute):
+
+Chrome 36
+Firefox 28
+Firefox 3.6
+Safari 7.0.3
+IE10
+IE9
+Opera 20
+Opera 12.16
+
+Only IE8 seems to treat the things special. It returns an empty string for the not set attribute and &#39;disabled&#39; for the set attribute. But thats only true for input elements like buttons. DIVs for example don&#39;t have the disabled property so I changed the code to exclusive attribute use.
+Additionally, the attribute reading did not work when attributes without values were used. Fix that as well.
+
+master: b2b73c4317e5973cd68027d63a28674102852aed
+3.5.x: b738dbc857c057de915087e3f32143c6979d3570</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39989</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-04-16 13:10:09 +0200</bug_when>
+            <thetext>Added a fix for IE8 which sets the attributes value to an empty string on reset.
+
+master: 752ea34a45065e1624c9e609d959c1e23a8db72e
+3.5.x: 52e69e8c293b6cfb8a223c5cc94983ccb650d5ad</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39998</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-04-17 09:02:33 +0200</bug_when>
+            <thetext>Added migration data to the master because it changes behavior. Therefore, I reverted the changes from branch to make sure its a drop in replacement.
+
+master: b20d9019d15c7261b5f994990102a4916b1abfe5
+3.5.x: 0873b400e98234c3fcbebb7358288d1fdb1dd0f5</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

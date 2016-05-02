@@ -1,0 +1,145 @@
+<bug>
+          <bug_id>818</bug_id>
+          
+          <creation_ts>2008-04-10 15:25:00 +0200</creation_ts>
+          <short_desc>qx.client.Timer misbehaves in Firefox</short_desc>
+          <delta_ts>2014-03-03 15:20:20 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>unspecified</version>
+          <rep_platform>Firefox 2.0</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.7.4</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Helder Magalhães">helder.magalhaes</reporter>
+          <assigned_to name="Jonathan Weiß">qooxdoo-bugs</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Firefox</cf_browser>
+          <cf_browser_version>2</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2937</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-04-10 15:25:53 +0200</bug_when>
+            <thetext>Qooxdoo&#39;s timer implementation uses &#39;setInterval&#39;, which has a caveat in Gecko-based browsers: there is a rather old bug [2] which makes intervals not being respected.
+
+I&#39;ve noticed this while using timed actions (which output a debug line, somehow similar to an existing test case [2]). The chances that this symptom is displayed increase with CPU load and if the browser temporarily pauses such as during a sync request and/or heavy JS processing.
+
+Although I haven&#39;t yet attempted (so I don&#39;t even know if it&#39;s possible), proposal consists in changing Timer class implementation:
+«A workaround is to cancel the timer (using clearInterval()) each time it is executed, and then regenerating the timer again - or, alternately, using setTimeout() repeatedly.» [2]
+
+This issue doesn&#39;t seem to affect Firefox 3 (at least, not as much [2] and not noticed in my tests), therefore IMHO it make sense to address this in time for maintenance release 0.7.4 - for 0.8 probably Firefox 3 will already be «in the wild».
+
+[1] https://bugzilla.mozilla.org/show_bug.cgi?id=291386
+[2] http://pages.mckoss.com/setIntervalTest.htm</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5281</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-05 15:05:25 +0200</bug_when>
+            <thetext>to Fabian</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5860</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-10-16 11:43:31 +0200</bug_when>
+            <thetext>By the way, I&#39;d like to suggest to overall change the timer.once implementation to &quot;setTimeout&quot; instead of &quot;setInterval&quot; - I don&#39;t see any advantage in using &quot;setInterval&quot; (which has to be canceled afterward) for one shot timers... ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5880</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-10-20 14:08:56 +0200</bug_when>
+            <thetext>Sure this makes sense.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6171</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-11-07 16:47:12 +0100</bug_when>
+            <thetext>to Johnny</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6188</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2008-11-10 11:05:44 +0100</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6198</commentid>
+            <who name="Jonathan Weiß">qooxdoo-bugs</who>
+            <bug_when>2008-11-10 14:09:22 +0100</bug_when>
+            <thetext>Since Firefox 3 has been out a while we will not fix this issue.
+
+Helder, your recommendation is correct: it would be better to use 
+window.setTimeout for all once timers. Unfortunately this would break the API 
+since once() returns a timer object which can be restarted and used again. I do 
+not know how many single shot timers are being used more than one time, but we 
+do not want to break existing code.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6614</commentid>
+            <who name="Helder Magalhães">helder.magalhaes</who>
+            <bug_when>2008-12-03 12:20:25 +0100</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; Since Firefox 3 has been out a while we will not fix this issue.
+Well, I must say that, unfortunately, this is still reproduced in Firefox 3. Although it&#39;s pretty much harder to reproduce, while the browser is experiencing a high load it does reproduce more often. And high load is what medium-to-complex qooxdoo applications cause to browsers... ;-)
+Unfortunately, I wasn&#39;t yet able to create an easy to reproduce procedure for updating (the already stated Firefox) bug report. :-|
+
+
+&gt; Helder, your recommendation is correct: it would be better to use 
+&gt; window.setTimeout for all once timers.
+
+Yes, I&#39;d say this is conceptually more appropriate. :-)
+
+
+&gt; Unfortunately this would break the API 
+&gt; since once() returns a timer object which can be restarted and used again. I do 
+&gt; not know how many single shot timers are being used more than one time, but we 
+&gt; do not want to break existing code.
+
+Humm... I don&#39;t quite agree with this. The method &quot;setTimeout&quot; can also be canceled (through &quot;clearTimeout&quot;) and/or restarted (setting up another &quot;setTimeout&quot; call), similarly to &quot;setInterval&quot;/&quot;clearInterval&quot;). Adjusting the implementation would, in my opinion, create a more robust and more elegant timing mechanism (for &quot;once&quot; calls).
+
+
+Nevertheless, this issue is left closed if/until someone else agrees with this: maybe I&#39;m erroneously assuming something...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6622</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2008-12-03 14:57:13 +0100</bug_when>
+            <thetext>Rather than changing qx.client.Timer, it wouldn&#39;t hurt to port qx.event.Idle and qx.util.TimerManager from 0.8 to 0.7.  Those modules should port pretty easily, and provide the &quot;proper&quot; single native timer regardless of number of qooxdoo timers in use.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36846</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:20 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

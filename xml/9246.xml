@@ -1,0 +1,98 @@
+<bug>
+          <bug_id>9246</bug_id>
+          
+          <creation_ts>2016-01-26 15:51:00 +0100</creation_ts>
+          <short_desc>Gesture sometimes stop working</short_desc>
+          <delta_ts>2016-01-27 08:41:24 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>5.0.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>iOS</op_sys>
+          <bug_status>UNCONFIRMED</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          
+          <reporter name="Cajus Pollmeier">pollmeier</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>bader</cc>
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>43680</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2016-01-26 15:51:34 +0100</bug_when>
+            <thetext>If you make use of pinching, swiping, etc. it is possible to get the qx event handling into a state where it misses a touchend event. As a result it thinks that a finger or more are still on the touch device. It does not recover and you need to reload the page.
+
+The attached video demonstrates the issue using the mobile showcase. Just pick the Logo and try to rotate or pinch it frequently. After a few tries it will stop reacting on the gesture input. Same for the blue background.
+
+Result is, that the logo is no longer gesture active. In case of the background, some events/circles stay in the visualization.
+
+Note that this only happens on iOS devices. I&#39;m not able to reproduce this issue with any Android device I got my hands on. The browser sends a touchend.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43681</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2016-01-26 15:52:56 +0100</bug_when>
+            <thetext>Ok. I need to place the video somewhere. It does not accept files with 5M.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43682</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2016-01-26 16:00:29 +0100</bug_when>
+            <thetext>See the video here:
+
+https://ferdi.naasa.net/oc/index.php/s/AY9r3qBVvs94Cc6</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>43683</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2016-01-26 16:56:17 +0100</bug_when>
+            <thetext>Thats probably not the right fix, but it fixes the Safari issue:
+
+diff --git a/framework/source/class/qx/event/handler/PointerCore.js b/framework/source/class/qx/event/handler/PointerCore.js
+index b8d3b45..f74b94b 100644
+--- a/framework/source/class/qx/event/handler/PointerCore.js
++++ b/framework/source/class/qx/event/handler/PointerCore.js
+@@ -208,10 +208,10 @@ qx.Bootstrap.define(&quot;qx.event.handler.PointerCore&quot;, {
+         // Firing pointer cancel for previously active touches.
+         for (var i = this.__activeTouches.length - 1; i &gt;= 0; i--) {
+           var cancelEvent = new qx.event.type.dom.Pointer(&quot;pointercancel&quot;, domEvent, {
+-            identifier: this.__activeTouches[i].identifier,
++            identifier: changedTouches[0].identifier,
+             target: domEvent.target,
+             pointerType: &quot;touch&quot;,
+-            pointerId: this.__activeTouches[i].identifier + 2
++            pointerId: changedTouches[0].identifier + 2
+           });
+ 
+           this._fireEvent(cancelEvent, &quot;pointercancel&quot;, domEvent.target);
+
+Maybe its a hint for the real problem.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

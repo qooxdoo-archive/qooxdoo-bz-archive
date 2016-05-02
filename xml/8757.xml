@@ -1,0 +1,123 @@
+<bug>
+          <bug_id>8757</bug_id>
+          
+          <creation_ts>2014-12-02 12:11:00 +0100</creation_ts>
+          <short_desc>context menu not displayed if the height of the display area is smaller than the menu</short_desc>
+          <delta_ts>2015-02-19 13:47:19 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>4.0.2</target_milestone>
+          
+          <blocked>8544</blocked>
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Dietrich Streifert">dietrich.streifert</reporter>
+          <assigned_to name="Tobias Oberrauch">tobias.oberrauch</assigned_to>
+          <cc>mustafa.sak</cc>
+    
+    <cc>tobias.oberrauch</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>41781</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2014-12-02 12:11:19 +0100</bug_when>
+            <thetext>Our main app view consists of a table which has a large context menu attached. 
+Displaying the context menu by e.g. clicking the right mouse button when the menu does not fit into the display, leads to an error in qx.ui.menu.Menu which itself inhibits the context menu display.
+
+This is reproducable using the following playground example:
+
+
+http://tinyurl.com/ptgo7je
+
+
+Run the example and resize the browser heigt up to the point where the table covers the complete content of the right pane. Then try to open the context menu attached to the table by right clicking with the mouse.
+
+In console the following message is displayed:
+
+298625 playground.Application[17-0]: GlobalError: this._placementTarget.getBounds is not a function http://demo.qooxdoo.org/4.1/playground/script/playground.js:210:54232,http://demo.qooxdoo.org/4.1/playground/script/playground.js:210:53263,http://demo.qooxdoo.org/4.1/playground/script/playground.js:210:51619
+
+Reproducable on Windows 7 SP1 x64 with Firefox 34, Internet Explorer 11 and Chrome 39.
+
+Further investigations lead to the following commit
+
+https://github.com/qooxdoo/qooxdoo/commit/7c16c8d6fea87cde58974ea282119702470c01e1 
+
+related to bugzilla bug #8544:
+
++      else if (top === 0)
++      {
++        var height = this._placementTarget.getBounds().top;
++        this._assertSlideBar(function() {
++          this.setHeight(height);
++        });
++        this.moveTo(left, 0);
++      }
+
+where the attempt to invoke method getBounds() on this._placementTarget fails because this._placementTarget does not provide that method.
+
+Removing the code above solves the bug for our use case.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41840</commentid>
+            <who name="Tobias Oberrauch">tobias.oberrauch</who>
+            <bug_when>2014-12-04 21:58:54 +0100</bug_when>
+            <thetext>Thanks a lot for reporting this bug with example and link to the specific commit.
+I fixed this bug in
+master with  and 0c1a742da7fe1f6214f01b5d58a914aab20c5b75
+branch_4_0_x with f0f2b972b1987b563f5baf1266093ea8e9a0d9b4
+
+Problem:
+I expected and tested that _placementTarget is a widget that contains the getBounds method.
+But in your case _placementTarget is an object with left and top because it will open as a context menu.
+
+Solution:
+Now it covers the 2 possible values for _placementTarget: widget and object (with top and left)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42586</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2015-02-19 13:30:35 +0100</bug_when>
+            <thetext>Together with Tobias we could determine that the &quot;else if&quot; clause in qx.ui.menu.Menu line 636 is unnecessary. Setting of the height of the menu to the top offset of the pointer event or the top bounds of the opener widget is not what we want to. Furthermore this clause blocks the next else if clause, which corrects the height if the menu is higher then the root height.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42587</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2015-02-19 13:47:19 +0100</bug_when>
+            <thetext>I removed the else if clause from code base.
+
+Furthermore I could recognize, that openAtPointer was handled twice. We are preventing that handler in qx.ui.table.pane.Scroller, because it handles it self. But the scroller pane is a child of table, which should prevent context menu handling, too.
+
+Committed into:
+ master 36ae2c5b94f3a1ea6207b909465f66bb9b3dce70
+ branch_4_1_x a5d9120860718e793b758e0bddf3616de8d12d27 
+ branch_4_0_x 3fea518f5c132a8a11bb70341ef6d553bf863cd7</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

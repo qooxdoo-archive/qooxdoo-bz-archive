@@ -1,0 +1,133 @@
+<bug>
+          <bug_id>4287</bug_id>
+          
+          <creation_ts>2010-11-05 10:40:00 +0100</creation_ts>
+          <short_desc>Increase in compile times</short_desc>
+          <delta_ts>2010-11-23 13:12:07 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          <keywords>Performance</keywords>
+          <priority>P4</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Daniel Wagner">daniel.wagner</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21111</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2010-11-05 10:40:09 +0100</bug_when>
+            <thetext>Recent changes in the toolchain seem to have had an adverse effect on performance. Building all the demo applications plus framework tests and API (both source and build variants) took 1h 12min on my Linux machine for revision 23657. In revision 23672, the same task took 1h 30min. Build speed on Vista was similarly affected.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21112</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-05 10:45:31 +0100</bug_when>
+            <thetext>up prio and -&gt; 1.3</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21222</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-10 20:17:04 +0100</bug_when>
+            <thetext>The increase can be traced to the fix of bug#4285, thanks to the precise 
+revision range given in this bug&#39;s summary. Bug#4285 addressed an issue where 
+load dependencies were not correctly detected due to prematurely discarding 
+dependencies which were already discovered for a class, but with a different 
+significance (E.g. when a dependency was first discovered it was as a run-time 
+dependency, but the next time it was as a load-time dependency). So 
+dependencies were recognized, but potentially categorized wrongly.
+
+So basically there is a price we are paying for this bug fix. The price is in a 
+generally increased amount of dependencies which have to be looked at, which is 
+not that dramatic. But not only there are more dependency items to consider 
+now, there are specifically more to calculate recursive dependencies for (s. 
+bug#1455), and this is significant. E.g. for the Playground, the number of 
+dependencies that are subjected to recursive analysis was 315 before the fix, 
+and is 600 after it. As this recursive calculation is expensive, this slows the 
+analysis process perceivably.
+
+I did my best in the last couple of days to amend for this, sqeezing 
+performance out of various parts of the generator. Test runs on our internal 
+staging machine indicate that we now have a slow down of about 8% against the 
+revision before fixing bug#4285. This is far less dramatic than the reported 
+25% slowdown, and should be acceptable for an improved dependency handling.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21244</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-11 15:25:41 +0100</bug_when>
+            <thetext>I did some more measurements today, and checked the logs of various nightly 
+builds during the past two weeks. The reference measurments on the staging host 
+confirm Daniels experience in general, as build runtime performance dropped 
+after r23657 about 20-25%. The shell timings for &#39;generate.py build,source&#39; in 
+the Demobrowser have this (total/user):
+
+r23657:  21&#39;31 / 19&#39;10
+r23672:  26&#39;10 / 23&#39;35
+
+This matches the overall tendency of the nightly builds, which encompass 
+building the scope of all online demos, each with an empty cache and in its 
+build and source version. Still surprising to me is the overproportional 
+increase of runtime in the nightly Demobrowser builds, which was above 200% 
+(35&#39;, then 75&#39;), which I cannot explain. Seems like a non-linear increase with 
+the amount of classes/code.
+
+The recent &quot;optimizations&quot; seem to have worsen things for the Demobrowser:
+
+r23774:  44&#39;56 / 38&#39;46
+
+I will look into this in the course of other optimization bugs.
+
+Unfocus for the moment -&gt; P4.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21253</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-12 11:26:01 +0100</bug_when>
+            <thetext>Closing this for now. There is a trade-off of about 22% in compile time 
+performance for uncached items, which I leave as is for now. Other optimization 
+might touch on this again.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21258</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-11-12 13:44:23 +0100</bug_when>
+            <thetext>After cautiously re-applying some structural changes to Class.py, the module 
+mostly responsible for the dependency analysis, I discovered that the last of 
+these changes, modifying the way dependency information is cached, was the real 
+culprit that hogged build time performance. I also realized that the new 
+caching wasn&#39;t taking advantage of memory-level caching. After enabling this, 
+the performance is not only the same as with the old caching, but way better. - 
+All the better :).</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

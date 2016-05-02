@@ -1,0 +1,115 @@
+<bug>
+          <bug_id>5983</bug_id>
+          
+          <creation_ts>2011-12-22 11:01:00 +0100</creation_ts>
+          <short_desc>Error from class qx.ui.basic.Image: Has no children!</short_desc>
+          <delta_ts>2014-03-03 15:21:39 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>website.dom</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>trivial</bug_severity>
+          <target_milestone>1.6.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          
+          <qa_contact name="Alexander Steitz">alexander.steitz</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>28104</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2011-12-22 11:01:52 +0100</bug_when>
+            <thetext>Our error logging tool shows that the following error has occured three times in the last 24 hours:
+
+Catched global error: Error: Has no children!
+at:  qx.html.Element.removeAt
+at:  qx.ui.basic.Image.__checkForContentElementReplacement
+at:  qx.ui.basic.Image.__checkForContentElementSwitch
+at:  qx.ui.basic.Image._styleSource
+at:  qx.ui.basic.Image.__loaderCallback
+
+This error has occured for two different users, both using Firefox 3.6.
+
+Unfortunately, I was not able to reproduce this issue, I only have the stack trace from our error logging tool.
+
+The problem could be located in the method qx.ui.basic.Image.__checkForContentElementReplacement.
+The variable &quot;currentContentElement&quot; could be null - otherwise the code would not check &quot;currentContentElement != null&quot;. If the variable &quot;currentContentElement&quot; is null, then &quot;container.getChild(0)&quot; must have returned null. In that case, it is not allowed to call &quot;container.removeAt(0)&quot;.
+
+To fix this problem, I would recomment to move the code &quot;container.removeAt(0)&quot; one line up inside the block if(currentContentElement!=null){}.
+
+-- start code snipplet ------------------------------------
+    __checkForContentElementReplacement : function(elementToAdd)
+    {
+      var container = this.getContainerElement();
+      var currentContentElement = container.getChild(0);
+
+      if (currentContentElement != elementToAdd)
+      {
+        if (currentContentElement != null)
+        {
+          var pixel = &quot;px&quot;;
+
+          // ...
+          
+          elementToAdd.setStyles(styles, true);
+          elementToAdd.setSelectable(this.getSelectable());
+        }
+
+        container.removeAt(0);
+        container.addAt(elementToAdd, 0);
+      }
+    },
+-- end code snipplet ------------------------------------</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28106</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-12-22 11:08:48 +0100</bug_when>
+            <thetext>Thanks for the detailed report, Uwe. I&#39;ll take care of this issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29760</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2012-06-13 18:23:20 +0200</bug_when>
+            <thetext>Fixed with 
+
+6af9d14d0183241c83afbeaa5f2cecae8998bc46 (master)
+1cc0c5c445ebe5cbbd8006e662f75757f6e37b02 (branch_1_6_x)
+
+Thankfs Uwe for the detailed report.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37374</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:39 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,200 @@
+<bug>
+          <bug_id>8885</bug_id>
+          
+          <creation_ts>2015-01-27 13:45:00 +0100</creation_ts>
+          <short_desc>The value of TAP_MAX_DISTANCE[&quot;mouse&quot;] is way too large, causing selection-related problems in qx.ui.table.Table</short_desc>
+          <delta_ts>2015-02-03 11:04:58 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>5.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Andriy Syrovenko">andriys</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>42298</commentid>
+            <who name="Andriy Syrovenko">andriys</who>
+            <bug_when>2015-01-27 13:45:04 +0100</bug_when>
+            <thetext>There&#39;s a TAP_MAX_DISTANCE array of constants in qx.event.handler.GestureCore (one value for each pointer type). These constants specify the maximum distance between two subsequent taps (clicks) for &quot;dbltab&quot; (double-click) event to be emitted. A comment in the code says these &#39;values are educated guesses&#39;. I can not judge how well-taken the values for &quot;touch&quot; and &quot;pen&quot; pointer types are, but the value of 50 is definitely way too large for the &quot;mouse&quot; pointer type. For instance, on Windows (all version from XP to 8.1 at least) the default value used for similar purpose is 4 (which is 12,5 times smaller!!!).
+
+These huge distance value is causing the following problem for me. I have a table (qx.ui.table.Table), where I&#39;m listening on &quot;cellDbltap&quot; event. Selection model in this table is set to MULTIPLE_INTERVAL_SELECTION mode. When user double-clicks a cell in a table I open a modal window. The problem is that quickly Ctrl-clicking adjacent table rows (to select them) may trigger (and often triggers) an unexpected &quot;cellDbltap&quot; event.
+
+So please make TAP_MAX_DISTANCE values smaller, well at least for the &quot;mouse&quot; pointer type. I&#39;m currently using the value of 4, and it works very fine for me.
+
+Thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42303</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-01-28 09:27:59 +0100</bug_when>
+            <thetext>Thanks for the report. I can recall that we increased the tap distance due to bug report #8393. We had 10 px in the first few days and realized that some single selection e.g. on the list might not happen as the tap event is not fired as you move your mouse while using the mouse button (that might happen as well). So setting it to 4 px is way too low as 10 px was. So we decided to set a hight value but knowing that those defaults might not be ok for everyone. Thats why we decided to make it configurable for everyone (which should solve your local problem). 
+But even knowing the use case you described (which is totally valid ofc.) make me think we should keep the default value as it is because its more important to have a tap on every widget if the mouse is moved during mousedown and up as it is to keep the adaptive multi selection table working perfectly.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42307</commentid>
+            <who name="Andriy Syrovenko">andriys</who>
+            <bug_when>2015-01-28 12:01:51 +0100</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Thanks for the report. I can recall that we increased the tap distance due to
+&gt; bug report #8393.
+
+I&#39;ve looked through the #8393, and it looks pretty valid. However #8393 is about a different event- it deals with pairing mouse-up and mouse-down events, while this ticket is about dbl-click event. These are completely different, and in my opinion should not share the same distance constants.
+
+So my suggestion now is to introduce another constant (DBLTAP_MAX_DISTANCE for instance), and use it in the __isBelowDoubleTapDistance() instead of the TAP_MAX_DISTANCE.
+
+I can submit a patch if you accept the idea in general.
+
+&gt; Thats why we decided to make it configurable for everyone (which should solve
+&gt; your local problem). 
+
+The documentation (http://demo.qooxdoo.org/current/apiviewer/#qx.event.handler.GestureCore) lists it in the Constants section (and constants are not meant to be redefined in runtime, are they?). More over it does not have any description text at all, not even a notice that this is an array, and not a single numeric value. If it is meant to be redefined by the application when necessary, it should at least be documented as such.
+
+As a side note, while searching through the entire framework&#39;s code base, I paid attention there&#39;s a reference to qx.event.handler.GestureCore.TAP_MAX_DISTANCE in the qx.ui.mobile.core.EventHandler.__onPointerMove() method (qx/ui/mobile/core/EventHandler.js:216), where it is treated as an integer value, not as an array. Should I file another ticket for this?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42308</commentid>
+            <who name="Andriy Syrovenko">andriys</who>
+            <bug_when>2015-01-28 12:06:18 +0100</bug_when>
+            <thetext>In my previous comments I wrote TAP_MAX_DISTANCE is an array, while it is a dictionary in fact. Sorry for the typo.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42320</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-01-29 08:46:13 +0100</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; So my suggestion now is to introduce another constant (DBLTAP_MAX_DISTANCE for
+&gt; instance), and use it in the __isBelowDoubleTapDistance() instead of the
+&gt; TAP_MAX_DISTANCE.
+I haven&#39;t thought about that but that sounds like a good approach.
+
+&gt; I can submit a patch if you accept the idea in general.
+Sure, go ahead. :)
+
+&gt; The documentation
+&gt; (http://demo.qooxdoo.org/current/apiviewer/#qx.event.handler.GestureCore) lists
+&gt; it in the Constants section (and constants are not meant to be redefined in
+&gt; runtime, are they?). More over it does not have any description text at all,
+&gt; not even a notice that this is an array, and not a single numeric value. If it
+&gt; is meant to be redefined by the application when necessary, it should at least
+&gt; be documented as such.
+Totally agree on that. That would be good for another issue type.
+
+&gt; As a side note, while searching through the entire framework&#39;s code base, I
+&gt; paid attention there&#39;s a reference to
+&gt; qx.event.handler.GestureCore.TAP_MAX_DISTANCE in the
+&gt; qx.ui.mobile.core.EventHandler.__onPointerMove() method
+&gt; (qx/ui/mobile/core/EventHandler.js:216), where it is treated as an integer
+&gt; value, not as an array. Should I file another ticket for this?
+Yes, that would be great.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42333</commentid>
+              <attachid>1361</attachid>
+            <who name="Andriy Syrovenko">andriys</who>
+            <bug_when>2015-02-02 00:49:59 +0100</bug_when>
+            <thetext>Created attachment 1361
+Patch
+
+&gt; &gt; I can submit a patch if you accept the idea in general.
+&gt; Sure, go ahead. :)
+Patch attached.
+
+&gt; &gt; The documentation
+&gt; &gt; (http://demo.qooxdoo.org/current/apiviewer/#qx.event.handler.GestureCore) lists
+&gt; &gt; it in the Constants section (and constants are not meant to be redefined in
+&gt; &gt; runtime, are they?). More over it does not have any description text at all,
+&gt; &gt; not even a notice that this is an array, and not a single numeric value. If it
+&gt; &gt; is meant to be redefined by the application when necessary, it should at least
+&gt; &gt; be documented as such.
+&gt; Totally agree on that. That would be good for another issue type.
+Done. http://bugzilla.qooxdoo.org/show_bug.cgi?id=8894.
+
+&gt; &gt; there&#39;s a reference to
+&gt; &gt; qx.event.handler.GestureCore.TAP_MAX_DISTANCE in the
+&gt; &gt; qx.ui.mobile.core.EventHandler.__onPointerMove() method
+&gt; &gt; (qx/ui/mobile/core/EventHandler.js:216), where it is treated as an integer
+&gt; &gt; value, not as an array. Should I file another ticket for this?
+&gt; Yes, that would be great.
+Done. http://bugzilla.qooxdoo.org/show_bug.cgi?id=8895</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42336</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-02-02 08:41:17 +0100</bug_when>
+            <thetext>Thank you very much. We will take care of that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42368</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2015-02-03 09:37:35 +0100</bug_when>
+            <thetext>Applied the patch:
+dc60ea759f1da94c921b51fd93e799fe38b4eb32 qooxdoo master
+0f97e037248dc3e62035351da8b9d5d321caa1be next master</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>1361</attachid>
+            <date>2015-02-02 00:49:00 +0100</date>
+            <delta_ts>2015-02-02 00:49:59 +0100</delta_ts>
+            <desc>Patch</desc>
+            <filename>dbltap_distance.patch</filename>
+            <type>text/plain</type>
+            <size>1156</size>
+            <attacher>andriys</attacher>
+            
+              <data encoding="base64">ZGlmZiAtLWdpdCBhL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvZXZlbnQvaGFuZGxlci9HZXN0
+dXJlQ29yZS5qcyBiL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvZXZlbnQvaGFuZGxlci9HZXN0
+dXJlQ29yZS5qcwppbmRleCBkY2QyYjIxLi4zYTBmNDc5IDEwMDY0NAotLS0gYS9mcmFtZXdvcmsv
+c291cmNlL2NsYXNzL3F4L2V2ZW50L2hhbmRsZXIvR2VzdHVyZUNvcmUuanMKKysrIGIvZnJhbWV3
+b3JrL3NvdXJjZS9jbGFzcy9xeC9ldmVudC9oYW5kbGVyL0dlc3R1cmVDb3JlLmpzCkBAIC0zMyw2
+ICszMyw4IEBAIHF4LkJvb3RzdHJhcC5kZWZpbmUoInF4LmV2ZW50LmhhbmRsZXIuR2VzdHVyZUNv
+cmUiLCB7CiAKICAgICBUQVBfTUFYX0RJU1RBTkNFIDogeyJ0b3VjaCI6IDQwLCAibW91c2UiOiA1
+MCwgInBlbiI6IDIwfSwgLy8gdmFsdWVzIGFyZSBlZHVjYXRlZCBndWVzc2VzCiAKKyAgICBET1VC
+TEVUQVBfTUFYX0RJU1RBTkNFIDogeyJ0b3VjaCI6IDEwLCAibW91c2UiOiA0LCAicGVuIjogMTB9
+LCAvLyB2YWx1ZXMgYXJlIGVkdWNhdGVkIGd1ZXNzZXMKKwogICAgIC8qKiBAdHlwZSB7TWFwfSBU
+aGUgZGlyZWN0aW9uIG9mIGEgc3dpcGUgcmVsYXRpdmUgdG8gdGhlIGF4aXMgKi8KICAgICBTV0lQ
+RV9ESVJFQ1RJT04gOgogICAgIHsKQEAgLTUyNiw4ICs1MjgsOCBAQCBxeC5Cb290c3RyYXAuZGVm
+aW5lKCJxeC5ldmVudC5oYW5kbGVyLkdlc3R1cmVDb3JlIiwgewogICAgIF9faXNCZWxvd0RvdWJs
+ZVRhcERpc3RhbmNlIDogZnVuY3Rpb24oeDEsIHkxLCB4MiwgeTIsIHR5cGUpIHsKICAgICAgIHZh
+ciBjbGF6eiA9IHF4LmV2ZW50LmhhbmRsZXIuR2VzdHVyZUNvcmU7CiAKLSAgICAgIHZhciBpblgg
+PSBNYXRoLmFicyh4MSAtIHgyKSA8IGNsYXp6LlRBUF9NQVhfRElTVEFOQ0VbdHlwZV07Ci0gICAg
+ICB2YXIgaW5ZID0gTWF0aC5hYnMoeTEgLSB5MikgPCBjbGF6ei5UQVBfTUFYX0RJU1RBTkNFW3R5
+cGVdOworICAgICAgdmFyIGluWCA9IE1hdGguYWJzKHgxIC0geDIpIDwgY2xhenouRE9VQkxFVEFQ
+X01BWF9ESVNUQU5DRVt0eXBlXTsKKyAgICAgIHZhciBpblkgPSBNYXRoLmFicyh5MSAtIHkyKSA8
+IGNsYXp6LkRPVUJMRVRBUF9NQVhfRElTVEFOQ0VbdHlwZV07CiAKICAgICAgIHJldHVybiBpblgg
+JiYgaW5ZOwogICAgIH0sCg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

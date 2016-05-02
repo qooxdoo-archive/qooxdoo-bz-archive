@@ -1,0 +1,146 @@
+<bug>
+          <bug_id>2369</bug_id>
+          
+          <creation_ts>2009-05-11 13:14:00 +0200</creation_ts>
+          <short_desc>xml processing api needs namespace mapping support.</short_desc>
+          <delta_ts>2014-03-03 15:26:04 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Burak Arslan">burak.arslan</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          <cc>burak.arslan</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9907</commentid>
+            <who name="Burak Arslan">burak.arslan</who>
+            <bug_when>2009-05-11 13:14:56 +0200</bug_when>
+            <thetext>Okay, here&#39;s the deal:
+
+quoting xpath 1.0 specs that can be found at: http://www.w3.org/TR/xpath#node-tests:
+
+==========
+A QName in the node test is expanded into an expanded-name using the namespace declarations from the expression context. This is the same way expansion is done for element type names in start and end-tags except that the default namespace declared with xmlns is not used: if the QName does not have a prefix, then the namespace URI is null (this is the same way attribute names are expanded). It is an error if the QName has a prefix for which there is no namespace declaration in the expression context.
+==========
+
+in other words,
+
+if one has declared a default namespace in the xml document (i.e. xmlns=&quot;...&quot;), one has to provide the xpath evaluator a namespace mapper because xpath interprets qnames without prefixes to be in the null namespace. by declaring a default namespace, your non-prefixed tags shadow the ones from the null namespace, and xpath does not want to care about your default namespace. instead, you must supply it with a namespace mapper so that every namespace (including the default namespace) is bound to a namespace prefix.
+
+So, there has to be some way of supplying this mapper to the qx.xml.Element.selectSingleNode() and qx.xml.Element.selectNodes().
+
+here&#39;s how it should work under the hood:
+
+for mozilla:
+--------------
+https://developer.mozilla.org/en/Using_XPath
+
+says:
+===================
+Note however that createNSResolver should only be used if you are sure the namespace prefixes in the XPath expression match those in the document you want to query (and that no default namespace is being used (though see DOM:document.createNSResolver for a workaround)). Otherwise, you have to provide your own implementation of XPathNSResolver.
+===================
+
+here&#39;s how to do that:
+https://developer.mozilla.org/en/Introduction_to_using_XPath_in_JavaScript#Implementing_a_User_Defined_Namespace_Resolver
+
+turns out it&#39;s pretty simple.
+
+For ie:
+---------
+http://www.nczonline.net/blog/2009/04/04/xpath-in-javascript-part-3/
+
+has a section about namespaces towards the end.
+
+http://msdn.microsoft.com/en-us/library/ms756048(VS.85).aspx
+
+documents the SelectionNamespaces property.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9908</commentid>
+            <who name="Burak Arslan">burak.arslan</who>
+            <bug_when>2009-05-11 13:20:00 +0200</bug_when>
+            <thetext>this plugin for firefox is also quite helpful: 
+
+https://addons.mozilla.org/en-US/firefox/addon/1095 </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9914</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-05-11 17:26:36 +0200</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9915</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-05-11 17:28:42 +0200</bug_when>
+            <thetext>Accepted (for real this time, stupid Mylyn).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9916</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-05-11 18:31:03 +0200</bug_when>
+            <thetext>As of trunk r19094, qx.xml.Element.selectNodes and selectSingleNodes accept a map of namespace prefixes and corresponding URIs as an additional parameter.
+
+Chromium currently has a bug[1] where queries on documents using namespaces will fail. Leaving this bug open for now as a reminder to update the docs once the issue is fixed.
+
+Also, I couldn&#39;t find a way to make this work in older Opera versions (&lt; 9.5) that don&#39;t support XPathEvaluate.
+
+[1]http://code.google.com/p/chromium/issues/detail?id=671</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9925</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-05-12 15:14:30 +0200</bug_when>
+            <thetext>Changed the unit test so that it will fail if the Chrome issue is fixed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10229</commentid>
+            <who name="Burak Arslan">burak.arslan</who>
+            <bug_when>2009-05-29 14:00:17 +0200</bug_when>
+            <thetext>qx.xml.Element.selectSingleNode() line 83 throws an exception when the function is supplied an IXMLDomElement (i.e. an xml node, not the whole document itself)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10252</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2009-06-02 11:15:57 +0200</bug_when>
+            <thetext>Fixed in trunk r19272.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38975</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:04 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

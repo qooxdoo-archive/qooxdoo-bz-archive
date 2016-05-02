@@ -1,0 +1,544 @@
+<bug>
+          <bug_id>753</bug_id>
+          
+          <creation_ts>2008-01-10 15:38:00 +0100</creation_ts>
+          <short_desc>Table object leaks 1MB on disposal</short_desc>
+          <delta_ts>2014-03-03 15:25:46 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>0.7.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>0.7.5</target_milestone>
+          <dependson>764</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Hugh Gibson">hgibson</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>derrell.lipman</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2644</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-01-10 15:38:15 +0100</bug_when>
+            <thetext>I&#39;m seeing a major memory leak with table destruction, in 0.7.2
+
+In our qooxdoo application we have a viewer which instantiates a handler
+for particular types of objects. The handler is in charge of displaying
+the object. The viewer disposes and instantiates a new handler when the
+object selection changes. 
+
+In a common case, the handler uses a table object (with our own remote
+data model and custom row and cell renderers). When changing viewed
+objects we&#39;re seeing a considerable memory leak, of the order of 1.3MB in
+IE7. 
+
+I modified qx.dev.ObjectSummary.getInfo to show a delta - i.e. only those
+object types which increased in count were shown in the report. This
+revealed that there were three objects not being disposed when the table
+object was disposed:
+
+024625 DEBUG: abling.fragment.CViewer[608]: Summary: (1922 Objects) 
+1: qx.ui.table.pane.Model 
+1: qx.ui.table.columnmodel.Basic 
+1: qx.ui.table.selection.Model 
+
+Taking qx.ui.table.selection.Model as an example, it is created in
+qx.ui.table.Table property newSelectionModel() and is stored in the Table
+property selectionModel. 
+
+But there&#39;s no call to dispose it. If I add code in the Table destructor
+to dispose it (as well as removing the event listener) then it no longer
+appears in the list of objects.
+
+If I do this for the other objects they don&#39;t appear in the list of
+leaked objects. However, I still get memory increasing in IE which might
+be due to circular references.
+
+I&#39;ve reproduced this with an application.js that can be slotted into the quickstart for 0.7.2. Every time you click on the button the table is disposed (along with the table model), an alert opened with the additional objects, and the table created again. You can see the objects after the second click on the button (a base set of objects is required).
+
+This is a critical issue for us. Previously our code reused tables where possible but this suffered from a problem with cached data from the previous content flashing up. However, we would have suffered from the leak less often but still enough to cause a big problem. Presumably it occurs in the table-based tree as well, though we don&#39;t use that.
+
+Anyone writing a dynamic user interface is going to suffer from this problem. It must be fixed as soon as possible, preferably in 0.7.3.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2645</commentid>
+              <attachid>273</attachid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-01-10 15:39:39 +0100</bug_when>
+            <thetext>Created attachment 273
+application.js to slot into quickstart for 0.7.2 to demonstrate the problem.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2657</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-01-10 19:17:25 +0100</bug_when>
+            <thetext>It was relatively easy to clean up the extra objects in the appropriate destruct functions (selectionModel and tableColumnModel in table.js, tablePaneModel in scroller.js) but I am having no luck in removing the memory leak (as distinct from the object leak).
+
+It would appear that there are circular references between the table objects so they can&#39;t be garbage collected. I tried removing all event listeners in table.js with no luck. There are a load added in scroller.js which aren&#39;t removed, and I haven&#39;t tried removing those yet.
+
+If the leak is due to the event listeners then I suggest that you rework them so they are automatically removed on disposal. Otherwise it seems that it&#39;s very easy to create poor qooxdoo applications - as evidenced by the lack of cleaning up the table code listeners.
+
+Perhaps when adding an event listener a standard function on the destination object can be called to record the fact. Then on disposal the list of event listeners can be removed.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2679</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-01-11 11:18:52 +0100</bug_when>
+            <thetext>Til is not actively working on qooxdoo anymore.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2698</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-01-11 13:11:01 +0100</bug_when>
+            <thetext>You need to fix up Bugzilla. It automatically assigns Til to any bugs in the ui-table component.
+
+I&#39;m still looking into this but my time is limited today. It appears to be caused by circular references in the table classes, combined with various instances not being disposed.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2705</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-01-11 14:39:25 +0100</bug_when>
+            <thetext>As an absolute minimum, the following needs to be done, otherwise objects are left hanging around after disposing of a table:
+
+table.pane.Scroller:
+ - add dispose of property tablePaneModel
+
+table.Table:
+ - add dispose of property selectionModel
+
+Even after doing this the test harness shows that memory is leaked every time a table is disposed. I&#39;ve looked through all the links I could find and didn&#39;t track anything down.
+
+I don&#39;t have any more time to look at this today.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2707</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-01-11 14:42:54 +0100</bug_when>
+            <thetext>Hugh. Thank you for your investigation. Can you please provide a patch with your modifications? I will than make sure that these will be part of 0.7.3. Thanks.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2736</commentid>
+              <attachid>275</attachid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-01-13 08:53:32 +0100</bug_when>
+            <thetext>Created attachment 275
+Patch to fix object leaks in 0.7.3
+
+This patch fixes obvious leaks in the table code in 0.7.3.
+
+There are still issues regarding this. If a table property containing an object is overridden by the application, who is responsible for disposing of the old object? Given that the table is disposing of the object on destruct, shouldn&#39;t the table be responsible for diposing of the old object on _applyXxxx? 
+
+For the moment I haven&#39;t changed this but the question must be addressed. I had a leak caused by this because our app overrides the dataRowRenderer property of Table.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2737</commentid>
+              <attachid>276</attachid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-01-13 09:21:44 +0100</bug_when>
+            <thetext>Created attachment 276
+Patch to fix object leaks in 0.7.3 - take 2.
+
+I found that the dataRowRenderer property of Table had to be cleaned up as well as it is created when the table is opened.
+
+Therefore another patch is attached.
+
+Note that there is still a memory leak in that every time a table is disposed and a new one created, memory usage in IE increases. This persists even if IE is iconised. 
+
+Therefore this issue (or a similar one) should remain open as a top priority to fix.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2741</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-01-14 09:37:14 +0100</bug_when>
+            <thetext>One thing to always keep in mind, is that disposing objects does not directly mean to release memory as well. Disposing in qooxdoo is mainly used to fix typical memory leaks  when leaving the page. For a web application, where the user keeps visiting a single page for a longer time, we can delete data fields and try to remove references to disposed objects. But our possibilities are a bit limited here. We have no exact control over the memory managment of the browser.
+
+For long-running applications it is a good idea to use design patterns like singletons or pooling to keep the created instances at a minimum. You may also want to have a look at one of our articles: http://qooxdoo.org/documentation/general/enterprise_application</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2742</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-01-14 09:43:49 +0100</bug_when>
+            <thetext>I&#39;ve applied your patch. Thank you for your contribution.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2743</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-01-14 09:45:08 +0100</bug_when>
+            <thetext>Moved to target=0.7.4 for further fixes. Minor adjustments to priority/severity.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2756</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-01-14 10:27:07 +0100</bug_when>
+            <thetext>&gt; For long-running applications it is a good idea to use design patterns like
+&gt; singletons or pooling to keep the created instances at a minimum. You may also
+&gt; want to have a look at one of our articles:
+
+Thankyou for that pointer. Previously we did have re-use of the handler if a new object of the same type was to be shown. However we hit a cosmetic issue with the table in that the browser cached the HTML from the previous table contents so the old content disappeared, then showed again to be quickly replaced by new content. Creating a new handler each time got around this problem. This was also not a true singleton implementation as the handler would be disposed if a different object type was requested.
+
+A true handler factory with reuse, as well as solving the cosmetic issue would seem to be the way to go.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2784</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-01-21 08:54:33 +0100</bug_when>
+            <thetext>See bug 764 which appears to have tracked down why table objects aren&#39;t released by the browser.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2787</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-01-21 12:53:52 +0100</bug_when>
+            <thetext>The patch for bug 764 (attachment 282) makes a big difference to this bug.
+
+In my test harness with (using compiled code) 12 iterations of table creation, iconising IE, repeated twice, followed by 5 iterations of table creation memory usage was 27,228 kb for the patched version vs 41,804 kb for 0.7.3. That&#39;s a 50% increase.
+
+There was still a slight increase of memory per iteration with the patched version, but that was mostly released after iconising, being 22 kb per iteration. With the non-patched version there was 595 kb per iteration which wasn&#39;t released by iconising.
+
+Therefore this bug should remain open until the remaining leaks can be traced.
+
+Hugh
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2845</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-02-11 11:11:17 +0100</bug_when>
+            <thetext>Hugh,
+
+does the fix to bug 764 solve your problem?
+
+
+Regarding property disposal: This is a tricky problem. You never now, whether the user retains a reference to the property value. If you decide to dispose the old property value, the user code may break without warning. There may be very exceptional cases, where it is OK to dispose the old property value but in general I think it safer not to take the risk of braking user code.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2849</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-02-11 12:53:28 +0100</bug_when>
+            <thetext>Fabian,
+
+&gt; does the fix to bug 764 solve your problem?
+
+As I said in comment 14, it goes a long way to doing it but it&#39;s not perfect yet.
+
+&gt; Regarding property disposal: This is a tricky problem. You never now, whether
+&gt; the user retains a reference to the property value. If you decide to dispose
+&gt; the old property value, the user code may break without warning. There may be
+&gt; very exceptional cases, where it is OK to dispose the old property value but in
+&gt; general I think it safer not to take the risk of braking user code.
+
+So what is your proposal for the disposal of items created by the table? Try this sequence:
+
+1. Table object created
+2. Row renderer object A created automatically by table
+3. New row renderer B created by user and set as property for table
+4. Table disposed
+
+The table has a responsibility for disposing of object A but not of B, but it has lost references to A because of the new property. Perhaps in this case it has to remember A in a private member, separate from the property, and dispose of the private member. 
+
+At the moment you have to have intimate knowledge of the internal structure of the table items, and that is a really really bad thing for naive users of the table. It should be easy to use without causing any problems.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2850</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-02-11 13:08:50 +0100</bug_when>
+            <thetext>I can see your point. While it sounds ugly to remember the initial value it may be the the best way to handle this scenario. Are you aware of any other such properties?
+
+Best Fabian</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2852</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-02-11 14:46:07 +0100</bug_when>
+            <thetext>Bug 771 comes from the same sort of area. Derrell was going to take a look  but if you&#39;re involved now it should probably be your responsibility. 
+
+Searching for &quot;new qx.ui.table&quot; also shows problems with qx.ui.form.ComboBoxEx  -       
+
+      var model = new qx.ui.table.model.Simple;
+
+      // Default column titles
+      model.setColumns(this.getColumnHeaders());
+      var l = this._list = new qx.ui.table.Table(model, {
+
+There are no more references to model in the combo box code.
+
+The model is not disposed by the table. It looks like it might have done once - in the table destructor there is a reference to _tableModel but there is no other reference to it.
+
+I haven&#39;t exhastively looked at all cases found by searching for new qx.ui.table - I don&#39;t see that as my responsibility as a user... (and I don&#39;t have time). But take note that some hits are in generator functions which need deeper analysis.
+
+It had seemed to me that the obvious way to go about this was:
+
+- any items created in a qooxdoo class are disposed by that class
+- any items created in a parent class and passed into a member object are to be disposed by the parent class.
+
+However, what happens when a generator function is supplied? The generator function is supplied by the parent class but it&#39;s the member object class which calls it. So in this case I would say that the member object class is responsible for disposing.
+
+It&#39;s certainly the case that my extension to the getObject function (which returns new objects) would be very useful as part of the standard debug qooxdoo - see code in the application.js attachment to this bug. That would make it very easy to see when object references are hanging around.
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>2860</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-02-11 17:12:55 +0100</bug_when>
+            <thetext>I absolutely agree with your suggestions:
+
+- any items created in a qooxdoo class are disposed by that class
+- any items created in a parent class and passed into a member object are to be disposed by the parent class.
+- If a object if instantiated using a supplied generator function,  the member object class which calls it is responsible for disposing.
+
+If Derrell had some time to look at this issue, that would be great.
+
+BTW:
+I have added gour getNewObjects method to qx.dev.ObjectSummary.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5216</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-04 10:29:13 +0200</bug_when>
+            <thetext>Fabian, please have a look at this issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5596</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-09-19 20:09:26 +0200</bug_when>
+            <thetext>Fabian is on vacation right now, but will certainly look at the issues once he&#39;s back end of Sept.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7170</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-12-18 11:54:09 +0100</bug_when>
+            <thetext>move open table bugs to 0.8.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>18370</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-05-19 09:28:59 +0200</bug_when>
+            <thetext>Set all open 0.7.x-only issues that have no assignee to WONTFIX. This is in accordance with 0.7.x users like the RAP team. If you want to work on such an 0.7.x issue, feel free to reopen it and assign it to you. The issues should only exist in the legacy 0.7.x versions and be already resolved in qooxdoo 0.8 or above.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38864</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:25:46 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>273</attachid>
+            <date>2008-01-10 15:39:00 +0100</date>
+            <delta_ts>2008-01-10 15:39:39 +0100</delta_ts>
+            <desc>application.js to slot into quickstart for 0.7.2 to demonstrate the problem.</desc>
+            <filename>Application.js</filename>
+            <type>text/plain</type>
+            <size>4420</size>
+            <attacher>hgibson</attacher>
+            
+              <data encoding="base64">LyogKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqDQoNCiAgIENvcHlyaWdodDogMjAwOCBBYmxpbmcgR3JvdXAgTHRk
+IA0KDQogICBBdXRob3JzOiBIdWdoIEdpYnNvbg0KDQoqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiogKi8NCg0KLyoq
+DQogKiBZb3VyIGFwcGxpY2F0aW9uDQogKi8NCnF4LkNsYXNzLmRlZmluZSgiQXBwbGljYXRpb24i
+LA0KICB7DQogIGV4dGVuZCA6IHF4LmFwcGxpY2F0aW9uLkd1aSwNCg0KICBtZW1iZXJzIDoNCiAg
+ICB7DQogICAgbWFpbiA6IGZ1bmN0aW9uKCkNCiAgICAgIHsNCiAgICAgIC8vIENhbGwgc3VwZXIg
+Y2xhc3MNCiAgICAgIHRoaXMuYmFzZShhcmd1bWVudHMpOw0KICAgICAgdGhpcy5fbV9kT2JqZWN0
+TGlzdCA9IHt9Ow0KICAgICAgZCA9IHF4LnVpLmNvcmUuQ2xpZW50RG9jdW1lbnQuZ2V0SW5zdGFu
+Y2UoKTsNCg0KICAgICAgdmFyIG1haW4gPSBuZXcgcXgudWkubGF5b3V0LlZlcnRpY2FsQm94TGF5
+b3V0KCk7DQogICAgICB0aGlzLm1fbWFpbiA9IG1haW47DQogICAgICBtYWluLnNldCh7IGxlZnQ6
+MjAsIHRvcDoyMCwgcmlnaHQ6MjAsIGJvdHRvbToyMCwgc3BhY2luZzo1IH0pOw0KDQogICAgICB2
+YXIgYnV0dG9uQmFyID0gbmV3IHF4LnVpLmxheW91dC5Ib3Jpem9udGFsQm94TGF5b3V0KCk7DQog
+ICAgICBidXR0b25CYXIuc2V0KHsgd2lkdGg6IjEwMCUiLCBoZWlnaHQ6ImF1dG8iLCBzcGFjaW5n
+OjUgfSk7DQogICAgICBtYWluLmFkZChidXR0b25CYXIpOw0KDQogICAgICB2YXIgYnV0dG9uID0g
+bmV3IHF4LnVpLmZvcm0uQnV0dG9uKCJSZW1vdmUgYW5kIGFkZCB0YWJsZSIpOw0KICAgICAgYnV0
+dG9uLmFkZEV2ZW50TGlzdGVuZXIoImV4ZWN1dGUiLCB0aGlzLl9SZW1vdmVBZGRUYWJsZSwgdGhp
+cyk7DQogICAgICBidXR0b25CYXIuYWRkKGJ1dHRvbik7DQogICAgICANCiAgICAgIHRoaXMubV90
+YWJsZSA9IHRoaXMubWFrZVRhYmxlKCk7DQogICAgICBtYWluLmFkZCh0aGlzLm1fdGFibGUpOw0K
+DQogICAgICBkLmFkZChtYWluKTsNCiAgICAgIH0sDQoNCiAgICBfUmVtb3ZlQWRkVGFibGUgOiBm
+dW5jdGlvbihvRXZlbnQpDQogICAgICB7DQogICAgICB0aGlzLm1fbWFpbi5yZW1vdmUodGhpcy5t
+X3RhYmxlKTsNCiAgICAgIHRoaXMubV90YWJsZS5kaXNwb3NlKCk7DQogICAgICB0aGlzLm1fdGFi
+bGVNb2RlbC5kaXNwb3NlKCk7DQogICAgICBhbGVydCh0aGlzLmdldE5ld09iamVjdHMoKSk7DQog
+ICAgICB0aGlzLm1fdGFibGUgPSB0aGlzLm1ha2VUYWJsZSgpOw0KICAgICAgdGhpcy5tX21haW4u
+YWRkKHRoaXMubV90YWJsZSk7DQogICAgICB9LA0KICAgICAgDQogICAgY3JlYXRlUmFuZG9tUm93
+cyA6IGZ1bmN0aW9uKHJvd0NvdW50KSANCiAgICAgIHsNCiAgICAgIHZhciBuZXh0SWQgPSAwOw0K
+ICAgICAgdmFyIHJvd0RhdGEgPSBbXTsNCiAgICAgIGZvciAodmFyIHJvdyA9IDA7IHJvdyA8IHJv
+d0NvdW50OyByb3crKykgDQogICAgICAgIHsNCiAgICAgICAgcm93RGF0YS5wdXNoKFsgbmV4dElk
+KyssIDEsIDIsIHRydWUgXSk7DQogICAgICAgIH0NCiAgICAgIHJldHVybiByb3dEYXRhOw0KICAg
+ICAgfSwNCg0KICAgIG1ha2VUYWJsZSA6IGZ1bmN0aW9uKCkNCiAgICAgIHsNCiAgICAgIC8vIENy
+ZWF0ZSB0aGUgaW5pdGlhbCBkYXRhDQogICAgICB2YXIgcm93RGF0YSA9IHRoaXMuY3JlYXRlUmFu
+ZG9tUm93cyg1MCk7DQogICAgICAvLyB0YWJsZSBtb2RlbA0KICAgICAgdmFyIHRhYmxlTW9kZWwg
+PSBuZXcgcXgudWkudGFibGUubW9kZWwuU2ltcGxlKCk7DQogICAgICB0YWJsZU1vZGVsLnNldENv
+bHVtbnMoWyAiSUQiLCAiQSBudW1iZXIiLCAiQSBkYXRlIiwgIkJvb2xlYW4gdGVzdCIgXSk7DQog
+ICAgICB0YWJsZU1vZGVsLnNldERhdGEocm93RGF0YSk7DQogICAgICB0YWJsZU1vZGVsLnNldENv
+bHVtbkVkaXRhYmxlKDEsIHRydWUpOw0KICAgICAgdGFibGVNb2RlbC5zZXRDb2x1bW5FZGl0YWJs
+ZSgyLCB0cnVlKTsNCiAgICAgIHRoaXMubV90YWJsZU1vZGVsID0gdGFibGVNb2RlbDsNCiAgICAg
+IC8vIHRhYmxlDQogICAgICB2YXIgdGFibGUgPSBuZXcgcXgudWkudGFibGUuVGFibGUodGFibGVN
+b2RlbCk7DQogICAgICB0YWJsZS5zZXQoeyB3aWR0aDoiMTAwJSIsIGhlaWdodDoiMSoiLCBib3Jk
+ZXI6Imluc2V0LXRoaW4iIH0pOw0KICAgICAgcmV0dXJuIHRhYmxlOw0KICAgICAgfSwNCiAgICAg
+IA0KICAgICAgLy8gLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tDQogICAgICAvKioNCiAgICAgICAqIEFsbG9jYXRlZCBvYmplY3Rz
+DQogICAgICAgKg0KICAgICAgICogQHR5cGUgc3RhdGljDQogICAgICAgKiBAcmV0dXJuIHtTdHJp
+bmd9IHN1bW1hcnkgb2YgYWxsb2NhdGVkIG9iamVjdHMuDQogICAgICAgKi8NCiAgICAgIC8vIC0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLQ0KICAgICAgZ2V0TmV3T2JqZWN0cyA6IGZ1bmN0aW9uKCkNCiAgICAgICAgIHsNCiAgICAg
+ICAgIHZhciB2RGF0YSA9IHt9Ow0KICAgICAgICAgdmFyIHZDb3VudGVyID0gMDsNCiAgICAgICAg
+IHZhciB2T2JqZWN0Ow0KICAgICAgICAgdmFyIHZEYiA9IHF4LmNvcmUuT2JqZWN0LmdldERiKCk7
+DQogICANCiAgICAgICAgIGZvciAodmFyIGk9dkRiLmxlbmd0aCAtIDE7IGk+PTA7IGktLSkNCiAg
+ICAgICAgICAgIHsNCiAgICAgICAgICAgIHZPYmplY3QgPSB2RGJbaV07DQogICANCiAgICAgICAg
+ICAgIGlmICh2T2JqZWN0ICYmIHZPYmplY3QuX19kaXNwb3NlZCA9PT0gZmFsc2UpDQogICAgICAg
+ICAgICAgICB7DQogICAgICAgICAgICAgICB2YXIgc0NsYXNzTmFtZSA9IHZPYmplY3QuY2xhc3Nu
+YW1lOw0KICAgICAgICAgICAgICAgaWYgKHZEYXRhW3NDbGFzc05hbWVdID09IG51bGwpIA0KICAg
+ICAgICAgICAgICAgICAgew0KICAgICAgICAgICAgICAgICAgdkRhdGFbc0NsYXNzTmFtZV0gPSAx
+Ow0KICAgICAgICAgICAgICAgICAgfSANCiAgICAgICAgICAgICAgIGVsc2UgDQogICAgICAgICAg
+ICAgICAgICB7DQogICAgICAgICAgICAgICAgICB2RGF0YVtzQ2xhc3NOYW1lXSsrOw0KICAgICAg
+ICAgICAgICAgICAgfQ0KICAgICAgICAgICAgICAgdkNvdW50ZXIrKzsNCiAgICAgICAgICAgICAg
+IH0NCiAgICAgICAgICAgIH0NCg0KICAgICAgICAgdmFyIGRNb3JlID0ge307DQogICAgICAgICBm
+b3IgKHZhciBzQ2xhc3NOYW1lIGluIHZEYXRhKQ0KICAgICAgICAgICAgew0KICAgICAgICAgICAg
+aWYgKCEoc0NsYXNzTmFtZSBpbiB0aGlzLl9tX2RPYmplY3RMaXN0KSkNCiAgICAgICAgICAgICAg
+IHsNCiAgICAgICAgICAgICAgIHRoaXMuX21fZE9iamVjdExpc3Rbc0NsYXNzTmFtZV0gPSAwOw0K
+ICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgaWYgKHRoaXMuX21fZE9iamVjdExpc3Rbc0Ns
+YXNzTmFtZV0gPj0gMCAmJiB0aGlzLl9tX2RPYmplY3RMaXN0W3NDbGFzc05hbWVdIDwgdkRhdGFb
+c0NsYXNzTmFtZV0pDQogICAgICAgICAgICAgICB7DQogICAgICAgICAgICAgICBkTW9yZVtzQ2xh
+c3NOYW1lXSA9IHZEYXRhW3NDbGFzc05hbWVdIC0gdGhpcy5fbV9kT2JqZWN0TGlzdFtzQ2xhc3NO
+YW1lXTsNCiAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgIH0NCg0KICAgICAgICAgdGhpcy5f
+bV9kT2JqZWN0TGlzdCA9IHZEYXRhOw0KDQogICAgICAgICB2YXIgdkFyckRhdGEgPSBbXTsNCiAg
+ICAgICAgIGZvciAodmFyIHZDbGFzc05hbWUgaW4gZE1vcmUpDQogICAgICAgICAgICB7DQogICAg
+ICAgICAgICB2QXJyRGF0YS5wdXNoKHtjbGFzc25hbWUgOiB2Q2xhc3NOYW1lLA0KICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgbnVtYmVyICAgIDogZE1vcmVbdkNsYXNzTmFtZV0NCiAgICAgICAg
+ICAgICAgICAgICAgICAgICAgIH0pOw0KICAgICAgICAgICAgfQ0KICAgDQogICAgICAgICB2QXJy
+RGF0YS5zb3J0KGZ1bmN0aW9uKGEsIGIpIHsNCiAgICAgICAgICAgIHJldHVybiBiLm51bWJlciAt
+IGEubnVtYmVyOw0KICAgICAgICAgICAgfSk7DQoNCiAgICAgICAgIHZhciB2TXNnID0gIlN1bW1h
+cnk6ICgiICsgdkNvdW50ZXIgKyAiIE9iamVjdHMpXHJcblxyXG4iOw0KICAgICAgICAgZm9yICh2
+YXIgaT0wOyBpPHZBcnJEYXRhLmxlbmd0aDsgaSsrKSANCiAgICAgICAgICAgIHsNCiAgICAgICAg
+ICAgIHZNc2cgKz0gdkFyckRhdGFbaV0ubnVtYmVyICsgIjogIiArIHZBcnJEYXRhW2ldLmNsYXNz
+bmFtZSArICJcclxuIjsNCiAgICAgICAgICAgIH0NCiAgICAgICAgIHJldHVybiB2TXNnOw0KICAg
+ICAgICAgfQ0KICAgICAgDQogICAgfQ0KICB9KTsNCg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="1" ispatch="1" isprivate="0" isurl="0">
+            <attachid>275</attachid>
+            <date>2008-01-13 08:53:00 +0100</date>
+            <delta_ts>2008-01-13 09:21:44 +0100</delta_ts>
+            <desc>Patch to fix object leaks in 0.7.3</desc>
+            <filename>qxBug753.patch</filename>
+            <type>text/plain</type>
+            <size>1411</size>
+            <attacher>hgibson</attacher>
+            
+              <data encoding="base64">SW5kZXg6IHFvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS90YWJs
+ZS9wYW5lL1Njcm9sbGVyLmpzDQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09DQotLS0gcW9veGRvby9mcm9udGVuZC9mcmFt
+ZXdvcmsvc291cmNlL2NsYXNzL3F4L3VpL3RhYmxlL3BhbmUvU2Nyb2xsZXIuanMJKHJldmlzaW9u
+IDExMTQ2KQ0KKysrIHFvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91
+aS90YWJsZS9wYW5lL1Njcm9sbGVyLmpzCSh3b3JraW5nIGNvcHkpDQpAQCAtMjE1Miw2ICsyMTUy
+LDEyIEBADQogICAgICAgdGhpcy5fdXBkYXRlSW50ZXJ2YWwgPSBudWxsOwogICAgIH0KIAorICAg
+IHZhciB0YWJsZVBhbmVNb2RlbCA9IHRoaXMuZ2V0VGFibGVQYW5lTW9kZWwoKTsKKyAgICBpZiAo
+dGFibGVQYW5lTW9kZWwpCisgICAgeworICAgICAgdGFibGVQYW5lTW9kZWwuZGlzcG9zZSgpOwor
+ICAgIH0KKyAgCiAgICAgdGhpcy5fZGlzcG9zZU9iamVjdHMoIl92ZXJTY3JvbGxCYXIiLCAiX2hv
+clNjcm9sbEJhciIsICJfaGVhZGVyIiwgIl9oZWFkZXJDbGlwcGVyIiwKICAgICAgICJfc3BhY2Vy
+IiwgIl90b3AiLCAiX3RhYmxlUGFuZSIsICJfcGFuZUNsaXBwZXIiLCAiX3Jlc2l6ZUxpbmUiLCAi
+X3RhYmxlIiwKICAgICAgICJfZm9jdXNJbmRpY2F0b3IiLCAiX3RvcFJpZ2h0V2lkZ2V0Iik7Cklu
+ZGV4OiBxb294ZG9vL2Zyb250ZW5kL2ZyYW1ld29yay9zb3VyY2UvY2xhc3MvcXgvdWkvdGFibGUv
+VGFibGUuanMNCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT0NCi0tLSBxb294ZG9vL2Zyb250ZW5kL2ZyYW1ld29yay9zb3Vy
+Y2UvY2xhc3MvcXgvdWkvdGFibGUvVGFibGUuanMJKHJldmlzaW9uIDExMTQ2KQ0KKysrIHFvb3hk
+b28vZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS90YWJsZS9UYWJsZS5qcwko
+d29ya2luZyBjb3B5KQ0KQEAgLTE4MzUsNiArMTgzNSwxMiBAQA0KIAogICBkZXN0cnVjdCA6IGZ1
+bmN0aW9uKCkKICAgeworICAgIHZhciBzZWxlY3Rpb25Nb2RlbCA9IHRoaXMuZ2V0U2VsZWN0aW9u
+TW9kZWwoKTsKKyAgICBpZiAoc2VsZWN0aW9uTW9kZWwpIAorICAgIHsKKyAgICAgIHNlbGVjdGlv
+bk1vZGVsLmRpc3Bvc2UoKTsKKyAgICB9CisgICAgCiAgICAgdGhpcy5fY2xlYW5VcE1ldGFDb2x1
+bW5zKDApOwogICAgIHRoaXMuX2Rpc3Bvc2VPYmplY3RzKCJfc2VsZWN0aW9uTWFuYWdlciIsICJf
+Y29sdW1uVmlzaWJpbGl0eU1lbnUiLCAiX3RhYmxlTW9kZWwiLCAiX2NvbHVtblZpc2liaWxpdHlC
+dCIsICJfc2Nyb2xsZXJQYXJlbnQiLCAiX3N0YXR1c0JhciIpOwogICB9Cg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="1" isprivate="0" isurl="0">
+            <attachid>276</attachid>
+            <date>2008-01-13 09:21:00 +0100</date>
+            <delta_ts>2008-01-13 09:21:44 +0100</delta_ts>
+            <desc>Patch to fix object leaks in 0.7.3 - take 2.</desc>
+            <filename>qxBug753_2.patch</filename>
+            <type>text/plain</type>
+            <size>1697</size>
+            <attacher>hgibson</attacher>
+            
+              <data encoding="base64">SW5kZXg6IHFvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS90YWJs
+ZS9wYW5lL1Njcm9sbGVyLmpzDQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09DQotLS0gcW9veGRvby9mcm9udGVuZC9mcmFt
+ZXdvcmsvc291cmNlL2NsYXNzL3F4L3VpL3RhYmxlL3BhbmUvU2Nyb2xsZXIuanMJKHJldmlzaW9u
+IDExMTQ2KQ0KKysrIHFvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91
+aS90YWJsZS9wYW5lL1Njcm9sbGVyLmpzCSh3b3JraW5nIGNvcHkpDQpAQCAtMjE1Miw2ICsyMTUy
+LDEzIEBADQogICAgICAgdGhpcy5fdXBkYXRlSW50ZXJ2YWwgPSBudWxsOwogICAgIH0KIAorICAg
+IC8vIHRoaXMgb2JqZWN0IHdhcyBjcmVhdGVkIGJ5IHRoZSB0YWJsZSBvbiBpbml0IHNvIHdlIGhh
+dmUgdG8gY2xlYW4gaXQgdXAuCisgICAgdmFyIHRhYmxlUGFuZU1vZGVsID0gdGhpcy5nZXRUYWJs
+ZVBhbmVNb2RlbCgpOworICAgIGlmICh0YWJsZVBhbmVNb2RlbCkKKyAgICB7CisgICAgICB0YWJs
+ZVBhbmVNb2RlbC5kaXNwb3NlKCk7CisgICAgfQorICAKICAgICB0aGlzLl9kaXNwb3NlT2JqZWN0
+cygiX3ZlclNjcm9sbEJhciIsICJfaG9yU2Nyb2xsQmFyIiwgIl9oZWFkZXIiLCAiX2hlYWRlckNs
+aXBwZXIiLAogICAgICAgIl9zcGFjZXIiLCAiX3RvcCIsICJfdGFibGVQYW5lIiwgIl9wYW5lQ2xp
+cHBlciIsICJfcmVzaXplTGluZSIsICJfdGFibGUiLAogICAgICAgIl9mb2N1c0luZGljYXRvciIs
+ICJfdG9wUmlnaHRXaWRnZXQiKTsKSW5kZXg6IHFvb3hkb28vZnJvbnRlbmQvZnJhbWV3b3JrL3Nv
+dXJjZS9jbGFzcy9xeC91aS90YWJsZS9UYWJsZS5qcw0KPT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQ0KLS0tIHFvb3hkb28v
+ZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJjZS9jbGFzcy9xeC91aS90YWJsZS9UYWJsZS5qcwkocmV2
+aXNpb24gMTExNDYpDQorKysgcW9veGRvby9mcm9udGVuZC9mcmFtZXdvcmsvc291cmNlL2NsYXNz
+L3F4L3VpL3RhYmxlL1RhYmxlLmpzCSh3b3JraW5nIGNvcHkpDQpAQCAtMTgzNSw2ICsxODM1LDE5
+IEBADQogCiAgIGRlc3RydWN0IDogZnVuY3Rpb24oKQogICB7CisgICAgLy8gd2UgYWxsb2NhdGVk
+IHRoZXNlIG9iamVjdHMgb24gaW5pdCBzbyB3ZSBoYXZlIHRvIGNsZWFuIHRoZW0gdXAuCisgICAg
+dmFyIHNlbGVjdGlvbk1vZGVsID0gdGhpcy5nZXRTZWxlY3Rpb25Nb2RlbCgpOworICAgIGlmIChz
+ZWxlY3Rpb25Nb2RlbCkgCisgICAgeworICAgICAgc2VsZWN0aW9uTW9kZWwuZGlzcG9zZSgpOwor
+ICAgIH0KKyAgICAKKyAgICB2YXIgZGF0YVJvd1JlbmRlcmVyID0gdGhpcy5nZXREYXRhUm93UmVu
+ZGVyZXIoKTsKKyAgICBpZiAoZGF0YVJvd1JlbmRlcmVyKQorICAgIHsKKyAgICAgIGRhdGFSb3dS
+ZW5kZXJlci5kaXNwb3NlKCk7CisgICAgfQorICAgIAogICAgIHRoaXMuX2NsZWFuVXBNZXRhQ29s
+dW1ucygwKTsKICAgICB0aGlzLl9kaXNwb3NlT2JqZWN0cygiX3NlbGVjdGlvbk1hbmFnZXIiLCAi
+X2NvbHVtblZpc2liaWxpdHlNZW51IiwgIl90YWJsZU1vZGVsIiwgIl9jb2x1bW5WaXNpYmlsaXR5
+QnQiLCAiX3Njcm9sbGVyUGFyZW50IiwgIl9zdGF0dXNCYXIiKTsKICAgfQo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

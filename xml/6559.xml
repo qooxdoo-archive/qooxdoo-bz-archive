@@ -1,0 +1,264 @@
+<bug>
+          <bug_id>6559</bug_id>
+          
+          <creation_ts>2012-06-23 15:42:00 +0200</creation_ts>
+          <short_desc>Receiving error about unknown new operator while scanning libraries</short_desc>
+          <delta_ts>2014-03-03 15:22:06 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>2.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>2.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="eda">edadasiewicz</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>29902</commentid>
+              <attachid>1168</attachid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2012-06-23 15:42:25 +0200</bug_when>
+            <thetext>Created attachment 1168
+output of &quot;generate.py -s source&quot;
+
+While migrating a fairly large application to 2.0 I encountered the following error:
+
+&gt;&gt;&gt; Scanning libraries \Unknown operator &#39;new&#39; (pos (874, 7)).
+File: /var/www/qooxdoo/webrf/source/class/webrf/SystemPick.js
+
+The offending function from the file is:
+
+__captureWeight: function(fld, callback) {
+  function setWeight(intWeight, dispWeight, dispUOM) {
+    this.__weight = intWeight;
+    this.__weightEntered = true;
+    if (callback) {
+      callback.call(this);
+    }
+  }
+
+  new webrf.WeightCpt(this.__lpid, this.__custid, false, this.__weight, setWeight, fld, true, this);
+},
+
+I re-built the application with both 1.6 and 1.6.1 and this error did not occur.  On the forum it was suggested that I add a semi-colon after the closing brace for the function definition -- the one before the &quot;new&quot; statement.  I tried this but still received the same error.  I grep&#39;ed all of the code in the app and found similar constructs -- one which was identical -- that did not generate an error.  I have attached the results of running generate.py source with the -s option.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29907</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-06-25 08:14:17 +0200</bug_when>
+            <thetext>Thanks for the report.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29918</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2012-06-25 14:20:20 +0200</bug_when>
+            <thetext>The problem appears to be related to defining a local function within a member function.  If I replace the call to the local function within the &quot;new&quot; request with an anonymous function it builds cleanly ... until it encounters this type of construct again.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29931</commentid>
+              <attachid>1169</attachid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-06-26 14:39:56 +0200</bug_when>
+            <thetext>Created attachment 1169
+Modified Application.js from desktop skeleton
+
+I still have to find out what makes the parser trying to consume the &#39;new&#39; after the function definition. I think it might be similar to a function definition that is immediately applied. 
+
+The &#39;new&#39; seems to be taken as an operator in infix position, that would explain the error message (which still leaves quite a bit to be wanting, as the operator is not &quot;unknown&quot;, just unknown in infix position).
+
+I can reproduce the issue. But still a semicolon after the inner function definition fixes it. I&#39;ve added an Application.js file from a &#39;desktop&#39; skeleton where I just added your code in the members section. Could you download it into an own skeleton and re-check if removing/adding the semicolon doesn&#39;t trigger/remove the exception?!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>29933</commentid>
+            <who name="eda">edadasiewicz</who>
+            <bug_when>2012-06-26 16:24:23 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; Created attachment 1169 [details]
+&gt; Modified Application.js from desktop skeleton
+&gt; 
+&gt; I still have to find out what makes the parser trying to consume the &#39;new&#39;
+&gt; after the function definition. I think it might be similar to a function
+&gt; definition that is immediately applied. 
+&gt; 
+&gt; The &#39;new&#39; seems to be taken as an operator in infix position, that would
+&gt; explain the error message (which still leaves quite a bit to be wanting, as the
+&gt; operator is not &quot;unknown&quot;, just unknown in infix position).
+&gt; 
+&gt; I can reproduce the issue. But still a semicolon after the inner function
+&gt; definition fixes it. I&#39;ve added an Application.js file from a &#39;desktop&#39;
+&gt; skeleton where I just added your code in the members section. Could you
+&gt; download it into an own skeleton and re-check if removing/adding the semicolon
+&gt; doesn&#39;t trigger/remove the exception?!
+
+Yes, you are correct that the semicolon fixed the problem.  I tried the same suggestion on the forum and it did not &quot;appear&quot; to work since the error was then occurring in another file and I did not notice the new file name.  Once I corrected all of the &quot;similar constructs&quot; then the app built cleanly.  Also, there is nothing special about the outer function being a member function -- I had to fix one where it was not.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30051</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-07-09 10:29:15 +0200</bug_when>
+            <thetext>The same problem occurs for 
+
+function(){}typeof &quot;a&quot;;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30066</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-07-09 17:37:00 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; The same problem occurs for 
+&gt; 
+&gt; function(){}typeof &quot;a&quot;;
+
+Actually, this line of code is not accepted by any of the JavaScript VMs. But 
+adding a function name is, and is close enough:
+
+  function foo(){} typeof &quot;a&quot;;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30089</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-07-10 18:05:41 +0200</bug_when>
+            <thetext>parse function definition in place of a statement
+
+- ECMA spec places FunctionDeclaration en par to Statement
+- so it seems better to parse a function definition explicitly rather than 
+  leaving it to the expression() parser
+- (which tries to combine the definition into a larger expression)
+- this way FunctionDeclaration is parsed like a whole statement
+- and &#39;function f(){} new foo();&#39; is then treated as two statements
+  (like automatic semicolon insertion)
+
+master: 058c739</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37550</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:06 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1168</attachid>
+            <date>2012-06-23 15:42:00 +0200</date>
+            <delta_ts>2012-06-23 15:42:25 +0200</delta_ts>
+            <desc>output of &quot;generate.py -s source&quot;</desc>
+            <filename>generate.out</filename>
+            <type>application/octet-stream</type>
+            <size>1483</size>
+            <attacher>edadasiewicz</attacher>
+            
+              <data encoding="base64">ICAtIFdhcm5pbmc6ICEgU2hhZG93aW5nIGpvYiAic291cmNlIiB3aXRoIGxvY2FsIG9uZQogIC0g
+V2FybmluZzogISBTaGFkb3dpbmcgam9iICJidWlsZCIgd2l0aCBsb2NhbCBvbmUKVHJhY2ViYWNr
+IChtb3N0IHJlY2VudCBjYWxsIGxhc3QpOgogIEZpbGUgIi92YXIvd3d3L3Fvb3hkb28vcW9veGRv
+by0yLjAtc2RrL3Rvb2wvYmluL2dlbmVyYXRvci5weSIsIGxpbmUgMjMzLCBpbiA8bW9kdWxlPgog
+ICAgbWFpbigpCiAgRmlsZSAiL3Zhci93d3cvcW9veGRvby9xb294ZG9vLTIuMC1zZGsvdG9vbC9i
+aW4vZ2VuZXJhdG9yLnB5IiwgbGluZSAyMTYsIGluIG1haW4KICAgIGdlbmVyYXRvck9iai5ydW4o
+KQogIEZpbGUgIi92YXIvd3d3L3Fvb3hkb28vcW9veGRvby0yLjAtc2RrL3Rvb2wvcHlsaWIvZ2Vu
+ZXJhdG9yL0dlbmVyYXRvci5weSIsIGxpbmUgNDg1LCBpbiBydW4KICAgIHByZXBhcmVHZW5lcmF0
+b3IxKCkKICBGaWxlICIvdmFyL3d3dy9xb294ZG9vL3Fvb3hkb28tMi4wLXNkay90b29sL3B5bGli
+L2dlbmVyYXRvci9HZW5lcmF0b3IucHkiLCBsaW5lIDQxOCwgaW4gcHJlcGFyZUdlbmVyYXRvcjEK
+ICAgIHNlbGYuX2xpYnJhcmllcykgICAgID0gc2VsZi5zY2FuTGlicmFyeShjb25maWcuZ2V0KCJs
+aWJyYXJ5IiwgW10pKQogIEZpbGUgIi92YXIvd3d3L3Fvb3hkb28vcW9veGRvby0yLjAtc2RrL3Rv
+b2wvcHlsaWIvZ2VuZXJhdG9yL0dlbmVyYXRvci5weSIsIGxpbmUgMTkyNSwgaW4gc2NhbkxpYnJh
+cnkKICAgIGxpYk9iai5zY2FuKGNhY2hlVGltZSkKICBGaWxlICIvdmFyL3d3dy9xb294ZG9vL3Fv
+b3hkb28tMi4wLXNkay90b29sL3B5bGliL2dlbmVyYXRvci9yZXNvdXJjZS9MaWJyYXJ5LnB5Iiwg
+bGluZSAyMjAsIGluIHNjYW4KICAgIHNjYW5yZXMgPSBzZWxmLl9zY2FuQ2xhc3NQYXRoKHRpbWVP
+Zkxhc3RTY2FuKQogIEZpbGUgIi92YXIvd3d3L3Fvb3hkb28vcW9veGRvby0yLjAtc2RrL3Rvb2wv
+cHlsaWIvZ2VuZXJhdG9yL3Jlc291cmNlL0xpYnJhcnkucHkiLCBsaW5lIDQzOSwgaW4gX3NjYW5D
+bGFzc1BhdGgKICAgIGZpbGVDb2RlSWQgPSBzZWxmLl9nZXRDb2RlSWQoY2xhenopCiAgRmlsZSAi
+L3Zhci93d3cvcW9veGRvby9xb294ZG9vLTIuMC1zZGsvdG9vbC9weWxpYi9nZW5lcmF0b3IvcmVz
+b3VyY2UvTGlicmFyeS5weSIsIGxpbmUgMjQyLCBpbiBfZ2V0Q29kZUlkCiAgICB0cmVlICAgICA9
+IGNsYXp6LnRyZWUoKQogIEZpbGUgIi92YXIvd3d3L3Fvb3hkb28vcW9veGRvby0yLjAtc2RrL3Rv
+b2wvcHlsaWIvZ2VuZXJhdG9yL2NvZGUvY2xhenovTUNsYXNzQ29kZS5weSIsIGxpbmUgODQsIGlu
+IHRyZWUKICAgIHJhaXNlIGUKZWNtYXNjcmlwdC5mcm9udGVuZC5TeW50YXhFeGNlcHRpb24uU3lu
+dGF4RXhjZXB0aW9uOiBVbmtub3duIG9wZXJhdG9yICduZXcnIChwb3MgKDg3NCwgNykpLgpGaWxl
+OiAvdmFyL3d3dy9xb294ZG9vL3dlYnJmL3NvdXJjZS9jbGFzcy93ZWJyZi9TeXN0ZW1QaWNrLmpz
+Cg==
+</data>
+
+          </attachment>
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1169</attachid>
+            <date>2012-06-26 14:39:00 +0200</date>
+            <delta_ts>2012-06-26 14:39:56 +0200</delta_ts>
+            <desc>Modified Application.js from desktop skeleton</desc>
+            <filename>Application.js</filename>
+            <type>application/x-javascript</type>
+            <size>2353</size>
+            <attacher>thron7</attacher>
+            
+              <data encoding="base64">LyogKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqCgogICBDb3B5cmlnaHQ6CgogICBMaWNlbnNlOgoKICAgQXV0aG9y
+czoKCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKiAqLwoKLyogKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCgojYXNzZXQoYnVnNjU1
+OS8qKQoKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqICovCgovKioKICogVGhpcyBpcyB0aGUgbWFpbiBhcHBsaWNh
+dGlvbiBjbGFzcyBvZiB5b3VyIGN1c3RvbSBhcHBsaWNhdGlvbiAiYnVnNjU1OSIKICovCnF4LkNs
+YXNzLmRlZmluZSgiYnVnNjU1OS5BcHBsaWNhdGlvbiIsCnsKICBleHRlbmQgOiBxeC5hcHBsaWNh
+dGlvbi5TdGFuZGFsb25lLAoKCgogIC8qCiAgKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKICAgICBNRU1C
+RVJTCiAgKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioKICAqLwoKICBtZW1iZXJzIDoKICB7CiAgICBfX2Nh
+cHR1cmVXZWlnaHQ6IGZ1bmN0aW9uKGZsZCwgY2FsbGJhY2spIHsKICAgICAgZnVuY3Rpb24gc2V0
+V2VpZ2h0KGludFdlaWdodCwgZGlzcFdlaWdodCwgZGlzcFVPTSkgewogICAgICAgIHRoaXMuX193
+ZWlnaHQgPSBpbnRXZWlnaHQ7CiAgICAgICAgdGhpcy5fX3dlaWdodEVudGVyZWQgPSB0cnVlOwog
+ICAgICAgIGlmIChjYWxsYmFjaykgewogICAgICAgICAgY2FsbGJhY2suY2FsbCh0aGlzKTsKICAg
+ICAgICB9CiAgICAgIH07ICAvLyA8LSBjcnVjaWFsIHNlbWljb2xvbgoKICAgICAgbmV3IHdlYnJm
+LldlaWdodENwdCh0aGlzLl9fbHBpZCwgdGhpcy5fX2N1c3RpZCwgZmFsc2UsIHRoaXMuX193ZWln
+aHQsIHNldFdlaWdodCwgZmxkLCB0cnVlLCB0aGlzKTsKICAgIH0sCiAgICAvKioKICAgICAqIFRo
+aXMgbWV0aG9kIGNvbnRhaW5zIHRoZSBpbml0aWFsIGFwcGxpY2F0aW9uIGNvZGUgYW5kIGdldHMg
+Y2FsbGVkIAogICAgICogZHVyaW5nIHN0YXJ0dXAgb2YgdGhlIGFwcGxpY2F0aW9uCiAgICAgKiAK
+ICAgICAqIEBsaW50IGlnbm9yZURlcHJlY2F0ZWQoYWxlcnQpCiAgICAgKi8KICAgIG1haW4gOiBm
+dW5jdGlvbigpCiAgICB7CiAgICAgIC8vIENhbGwgc3VwZXIgY2xhc3MKICAgICAgdGhpcy5iYXNl
+KGFyZ3VtZW50cyk7CgogICAgICAvLyBFbmFibGUgbG9nZ2luZyBpbiBkZWJ1ZyB2YXJpYW50CiAg
+ICAgIGlmIChxeC5jb3JlLkVudmlyb25tZW50LmdldCgicXguZGVidWciKSkKICAgICAgewogICAg
+ICAgIC8vIHN1cHBvcnQgbmF0aXZlIGxvZ2dpbmcgY2FwYWJpbGl0aWVzLCBlLmcuIEZpcmVidWcg
+Zm9yIEZpcmVmb3gKICAgICAgICBxeC5sb2cuYXBwZW5kZXIuTmF0aXZlOwogICAgICAgIC8vIHN1
+cHBvcnQgYWRkaXRpb25hbCBjcm9zcy1icm93c2VyIGNvbnNvbGUuIFByZXNzIEY3IHRvIHRvZ2ds
+ZSB2aXNpYmlsaXR5CiAgICAgICAgcXgubG9nLmFwcGVuZGVyLkNvbnNvbGU7CiAgICAgIH0KCiAg
+ICAgIC8qCiAgICAgIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KICAgICAgICBCZWxvdyBpcyB5b3VyIGFjdHVh
+bCBhcHBsaWNhdGlvbiBjb2RlLi4uCiAgICAgIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KICAgICAgKi8KCiAg
+ICAgIC8vIENyZWF0ZSBhIGJ1dHRvbgogICAgICB2YXIgYnV0dG9uMSA9IG5ldyBxeC51aS5mb3Jt
+LkJ1dHRvbigiRmlyc3QgQnV0dG9uIiwgImJ1ZzY1NTkvdGVzdC5wbmciKTsKCiAgICAgIC8vIERv
+Y3VtZW50IGlzIHRoZSBhcHBsaWNhdGlvbiByb290CiAgICAgIHZhciBkb2MgPSB0aGlzLmdldFJv
+b3QoKTsKCiAgICAgIC8vIEFkZCBidXR0b24gdG8gZG9jdW1lbnQgYXQgZml4ZWQgY29vcmRpbmF0
+ZXMKICAgICAgZG9jLmFkZChidXR0b24xLCB7bGVmdDogMTAwLCB0b3A6IDUwfSk7CgogICAgICAv
+LyBBZGQgYW4gZXZlbnQgbGlzdGVuZXIKICAgICAgYnV0dG9uMS5hZGRMaXN0ZW5lcigiZXhlY3V0
+ZSIsIGZ1bmN0aW9uKGUpIHsKICAgICAgICBhbGVydCgiSGVsbG8gV29ybGQhIik7CiAgICAgIH0p
+OwogICAgfQogIH0KfSk7Cg==
+</data>
+
+          </attachment>
+      
+
+    </bug>

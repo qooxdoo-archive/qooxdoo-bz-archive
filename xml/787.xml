@@ -1,0 +1,172 @@
+<bug>
+          <bug_id>787</bug_id>
+          
+          <creation_ts>2008-02-06 13:04:00 +0100</creation_ts>
+          <short_desc>“Hidden” table with resizable columns does not react to window resizing</short_desc>
+          <delta_ts>2014-03-03 15:24:37 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>0.7.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Denis">nomus</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>2830</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-02-06 13:04:19 +0100</bug_when>
+            <thetext>Try the following code to see the problem. Perform the following steps:
+- go to “Page 2”;
+- resize the window (for example, maximize it);
+- go to “Page 1”.
+You will see that table columns are shrunk and messed in Firefox 2.0.0.11 and Opera 9.24.
+In IE 6 table columns and scrollbar will not change their size.
+There is no such problem in 0.7.2 version.
+
+Code snippet:
+
+var wnd = new qx.ui.window.Window(&quot;Test&quot;);
+wnd.setLeft(10);
+wnd.setTop(10);
+wnd.setWidth(400);
+wnd.setHeight(300);
+wnd.setMinWidth(200);
+wnd.setMinHeight(100);
+wnd.show();
+
+var btv = new qx.ui.pageview.buttonview.ButtonView;
+
+btv.setLocation(0, 0);
+btv.setRight(0);
+btv.setBottom(0);
+btv.getPane().setPadding(0);
+//btv.getPane().setBackgroundColor(&quot;background&quot;);
+//btv.setBorder(new qx.ui.core.Border(0, &quot;solid&quot;, &quot;#000000&quot;));
+
+var button1 = new qx.ui.pageview.buttonview.Button(&quot;Page 1&quot;);
+button1.setChecked(true);
+var button2 = new qx.ui.pageview.buttonview.Button(&quot;Page 2&quot;);
+btv.getBar().add(button1, button2);
+
+var p1 = new qx.ui.pageview.buttonview.Page(button1);
+var p2 = new qx.ui.pageview.buttonview.Page(button2);
+btv.getPane().add(p1, p2);
+
+var nextId = 0;
+var createRandomRows = function(rowCount) {
+  var rowData = [];
+  var now = new Date().getTime();
+  var dateRange = 400 * 24 * 60 * 60 * 1000; // 400 days
+  for (var row = 0; row &lt; rowCount; row++) {
+    var date = new Date(now + Math.random() * dateRange - dateRange / 2);
+    rowData.push([ nextId++, Math.random() * 10000, date, (Math.random() &gt; 0.5) ]);
+  }
+  return rowData;
+};
+
+var rowData = createRandomRows(50);
+
+var tableModel = new qx.ui.table.model.Simple();
+tableModel.setColumns([ &quot;ID&quot;, &quot;A number&quot;, &quot;A date&quot;, &quot;Boolean test&quot; ]);
+tableModel.setData(rowData);
+
+var custom =
+  {
+    tableColumnModel :
+      function(obj)
+      {
+        return new qx.ui.table.columnmodel.Resize(obj);
+      }
+  };
+
+var table1 = new qx.ui.table.Table(tableModel, custom);
+table1.setLeft(5);
+table1.setTop(5);
+table1.setRight(5);
+table1.setBottom(5);
+table1.setBorder(&quot;inset-thin&quot;);
+var tcm = table1.getTableColumnModel();
+var resizeBehavior = tcm.getBehavior();
+resizeBehavior.set(0, { width:&quot;1*&quot;, minWidth:40, maxWidth:80  });
+resizeBehavior.setWidth(1, &quot;50%&quot;);
+resizeBehavior.setMinWidth(1, 100);
+resizeBehavior.setMaxWidth(1, 320);
+resizeBehavior.set(3, { width:100 });
+
+tcm.setDataCellRenderer(3, new qx.ui.table.cellrenderer.Boolean());
+
+p1.add(table1);
+wnd.add(btv);
+wnd.addToDocument();
+
+return;
+
+
+Denis</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3618</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-07-01 17:30:35 +0200</bug_when>
+            <thetext>This problem can be fixed by setting “initializeWidthsOnEveryAppear” property of resize behaviour object to true:
+
+resizeBehavior.setInitializeWidthsOnEveryAppear(true);
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5266</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-09-05 08:03:56 +0200</bug_when>
+            <thetext>To Fabian</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7172</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2008-12-18 11:54:10 +0100</bug_when>
+            <thetext>move open table bugs to 0.8.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>7309</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-01-12 18:01:32 +0100</bug_when>
+            <thetext>This issue is fixed in qooxdoo 0.8</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38455</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:37 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

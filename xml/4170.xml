@@ -1,0 +1,151 @@
+<bug>
+          <bug_id>4170</bug_id>
+          
+          <creation_ts>2010-10-07 16:52:00 +0200</creation_ts>
+          <short_desc>Memory leak problem with Iframe in Internet Explorer</short_desc>
+          <delta_ts>2012-05-16 09:36:37 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.embeds</component>
+          <version>0.7</version>
+          <rep_platform>IE 7</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Navatski Siarhei">navatski</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          <cf_browser_version>7</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20528</commentid>
+            <who name="Navatski Siarhei">navatski</who>
+            <bug_when>2010-10-07 16:52:13 +0200</bug_when>
+            <thetext>Hi, I&#39;m using rap 1.3 that is based on Qooxdoo 0.7 and found memory leak problem while using component based on qx.ui.embed.Iframe in Internet Explorer (v. 7 and 8 ).
+
+Use case is the following:
+1. create custom component based on qx.ui.embed.Iframe with URL to some static html page
+2. display this component on UI
+3. iframe loads html that create some big JS-object
+4. dispose this component from UI
+
+As a result memory allocated by loaded html page is not disposed in Internet Exporer. It is disposed normally in FireFox and Chrome browsers.
+
+As I see problem is related to disposing qx.ui.embed.Iframe object. It is not disposed correctly in Internet Explorer.
+
+Can you suggest how to fix this problem?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20531</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-10-08 09:09:47 +0200</bug_when>
+            <thetext>We dropped support for qooxdoo 0.7.x some time ago so i guess there wont be a fix for that from our side. I can give you a hint how to fix it yourself. Maybe you should check if the destruct section is completely done in IE. I can remember we had the problem that the destructor threw an error and hasn&#39;t been executed properly. But i cant remember if it was the iFrame class. No mater what, you need to take care the you remove all connections to the local scope (object is reachable somehow!) and from all DOM elements. I guess that could be the the problem too.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20534</commentid>
+            <who name="Navatski Siarhei">navatski</who>
+            <bug_when>2010-10-08 11:17:41 +0200</bug_when>
+            <thetext>Hi Martin
+
+Thank you for your suggestions.
+
+Destruct function of our custom widget is executed without error.
+
+As I see problem is related to not disposing iframe window object. Probably there is some reference to it that not allow to dispose it by garbage collector and as a result JS-object inside iframe window is not disposed too.
+
+Here is the content of static html page that is loaded in Iframe:
+
+&lt; html &gt; 
+&lt; head &gt;
+  &lt; script &gt;
+    function doMem(){
+      window.jsObject = [];
+      for(var i = 0; i &lt; 1024*1024; i++){
+         window.jsObject[i] = &quot;SOME_TEXT_CONTENT&quot;;
+      }
+    }
+   &lt;/ script &gt;
+&lt;/ head &gt;	
+&lt; body onload=&quot;doMem()&quot; &gt;
+  MEM LEAK!
+&lt;/ body &gt;
+&lt;/ html &gt;
+
+If in the desctruct function of my custom widget I assign null to the jsObject then the jsObject is disposed correctly and there is no memory leak:
+
+destruct : function() {
+    this.getIframeNode().contentWindow.jsObject = null;
+}
+
+It means that there are no other references to jsObject except of the window object and because there is memory leak it indicates that window object is not disposed. 
+
+As I see iframe widget is disposed in QooxDoo by using DOM API - removeChild method.
+
+I checked this removal mechanism in simple static html page:
+
+&lt; html &gt;
+&lt; head &gt;
+&lt; script &gt;
+var templateDiv = null;
+
+function prepareTemplate(){
+    templateDiv = document.createElement(&#39;DIV&#39;);
+    templateDiv.innerHTML = &#39;&lt;iframe src=&quot;mem_leak3.html&quot; width=&quot;800&quot; height=&quot;600&quot;&gt;&lt;/iframe&gt;&#39;;
+}
+
+function switchWidget(){
+    var contentDiv = document.getElementById(&#39;contentDiv&#39;);
+    if(contentDiv.firstChild != null){
+         contentDiv.removeChild(contentDiv.firstChild);
+    } else {
+         contentDiv.appendChild(templateDiv.firstChild.cloneNode(true));
+    }
+}
+&lt;/ script &gt;
+&lt;/ head &gt;
+&lt; body onload=&quot;prepareTemplate()&quot; &gt;
+&lt; input type=&quot;button&quot; onclick=&quot;switchWidget()&quot; value=&quot;switch&quot; &gt;
+&lt; hr &gt;
+&lt; div id=&quot;contentDiv&quot; &gt;&lt;/ div &gt;
+&lt;/ body &gt;
+&lt;/ html &gt;
+
+And as I see it works without any memory leak.
+So it looks like there is a problem with disposing iframe window on QooxDoo side.
+
+Can you suggest what can be done in this situation to avoid memory leak?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20547</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-10-08 14:34:57 +0200</bug_when>
+            <thetext>You should check if there are any references to that dom element after dispose. Also every object is registered in our object registry which is static --&gt; always in scope. Be sure to get rid of that too. But usually the dispose of our base object should do that but you have to execute that...
+Expect fo that, I have no idea what could be the problem. :(</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

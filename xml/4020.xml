@@ -1,0 +1,237 @@
+<bug>
+          <bug_id>4020</bug_id>
+          
+          <creation_ts>2010-08-24 17:26:00 +0200</creation_ts>
+          <short_desc>Problem with showing Slider when getting it with this.getChildControl</short_desc>
+          <delta_ts>2011-03-11 13:42:20 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>1.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.2.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Erol Demircan">edemircan</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>qooxdoo</cc>
+    
+    <cc>tristan.koch</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>19970</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2010-08-24 17:26:08 +0200</bug_when>
+            <thetext>Hello,
+
+I have made a custom widget with an implementation of the _createChildControlImpl function. There are several ui objects in it which it will return with the this.getChildControl function.
+This works very well but in case of a qx.ui.form.Slider I get an faulty ui object back! For example the knob in the slider isn&#39;t being showed at all! I tried to add the Slider to different layouts but with no success.
+
+Snippet code:
+_createChildControlImpl : function(id){
+    var control;
+    switch(id)
+    {
+        case &quot;slider&quot;:
+            control = new qx.ui.form.Slider()
+        break;
+        case &quot;sliderContainer&quot;:
+            control = 
+        break;
+    }
+    return control
+}
+var comp = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+control.add(this.getChildControl(&quot;slider&quot;));
+
+Regards,
+Erol</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19971</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2010-08-24 17:27:54 +0200</bug_when>
+            <thetext>Sorry snippet code has to be like:
+Snippet code:
+_createChildControlImpl : function(id){
+    var control;
+    switch(id)
+    {
+        case &quot;slider&quot;:
+            control = new qx.ui.form.Slider()
+        break;
+    }
+    return control
+}
+var comp = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+control.add(this.getChildControl(&quot;slider&quot;));</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21006</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-29 16:56:28 +0200</bug_when>
+            <thetext>to Adi</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21377</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2010-11-17 18:06:06 +0100</bug_when>
+            <thetext>I&#39;ve seen what you mean. I will get into it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21389</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2010-11-18 12:45:11 +0100</bug_when>
+            <thetext>Committed revision 23864 on trunk.
+Committed revision 23865 on branch 1.2.x.
+
+The problem was that the knob, the inner control of the slider, doesn&#39;t have an appearance set when the slider is used as inner part of a custom widget.
+
+@Erol: for a quick fix for your current code: 
+slider.getChildControl(&quot;knob&quot;).setAppearance(&quot;slider/knob&quot;);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21396</commentid>
+            <who name="Erol Demircan">edemircan</who>
+            <bug_when>2010-11-18 14:05:39 +0100</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; Committed revision 23864 on trunk.
+&gt; Committed revision 23865 on branch 1.2.x.
+&gt; 
+&gt; The problem was that the knob, the inner control of the slider, doesn&#39;t have an
+&gt; appearance set when the slider is used as inner part of a custom widget.
+&gt; 
+&gt; @Erol: for a quick fix for your current code: 
+&gt; slider.getChildControl(&quot;knob&quot;).setAppearance(&quot;slider/knob&quot;);
+
+Thanks guys</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21400</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-18 14:33:32 +0100</bug_when>
+            <thetext>Looks like a general problem. Setting the appearance in the code sounds like a workaround and not like a fix. have you tested it with other combined widgets as well?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21401</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2010-11-18 14:37:47 +0100</bug_when>
+            <thetext>My feeling is that this happens only with inner controls of type Widget. In the slider case, the knob was a qx.ui.core.Widget and this is way appearance didn&#39;t work. 
+
+All other widgets that are used as inner controls work. Maybe we may need to check for other inner controls of type Widget.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21402</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-18 14:49:24 +0100</bug_when>
+            <thetext>Usually every inner control is a widget, at least derived from a widget. The appearance should be applied by the appearance system as far as I know. Could you maybe build an example showing that behavior? Would be nice to check that its not a general problem with the appearance apply.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21403</commentid>
+            <who name="Adrian Olaru">adrian.olaru</who>
+            <bug_when>2010-11-18 14:58:34 +0100</bug_when>
+            <thetext>Here&#39;s the code used to debug the problem, but now that the bug was fixed...I don&#39;t know if it helps you or not: https://gist.github.com/704818
+
+Here&#39;s the thing. When you create a control...you usually set the appearance property...that is why when you use a control as a inner control, the appearance is not lost.
+
+When you use a plain widget as a inner control, the appearance property is set to &quot;widget&quot;. This is why things gets messed up. So, IMO, the appearance is working fine.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21406</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-18 16:14:04 +0100</bug_when>
+            <thetext>After a talk with Alex and Andreas, they both agree with me. This seems to be a problem related to the appearance system and should work out of the box. We should check that issue and be sure this is working in every possible case. I take the bug and check whats wrong with that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21560</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-25 14:02:12 +0100</bug_when>
+            <thetext>// code to reproduce the issue
+
+qx.Class.define(&quot;T&quot;, {
+  extend : qx.ui.core.Widget,
+  
+  construct : function() {
+    this.base(arguments);
+    this._setLayout(new qx.ui.layout.Canvas());
+    this._add(this.getChildControl(&quot;slider&quot;));
+  },
+  
+  members : {
+    _createChildControlImpl : function(id){
+        var control;
+        switch(id)
+        {
+            case &quot;slider&quot;:
+                control = new qx.ui.form.Slider()
+                control.setWidth(100);
+            break;
+        }
+        return control
+    }
+  }
+});
+
+var t = new T();
+this.getRoot().add(t);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21562</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-25 16:06:26 +0100</bug_when>
+            <thetext>The part for that feature was missing the the appearance manager. It used the given fallback id if no appearance could be found. In the case of the slider used as a standalone widget its pretty easy:
+
+slider&#39;s appearance is set to &quot;slider&quot; --&gt; take the slider appearance of the appearance
+&quot;slider/knob&quot; is a child control and is also in the appearance --&gt; use that
+
+Used as child control, the id&#39;s change and are prefixed with the appearance of the containing widget. In the given example code, the default appearance &quot;widget&quot; is used.
+
+&quot;widget/slider&quot; works because the slider widget itself has its appearance property refined with &quot;slider&quot;.
+&quot;widget/slider/knob&quot; is now a child control of widget and can&#39;t be found that way in the appearance. Thats why it used the fallback appearance of the knob which is, &quot;widget&quot; again.
+
+
+
+I added another fallback right before using the default id which is pretty easy. I just cut the first key used in the id one by one and check for a fitting appearance. That means in the given example:
+
+(widget/slider/knob) would not be checked because we already checked it in first place
+slider/know --&gt; appearance used because its available
+(knob) would be next and last step to check but would not be executed in that example
+
+trunk: r24001
+1.2.x: r24002</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>23229</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-03-11 13:42:20 +0100</bug_when>
+            <thetext>Example of the fall back in action:
+http://tinyurl.com/5rsswmu</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

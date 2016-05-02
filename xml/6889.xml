@@ -1,0 +1,196 @@
+<bug>
+          <bug_id>6889</bug_id>
+          
+          <creation_ts>2012-10-11 16:55:00 +0200</creation_ts>
+          <short_desc>Wrong selection when opening qx.ui.table.celleditor.SelectBox</short_desc>
+          <delta_ts>2013-02-11 08:12:11 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>2.0.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>2.1.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Fritz Zaucker">fritz.zaucker</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>dietrich.streifert</cc>
+    
+    <cc>patrick.fischer</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30926</commentid>
+            <who name="Fritz Zaucker">fritz.zaucker</who>
+            <bug_when>2012-10-11 16:55:53 +0200</bug_when>
+            <thetext>When using SelectBox as celleditor in a table, the SelectBox is always
+&quot;opened&quot; on startEditing() with the first item selected, no matter what the
+previous selection was.
+
+So if a user just wants to check what options are available, s/he has to
+remember what the previous setting was in order to be sure not to change it
+unintentionally (or exit editing mode with ESC).
+
+This behaviour can be observed in the demo browser:
+
+        http://demo.qooxdoo.org/devel/demobrowser/#table~Table_Cell_Editor.html
+        or
+        http://demo.qooxdoo.org/current/demobrowser/#table~Table_Cell_Editor.html
+
+by for example setting Status to &quot;Waiting&quot; and then opening the Status
+select box again (it will have &quot;Inactive&quot; selected).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31000</commentid>
+            <who name="Patrick Fischer">patrick.fischer</who>
+            <bug_when>2012-10-19 11:16:35 +0200</bug_when>
+            <thetext>It&#39;s broken since Qooxdoo 0.7.x.
+The last working demo:
+http://demo.qooxdoo.org/0.7.x/demobrowser/#test~Table_CellEditor_1.html
+
+Because of being annoyed about that behavior i began cause studies.
+
+The problem in hand seems to consists of the wrong return-value of the replace-Renderer.
+
+var value=cellInfo.value;
+cellEditor.originalValue=value;
+var cellRenderer=cellInfo.table.getTableColumnModel().getDataCellRenderer(cellInfo.col);
+var label=cellRenderer._getContentHtml(cellInfo);
+
+&#39;value&#39; und &#39;label&#39; in qx.ui.table.celleditor.SelectBox contains in case of the replacement-renderer listitem&#39;s model-value instead of the label-value.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31001</commentid>
+            <who name="Patrick Fischer">patrick.fischer</who>
+            <bug_when>2012-10-19 11:41:13 +0200</bug_when>
+            <thetext>Just another additional information about that topic.
+
+The problem comes from the dynamic-renderer, which inherits the _getContentHtml-method from the default-renderer, which in turn ignores the replace-renderer-value.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31002</commentid>
+            <who name="Patrick Fischer">patrick.fischer</who>
+            <bug_when>2012-10-19 12:00:08 +0200</bug_when>
+            <thetext>To fix that problem override qx.ui.table.cellrenderer.Dynamic&#39;s _getContentHtml-method with the following lines: 
+
+// overridden
+_getContentHtml : function(cellInfo) {
+  var cellRendererFactoryFunction = this.getCellRendererFactoryFunction();
+  if( cellRendererFactoryFunction ) {
+    cellRendererFactoryFunction(cellInfo)._getContentHtml(cellInfo);
+  }
+return qx.bom.String.escape(this._formatValue(cellInfo));
+},</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31010</commentid>
+            <who name="Fritz Zaucker">fritz.zaucker</who>
+            <bug_when>2012-10-19 15:40:28 +0200</bug_when>
+            <thetext>Cool, Patrick&#39;s fix works just fine for me. Perhaps this could be fixed in 2.1?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31015</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-10-22 10:54:14 +0200</bug_when>
+            <thetext>I will try but don&#39;t think that it will make it to the 2.1 release. Still, thanks Patrick for digging into the issue and providing a fix. This will help a lot when I take care of this bug!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31336</commentid>
+            <who name="Fritz Zaucker">fritz.zaucker</who>
+            <bug_when>2012-11-13 22:11:46 +0100</bug_when>
+            <thetext>Hi Patrick,
+
+unfortunately, this fix does not fix my problem completely after all.
+
+I have a table with several select boxes in various rows of my table (all in the same column). For some cells, the fix works and for some it doesn&#39;t (in the latter case there is always the first entry displayed when the select box is opened, no matter what item was displayed).
+
+Unfortunately, there is no real pattern I could find so far. All cells use identical cellRendererFactoryFunction()s.
+
+Any idea what could go wrong?
+
+Cheers,
+Fritz
+
+(In reply to comment #3)
+&gt; To fix that problem override qx.ui.table.cellrenderer.Dynamic&#39;s
+&gt; _getContentHtml-method with the following lines: 
+&gt; 
+&gt; // overridden
+&gt; _getContentHtml : function(cellInfo) {
+&gt;   var cellRendererFactoryFunction = this.getCellRendererFactoryFunction();
+&gt;   if( cellRendererFactoryFunction ) {
+&gt;     cellRendererFactoryFunction(cellInfo)._getContentHtml(cellInfo);
+&gt;   }
+&gt; return qx.bom.String.escape(this._formatValue(cellInfo));
+&gt; },</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31782</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-12-20 13:05:36 +0100</bug_when>
+            <thetext>This is a regression which has been introduced with 0.8.3 which is quite some time ago!
+Still, it was only half a bug because if you supply only labels for the options, everything worked as expected. Only having an array for the options (like in the mentioned sample) broke the selection. Still, the fix is in place now. :)
+
+master: ab0db909d5b40169de6b201cf937f61a6888420e
+2.1.x: 9c4a8fabd419c8a8b3a1dc87fc0a59e8d873bece</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31783</commentid>
+            <who name="Patrick Fischer">patrick.fischer</who>
+            <bug_when>2012-12-20 13:31:17 +0100</bug_when>
+            <thetext>Thanks for that early Christmas gift!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31788</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2012-12-21 08:54:22 +0100</bug_when>
+            <thetext>The fix broke some unit tests:
+
+qx.test.ui.table.celleditor.SelectBox:testAutoconvertToNumber
+TypeError: Object 10 has no method &quot;toLowerCase&quot;
+
+qx.test.ui.table.celleditor.SelectBox:testCreateCellEditor
+TypeError: Cannot call method &quot;toLowerCase&quot; of undefined
+
+qx.test.ui.table.celleditor.SelectBox:testGetCellEditorValue
+TypeError: Cannot call method &quot;toLowerCase&quot; of undefined
+
+qx.test.ui.table.celleditor.SelectBox:testValidationFunction
+TypeError: Cannot call method &quot;toLowerCase&quot; of undefined</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31840</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-01-07 16:02:18 +0100</bug_when>
+            <thetext>Fixed unit tests.
+
+master: ddce4acf9253bd48b82d236b8c78c6b2002cf067
+2.1.x: 306c80ff53c2ebe82d679952c705c80bbc303f36</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,99 @@
+<bug>
+          <bug_id>3038</bug_id>
+          
+          <creation_ts>2009-11-09 14:47:00 +0100</creation_ts>
+          <short_desc>Race condition between adding and removing of child node&#39;s children container</short_desc>
+          <delta_ts>2014-03-03 15:22:32 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.tree</component>
+          <version>0.8.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>DUPLICATE</resolution>
+          <dup_id>2911</dup_id>
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Carsten Lergenmüller">carsten.lergenmueller</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>14005</commentid>
+            <who name="Carsten Lergenmüller">carsten.lergenmueller</who>
+            <bug_when>2009-11-09 14:47:24 +0100</bug_when>
+            <thetext>When doing rapid tree modification with D&amp;D, we are occasionally seeing the following error:
+
+60896: Error: Remove Error: qx.ui.container.Composite[2ev] is not a child of this 
+widget!
+  qx.ui.core.Widget:2130
+  qx.ui.core.Widget:1990
+  qx.ui.tree.AbstractTreeItem:856
+  qx.ui.tree.AbstractTreeItem:893
+
+Comes from AbstractTreeItem.remove:
+
+       if (treeItem.hasChildrenContainer()) {
+          container.remove(treeItem.getChildrenContainer());
+        }
+
+treeItem.getChildrenContainer().getLayoutParent() returns NULL in the errror case, so Widget complains that the child to be remove has an invalid parent.
+
+I looked around the AbstractTreeItem code. The children container of a tree node is lazily instantiated by getChildrenContainer(), but it is not added to the children container of the parent until later (during add) and only if certain conditions are met (has children itself). Difficult to estimate what will or may occur in which order, it looks to me like race conditions could be in there.
+
+-&gt;me for quick workaround</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14013</commentid>
+            <who name="Carsten Lergenmüller">carsten.lergenmueller</who>
+            <bug_when>2009-11-09 18:22:06 +0100</bug_when>
+            <thetext>Committed a workaround in Rev 20587. Bug to Fabian for review.
+
+Side note: I think it&#39;s rather harsh for Widget to throw an exception when a child is removed that was already removed (or not added). Wouldn&#39;t an assertion be better for this? Complains in debug mode, but does not break the app in live mode.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14321</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-23 15:36:49 +0100</bug_when>
+            <thetext>to me</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14962</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-11-26 13:33:34 +0100</bug_when>
+            <thetext>
+
+*** This bug has been marked as a duplicate of bug 2911 ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37713</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:22:32 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

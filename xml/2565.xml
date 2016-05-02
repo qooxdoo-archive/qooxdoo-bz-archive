@@ -1,0 +1,273 @@
+<bug>
+          <bug_id>2565</bug_id>
+          
+          <creation_ts>2009-07-09 10:16:00 +0200</creation_ts>
+          <short_desc>JSON and FireFox 3.5</short_desc>
+          <delta_ts>2014-03-03 15:21:48 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Henner Kollmann">Henner.Kollmann</reporter>
+          <assigned_to name="Fabian Jakobs">fabian.jakobs</assigned_to>
+          <cc>matthew+qooxdoo</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>10819</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2009-07-09 10:16:59 +0200</bug_when>
+            <thetext>Hello,
+
+i found a problem using json conversion with FireFox 3.5. FireFox seems to have an built  in toJSON() function. This function did not handle Date transformation in the qooxdoo way. In _convertObject this function is called first. So Date is not transported as expected.
+I changed the order of the calls:
+
+  /**
+     * Converts the incoming value from Object to String.
+     *
+     * @param incoming {Object} The incoming value
+     * @param key {String} The key under which the value is stored     
+     * @return {String} value converted to a JSON string
+     */
+    __convertObject : function(incoming, key)
+    {
+      if (incoming)
+      {
+        // for objects defined in other frames the instanceof check failes.
+        var constructorName = incoming.constructor.name;
+       // First check for Date. FireFox 3.5 has an build in toJSON method which not 
+        // handle Date in the qooxdoo style
+        if (incoming instanceof Date || constructorName == &quot;Date&quot;) {
+          return this.__convertDate(incoming, key);
+       } else if (typeof incoming.toJSON == &quot;function&quot;) {
+          return this.__convert(incoming.toJSON(key), key);
+        } else if (incoming instanceof Array || constructorName == &quot;Array&quot;) {
+          return this.__convertArray(incoming, key);
+//        } else if (incoming instanceof Date || constructorName == &quot;Date&quot;) {
+//          return this.__convertDate(incoming, key);
+        } else if (incoming instanceof Object || constructorName == &quot;Object&quot;) {
+          return this.__convertMap(incoming, key);
+        }
+
+        return &quot;&quot;;
+      }
+
+      return &quot;null&quot;;
+    },
+
+
+
+
+best regards,
+Henner</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10946</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-07-17 12:25:13 +0200</bug_when>
+            <thetext>fixed in r19630</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10948</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-07-17 13:54:51 +0200</bug_when>
+            <thetext>:(
+You have just broken your fix for bug 2078</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10949</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-07-17 14:00:28 +0200</bug_when>
+            <thetext>Wouldn&#39;t it be possible to point Date.prototype.toJSON to __convertDate at startup? This way we would be free to overrride it again if we whish.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10950</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-07-17 14:44:25 +0200</bug_when>
+            <thetext>Thanks for the hint Matthew. In general we tend to avoid changing the prototype of 
+buildin classes but in this case it&#39;s probably the best solution</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10951</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-07-17 14:51:04 +0200</bug_when>
+            <thetext>We are moving so nicely towards eliminating all changes to native types (reference the Array changes made recently). Please let&#39;s stay with the stated &quot;no modification of native prototypes&quot;.
+
+As was done with Arrays, we can create a qx.type.Date that extends the native Date, and add the toJSON method to it. Users of Date will then instead use qx.type.Date and all is well with the world.
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10952</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-07-17 15:52:39 +0200</bug_when>
+            <thetext>I have a added a fix, which doesn&#39;t require modifications to the Date&#39;s prototype...
+
+BUT I think the real problem is that we are maintaining a JSON implementation, which has
+subtle differences to the native browser implementations. I would suggest a more drastic
+solution to this.
+
+1. deprecate qx.util.Json
+2. create qx.bom.Json, which wraps the native JSON object on browsers, which support it
+    and closely emulate it if it is not available.
+3. replace all uses of qx.util.Json with qx.bom.Json
+
+The main problem will be Date support. However the native JSON object supports custom 
+serializer and deserializer, which could be used to emulate the old Date support if 
+necessary. 
+
+Here are examples from the standard document:
+
+* parse json and convert date strings to date instances:
+  
+  myData = JSON.parse(text, function (key, value) {
+      var a;
+      if (typeof value === &#39;string&#39;) {
+          a =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)Z$/.exec(value);
+          if (a) {
+              return new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4],
+                  +a[5], +a[6]));
+          }
+      }
+      return value;
+  });
+  
+  
+* stringify an object with custom date serialization
+
+  text = JSON.stringify([new Date()], function (key, value) {
+      return this[key] instanceof Date ?
+          &#39;Date(&#39; + this[key] + &#39;)&#39; : value;
+  });</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10953</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-07-17 15:52:57 +0200</bug_when>
+            <thetext>r19635</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10956</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2009-07-17 15:59:46 +0200</bug_when>
+            <thetext>&gt; I have a added a fix, which doesn&#39;t require modifications to the Date&#39;s
+&gt; prototype...
+
+Thank you!
+
+&gt; * parse json and convert date strings to date instances:
+&gt;
+&gt;  myData = JSON.parse(text, function (key, value) {
+&gt;      var a;
+&gt;      if (typeof value === &#39;string&#39;) {
+&gt;          a =
+&gt;  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)Z$/.exec(value);
+&gt;          if (a) {
+&gt;              return new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4],
+&gt;                  +a[5], +a[6]));
+&gt;          }
+&gt;      }
+&gt;      return value;
+&gt;  });
+
+This looks to me like every &quot;string&quot; will be run through the regular expression parser. Don&#39;t you
+think that will slow things down, possibly substantially, parsing large JSON documents? 
+
+(This belongs in some other bug #)
+
+Derrell
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10969</commentid>
+            <who name="Matthew">matthew+qooxdoo</who>
+            <bug_when>2009-07-20 11:48:38 +0200</bug_when>
+            <thetext>That fix doesn&#39;t really solve the issue I mentioned though, we should allow a way for user custom serialization.
+
+We could get away with wrapping the date object, I personally like this idea but it could be easy to forget.
+
+I think it might also be nice to have a global hook or event for the JSON.stringify so we could add custom code for native types.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10971</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-07-20 12:12:05 +0200</bug_when>
+            <thetext>This is how serialization works right now:
+
+if the value to serialize is a Date:
+  if Date has toJSON
+    if Date.toJSON is not the native toJSON
+      convert value.toJSON
+      
+	in all other cases convert Date the qooxdoo way.
+	
+for all other types:
+	if the value has a toJSON method:
+	  convert value.toJSON
+	else
+	  convert value
+	  
+If you want custom serialization of special values you just have to define a proper toJSON
+method. In what regard does this not solve your issue?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11236</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2009-08-07 22:41:53 +0200</bug_when>
+            <thetext>Date serialization is not working correctly in the Rpc classes.
+
+So i reopend the bug!
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11238</commentid>
+            <who name="Henner Kollmann">Henner.Kollmann</who>
+            <bug_when>2009-08-08 14:38:35 +0200</bug_when>
+            <thetext>Sorry, is working. Error on the server side!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>12495</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-21 19:15:57 +0200</bug_when>
+            <thetext>added missing target</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37430</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:48 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

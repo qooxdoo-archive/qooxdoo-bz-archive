@@ -1,0 +1,199 @@
+<bug>
+          <bug_id>2109</bug_id>
+          
+          <creation_ts>2009-03-13 16:18:00 +0100</creation_ts>
+          <short_desc>qx.ui.form.Spinner spin buttons are sometimes disabled when wrap is true</short_desc>
+          <delta_ts>2014-03-03 15:19:09 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.form</component>
+          <version>0.8.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Will Pritchard">Will_Pritchard</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>8613</commentid>
+            <who name="Will Pritchard">Will_Pritchard</who>
+            <bug_when>2009-03-13 16:18:32 +0100</bug_when>
+            <thetext>When a qx.ui.form.Spinner control with wrap set to true is disabled and enabled again and the current value is at the maximum then the spin up button remains disabled until the spin down button is pressed.
+
+Likewise if the current value is at the minimum then the spin down button remains disabled until the spin up button is pressed.
+
+This fault can be seen in the sample below. To begin with the lower row of spinners (wrap enabled) have all their buttons enabled. If the enabled state is toggled false and then true again with the check box then those spinners on the lower row which have a value at max or min don&#39;t reenable both their buttons.
+
+I believe the fix for this is to change the _updateButtons method to replace lines 493 - 495:
+
+        if (!this.getWrap()) {
+          upButton.setEnabled(false);
+        }
+
+with:
+
+        upButton.setEnabled(this.getWrap() &amp;&amp; this.getEnabled());
+
+and replace lines 509 - 511:
+
+        if (!this.getWrap()) {
+          downButton.setEnabled(false);
+        }
+
+with:
+
+        downButton.setEnabled(this.getWrap() &amp;&amp; this.getEnabled());
+
+Sample code showing the problem:
+
+qx.Class.define(&quot;SpinnerBug.Application&quot;,
+{
+  extend : qx.application.Standalone,
+
+
+
+  /*
+  *****************************************************************************
+     MEMBERS
+  *****************************************************************************
+  */
+
+  members :
+  {
+    /**
+     * This method contains the initial application code and gets called
+     * during startup of the application
+     */
+    main : function()
+    {
+      // Call super class
+      this.base(arguments);
+
+      // Enable logging in debug variant
+      if (qx.core.Variant.isSet(&quot;qx.debug&quot;, &quot;on&quot;))
+      {
+        // support native logging capabilities, e.g. Firebug for Firefox
+        qx.log.appender.Native;
+        // support additional cross-browser console. Press F7 to toggle visibility
+        qx.log.appender.Console;
+      }
+
+      /*
+      -------------------------------------------------------------------------
+        Below is your actual application code...
+      -------------------------------------------------------------------------
+      */
+
+      // Create some spinners
+      var spinner1 = new qx.ui.form.Spinner(0, 0, 2);
+      var spinner2 = new qx.ui.form.Spinner(0, 1, 2);
+      var spinner3 = new qx.ui.form.Spinner(0, 2, 2);
+      var spinner4 = new qx.ui.form.Spinner(0, 0, 1);
+      var spinner5 = new qx.ui.form.Spinner(0, 1, 1);
+
+      var spinner6 = new qx.ui.form.Spinner(0, 0, 2);
+      spinner6.setWrap(true);
+      var spinner7 = new qx.ui.form.Spinner(0, 1, 2);
+      spinner7.setWrap(true);
+      var spinner8 = new qx.ui.form.Spinner(0, 2, 2);
+      spinner8.setWrap(true);
+      var spinner9 = new qx.ui.form.Spinner(0, 0, 1);
+      spinner9.setWrap(true);
+      var spinner10 = new qx.ui.form.Spinner(0, 1, 1);
+      spinner10.setWrap(true);
+
+      // Document is the application root
+      var doc = this.getRoot();
+      var layout = new qx.ui.layout.Grid();
+      layout.setRowAlign(0, &quot;center&quot;, &quot;middle&quot;);
+      var panel = new qx.ui.container.Composite(layout);
+
+      // Add spinners to grid in two rows, non-wrapping spinners top row and
+      // wrapping spinners bottom row
+      panel.add(new qx.ui.basic.Label(&quot;----- Min=0, Max=2 -----&quot;), {row:0, column:1, colSpan:3});
+      panel.add(new qx.ui.basic.Label(&quot;----- Min=0, Max=1 -----&quot;), {row:0, column:4, colSpan:2});
+      panel.add(new qx.ui.basic.Label(&quot;Non-wrapping spinners&quot;), {row:1, column:0});
+      panel.add(spinner1, {row:1, column:1});
+      panel.add(spinner2, {row:1, column:2});
+      panel.add(spinner3, {row:1, column:3});
+      panel.add(spinner4, {row:1, column:4});
+      panel.add(spinner5, {row:1, column:5});
+
+      panel.add(new qx.ui.basic.Label(&quot;Wrapping spinners&quot;), {row:2, column:0});
+      panel.add(spinner6, {row:2, column:1});
+      panel.add(spinner7, {row:2, column:2});
+      panel.add(spinner8, {row:2, column:3});
+      panel.add(spinner9, {row:2, column:4});
+      panel.add(spinner10, {row:2, column:5});
+
+      var check = new qx.ui.form.CheckBox(&quot;Panel enabled&quot;);
+			check.setChecked(true);
+      doc.add(check, {left: 100, top: 50});
+      doc.add(panel, {left: 100, top: 80});
+
+      // Add an event listener
+      check.addListener(&quot;changeChecked&quot;, function(e) {
+        panel.setEnabled(check.getChecked());
+      });
+    }
+  }
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8629</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-03-16 12:34:44 +0100</bug_when>
+            <thetext>Thank you for the detailed bug report.
+
+I will take this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8641</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-03-17 09:01:30 +0100</bug_when>
+            <thetext>Accepted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>8649</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2009-03-17 13:10:00 +0100</bug_when>
+            <thetext>Re-engineered the &quot;_updateButtons&quot; method. Removed code that the &quot;_updateButtons&quot; method should handle.
+
+Fixed in trunk (r18456).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36365</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:09 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

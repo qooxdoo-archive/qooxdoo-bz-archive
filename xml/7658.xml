@@ -1,0 +1,189 @@
+<bug>
+          <bug_id>7658</bug_id>
+          
+          <creation_ts>2013-08-17 12:48:00 +0200</creation_ts>
+          <short_desc>Validation for statics does not consider inner classes</short_desc>
+          <delta_ts>2014-03-03 15:24:11 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator.compiler</component>
+          <version>3.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>3.5</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Ingo Bürk">admin</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>33650</commentid>
+            <who name="Ingo Bürk">admin</who>
+            <bug_when>2013-08-17 12:48:58 +0200</bug_when>
+            <thetext>The validation for static fields requires such fields to be all uppercase as it is a common convention – for constants. Static inner classes are typically not in uppercase, but the validation doesn&#39;t consider this.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33691</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-08-22 09:25:11 +0200</bug_when>
+            <thetext>Actually, we don&#39;t have any support for inner classes. But we all know that in JavaScript, almost everything is somehow possible so it might work but we never tried. :)
+Could you maybe describe your use case why that should be supported?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33692</commentid>
+            <who name="Ingo Bürk">admin</who>
+            <bug_when>2013-08-22 09:43:35 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Actually, we don&#39;t have any support for inner classes. But we all know that in
+&gt; JavaScript, almost everything is somehow possible so it might work but we never
+&gt; tried. :)
+&gt; Could you maybe describe your use case why that should be supported?
+
+I don&#39;t have a use-case for inner classes in statics that couldn&#39;t be solved by simply using a class on its own, outside of the statics.
+I still think there should at least be a way to deactivate this particular validation rule or reduce it to a warning rather than something that causes the generate script to exit as there are plenty examples even in the Java language itself where this convention is broken (e.g. serialVersionUID and many others). I don&#39;t think any upper-/lowercase convention should prevent me from compile my code (without having to deactivate validation alltogether).
+
+However, there *is* a use-case for actual inner classes (not static ones) as they could try to access fields and methods in the enclosing class. qooxdoo doesn&#39;t support this either and so my workaround to access the enclosing class is to pass it in the constructor – not exactly pretty. But this isn&#39;t related to this report at all.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33712</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-08-23 08:04:24 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; I don&#39;t have a use-case for inner classes in statics that couldn&#39;t be solved by
+&gt; simply using a class on its own, outside of the statics.
+&gt; I still think there should at least be a way to deactivate this particular
+&gt; validation rule or reduce it to a warning rather than something that causes the
+&gt; generate script to exit as there are plenty examples even in the Java language
+&gt; itself where this convention is broken (e.g. serialVersionUID and many others).
+&gt; I don&#39;t think any upper-/lowercase convention should prevent me from compile my
+&gt; code (without having to deactivate validation alltogether).
+I agree with that. There is no need to exit the build for that.
+
+&gt; However, there *is* a use-case for actual inner classes (not static ones) as
+&gt; they could try to access fields and methods in the enclosing class. qooxdoo
+&gt; doesn&#39;t support this either and so my workaround to access the enclosing class
+&gt; is to pass it in the constructor – not exactly pretty. But this isn&#39;t related
+&gt; to this report at all.
+
+You can simply create the class in the constructor:
+
+constructor : function() {
+  qx.Class.define(...);
+}
+
+Which would make it inner but you have to check if its already created. But that could work. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33715</commentid>
+            <who name="Ingo Bürk">admin</who>
+            <bug_when>2013-08-23 14:08:16 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; (In reply to comment #2)
+&gt; &gt; I don&#39;t have a use-case for inner classes in statics that couldn&#39;t be solved by
+&gt; &gt; simply using a class on its own, outside of the statics.
+&gt; &gt; I still think there should at least be a way to deactivate this particular
+&gt; &gt; validation rule or reduce it to a warning rather than something that causes the
+&gt; &gt; generate script to exit as there are plenty examples even in the Java language
+&gt; &gt; itself where this convention is broken (e.g. serialVersionUID and many others).
+&gt; &gt; I don&#39;t think any upper-/lowercase convention should prevent me from compile my
+&gt; &gt; code (without having to deactivate validation alltogether).
+&gt; I agree with that. There is no need to exit the build for that.
+&gt; 
+&gt; &gt; However, there *is* a use-case for actual inner classes (not static ones) as
+&gt; &gt; they could try to access fields and methods in the enclosing class. qooxdoo
+&gt; &gt; doesn&#39;t support this either and so my workaround to access the enclosing class
+&gt; &gt; is to pass it in the constructor – not exactly pretty. But this isn&#39;t related
+&gt; &gt; to this report at all.
+&gt; 
+&gt; You can simply create the class in the constructor:
+&gt; 
+&gt; constructor : function() {
+&gt;   qx.Class.define(...);
+&gt; }
+&gt; 
+&gt; Which would make it inner but you have to check if its already created. But
+&gt; that could work. :)
+
+Defining it in the constructor is a great idea. How did I not think about that? I&#39;ll try that later on.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33722</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-08-26 10:51:17 +0200</bug_when>
+            <thetext>So is this bug solved?! If I&#39;m to do anything with the tool chain I&#39;d need at least a code snippet and a job name that fail the Generator.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33738</commentid>
+            <who name="Ingo Bürk">admin</who>
+            <bug_when>2013-08-26 20:37:48 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; So is this bug solved?! If I&#39;m to do anything with the tool chain I&#39;d need at
+&gt; least a code snippet and a job name that fail the Generator.
+
+I don&#39;t know why, but I can&#39;t reproduce this with a simple example. Unfortunately I already deleted my attempt to use the toolchain on my project.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33740</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-08-27 08:51:55 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; (In reply to comment #5)
+&gt; &gt; So is this bug solved?! If I&#39;m to do anything with the tool chain I&#39;d need at
+&gt; &gt; least a code snippet and a job name that fail the Generator.
+&gt; 
+&gt; I don&#39;t know why, but I can&#39;t reproduce this with a simple example.
+&gt; Unfortunately I already deleted my attempt to use the toolchain on my project.
+
+So I guess we can mark this one as solved, right?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>33741</commentid>
+            <who name="Ingo Bürk">admin</who>
+            <bug_when>2013-08-27 08:52:49 +0200</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; (In reply to comment #6)
+&gt; &gt; (In reply to comment #5)
+&gt; &gt; &gt; So is this bug solved?! If I&#39;m to do anything with the tool chain I&#39;d need at
+&gt; &gt; &gt; least a code snippet and a job name that fail the Generator.
+&gt; &gt; 
+&gt; &gt; I don&#39;t know why, but I can&#39;t reproduce this with a simple example.
+&gt; &gt; Unfortunately I already deleted my attempt to use the toolchain on my project.
+&gt; 
+&gt; So I guess we can mark this one as solved, right?
+
+Yeah, I think so. If I run into it again, I&#39;ll make sure to save a copy and open another report. Sorry!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38292</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:11 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,90 @@
+<bug>
+          <bug_id>7827</bug_id>
+          
+          <creation_ts>2013-10-30 08:50:00 +0100</creation_ts>
+          <short_desc>dynamic decorators do not work</short_desc>
+          <delta_ts>2014-11-18 09:16:30 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>3.0</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="cyrille rigault">cyrillerigault</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>34175</commentid>
+            <who name="cyrille rigault">cyrillerigault</who>
+            <bug_when>2013-10-30 08:50:19 +0100</bug_when>
+            <thetext>I am porting my application from Qooxdoo 2.1 to 3.0 and I discovered some problems concerning decorators. I spent some time understanding why it doesn&#39;t work and found some issues.
+
+My application uses dynamic decorators, in the sense that users may change borders of objects using an interface. One decorator is used per object. When this happens, I tried two strategies:
+
+1) first strategy - dispose the old decorator then assign a new one (as I did in 2.1)
+If the decorator is disposed before assigning the new one to the component, the component _applyDecorator() method calls getCssClassName() on a disposed object, which returns qx-undefined, and the old decorator class is not removed from the component. =&gt; decoration is not pro
+perly applied to the widget.
+
+2) second strategy - dispose an old decorator after assigning a new one
+In qooxdoo 3.0, the decorator class is removed from the HTML component, but not from the style sheet.
+As object hashes are re-used from disposed objects, a new decorator may use a hash from a disposed decorator.
+When so, the new decorator will have the same css classname as the disposed one, and when Widget._applyDecorator() calls qx.theme.manager.Decoration.addCssClass(), the new decorator properties will not be applied, as they already exist in the style sheet for this hash.
+So, the new decorator properties will not be applied !
+
+
+If I do not dispose Decorators, it works fine, but I may have hundreds of unused objects in my application.
+
+
+Here is how I temporarily? solved the problem:
+- I use a subclassed version of qx.ui.decoration.Decorator, that only defines a destructor which:
+. gets the css selector of the decorator to dispose
+. removes the css selector from the style sheet
+destruct : function() {
+    var selector = &quot;.&quot;+qx.theme.manager.Decoration.getInstance().getCssClassName(this);
+    qx.ui.style.Stylesheet.getInstance().removeRule( selector);
+  }
+- I only dispose an old decorator after assigning the new one to the widget (another option is to use resetDecorator()).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>34198</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-11-04 11:24:48 +0100</bug_when>
+            <thetext>Thanks for the report. Your suggested fix sounds reasonable and could be added. Are you interested in taking care of that yourself? If so, just file a pull request and I&#39;ll pull it in.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41607</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-11-18 09:16:30 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

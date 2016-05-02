@@ -1,0 +1,289 @@
+<bug>
+          <bug_id>5460</bug_id>
+          
+          <creation_ts>2011-07-28 19:04:00 +0200</creation_ts>
+          <short_desc>generator &quot;build&quot; job corrupts string literals that flow across multiple lines</short_desc>
+          <delta_ts>2014-03-03 15:27:30 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.6</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="John Spackman">john.spackman</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>derrell.lipman</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26304</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2011-07-28 19:04:01 +0200</bug_when>
+            <thetext>The &quot;build&quot; job does not parse strings properly that cross multiple lines; create a new application with create-application.py and add this code to Application.js:
+
+
+      alert(&quot;\n\
+&lt;!DOCTYPE html&gt;\n\
+&lt;html xmlns=\&quot;http://www.w3.org/1999/xhtml\&quot;&gt;\n\
+	&lt;head&gt;\n\
+&quot;);
+
+
+do generate build and run the app and you get an alert box with:
+
+      &lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26305</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-07-28 19:40:54 +0200</bug_when>
+            <thetext>Yes, continuing strings across lines with a shell-style end-of-line escape is not supported. Though most browsers allow it, it&#39;s not in the ECMA spec. Therefore I haven&#39;t implemented it. But I&#39;m open to change if the consent is that it is such a common feature that it should be supported beyond the spec.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26306</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2011-07-28 19:49:54 +0200</bug_when>
+            <thetext>I would argue against this &quot;extension&quot;. Code like that is really difficult to read, since the proper indentation is, by definition, lost. I&#39;d contend that one of the valid formats would be much preferable:
+
+
+  alert(&quot;\n&quot; +
+        &quot;&lt;!DOCTYPE html&gt;\n&quot; +
+        &quot;&lt;html xmlns=\&quot;http://www.w3.org/1999/xhtml\&quot;&gt;\n&quot; +
+        &quot;  &lt;head&gt;\n&quot; +
+        &quot;  &lt;/head&gt;\n&quot; +
+        &quot;&lt;/html&gt;\n&quot;);
+  
+  alert([
+          &quot;&quot;,
+          &quot;&lt;!DOCTYPE html&gt;&quot;,
+          &quot;&lt;html xmlns=\&quot;http://www.w3.org/1999/xhtml\&quot;&gt;&quot;,
+          &quot;  &lt;head&gt;&quot;,
+          &quot;  &lt;/head&gt;&quot;,
+          &quot;&lt;/html&gt;&quot;
+        ].join(&quot;\n&quot;));</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26316</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2011-07-29 11:30:44 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; Yes, continuing strings across lines with a shell-style end-of-line escape is
+&gt; not supported. Though most browsers allow it, it&#39;s not in the ECMA spec.
+&gt; Therefore I haven&#39;t implemented it. But I&#39;m open to change if the consent is
+&gt; that it is such a common feature that it should be supported beyond the spec.
+
+So this would be the first thing that is supported that is not in the formal spec?  
+
+Is there a particular version of the ECMA spec you&#39;re using?  I just checked the current one and it says that a SingleStringCharacter can contain &quot;\&quot; followed by LineTerminatorSequence and that combination should be represented as an empty character, ie it is allowed.
+
+(In reply to comment #2)
+&gt; I would argue against this &quot;extension&quot;. Code like that is really difficult to
+&gt; read, since the proper indentation is, by definition, lost. I&#39;d contend that
+&gt; one of the valid formats would be much preferable:
+&gt; 
+
+The code is generated so readability is not an issue here given that the original is preserved (and indented); the first form causes the generator to build a syntax tree so large that the recursion (see bug 5265, where using a \ to continue strings onto another line was discussed as a suitable solution).  
+
+I&#39;d argue that both alternatives cause unnecessary runtime processing that could (should) be avoided and that it is not the role of the generator to provide restrictions regarding coding style.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26321</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-07-29 16:01:05 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; (In reply to comment #1)
+&gt; &gt; Yes, continuing strings across lines with a shell-style end-of-line escape 
+is
+&gt; &gt; not supported. Though most browsers allow it, it&#39;s not in the ECMA spec.
+&gt; &gt; Therefore I haven&#39;t implemented it. But I&#39;m open to change if the consent is
+&gt; &gt; that it is such a common feature that it should be supported beyond the 
+spec.
+&gt; 
+&gt; So this would be the first thing that is supported that is not in the formal 
+spec?  
+&gt; 
+&gt; Is there a particular version of the ECMA spec you&#39;re using?
+
+Yes, ECMA-262, 3rd ed., Dec 1999, which constitutes JavaScript 1.5 - still the 
+least common denominator of JS dialects, section 7.8.4: &#39;\&#39; can precede &quot;... 
+SourceCharacter but not ... LineTerminator&quot;.
+
+&gt;  I just checked the current one
+
+Must then be one of the newer...
+
+&gt; and it says that a SingleStringCharacter can contain &quot;\&quot; followed by 
+LineTerminatorSequence and 
+&gt; that combination should be represented as an empty character, ie it is 
+allowed.
+
+Which version was that, exactly?
+
+&gt; The code is generated so readability is not an issue here given that the 
+original is preserved (and 
+&gt; indented); the first form causes the generator to build a syntax tree so 
+large that the recursion 
+
+&quot;... limit was reached ...&quot;
+
+Yes, if you put all fragments into one big string &#39;+&#39; expression.
+
+&gt; (see 
+&gt; bug 5265, where using a \ to continue strings onto another line was discussed 
+as a suitable solution).  
+
+I apologize. In my comment back then I wasn&#39;t realizing that you are refering 
+to this way of splitting a string across multiple lines. I didn&#39;t mean to 
+endorse this, but rather the other two options mentioned in the bug (successive 
+&#39;+=&#39; assignment and array.join()).
+
+&gt; I&#39;d argue that both alternatives cause unnecessary runtime processing that 
+could (should) be 
+
+I&#39;d argue that the runtime overhead of constructing the final string is 
+minuscule, given the fact that you are obviously targeting newer browsers 
+(judging from the ECMA spec you&#39;re referring to). We&#39;ve made various 
+measurements e.g. concerning string operations in modern browsers, and they all 
+seem to indicate that it&#39;s not worth optimizing on that level.
+
+&gt; avoided and that it is not the role of the generator to provide restrictions 
+regarding coding style.
+
+Agreed. It&#39;s just the question if we deviate from the spec in this point. And 
+even if we agree to do that, we&#39;re probably not going to implement it soon, 
+also given the fact that there are working alternatives to it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26323</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2011-07-29 16:56:25 +0200</bug_when>
+            <thetext>This method of escaping has been around for a long time and while not ratified as part of ECMA 3 just about every browser supports it, plus Rhino - even IE6 &amp; FF2 supports this so I&#39;m hardly targeting newer browsers.
+
+It&#39;s also arguable that while newer browsers may stick to the specs, older browsers which are supported by Qooxdoo don&#39;t - IE6 is hardly the bastion of standards compatibility and this is a language extension which is pervasive and widely known, even if it is not commonly used.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26336</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-01 11:40:05 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; This method of escaping has been around for a long time and while not 
+ratified as part of ECMA 3 just about every browser supports it, plus Rhino - 
+even IE6 &amp; FF2 supports this so I&#39;m hardly targeting newer browsers.
+
+node.js supports it, too.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26345</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2011-08-01 13:50:01 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; (In reply to comment #5)
+&gt; &gt; This method of escaping has been around for a long time and while not 
+&gt; ratified as part of ECMA 3 just about every browser supports it, plus Rhino - 
+&gt; even IE6 &amp; FF2 supports this so I&#39;m hardly targeting newer browsers.
+&gt; 
+&gt; node.js supports it, too.
+
+Although no browser supports exhaustively and exclusively the ECMA 3, as this isn&#39;t exactly a well-used extension I agree that it is an enhancement request, not a bug.
+
+However - if you use this code in an application, the generator does not raise an error or even a warning, it silently produces valid code with corrupt strings.  This does not appear to be ECMA compliant and given that this is in the build job, it is particularly difficult to track down the cause of the problem.
+
+The generator should either reject the code, or it should accomodate the code which has become a &quot;de facto&quot; standard (and is in ECMA 5).  If this is an enhancement request, please can we also raise a bug for the ECMA3 standard to be enforced for string expressions?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26348</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-01 14:33:27 +0200</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; However - if you use this code in an application, the generator does not 
+raise an error or even a warning, it silently produces valid code with corrupt 
+strings.  This does not appear to be ECMA compliant and given that this is in 
+the build job, it is particularly difficult to track down the cause of the 
+problem.
+
+You&#39;re right.
+
+Martin, should we take this on 1.6?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26350</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-01 14:54:48 +0200</bug_when>
+            <thetext>Added support for strings with escaped newlines. Re-added error exit on scan 
+gaps (this would have prevented the generator to silently generate corrupt 
+code). I leave the newlines in the string, to be more faithful to the original 
+text, although John&#39;s rephrasing of ECMA 5 suggests they could be removed.
+
+With r28360.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26356</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2011-08-01 17:28:17 +0200</bug_when>
+            <thetext>&gt; text, although John&#39;s rephrasing of ECMA 5 suggests they could be removed.
+&gt; With r28360.
+
+I think that the newlines should be removed - otherwise, the generator&#39;s production implementation will be at odds with FF3, FF5, Chrome, and IE6 (and probably all the rest, too) as well as ECMA 5.  Worse, at runtime the &quot;source&quot; compilations will have different output to &quot;build&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26357</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-08-01 18:46:56 +0200</bug_when>
+            <thetext>(In reply to comment #10)
+&gt; &gt; text, although John&#39;s rephrasing of ECMA 5 suggests they could be removed.
+&gt; &gt; With r28360.
+&gt; 
+&gt; I think that the newlines should be removed - otherwise, the generator&#39;s 
+production implementation will be at odds with FF3, FF5, Chrome, and IE6 (and 
+probably all the rest, too) as well as ECMA 5.  Worse, at runtime the &quot;source&quot; 
+compilations will have different output to &quot;build&quot;.
+
+I think it&#39;s exactly the other way round: By retaining the string literally it 
+will appear identical in &#39;source&#39; and &#39;build&#39; versions of the app, which was my 
+motivation. Browsers will love it since they handle the embedded newlines, and 
+then *they* will remove them in their internal representation. The generator is 
+no JavaScript runtime.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26358</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2011-08-01 18:55:20 +0200</bug_when>
+            <thetext>&gt; I think it&#39;s exactly the other way round: By retaining the string literally it 
+
+OK, ISWYM, I agree</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39490</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:30 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

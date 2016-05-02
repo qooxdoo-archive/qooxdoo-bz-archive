@@ -1,0 +1,204 @@
+<bug>
+          <bug_id>5593</bug_id>
+          
+          <creation_ts>2011-09-08 00:04:00 +0200</creation_ts>
+          <short_desc>incorrect month localization format</short_desc>
+          <delta_ts>2014-03-03 15:23:24 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.dev.util</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Serge">progmaker</reporter>
+          <assigned_to name="Gabriel Munteanu">jajalinux</assigned_to>
+          <cc>thron7</cc>
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26719</commentid>
+            <who name="Serge">progmaker</who>
+            <bug_when>2011-09-08 00:04:43 +0200</bug_when>
+            <thetext>In DateChooser we got &quot;сентября 2011&quot; as a month-year label, though expected value is &quot;Сентябрь 2011&quot;
+
+probably bug in qx.util.format.DateFormat
+
+now is:
+ format : function(date) {
+..........
+line 625
+
+   case &#39;L&#39;: // Stand-alone month
+     if (wildcardSize == 1 || wildcardSize == 2) {
+       replacement = this.__fillNumber(month + 1, wildcardSize);
+     } else if (wildcardSize == 3) {
+       replacement = qx.locale.Date.getMonthName(&quot;abbreviated&quot;, month, locale, &quot;format&quot;);
+              } else if (wildcardSize == 4) {
+                replacement = qx.locale.Date.getMonthName(&quot;wide&quot;, month, locale, &quot;format&quot;);
+              } else if (wildcardSize == 5) {
+                replacement = qx.locale.Date.getMonthName(&quot;narrow&quot;, month, locale, &quot;stand-alone&quot;);
+              }
+
+              break;
+......
+}
+
+probably should be:
+
+   case &#39;L&#39;: // Stand-alone month
+     if (wildcardSize == 1 || wildcardSize == 2) {
+       replacement = this.__fillNumber(month + 1, wildcardSize);
+     } else if (wildcardSize == 3) {
+       replacement = qx.locale.Date.getMonthName(&quot;abbreviated&quot;, month, locale, &quot;stand-alone&quot;);
+              } else if (wildcardSize == 4) {
+                replacement = qx.locale.Date.getMonthName(&quot;wide&quot;, month, locale, &quot;stand-alone&quot;);
+              } else if (wildcardSize == 5) {
+                replacement = qx.locale.Date.getMonthName(&quot;narrow&quot;, month, locale, &quot;stand-alone&quot;);
+              }
+
+              break;
+......
+}
+
+difference is in parameter &quot;stand-alone&quot; instead of &quot;format&quot; in qx.locale.Date.getMonthName(...) calling</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26803</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-09-15 12:38:19 +0200</bug_when>
+            <thetext>the reason I chose &quot;format&quot; for pattern &quot;L&quot; is because we have &quot;stand-alone&quot; context only for &quot;narrow&quot; case.
+
+Digging deeper I found the following:
+
+the cldr data generated in the &quot;C&quot; key of the json variable qx.$$packageData[&#39;0&#39;] we have:
+
+cldr_day_format_abbreviated_fri
+...
+cldr_day_format_abbreviated_sat
+
+cldr_day_format_wide_fri
+...
+cldr_day_format_wide_sat
+
+cldr_day_stand-alone_narrow_fri
+...
+cldr_day_stand-alone_narrow_sat
+
+cldr_month_format_abbreviated_1
+...
+cldr_month_format_abbreviated_12
+
+cldr_month_format_wide_1
+...
+cldr_month_format_wide_12
+
+cldr_month_stand-alone_narrow_1
+...
+cldr_month_stand-alone_narrow_12
+
+We do not have cldr_month_stand-alone_wide_1 ... cldr_month_stand-alone_wide_12 .
+and we should.
+After reading this article:
+http://cldr.unicode.org/translation/date-time#TOC-Stand-Alone-vs.-Format-Styles
+and the info about L pattern on this page:
+http://www.unicode.org/reports/tr35/#Date_Format_Patterns
+it looks like there must be cldr_month_format_abbreviated_*, cldr_month_format_wide_*, cldr_month_format_narrow_*, AND cldr_month_stand-alone_abbreviated_*, cldr_month_stand-alone_wide_*, cldr_month_stand-alone_narrow_*.
+
+It is especially relevant for wide format, because in some languages saying &quot;December&quot; alone, or saying &quot;1st of December&quot; changes the conjugation of the name of the month [like 1 Decembery].
+
+I guess this is generated by the python tool from a config data file. Thomas joined this bug and he will give us some input.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26872</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-09-21 18:58:15 +0200</bug_when>
+            <thetext>(There is a faintly related bug#4602, but there I switched to &#39;stand-alone&#39; in qx.util.format.DateFormat).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26873</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-09-21 19:12:54 +0200</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; We do not have cldr_month_stand-alone_wide_1 ... cldr_month_stand-alone_wide_12
+&gt; .
+&gt; and we should.
+
+But we do have them! Those entries are being generated by the generator, but *only if* the locale provides them! This is not true for all locales. E.g. &quot;de&quot; does not provide month_stand-alone_wide (maybe because they would be the same as month_format_wide?). The &quot;ru&quot; locale, on the other hand, does provide month_stand-alone_wide, and then it is included. &quot;C&quot; is probably a bad locale to look at because it basically mirrors &quot;en&quot; which doesn&#39;t provide month_stand-alone_wide as well.
+
+You can repro this by creating a gui skeleton, adding &quot;ru&quot; to config.json#LOCALES, and #cldr to Application.js. Then generate source and check the corresponding entries for &quot;ru&quot;. &quot;Сентябрь&quot; is contained.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26874</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-09-21 19:42:58 +0200</bug_when>
+            <thetext>(In reply to comment #4)
+&gt; probably should be:
+&gt; 
+&gt;    case &#39;L&#39;: // Stand-alone month
+&gt;      if (wildcardSize == 1 || wildcardSize == 2) {
+&gt;        replacement = this.__fillNumber(month + 1, wildcardSize);
+&gt;      } else if (wildcardSize == 3) {
+&gt;        replacement = qx.locale.Date.getMonthName(&quot;abbreviated&quot;, month, locale,
+&gt; &quot;stand-alone&quot;);
+&gt;               } else if (wildcardSize == 4) {
+&gt;                 replacement = qx.locale.Date.getMonthName(&quot;wide&quot;, month,
+&gt; locale, &quot;stand-alone&quot;);
+&gt;               } else if (wildcardSize == 5) {
+&gt;                 replacement = qx.locale.Date.getMonthName(&quot;narrow&quot;, month,
+&gt; locale, &quot;stand-alone&quot;);
+&gt;               }
+&gt; 
+&gt;               break;
+&gt; ......
+&gt; }
+&gt; 
+&gt; difference is in parameter &quot;stand-alone&quot; instead of &quot;format&quot; in
+&gt; qx.locale.Date.getMonthName(...) calling
+
+I&#39;m fine with the patch in principle, but as I wrote in the other comment, month_stand-alone_wide is not provided by every locale. It&#39;s certainly right to try the stand-alone entries first (&quot;L&quot; being a stand-alone format letter after all). But if that fails we should probably use month_format_wide as a fall-back.
+
+Gabi, could you check the specs/Internet if they say something about such a fall-back strategy?! My biggest fear would be that locales might provide one or the other arbitrarily, so whenever we want to use one of the contexts (format/stand-alone) we would need to fall-back on the other in case of a miss. That wouldn&#39;t be nice for us, but maybe the best solution for the users.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26984</commentid>
+            <who name="Gabriel Munteanu">jajalinux</who>
+            <bug_when>2011-09-27 12:36:16 +0200</bug_when>
+            <thetext>fixed on trunk with rev. 28785.
+
+The stand-alone patterns [L for month names and c for weekday names] are correctly supplied with stand-alone context now. in case the cldr data is missing, a fallback is provided with &quot;format&quot; context. this is done internally  by modifying the qx.locale.Date methods: getDayName, getDayNames, getMonthName and getMonthNames by adding an optional boolean parameter withFallback.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38000</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:24 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

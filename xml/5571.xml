@@ -1,0 +1,132 @@
+<bug>
+          <bug_id>5571</bug_id>
+          
+          <creation_ts>2011-08-31 11:27:00 +0200</creation_ts>
+          <short_desc>qx.io.request.Xhr: competing API - accept vs requestHeaders</short_desc>
+          <delta_ts>2012-01-02 07:35:02 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.io</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.6</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tino Butz">tinobutz</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          
+          <qa_contact name="Tristan Koch">tristan.koch</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26636</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-08-31 11:27:38 +0200</bug_when>
+            <thetext>In the qx.io.request.Xhr class a convenient property &quot;accept&quot; is available. In addition to this a requestHeaders is available. These properties are in competition, as you can add &quot;Accept&quot; headers with  both properties.
+
+This has the following effect: When using the JSON store, the &quot;accept&quot; header &quot;application/json&quot; is set by default. When the application sets another &quot;accept&quot; header &quot;application/json&quot; via the requestHeaders property (&quot;because it can&quot;), the accept headers get concatenated:
+
+Accept:application/json, application/json
+
+It seems like the call of this.__nativeXhr.setRequestHeader(key, value); in the BOM Xhr implementation, concatenates same named accept headers.
+
+In my opinion we shouldn&#39;t concatenate the set accept headers. If the user wants to use (which is valid) several types for the accept header, he should add them on its own. So the accept property should introduce an apply method, that adds the set value to the &quot;requestHeaders&quot;. By doing this, we could easily override the default accept header, even by using the &quot;requestHeaders&quot; property. 
+
+Another question is, do we need the convenient property &quot;accept&quot;, when it just adds a requestHeader?
+
+This change might deprecate API.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26639</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-08-31 12:30:40 +0200</bug_when>
+            <thetext>(In reply to comment #0)
+
+&gt; Another question is, do we need the convenient property &quot;accept&quot;, when it just
+&gt; adds a requestHeader?
+
+As we do not set the responseType anymore in the new implementation, I think this grade of convenience is acceptable. The rest of the bug is still valid.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26644</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-08-31 16:32:32 +0200</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; It seems like the call of this.__nativeXhr.setRequestHeader(key, value); in the
+&gt; BOM Xhr implementation, concatenates same named accept headers.
+
+The concatanation is done by the browser. This (rather unexpected) behavior is specified in http://www.w3.org/TR/XMLHttpRequest2/#the-setrequestheader-method and http://tools.ietf.org/html/rfc2616#section-4.2. It goes further: Two headers with the same key and different value are semantically equivalent to one header with a the two values concatenated. In a way, setRequestHeader() should have been named appendRequestHeader().</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26645</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-08-31 16:37:58 +0200</bug_when>
+            <thetext>Once the header is set, there is no way to remove it other than creating a new request. Setting an empty header does not work either. 
+
+req.setRequestHeader(&quot;X-Affe&quot;, &quot;Affe&quot;);
+req.setRequestHeader(&quot;X-Affe&quot;, &quot;&quot;);
+req.setRequestHeader(&quot;X-Affe&quot;, &quot;Maus&quot;);
+
+Results in:
+X-Affe:Affe, , Maus
+
+Using apply will not do the trick. setRequestHeader() can only be invoked when the request ist OPEN and (obviously) not sent yet.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26646</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-08-31 16:44:30 +0200</bug_when>
+            <thetext>(In reply to comment #3)
+&gt; Once the header is set, there is no way to remove it other than creating a new
+&gt; request. Setting an empty header does not work either. 
+&gt; 
+&gt; req.setRequestHeader(&quot;X-Affe&quot;, &quot;Affe&quot;);
+&gt; req.setRequestHeader(&quot;X-Affe&quot;, &quot;&quot;);
+&gt; req.setRequestHeader(&quot;X-Affe&quot;, &quot;Maus&quot;);
+&gt; 
+&gt; Results in:
+&gt; X-Affe:Affe, , Maus
+&gt; 
+&gt; Using apply will not do the trick. setRequestHeader() can only be invoked when
+&gt; the request ist OPEN and (obviously) not sent yet.
+
+The apply method of the &quot;accept&quot; property should just add the accept header to the &quot;requestHeaders&quot; property. This wouldn&#39;t add a header to the native XHR. By doing this the headers are correctly set, when the &quot;send&quot; method of qx.io.request.Xhr is called.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26648</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2011-09-01 10:42:09 +0200</bug_when>
+            <thetext>AbstractRequest and implementing classes now handle request headers in a more predictable way.
+
+There a three sources for request headers: general configuration, authentication and user-provided headers. _getAllRequestHeaders() merges those headers, with user-provided ones taking the highest precedence. _getConfiguredRequestHeaders() returns configuration related request headers and is usually overridden in the implementing class. This approach very much follows the same pattern of _getConfiguredUrl().
+
+With r28578 on trunk.
+
+From my point of view, this patch should not be applied to the branch. Actually, its a change of behavior. The old behavior was not wrong as such, instead, just exposing some unexpected behavior in XHR.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

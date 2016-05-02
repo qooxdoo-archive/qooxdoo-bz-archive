@@ -1,0 +1,222 @@
+<bug>
+          <bug_id>7111</bug_id>
+          
+          <creation_ts>2012-12-21 16:51:00 +0100</creation_ts>
+          <short_desc>Remote table model regression with caching background</short_desc>
+          <delta_ts>2014-03-03 15:27:30 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>2.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          <bug_file_loc>http://tinyurl.com/bsl6w2v</bug_file_loc>
+          
+          
+          <priority>P3</priority>
+          <bug_severity>critical</bug_severity>
+          <target_milestone>2.1.2</target_milestone>
+          <dependson>6612</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="saaj">id</reporter>
+          <assigned_to name="Mustafa Sak">mustafa.sak</assigned_to>
+          <cc>dietrich.streifert</cc>
+    
+    <cc>torsten.wesolek</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>31792</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2012-12-21 16:51:17 +0100</bug_when>
+            <thetext>Well, it is going to be a puzzle. At least it wasn&#39;t trivial to reproduce.
+
+It is a regression as 2.0.1 isn&#39;t affected, 2.0.3 is partially affected and 2.1 is fully affected. I had to downgrade the app to 2.0.3 I recently migrated to 2.1.
+
+Scenario
+========
+1. Open log. Wait until you see &quot;_loadRowCount not found&quot;.
+2. Click &quot;Populate data.
+3. Click &quot;Reload &amp; show&quot;. 
+   You see double data request happened. The table is showing rows from second
+   request with no possibility to scroll to the beginning. Another click to
+   &quot;Reload &amp; show&quot; fixes block shift. 2.0.3, 2.1 are affected. 2.0.1 is fine.
+4. Click &quot;Hide&quot;.
+5. Click &quot;Clear data&quot;.
+6. Click &quot;Reload &amp; show&quot;.
+   You see multiple concurrent requests to &quot;_loadRowData&quot; happening between
+   &quot;_loadRowCount&quot; and its &quot;_onRowCountLoaded&quot; which shouldn&#39;t be happening at
+   all until counting completed. If you uncomment line 31, you&#39;ll see the
+   origin, the top of call stack is:
+     * playground.RemoteTable._loadRowData
+     * qx.ui.table.model.Remote.prefetchRows:468
+     * qx.ui.table.pane.Pane._getRowsHtml:479 
+     * qx.ui.table.pane.Pane._updateAllRows:716
+   So it seems table rendering is forcing table to reload data. I glanced at 
+   diffs and it seems nothing changed in rendering itself. But there were
+   changes in remote table model caching which seem to be a culprit.
+   With long enough time of counting, the &quot;_loadRowData&quot; could to real
+   DOS-attack job ;-)
+
+Possible solution
+=================
+I think it makes sense to implement same check for row data request as row count request has, preventing concurrent calls.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31793</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2012-12-24 09:59:50 +0100</bug_when>
+            <thetext>App-level workaround http://tinyurl.com/btboun3.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31794</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2012-12-24 10:21:51 +0100</bug_when>
+            <thetext>Though, in real app have to release before _onRowCountLoaded, as otherwise no data is loaded. http://tinyurl.com/ch7dgr7.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31796</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2012-12-25 13:01:40 +0100</bug_when>
+            <thetext>Another found consequence. In some more complex cases it makes sense dissecting consecutive calls to the model API and concurrent requests model makes. It could make practical sense for table model&#39;s reloadData() to be invoked one after another in short time (filterable remote table and UI based on it). It could be resolved by queuing or listening for complete when locked. But maintaining a set of fixes in user code is bad ideas so I just put the qx.ui.table.model.Remote from 2.0.1 as user class.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31801</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2012-12-27 08:48:50 +0100</bug_when>
+            <thetext>I&#39;m going to ship an app which obviously suffers the same bug/effect described here. I&#39;m currently tracking for concurrent calls to _loadRowCount and _loadRowData using flags.
+
+I&#39;m using qooxdoo 2.1.
+
+I&#39;m trying to get attention by raising priority.
+
+Regards
+Dietrich</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31804</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2012-12-31 10:47:25 +0100</bug_when>
+            <thetext>Added related bug #6612</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31842</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2013-01-07 18:27:50 +0100</bug_when>
+            <thetext>*** Bug 6612 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31843</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2013-01-07 18:28:28 +0100</bug_when>
+            <thetext>Fixed in master eb0d639c709a67381d4ff0d357d86f9080c3ad24
+and branch_2_1_x d4cd43114dcd6ee22346aa3778a170973c231448
+
+
+There was a little mistake on slicing the array, fust fixed it.
+http://tinyurl.com/anryznd</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31877</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2013-01-12 19:45:47 +0100</bug_when>
+            <thetext>On master branch:
+  * Issues from step 3 are fixed. No block shift occurs.
+  * Issues from step 6 aren&#39;t fixed. Just amount of concurrent request is reduced. There shouldn&#39;t be any data requests until count request is completed.
+
+So I don&#39;t think it is resolved. Reference is 2.0.1 (http://tinyurl.com/a76kqnn).
+
+Also I don&#39;t see anything that deals with array slicing in both:
+  * https://github.com/qooxdoo/qooxdoo/commit/eb0d639c709a67381d4ff0d357d86f9080c3ad24
+  * https://github.com/qooxdoo/qooxdoo/commit/d4cd43114dcd6ee22346aa3778a170973c231448
+but changed flag setting position.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31890</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2013-01-14 14:01:12 +0100</bug_when>
+            <thetext>Right, we have to prevent an additional call of _loadData if the appear event was calling prefetchRows function.
+
+Done in master ba147769cf924ef3ae8c45c5ef4057be2b352474
+
+Please try if it works. But we have to make some more unit testings to care of all possible side effects.
+
+So I will close that task and cherry pick the fix to branch_2_1_x since we have made all tests.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31908</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2013-01-15 11:24:59 +0100</bug_when>
+            <thetext>Master branch looks good as I see no issues from the bug&#39;s scenario. I&#39;ve also built an app against master branch and made quick examination. It also exposed no issues with remote tables.
+
+More test coverage is good as the subject is really basic in applied sense of framework usage.
+
+Ought I mark the bug resolved?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31924</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-01-17 08:14:34 +0100</bug_when>
+            <thetext>(In reply to comment #10)
+&gt; Ought I mark the bug resolved?
+
+No, doing so is always the taks of the assigned person. I added a new report for the unit tests (#7143) so we can close this one.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31925</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2013-01-17 09:52:05 +0100</bug_when>
+            <thetext>I asked because I reopened the bug and wasn&#39;t sure about the flow in that case.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31930</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-01-18 08:02:24 +0100</bug_when>
+            <thetext>(In reply to comment #12)
+&gt; I asked because I reopened the bug and wasn&#39;t sure about the flow in that case.
+
+No problem. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32031</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-01-29 10:00:01 +0100</bug_when>
+            <thetext>Mustafa, please cherry-pick the fix for 2.1.x</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32140</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2013-02-06 10:13:34 +0100</bug_when>
+            <thetext>Cherry picked into branch_2_1_x
+
+check sums:
+1f969747ee730a0da7aac972be007c07a411a035
+951c8ec8af90188a8e3cd06811fcddde4564cc59</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39491</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:27:30 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

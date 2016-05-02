@@ -1,0 +1,209 @@
+<bug>
+          <bug_id>5443</bug_id>
+          
+          <creation_ts>2011-07-25 17:44:00 +0200</creation_ts>
+          <short_desc>Locale data is unavailable at parsing time</short_desc>
+          <delta_ts>2015-03-10 09:26:22 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.locale</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>Windows</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>LATER</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          <votes>1</votes>
+          <everconfirmed>1</everconfirmed>
+          <reporter name="saaj">id</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="Daniel Wagner">daniel.wagner</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26239</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2011-07-25 17:44:49 +0200</bug_when>
+            <thetext>The use case is to translate some application-fixed id-value map. This worked correctly against version 1.0. It doesn&#39;t in 1.4.1 and 1.5, so it seems to be a regression. Switching qx.dynlocale doesn&#39;t change the behavior. 
+
+
+qx.Class.define(&quot;localetest.Application&quot;, {
+
+  extend : qx.application.Standalone,
+ 
+  defer : function(statics)
+  {
+    console.log(&quot;qx.$$translations keys:&quot;, qx.lang.Object.getKeys(qx.$$translations));
+    console.log(&quot;qx.$$locales keys:&quot;,      qx.lang.Object.getKeys(qx.$$locales));
+    console.log(&quot;qx.$$translations:&quot;, qx.$$translations);
+    console.log(&quot;qx.$$locales:&quot;, qx.$$locales);
+     
+    console.log(&quot;available locales:&quot;, qx.locale.Manager.getInstance().getAvailableLocales());
+    console.log(&quot;locale:&quot;, qx.locale.Manager.getInstance().getLocale());
+   
+    console.log(qx.locale.Manager.tr(&quot;six six six&quot;).toString());
+  }
+  
+});
+
+------------------- source output -------------------
+qx.$$translations keys: [&quot;C&quot;, &quot;de&quot;]
+qx.$$locales keys: [&quot;C&quot;, &quot;de&quot;]
+qx.$$translations: Object { C={...}, de={...}}
+qx.$$locales: Object { C={...}, de={...}}
+available locales: [&quot;de&quot;]
+locale: de
+sechs sechs sechs
+
+------------------- build output -------------------
+qx.$$translations keys: []
+qx.$$locales keys: []
+qx.$$translations: Object {}
+qx.$$locales: Object {}
+available locales: []
+locale: de
+six six six</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26240</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-07-25 19:09:09 +0200</bug_when>
+            <thetext>There are a couple of things which I don&#39;t understand with this bug:
+
+- First, you write in the bug summary &quot;Locale data is unavailable at parsing 
+time&quot;. - What do you mean by this? Everything in the bug description refers to 
+run time, doesn&#39;t it?!
+
+- Then, in the description you write &quot;The use case is to translate some 
+application-fixed id-value map&quot;, but there is no such map mentioned anywhere 
+later in the description?!
+
+- Then, you present some code, I persume to analyse the problem. But you are 
+using internal, unpublished APIs, qx.$$translation and qx.$$locale. I hope this 
+is not what you do in production code!?
+
+- What *is* actually interesting is the difference between source and build 
+execution. But you are doing your console.log output in the &#39;defer&#39; section, 
+which makes load order and timing significant (you&#39;d better do it in the main 
+method). Do you have different configurations for source and build jobs? Are 
+you using parts? Are you using i18n-with-loader:false, to split I18N 
+information into dedicated parts? Are you loading these parts at some time? - 
+It just looks to me that the I18N information just hasn&#39;t been loaded yet, when 
+your &#39;defer&#39; section runs.
+
+I&#39;d rather look at a stripped-down example of your production code (with the 
+id-value map), to see the real context, and hear what is going wrong with that. 
+Your analysing code might have different issues.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26244</commentid>
+              <attachid>1035</attachid>
+            <who name="saaj">id</who>
+            <bug_when>2011-07-25 20:20:07 +0200</bug_when>
+            <thetext>Created attachment 1035
+example</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26245</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2011-07-25 20:22:32 +0200</bug_when>
+            <thetext>Yeah, exactly I felt that this summary is lacking for details, but I&#39;ve looking for workaround for my case, you know ;)
+
+- About parsing-time. I might have find a better term, but with it I meant the state of definition of the class. The processing of the class map in qx.Class.define() when defer gets called and which precede and qooxdoo instance flow. Sort of parsing. 
+
+- About use case. Lets imagine you have an order management system where you have a Purchase entity. This entity has a fixed never changing enumeration of its states. So requesting this data from server side seems to me overkill for the case, so this state map gets hardcoded in application. Since this state data is used by different class, e.g. views for rendering state in text field, or table column render, some validation rules, etc. So the most essential place for such data is somewhere in static fields of the model (i might have app.model.Purchase class with static map of states), where it could be accessed from different classes. It increases the class coupling but I don&#39;t think it&#39;s dramatic.
+
+- About internals. The :-D smile may be sufficient. Of course I don&#39;t use this $$ internals. It&#39;s the source of locale data for qx.locale.Manager, so I wanted to demonstrate that at this point they&#39;re empty, so locale manager has them not as well. 
+
+- About configuration. The problem occurs in build time, this is what I should have told at the beginning. The config.json is purely by create-application.py, which only locale changed. No tricks, no part-loading, no any-other-pretty-qx-build-feature. Just a plain build. So I don&#39;t get the appealing to load order and timing of console.log.
+
+The main question is is it a regression, where this locale data is available in qooxdoo 1.0 build, or it&#39;s the change made by design?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26249</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-07-26 10:39:48 +0200</bug_when>
+            <thetext>Thomas, please have a look at that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>35371</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 08:45:59 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36179</commentid>
+            <who name="saaj">id</who>
+            <bug_when>2014-03-03 08:52:31 +0100</bug_when>
+            <thetext>Reopen those issues that are still important.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42757</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-03-10 09:26:22 +0100</bug_when>
+            <thetext>Move open issues to RESOLVED – LATER, whose last comment is older than a year.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1035</attachid>
+            <date>2011-07-25 20:20:00 +0200</date>
+            <delta_ts>2011-07-25 20:20:07 +0200</delta_ts>
+            <desc>example</desc>
+            <filename>localetest.7z</filename>
+            <type>application/octet-stream</type>
+            <size>1496</size>
+            <attacher>id</attacher>
+            
+              <data encoding="base64">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
+EAAADII8CgFSkIXlAAA=
+</data>
+
+          </attachment>
+      
+
+    </bug>

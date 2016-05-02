@@ -1,0 +1,289 @@
+<bug>
+          <bug_id>8450</bug_id>
+          
+          <creation_ts>2014-06-26 15:54:00 +0200</creation_ts>
+          <short_desc>Focus won&#39;t be set on touch devices</short_desc>
+          <delta_ts>2015-03-26 11:36:04 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.event</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>NEW</bug_status>
+          
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mustafa Sak">mustafa.sak</reporter>
+          <assigned_to name="Daniel Wagner">daniel.wagner</assigned_to>
+          <cc>alexander.steitz</cc>
+    
+    <cc>selverr</cc>
+          <qa_contact name="Christian Hagendorn">christian.hagendorn</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>40587</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-06-26 15:54:44 +0200</bug_when>
+            <thetext>Mind you have a focusable widget. On a tap event triggered by mouse event, this widget will be focused. The same code dos not set focus on touch event triggered tap events.
+
+Please test this example on IOS and desktop devices
+http://tinyurl.com/paq7ffg</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40672</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-03 14:46:57 +0200</bug_when>
+            <thetext>The problem has its root in the browsers focus behavior. iOS does not focus divs even with a set tabindex, which common browsers do. If you add a mouse event listener to the root element, the focus works based on mouse events which means, with a delay of 300ms. We added a custom tap handling setting the focus instead to prevent that delay.
+
+master: 2014091e5e3013622ebf2353962ebdfa5edffb60
+4.0.x: d64e4987e8014d485c7f0c11e61c82856e9e86fb</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40687</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-07-04 10:31:36 +0200</bug_when>
+            <thetext>Now focusing of widgets, they are focus able works fine on IOS devices, too.
+
+But as I could see, this is not true for nested widgets, who are not focus able, but their container is. This issue only happens on Safari mobile, Chrome emulation does right.
+
+Please take a look at:
+
+http://tinyurl.com/pf89hau</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40702</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-07 08:11:47 +0200</bug_when>
+            <thetext>Here ist the code to reproduce (tinyurl links to a local machine)
+
+
+var container = new qx.ui.container.Composite(new qx.ui.layout.Canvas()).set({
+  backgroundColor : &quot;red&quot;,
+  width : 100,
+  height : 100,
+  focusable : true
+});
+
+
+this.getRoot().add(container, {left:100, top:109});
+
+
+var widget = new qx.ui.core.Widget().set({
+  backgroundColor : &quot;green&quot;,
+  focusable : false
+});
+
+container.add(widget, {edge : 2});
+
+
+container.addListener(&quot;focusin&quot;, function(e){
+  this.debug(1);
+}, this);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40714</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-07 15:11:15 +0200</bug_when>
+            <thetext>Fixed by considering the focusable property and the parent chain.
+
+master: ce7b6c25a843dcd175700a7c99f7fb2f6305efa1
+4.0.x: 47b2b0bc98837c0b9e79cff1b3e3e6410aa22209</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>40725</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-07-08 16:00:43 +0200</bug_when>
+            <thetext>The recent fix does not work for combo box widgets which focus the textfield on tapping the button which then closes the popup. Fixed it by using the native focus method (via qx.html) instead of the widget abstraction which delegates the focus in the case of the combo box.
+
+master; e435e7fbcca7d09ddc5f969a3ce9971c717f6b46
+4.0.x: f783498d59b7d20c759e0aea3b001188c8d3ec12</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41121</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-09-04 16:39:52 +0200</bug_when>
+            <thetext>IOS8 fires native focus events, now.
+
+However, as I could see the focus handler is setting the focus on mousedown for webkit browser. 
+
+I changed the events from mouse to touch. Now we don&#39;t need the additional IOS specific code on qx.ui.root.Application any more.
+
+The only thing it is confusing me, is that I have to add a mousedown event listener to the root widget for IOS7.
+
+IOS8 does not need it, as I could see.
+
+I would recommend to check following points:
+1. Does the focus handler do the job for focusing DOM elements?
+2. Why does root widget need a &quot;mouseup&quot; event listener?
+
+This is the diff for the focus handler:
+
+diff --git a/framework/source/class/qx/event/handler/Focus.js b/framework/source/class/qx/event/handler/Focus.js
+index 9c0cf08..097d548 100644
+@@ -453,8 +453,8 @@ qx.Class.define(&quot;qx.event.handler.Focus&quot;,
+ 
+ 
+         // Register events
+-        qx.bom.Event.addNativeListener(this._document, &quot;mousedown&quot;, this.__onNativeMouseDownWrapper, true);
+-        qx.bom.Event.addNativeListener(this._document, &quot;mouseup&quot;, this.__onNativeMouseUpWrapper, true);
++        qx.bom.Event.addNativeListener(this._document, &quot;touchstart&quot;, this.__onNativeMouseDownWrapper, true);
++        qx.bom.Event.addNativeListener(this._document, &quot;touchend&quot;, this.__onNativeMouseUpWrapper, true);
+         qx.bom.Event.addNativeListener(this._document, &quot;selectstart&quot;, this.__onNativeSelectStartWrapper, false);
+ 
+         qx.bom.Event.addNativeListener(this._window, &quot;DOMFocusOut&quot;, this.__onNativeFocusOutWrapper, true);
+
+
+diff --git a/framework/source/class/qx/ui/root/Application.js b/framework/source/class/qx/ui/root/Application.js
+index d67480c..671d4c6 100644
+@@ -82,19 +82,6 @@ qx.Class.define(&quot;qx.ui.root.Application&quot;,
+ 
+     // prevent scrolling on touch devices
+     this.addListener(&quot;touchmove&quot;, this.__stopScrolling, this);
+-
+-    // handle focus for iOS which seems to deny any focus action
+-    if (qx.core.Environment.get(&quot;os.name&quot;) == &quot;ios&quot;) {
+-      this.getContentElement().addListener(&quot;tap&quot;, function(e) {
+-        var widget = qx.ui.core.Widget.getWidgetByElement(e.getTarget());
+-        while (widget &amp;&amp; !widget.isFocusable()) {
+-          widget = widget.getLayoutParent();
+-        }
+-        if (widget &amp;&amp; widget.isFocusable()) {
+-          widget.getContentElement().focus();
+-        }
+-      }, this, true);
+-    }
+   },
+ 
+ 
+
+Here is a small example to test the issue:
+
+qx.Class.define(&quot;test.Application&quot;,
+{
+  extend : qx.application.Standalone,
+
+  members :
+  {
+    main: function()
+    {
+      this.base(arguments);
+      this.getRoot().add(new qx.ui.form.TextField());
+      var elem = this.getRoot().getContentElement().getDomElement();
+      qx.bom.element.Style.set(elem, &quot;float&quot;, &quot;left&quot;);
+
+      var dom = this.getRoot().getContentElement().getDomElement();
+      var nativeOne = q.create(&quot;&lt;input style=&#39;position:absolute; z-index:100; top:50px&#39;&gt;&quot;);
+      q(&quot;body&quot;).append(nativeOne);
+
+      // this event listener is only necessary for IOS7
+      this.getRoot().addListener(&quot;mousedown&quot;, function(){});
+      
+      this.getRoot().addListener(&quot;focus&quot;, function(){
+        elem = nativeOne[0];
+        elem.value=elem.value + &quot; | focus&quot;;
+      });
+
+      this.getRoot().addListener(&quot;tap&quot;, function(){
+
+        elem = nativeOne[0];
+        elem.value=elem.value + &quot; | tap&quot;;
+      });
+    }
+  }
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41130</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2014-09-05 09:58:30 +0200</bug_when>
+            <thetext>*** Bug 8489 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42944</commentid>
+            <who name="Veronika Seliverstova">selverr</who>
+            <bug_when>2015-03-25 18:09:25 +0100</bug_when>
+            <thetext>Hi,
+
+We&#39;ve recently faced a problem in our project based currently on qx 4.1.
+
+On an iPad we have a problem with combobox as described by Martin in his comment:
+
+&quot;The recent fix does not work for combo box widgets which focus the textfield on
+tapping the button which then closes the popup.&quot;
+
+Apparently focusing content element instead of widget itself does not help.
+
+I&#39;ve tried applying the fix described by Mustafa in his last comment and it works fine - combo now does not close it&#39;s popup and focusing widgets still works on an iPad iOS 8.2.
+However, I am not exactly sure how it would affect desktop webkit browsers such as Chrome, as now in this case there are no &quot;mousedown&quot; and &quot;mouseup&quot;listener that used to be attached in Focus.js _initObserver method.
+I&#39;ve of course tested that but I don&#39;t see Chrome behaviour affected so far.
+
+Is this fix safe? Is this issue not closed yet because the fix is not complete?
+
+Thank you for any advice,
+Veronika.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42945</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2015-03-26 07:28:51 +0100</bug_when>
+            <thetext>(In reply to comment #8)
+&gt; Hi,
+&gt; 
+&gt; We&#39;ve recently faced a problem in our project based currently on qx 4.1.
+&gt; 
+&gt; On an iPad we have a problem with combobox as described by Martin in his
+&gt; comment:
+&gt; 
+&gt; &quot;The recent fix does not work for combo box widgets which focus the textfield
+&gt; on
+&gt; tapping the button which then closes the popup.&quot;
+&gt; 
+&gt; Apparently focusing content element instead of widget itself does not help.
+&gt; 
+&gt; I&#39;ve tried applying the fix described by Mustafa in his last comment and it
+&gt; works fine - combo now does not close it&#39;s popup and focusing widgets still
+&gt; works on an iPad iOS 8.2.
+&gt; However, I am not exactly sure how it would affect desktop webkit browsers such
+&gt; as Chrome, as now in this case there are no &quot;mousedown&quot; and &quot;mouseup&quot;listener
+&gt; that used to be attached in Focus.js _initObserver method.
+&gt; I&#39;ve of course tested that but I don&#39;t see Chrome behaviour affected so far.
+&gt; 
+&gt; Is this fix safe? Is this issue not closed yet because the fix is not complete?
+&gt; 
+&gt; Thank you for any advice,
+&gt; Veronika.
+
+Changing the focus handling is a hot topic and needs immens testing on our side to be sure nothing breaks. This not only includes iPad but other devices as Androids devices. In shore, I don&#39;t know because we didn&#39;t have the time to test it.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>42950</commentid>
+            <who name="Veronika Seliverstova">selverr</who>
+            <bug_when>2015-03-26 11:36:04 +0100</bug_when>
+            <thetext>Thank you for your reply, Martin!</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

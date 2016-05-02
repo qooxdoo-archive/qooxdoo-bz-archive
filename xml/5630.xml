@@ -1,0 +1,119 @@
+<bug>
+          <bug_id>5630</bug_id>
+          
+          <creation_ts>2011-09-22 15:47:00 +0200</creation_ts>
+          <short_desc>Build variant debug off behaviour</short_desc>
+          <delta_ts>2013-12-16 12:46:07 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          <bug_file_loc>http://demo.qooxdoo.org/current/playground/#%7B%22code%22%3A%20%22%252F%252F%2520Create%2520a%2520button%250Avar%2520button1%2520%253D%2520new%2520qx.ui.form.Button%28%2522First%2520Button%2522%252C%2520%2522icon%252F22%252Fapps%252Finternet-web-browser.png%2522%29%253B%250A%250A%252F%252F%2520Document%2520is%2520the%2520application%2520root%250Avar%2520doc%2520%253D%2520this.getRoot%28%29%253B%250A%250A%252F%252F%2520Add%2520button%2520to%2520document%2520at%2520fixed%2520coordinates%250Adoc.add%28button1%252C%250A%257B%250A%2520%2520left%2520%253A%2520100%252C%250A%2520%2520top%2520%2520%253A%252050%250A%257D%29%253B%250A%250A%252F%252F%2520Add%2520an%2520event%2520listener%250Abutton1.addListener%28%2522execute%2522%252C%2520function%28e%29%2520%257B%250A%2520%2520var%2520a%2520%253D%2520null%253B%250A%2520%2520this.debug%28%25221%2522%29%253B%250A%2520%2520this.debug%28%2522a%253A%2520%2522%2520%252B%2520a.id%29%253B%250A%2520%2520this.debug%28%25222%2522%29%253B%250A%257D%29%253B%22%7D</bug_file_loc>
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Stefan Nicodem">snicodem</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26883</commentid>
+            <who name="Stefan Nicodem">snicodem</who>
+            <bug_when>2011-09-22 15:47:30 +0200</bug_when>
+            <thetext>I was just testing after fixing a bug in our application, and found something weird about a debugging line breaking our build version.
+
+To start, we use variant qx.debug true and false to generate ourapp-True.js and ourapp-False.js versions of the build.
+
+The bug was about debugging a line with a variable and getting it&#39;s ID without checking for null. This generates an error in the source version like expected, but we didn&#39;t find that bug before putting the build live.
+
+The strange thing is that the build version with qx.debug false also breaks on the this.debug(&quot;a: &quot; + a.id); line, exactly like the behaviour in the playground (see URL).
+
+I was expecting that the variant would take care of not including code that will not be executed, but it does include this line and just not debug anything.
+Am I doing something wrong or is this a real bug?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26894</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-09-23 13:47:05 +0200</bug_when>
+            <thetext>Hey,
+this is a plain javascript error which can not be handled by qooxdoo in that case. It&#39;s like typing fjaslfinsöiofns.fasfarsfa in the browsers console. It breaks because the first thing you are trying to access is not available. The only thing you can do is to wrap that piece of code into a block which gets excluded in the build process when debug is false:
+
+if (qx.core.Environment.get(&quot;qx.debug&quot;)) {
+  this.debug(adfdaf.adsfdsfa);
+}
+
+This code will always work in the dubug false version because this code does not get into your application at all. Having the following like you have:
+
+this.debug(adfdaf.adsfdsfa);
+
+the generator will not remove that code and the JS error is there. So everything works like expected.
+Does this help you to understand how it is working?
+Regards,
+Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26919</commentid>
+            <who name="Stefan Nicodem">snicodem</who>
+            <bug_when>2011-09-26 07:19:54 +0200</bug_when>
+            <thetext>Martin,
+
+Thanks for the explanation, it does makes sense and I also figured as much.
+
+I got confused by the variants and their documentation, although I might have been looking in the old documentation.
+There I got the impression the generator will remove all code that has to do with debugging when you set qx.debug to false.
+
+Thanks again,
+Stefan</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26921</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2011-09-26 08:44:43 +0200</bug_when>
+            <thetext>Your welcome! :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26928</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-09-26 09:28:09 +0200</bug_when>
+            <thetext>Or, to put it in other words:
+Code that is removed is code that is guarded by environment settings that are 
+known to be false at compile time. One of the standard settings to be used in 
+this way is qx.debug. As Martin wrote this is achieved by using qx.debug in a 
+call to qx.core.Environment.get (which is equivalent to calling 
+qx.core.Variant.isSet in earlier qooxdoo versions).
+
+Calls to this.debug are always executed and do not change with the value of 
+qx.debug. Rather, the behaviour of this.debug obeys the log level set with 
+qx.log.Logger.setLevel. And even if it would change, arguments passed to it 
+would be evaluated before the call is made, so any issue there, e.g. with 
+undefinedness, would creep up anyway (That&#39;s what Martin meant with it&#39;s a JS 
+error).</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,178 @@
+<bug>
+          <bug_id>6684</bug_id>
+          
+          <creation_ts>2012-07-27 16:20:00 +0200</creation_ts>
+          <short_desc>Misplaced and disappearing shadow decorators</short_desc>
+          <delta_ts>2012-12-03 14:58:08 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.theming</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>2.0.3</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Dietrich Streifert">dietrich.streifert</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>john.spackman</cc>
+          <qa_contact name="Alexander Steitz">alexander.steitz</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>30282</commentid>
+              <attachid>1179</attachid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2012-07-27 16:20:24 +0200</bug_when>
+            <thetext>Created attachment 1179
+playground example showing the bug
+
+I&#39;ve done a simple test in playground devel with the shadow decorator for buttons with two different decorators for the unfocused and focused state:
+
+    http://tinyurl.com/dy3ksqm
+
+The two decorators are based on qx.ui.decoration.Uniform having different colors and different widths.
+
+1. At initialization the shadow decorator (2px green) shows up misplaced by an offset shifted to the right bottom corner.
+
+2. At first focus of the button the focus decorator (3px red) also shows up misplaced as the non focus decorator does.
+
+3. After the button looses focus the shadow decorator &quot;disappears&quot; but should show the green border. I think it&#39;s hidden behind the button as the right bottom corner shows a little green.
+
+4. Focusing the button again shows the red 3px border misplaced again. 
+
+I&#39;ve attached the playground example to this bug.
+
+Regards
+Dietrich</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30283</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2012-07-27 16:21:25 +0200</bug_when>
+            <thetext>Raised priority.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30980</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-10-17 12:57:24 +0200</bug_when>
+            <thetext>Just checked that one. The different behavior comes from two different rendering routines. The first one is in _applyShadow and renders the shadow element in case bounds are already available. The second one is in renderLayout which is used to render the initial shadow element.
+
+Checking both implementations, I had to ask me some questions:
+
+1. What does &#39;inset&#39; mean for a shadow element? As a decorator, its the space from the decorator to the content element. This means the whole widget (container) gets a bigger size. In case of shadows thats not the desired behavior because the shadow should not affect the content at all. Is it the amount of pixels we should add on each side?
+
+2. Is the whole shadow implementation worth keeping it at all? If I check out which browser does not support the CSS box shadow, its only IE &lt;= 8 [1] which is not that much. Maybe we should think of removing the whole feature.
+
+[1] http://caniuse.com/#feat=css-boxshadow</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31124</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-10-30 09:10:55 +0100</bug_when>
+            <thetext>*** Bug 6927 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31127</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-10-30 09:18:35 +0100</bug_when>
+            <thetext>*** Bug 5715 has been marked as a duplicate of this bug. ***</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31128</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2012-10-30 09:56:20 +0100</bug_when>
+            <thetext>IMHO not sure about the meaning of inset, it&#39;s a little confusing to calculate the right and bottom insets but easy once you know how.
+
+But it&#39;s a nice feature and IE6 is stil on the official supported browser list; if my pull request from Bug 6927 fixes this I&#39;d vote that it was included because of the minimal effort involved and because that does not cause any backward compatibility issues.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31137</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-10-30 13:48:30 +0100</bug_when>
+            <thetext>Finally got a working version of the shadow handling. It was tricky but should be good now. It does not change the size / position on change of the shadow. :)
+
+master: a09eba9833243e95b5a50e05aebf131ae44602bb
+2.0.x: 9074220495a943ba706f0443512151f834d32086
+
+Please verify the fix (would be good before the 2.1 release) ;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31148</commentid>
+            <who name="John Spackman">john.spackman</who>
+            <bug_when>2012-10-30 18:01:17 +0100</bug_when>
+            <thetext>Great!  Yes, confirmed - I&#39;ve tried it with the sample code from bug 5715 and with the Aristo contrib (bug 6927) and it&#39;s fixed.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31155</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2012-10-31 07:38:14 +0100</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; Great!  Yes, confirmed - I&#39;ve tried it with the sample code from bug 5715 and
+&gt; with the Aristo contrib (bug 6927) and it&#39;s fixed.
+
+Thanks for the fast feedback. :)</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1179</attachid>
+            <date>2012-07-27 16:20:00 +0200</date>
+            <delta_ts>2012-07-27 16:20:24 +0200</delta_ts>
+            <desc>playground example showing the bug</desc>
+            <filename>misplaced-shadow-decorator-playground-example.js</filename>
+            <type>application/x-javascript</type>
+            <size>1373</size>
+            <attacher>dietrich.streifert</attacher>
+            
+              <data encoding="base64">Ly8gQ3JlYXRlIGEgYnV0dG9uDQp2YXIgYnV0dG9uMSA9IG5ldyBxeC51aS5mb3JtLkJ1dHRvbigi
+QnV0dG9uIDEiLCAiaWNvbi8yMi9hcHBzL2ludGVybmV0LXdlYi1icm93c2VyLnBuZyIpOw0KdmFy
+IGJ1dHRvbjIgPSBuZXcgcXgudWkuZm9ybS5CdXR0b24oIkJ1dHRvbiAyIiwgImljb24vMjIvYXBw
+cy9pbnRlcm5ldC13ZWItYnJvd3Nlci5wbmciKTsNCg0KLy8gRG9jdW1lbnQgaXMgdGhlIGFwcGxp
+Y2F0aW9uIHJvb3QNCnZhciBkb2MgPSB0aGlzLmdldFJvb3QoKTsNCg0KLy8gQWRkIGJ1dHRvbiB0
+byBkb2N1bWVudCBhdCBmaXhlZCBjb29yZGluYXRlcw0KZG9jLmFkZChidXR0b24xLA0Kew0KICBs
+ZWZ0IDogMTAwLA0KICB0b3AgIDogNTANCn0pOw0KZG9jLmFkZChidXR0b24yLA0Kew0KICBsZWZ0
+IDogMTAwLA0KICB0b3AgIDogMTAwDQp9KTsNCg0KcXguVGhlbWUuZGVmaW5lKCJmb29EZWNvcmF0
+aW9uIiwNCnsNCiAgZGVjb3JhdGlvbnMgOiANCiAgew0KICAgICJmb29CdXR0b25EZWNvcmF0b3Ii
+OiB7DQogICAgICBkZWNvcmF0b3IgOiBxeC51aS5kZWNvcmF0aW9uLlVuaWZvcm0sDQogICAgICBz
+dHlsZSA6IHsNCiAgICAgICAgd2lkdGggOiAyLA0KICAgICAgICBzdHlsZSA6ICJzb2xpZCIsDQog
+ICAgICAgIGNvbG9yIDogImdyZWVuIg0KICAgICAgfQ0KICAgIH0sDQogICAgImZvb0J1dHRvbkRl
+Y29yYXRvckZvY3VzZWQiOiB7DQogICAgICBkZWNvcmF0b3IgOiBxeC51aS5kZWNvcmF0aW9uLlVu
+aWZvcm0sDQogICAgICBzdHlsZSA6IHsNCiAgICAgICAgd2lkdGggOiAzLA0KICAgICAgICBzdHls
+ZSA6ICJzb2xpZCIsDQogICAgICAgIGNvbG9yIDogInJlZCINCiAgICAgIH0NCiAgICB9DQogIH0N
+Cn0pOw0KDQpxeC5UaGVtZS5kZWZpbmUoImZvb0FwcGVhcmFuY2UiLA0Kew0KICBhcHBlYXJhbmNl
+cyA6DQogIHsNCiAgICAiZm9vQnV0dG9uIiA6IHsNCiAgICAgIGluY2x1ZGUgOiAiYnV0dG9uIiwN
+CiAgICAgIA0KICAgICAgc3R5bGUgOiBmdW5jdGlvbihzdGF0ZXMsIHN0eWxlcykNCiAgICAgIHsN
+CiAgICAgICAgcmV0dXJuIHsNCiAgICAgICAgICBzaGFkb3cgOiBzdGF0ZXMuZm9jdXNlZCA/ICJm
+b29CdXR0b25EZWNvcmF0b3JGb2N1c2VkIiA6ICJmb29CdXR0b25EZWNvcmF0b3IiDQogICAgICAg
+IH07DQogICAgICB9DQogICAgfQ0KICB9DQp9KTsNCg0KcXguVGhlbWUuaW5jbHVkZShwbGF5Z3Jv
+dW5kLnRoZW1lLkRlY29yYXRpb24sIGZvb0RlY29yYXRpb24pOw0KcXguVGhlbWUuaW5jbHVkZShw
+bGF5Z3JvdW5kLnRoZW1lLkFwcGVhcmFuY2UsIGZvb0FwcGVhcmFuY2UpOw0KDQpidXR0b24xLnNl
+dEFwcGVhcmFuY2UoImZvb0J1dHRvbiIpOw0KYnV0dG9uMi5zZXRBcHBlYXJhbmNlKCJmb29CdXR0
+b24iKTs=
+</data>
+
+          </attachment>
+      
+
+    </bug>

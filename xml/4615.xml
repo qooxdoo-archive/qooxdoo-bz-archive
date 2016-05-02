@@ -1,0 +1,238 @@
+<bug>
+          <bug_id>4615</bug_id>
+          
+          <creation_ts>2011-02-03 15:47:00 +0100</creation_ts>
+          <short_desc>Unify Lint and Compile Functionality</short_desc>
+          <delta_ts>2014-03-03 15:23:29 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>2.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>22559</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-02-03 15:47:28 +0100</bug_when>
+            <thetext>This is a generalization over bug#4561. The compile and lint modules of the 
+generator were developed in a kind of isolated ways. Over time, this gap has 
+widened:
+
+- Lint and the compiler report the same issues in different ways, which 
+confuses users who run both on the same project.
+- There is a chance that one reports issues the other does not.
+- Lint and compile provide *different* code features to tailor reporting (e.g. 
+#ignore vs. @lint ignoreXXX), which also differ in scope and granularity.
+
+What is needed is a common code base for both the lint and the compiler 
+checking logic, to assure consistent behaviour, logging, features, and issue 
+reporting. The checking logic should be parameterizable, so that it can be used 
+in both kinds of jobs (lint/compile), but exhibit different behaviour according 
+to configuration/command line options.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28900</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-03-20 12:22:51 +0100</bug_when>
+            <thetext>Concerning code-level tool hint syntax:
+
+One part that needs to be unified is the concrete syntax by which a developer can influence the warning behaviour of compiler and lint checker. Here is the outline:
+
+* Tool hints will be wrapped in JSDoc comments: /** ... */ (It doesn&#39;t hurt if the comment contains text other than the tool hints).
+* The tool hint must be the first non-white phrase of the line; a leading and optional &#39;*&#39; is permitted.
+* As for the tool hint syntax, all tool hints start with a &#39;@&#39; (i.e. the traditional &#39;#&#39; in e.g. &#39;#require&#39; will be deprecated).
+* Then there follows a tool hint keyword, like &#39;require&#39;, &#39;asset&#39;, &#39;ignore&#39;. (The proper set of supported keywords is not settled yet, and will be discussed in the future).
+* Any argument to the tool hint will be enclosed in parentheses: &#39;@require(qx.core.Object)&#39;.
+* Multiple arguments are separated by commas. If an argument contains a comma (unlikely), it has to be escaped as &#39;\,&#39;.
+* Whitespace between these lexical elements (&#39;*&#39;, &#39;@&lt;keyword&gt;&#39;, &#39;(&#39;, &lt;argument&gt;, ..., &#39;)&#39;) is insignificant and optional. (But mind that you should not separate &#39;@&#39; and &#39;&lt;keyword&gt;&#39;).
+* Arguments of tool hints may follow this term-like syntax as well, but without the leading &#39;@&#39; sigil: @lint(ignoreUndefined(foo)).
+* There must only be one such expression per line.
+* JSDoc comments containing tool hints can appear and will be honored in two place in source code:
+  * Ahead of a class definition. (I.e. above the call to &#39;qx.(Class|Mixin|...).define()&#39;).
+  * Ahead of a method definition. (I.e. above a line like &#39;member : function () { ...&#39;).
+
+Here is an example:
+/**
+ * @require(qx.core.Object)
+ * @use(qx.util.ResourceManager, qx.util.format.DateFormat)
+ * @ignore(qx.dev.*)
+ * @lint(ignoreUndefined(foo))
+ */
+
+We also discussed a more verb-like syntax that uses significant whitespace between the keyword and its argument(s):
+/**
+ * @require qx.core.Object
+ * @require qx.util.ResourceManager
+ * @ignore qx.dev.*
+ * @lint ignoreUndefined(foo)
+ */ 
+but settled for the previous syntax as it is easier to extend and to parse robustly.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28901</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-03-20 12:29:51 +0100</bug_when>
+            <thetext>(In reply to comment #1)
+&gt; * JSDoc comments containing tool hints can appear and will be honored in two
+&gt; place in source code:
+&gt;   * Ahead of a class definition. (I.e. above the call to
+&gt; &#39;qx.(Class|Mixin|...).define()&#39;).
+&gt;   * Ahead of a method definition. (I.e. above a line like &#39;member : function ()
+&gt; { ...&#39;).
+
+I forgot to mention: This placement determins the scope of the tool hints: They apply either to the whole class definition, or to the specific method.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>28925</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-03-21 10:01:43 +0100</bug_when>
+            <thetext>One aspect that is relevant here is that the compiler warnings can currently 
+only be taylored in config.json, with the &#39;config-warnings&#39; key.
+
+This means that e.g. a warning about a qx.core.Environment.get(&lt;varname&gt;) 
+having a non-literal key can only be turned off in a particular config or a 
+particular job, when you *actually* want to turn it off in the source code. It 
+should be possible to approve of a non-literal key independent of the project 
+or the job that uses this class.
+
+On the other hand, turning the warning off in a config is rather coarse, as it 
+is applied to *any* occurrence of an issue in *any* class in the job&#39;s class 
+set, not just to a single and well-considered code line.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30131</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-07-13 18:02:39 +0200</bug_when>
+            <thetext>Working on scopes:
+
+One of the cornerstones of a unified implementation is the availability of 
+scope information (as one important feature of both lint and the compiler is 
+warnings about unknown globals).
+
+As there are several phases of the compiler that depend on scope information 
+(dependency analysis, unknown gloabl detection, variable optimization, ...), it 
+seems sensible to do scope analysis once and save the result with the syntax 
+tree. This way it gets cached, and is always available with the ast itself.
+
+In the lint/warnings run, the information about unknown globals can then be 
+matched against JSDoc @-tool hints, to decide whether or not to warn about them.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30391</commentid>
+            <who name="Daniel Wagner">daniel.wagner</who>
+            <bug_when>2012-08-16 09:29:35 +0200</bug_when>
+            <thetext>This seems to have impacted the API doc generation: For some class items, the comment text as displayed in the API is unformatted and contains the asterisks from the original JS comment. Example: http://demo.qooxdoo.org/devel/apiviewer/#qx.dev.unit.MMock~mock</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30420</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-08-20 15:33:52 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; This seems to have impacted the API doc generation: For some class items, the 
+comment text as displayed in the API is unformatted and contains the asterisks 
+from the original JS comment. Example: 
+http://demo.qooxdoo.org/devel/apiviewer/#qx.dev.unit.MMock~mock
+
+Formatting solved.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30421</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-08-20 15:37:47 +0200</bug_when>
+            <thetext>Locating relevant comments:
+
+Here is an example from demobrowser.Demobrowser:
+
+    /**
+     * @param url {var} TODOC
+     * @return {void}
+     */
+    dataLoader : function(url)
+    {
+      var req = new qx.io.request.Xhr(url);
+      req.setTimeout(180000);
+
+      /**
+       * @param evt {var} TODOC
+       * @lint ignoreDeprecated(alert, eval)
+       */
+      req.addListener(&quot;success&quot;, function(evt)
+      {
+        var content = evt.getTarget().getResponse();
+
+        .... alert(...) ...
+
+        }
+
+The &#39;@lint ignoreDeprecated&#39; above the call to addListener() is currently not 
+found when given the &#39;alert&#39; idenifier (in lint.get_at_hints).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30424</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-08-20 17:14:19 +0200</bug_when>
+            <thetext>Locating relevant comments:
+
+File-level comments are not honored. I.e. a comment at (near) the top of the 
+file is not honored for the whole file. (Possibly, it is assigned to the first 
+statement, and honored within it, but not further down the file).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>30476</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-08-23 10:00:01 +0200</bug_when>
+            <thetext>Locating relevant comments:
+
+Sample for @lint ignoreDeprecated not being found: apiviewer.ClassLoader:73</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>31231</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2012-11-06 12:46:36 +0100</bug_when>
+            <thetext>Closing this, as compile and lint jobs now both use the lint.py module for 
+checking and logging warnings, so the basic ground work has been done. Glitches 
+in the implementation that might come up should now be addressed in dedicated 
+bugs. The single known follow-up issue of porting the compiler to use @ hints 
+in place of # hints (like #ignore) is also being treated in a dedicated 
+bug#6968.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38031</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:23:29 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

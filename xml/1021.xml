@@ -1,0 +1,124 @@
+<bug>
+          <bug_id>1021</bug_id>
+          
+          <creation_ts>2008-07-01 14:57:00 +0200</creation_ts>
+          <short_desc>secure and nonsecure warning in IE using https (SSL or TLS)</short_desc>
+          <delta_ts>2014-03-03 15:21:25 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>0.7.3</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.7.4</target_milestone>
+          <dependson>250</dependson>
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Hugh Gibson">hgibson</reporter>
+          <assigned_to name="Alexander Steitz">alexander.steitz</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>3609</commentid>
+            <who name="Hugh Gibson">hgibson</who>
+            <bug_when>2008-07-01 14:57:49 +0200</bug_when>
+            <thetext>We&#39;ve just been running our site using SSL or TLS with protocol HTTPS.
+
+Mostly it&#39;s fine but occasionally when the screen is changed e.g. when clicking on something which requires an update of the DOM by the qooxdoo core, we get a warning dialog saying &quot;This page contains both secure and nonsecure items. Do you want to display the nonsecure items?&quot;
+
+This last happened with iframe - see www.mail-archive.com/qooxdoo-devel@lists.sourceforge.net/msg03282.html
+
+In this case I have used Fiddler and intercepted the https stream, and confirmed that at the point of clicking on the item in our application where this warning appeared there was no request for an http item.
+
+I found some information about possible causes at 
+http://weblogs.asp.net/rchartier/archive/2008/03/12/ie7-this-page-contains-both-secure-and-nonsecure-items.aspx
+
+and at the Microsoft KB article referenced there - http://support.microsoft.com/kb/925014
+
+An extract:
+
+&quot;
+I found out that when you are manipulating a DOM element (lets say creating a DIV tag), and are setting its style.background property to a incomplete url, for example:
+
+div.style.background=&quot;url(/images/message-top-left.png) &quot;;
+
+It seems that IE7 (and only IE7) will make this request over 443, but treat the data as one of these pesky “nonsecure items”.
+
+So, the work-around which I implemented was to specify the FULL url like:
+
+div.style.background=&quot;url(“+prefix+“/images/message-top-left.png) &quot;;
+
+Where “prefix” is something along the lines of: 
+
+prefix = document.location.protocol + &quot;//&quot; + document.location.hostname;
+&quot;
+
+and from the MS page:
+
+&quot;This problem occurs if the Web page script calls the removeChild() method to delete a DIV element that references a background image.&quot;
+
+A quick check shows a lot of calls to removeChild in the qooxdoo code.
+
+It probably applies to trunk and 0.8 unless you have specifically addressed it. Also see bug 710 for a related item (pngs don&#39;t show in IE7 https).
+
+Hugh</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3611</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-07-01 15:17:28 +0200</bug_when>
+            <thetext>Alex, please address those IE+SSL issues, possibly teaming up with bug reporters to validate/resolve the issues.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3622</commentid>
+            <who name="Denis">nomus</who>
+            <bug_when>2008-07-02 10:36:35 +0200</bug_when>
+            <thetext>It seems that this problem is related to bug #890
+(http://bugzilla.qooxdoo.org/show_bug.cgi?id=890).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3631</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2008-07-02 16:50:42 +0200</bug_when>
+            <thetext>First of all thanks Hugh for the detailed bug report.
+
+SSL and IE (especially version 6) is a bit complicated :)
+
+The issue with &quot;removeChild&quot; as described at the MS page is not the (exact) problem. More precisely IE has a problem whenever a backgroundImage is set as a CSS style attribute. This URL has to be an absolute URL (as far as I discovered). A relative URL won&#39;t work (showing the &quot;Unsecure items&quot; warning). I&#39;ve fixed this issue with backgroundImage with the fix for bug #890.
+
+Another problem with SSL in IE6 is described in bug #710 (also fixed). 
+
+So your bug should be fixed with the upcoming 0.7.4 release.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>37278</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:21:25 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

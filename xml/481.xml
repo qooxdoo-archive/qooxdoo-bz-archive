@@ -1,0 +1,293 @@
+<bug>
+          <bug_id>481</bug_id>
+          
+          <creation_ts>2007-06-12 12:14:00 +0200</creation_ts>
+          <short_desc>qx.core.Setting.get throws exception while getting a compiler generated setting value</short_desc>
+          <delta_ts>2007-07-09 11:23:47 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Dietrich Streifert">dietrich.streifert</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>1549</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2007-06-12 12:14:20 +0200</bug_when>
+            <thetext>I have an application which creates its own theme including an icon theme.
+
+The icon theme is defined as follows:
+
+	qx.Theme.define(&quot;visionet.theme.icon.NRA&quot;,
+	{
+	  title : &quot;NRA&quot;,
+
+	  icons : {
+	    uri : qx.core.Setting.get(&quot;visionet.resourceUri&quot;) + &quot;/icon/NRA&quot;
+	  }
+	});
+
+The generated source scricpt called nra.js includes the following line:
+
+if(qxsettings[&quot;visionet.resourceUri&quot;]==undefined)qxsettings[&quot;visionet.resourceUri&quot;]=&quot;./resource&quot;;\
+
+This is the correct path for the resource.
+
+When I load the generated application I get the following error message:
+
+Setting &quot;visionet.resourceUri&quot; is not supported by API.
+http://nra/qooxdoo.dev/frontend/framework/source/class/qx/core/Setting.js
+Line 126
+
+After having a look to Setting.js the thrown error is due to the fact that the &quot;defaultValue&quot; of the key is missing.
+
+The get method first does the following steps:
+
+1) Test if the key is present. If not throw an exception.
+
+2) Test if the key.defaultValue is defined. If not throw an exception.
+
+3) Return the key.value if value is defined.
+
+4) Return the key.defaultValue
+
+In my opinion step 2) and 3) should be swapped. This means that the get method should return the value if defined and then do the check if a defaultValue is defined before the defaultValue is returned.
+
+I&#39;ve attached a patch which swaps 2) and 3) within the get method.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1550</commentid>
+              <attachid>185</attachid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2007-06-12 12:17:35 +0200</bug_when>
+            <thetext>Created attachment 185
+Patch against rev 8507 of trunk</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1551</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-06-12 13:12:26 +0200</bug_when>
+            <thetext>The code is perfectly correct. This mechanism is for security. It should protect the application from unsupported settings which are coming from outside the lib. You must add a settings definition for this setting to one of your classes, for example your application and define a default value.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1552</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2007-06-12 13:24:45 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+&gt; The code is perfectly correct. This mechanism is for security. It should
+&gt; protect the application from unsupported settings which are coming from outside
+&gt; the lib. You must add a settings definition for this setting to one of your
+&gt; classes, for example your application and define a default value.
+&gt; 
+
+Where would I put the setting then?
+
+    qx.core.Setting.define(&quot;visionet.resourceUri&quot;,&quot;&quot;);
+
+I tried to put it into the main routine of my application, but this seems to be to late.
+
+I suspect I have to put this somewhere &quot;before&quot; the __init method of qx.core.Setting is called.
+
+But where is that?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1553</commentid>
+              <attachid>185</attachid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2007-06-12 13:26:13 +0200</bug_when>
+            <thetext>Comment on attachment 185
+Patch against rev 8507 of trunk
+
+Invalid patch bcs. of security reasons.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1554</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-06-12 13:30:13 +0200</bug_when>
+            <thetext>There is some documentation online. Please read it first. :)
+http://qooxdoo.org/documentation/0.7/settings
+
+Add your setting to your application, as mentioned, like:
+
+settings : {
+  &quot;visionet.resourceUri&quot; : &quot;someDefault&quot;
+}
+
+inside the qx.Class.define construct.
+
+Sebastian</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1555</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2007-06-12 14:23:59 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; There is some documentation online. Please read it first. :)
+&gt; http://qooxdoo.org/documentation/0.7/settings
+&gt; 
+&gt; Add your setting to your application, as mentioned, like:
+&gt; 
+&gt; settings : {
+&gt;   &quot;visionet.resourceUri&quot; : &quot;someDefault&quot;
+&gt; }
+&gt; 
+&gt; inside the qx.Class.define construct.
+&gt; 
+&gt; Sebastian
+&gt; 
+
+Well I&#39;ve read the documentation now ;-) Thank you for the hint.
+
+But it doesn&#39;t help. I&#39;ve created the setting as advised by you:
+
+qx.Class.define(&quot;visionet.application.nra.Main&quot;,
+{
+  extend : qx.application.Gui,
+
+  settings : {
+    &quot;visionet.resourceUri&quot; : &quot;./resource&quot;
+  },
+
+But this seems to be to late because the method call within the icon theme definition seems to come before the class define of my application class.
+
+The theme I have created uses a meta theme:
+
+qx.Theme.define(&quot;visionet.theme.NRA&quot;,
+{
+  title : &quot;NRA&quot;,
+
+  meta :
+  {
+    color : visionet.theme.color.NRA,
+    border : visionet.theme.border.NRA,
+    font : visionet.theme.font.NRA,
+    widget : qx.theme.classic.Widget,
+    appearance : visionet.theme.appearance.NRA,
+    icon : visionet.theme.icon.NRA
+  }
+});
+
+The theme is assigned to the application via the Makefile variable:
+
+APPLICATION_THEME = visionet.theme.NRA
+
+The namespace is set in the Makefile via:
+
+APPLICATION_NAMESPACE = visionet
+
+So I&#39;m just using the Makefile and get the setting visionet.resourceUri generated automatically with no chance to avoid the exception which is thrown by the get method in Setting.js.
+
+The subject of this bug describes my current problem and I think this is a bug so I reopen the bug. Sorry.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1557</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2007-06-12 14:53:32 +0200</bug_when>
+            <thetext>After looking at the framework code I found that the setting qx.resourceUri is defined in the class qx.io.Alias.
+
+In the icon theme files of the framework this class is marked as prerequisite through the #require statement so that the call to the get method of qx.core.Setting to &quot;qx.resourceUri&quot; can succeed.
+
+So the way to solve this is to define the setting &quot;visionet.rescoureUri&quot; within a class which is then marked as a prerequisite by the #require statement.
+
+Now it works but it was a big pitfall for me.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1561</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-06-12 16:30:51 +0200</bug_when>
+            <thetext>Reopened again by me now.
+
+We should improve the usability here.
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1691</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-06-28 11:41:30 +0200</bug_when>
+            <thetext>Have taken a look at this again. 
+
+The error comes from the &#39;qx.core.Setting.get&#39; function. You must to be sure that the class which defines a setting is loaded before accessing it with the getter. You can force this dependency (which is not auto-detected by the build system) adding a &quot;#require()&quot; to the class which defines the setting.
+
+I don&#39;t know how this can be done easier.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1692</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-06-28 11:41:37 +0200</bug_when>
+            <thetext>Have taken a look at this again. 
+
+The error comes from the &#39;qx.core.Setting.get&#39; function. You must to be sure that the class which defines a setting is loaded before accessing it with the getter. You can force this dependency (which is not auto-detected by the build system) adding a &quot;#require()&quot; to the class which defines the setting.
+
+I don&#39;t know how this can be done easier.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1938</commentid>
+            <who name="Dietrich Streifert">dietrich.streifert</who>
+            <bug_when>2007-07-09 11:23:47 +0200</bug_when>
+            <thetext>Closed.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="1" ispatch="1" isprivate="0" isurl="0">
+            <attachid>185</attachid>
+            <date>2007-06-12 12:17:00 +0200</date>
+            <delta_ts>2007-06-12 13:26:13 +0200</delta_ts>
+            <desc>Patch against rev 8507 of trunk</desc>
+            <filename>Settings.js.diff</filename>
+            <type>text/plain</type>
+            <size>857</size>
+            <attacher>dietrich.streifert</attacher>
+            
+              <data encoding="base64">SW5kZXg6IFg6L3d3dy9xb294ZG9vLmRldi9mcm9udGVuZC9mcmFtZXdvcmsvc291cmNlL2NsYXNz
+L3F4L2NvcmUvU2V0dGluZy5qcw0KPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQ0KLS0tIFg6L3d3dy9xb294ZG9vLmRldi9m
+cm9udGVuZC9mcmFtZXdvcmsvc291cmNlL2NsYXNzL3F4L2NvcmUvU2V0dGluZy5qcwkocmV2aXNp
+b24gODUwNykNCisrKyBYOi93d3cvcW9veGRvby5kZXYvZnJvbnRlbmQvZnJhbWV3b3JrL3NvdXJj
+ZS9jbGFzcy9xeC9jb3JlL1NldHRpbmcuanMJKHdvcmtpbmcgY29weSkNCkBAIC0xMjIsMTQgKzEy
+MiwxNCBAQA0KICAgICAgICAgdGhyb3cgbmV3IEVycm9yKCdTZXR0aW5nICInICsga2V5ICsgJyIg
+aXMgbm90IGRlZmluZWQuJyk7CiAgICAgICB9CiAKKyAgICAgIGlmICh0aGlzLl9fc2V0dGluZ3Nb
+a2V5XS52YWx1ZSAhPT0gdW5kZWZpbmVkKSB7CisgICAgICAgIHJldHVybiB0aGlzLl9fc2V0dGlu
+Z3Nba2V5XS52YWx1ZTsKKyAgICAgIH0KKwogICAgICAgaWYgKHRoaXMuX19zZXR0aW5nc1trZXld
+LmRlZmF1bHRWYWx1ZSA9PT0gdW5kZWZpbmVkKSB7CiAgICAgICAgIHRocm93IG5ldyBFcnJvcign
+U2V0dGluZyAiJyArIGtleSArICciIGlzIG5vdCBzdXBwb3J0ZWQgYnkgQVBJLicpOwogICAgICAg
+fQogCi0gICAgICBpZiAodGhpcy5fX3NldHRpbmdzW2tleV0udmFsdWUgIT09IHVuZGVmaW5lZCkg
+ewotICAgICAgICByZXR1cm4gdGhpcy5fX3NldHRpbmdzW2tleV0udmFsdWU7Ci0gICAgICB9Ci0K
+ICAgICAgIHJldHVybiB0aGlzLl9fc2V0dGluZ3Nba2V5XS5kZWZhdWx0VmFsdWU7CiAgICAgfSwK
+IAo=
+</data>
+
+          </attachment>
+      
+
+    </bug>

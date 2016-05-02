@@ -1,0 +1,137 @@
+<bug>
+          <bug_id>4323</bug_id>
+          
+          <creation_ts>2010-11-15 18:21:00 +0100</creation_ts>
+          <short_desc>Popup manager, wrong zindex when adding new popups.</short_desc>
+          <delta_ts>2010-12-13 08:47:14 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.popups</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>major</bug_severity>
+          <target_milestone>1.2.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="robin danzinger">robin.danzinger</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21315</commentid>
+            <who name="robin danzinger">robin.danzinger</who>
+            <bug_when>2010-11-15 18:21:01 +0100</bug_when>
+            <thetext>The zindex of newly added popups in qx.ui.popup.Manager is random, but should depend on which widget has been added last.
+
+In qx.ui.popup.Manager the data structure field __objects is an object and not an array.
+
+-&gt; When adding a widget the following code is executed.
+
+    add : function(obj)
+    {
+      if (qx.core.Variant.isSet(&quot;qx.debug&quot;, &quot;on&quot;))
+      {
+        if (!(obj instanceof qx.ui.popup.Popup)) {
+          throw new Error(&quot;Object is no popup: &quot; + obj);
+        }
+      }
+
+      this.__objects[obj.$$hash] = obj;
+      this.__updateIndexes();
+    },
+
+    __updateIndexes : function()
+    {
+      var min = 1e7;
+      var reg = this.__objects;
+      for (var hash in reg) {
+        reg[hash].setZIndex(min++);
+      }
+    },
+
+
+-&gt; Because this.__objects is an object and not an array the order of the object is not determined. So the zindex of the added widget is randomly and doesn&#39;t depend on which popup has been added at last.
+
+-&gt; Compare with qx.ui.menu.Manager where this.__objects is an array.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21320</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-16 08:59:43 +0100</bug_when>
+            <thetext>Thanks for the bug Robin. Do you have a playground example which fails?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21382</commentid>
+            <who name="robin danzinger">robin.danzinger</who>
+            <bug_when>2010-11-18 09:48:40 +0100</bug_when>
+            <thetext>yes, I have. This fails in IE8. 
+In FF 3.6 it works correct.
+
+http://tinyurl.com/2vprcbh
+
+Move the mouse to the datefield -&gt; Tooltip appears.
+Click on Datefield -&gt; Datechooser appears, Tooltip disappears.
+Move the mous on the datefield again -&gt; Tooltip appears but behind of the datechooser. (Move to the upper right corner of the datefield to see a part of the Tooltip)
+
+
+---CODE---
+
+var datefield = new qx.ui.form.DateField();
+
+var toolTip = new qx.ui.tooltip.ToolTip(&quot;bla blub di dub da&quot;);
+datefield.setToolTip(toolTip);
+
+// Document is the application root
+var doc = this.getRoot();
+
+// Add button to document at fixed coordinates
+doc.add(datefield,
+{
+  left : 100,
+  top  : 50
+});
+
+---Code---</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21383</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-18 10:04:32 +0100</bug_when>
+            <thetext>Your my hero, thanks. :) Will fix it soon!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21384</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-11-18 10:50:46 +0100</bug_when>
+            <thetext>As suggested, the change to an array for the internal data structure fixed the issue. Thanks for the report. :)
+
+trunk: r23862
+1.2.x: r23863</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

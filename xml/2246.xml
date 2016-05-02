@@ -1,0 +1,174 @@
+<bug>
+          <bug_id>2246</bug_id>
+          
+          <creation_ts>2009-04-16 13:00:00 +0200</creation_ts>
+          <short_desc>Modify qx.io.ScriptLoader that it uses events instead of callbacks</short_desc>
+          <delta_ts>2010-02-17 10:01:55 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Sebastian Werner">info</reporter>
+          <assigned_to name="Sebastian Werner">info</assigned_to>
+          <cc>fabian.jakobs</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9314</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-16 13:00:51 +0200</bug_when>
+            <thetext>In the original design of &quot;qx.io2.ScriptLoader&quot; it was build using &quot;qx.Bootstrap.define&quot; to make it usable really really early in the load process of an application. 
+
+Through the rewritten load handling of qooxdoo application this was not necessary anymore and the class now uses the classic &quot;qx.Class.define&quot; and extends &quot;qx.core.Object&quot;. 
+
+We should modify the class so that it uses events instead of callbacks for the load handling. This way it may be used the same way like &quot;qx.io2.HttpRequest&quot; for example.
+
+Maybe it&#39;s a good idea to move the basic script handling e.g. insertion, cleanup etc. into qx.bom.ScriptRequest.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9393</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-20 18:48:02 +0200</bug_when>
+            <thetext>I&#39;ve an alternative implementation here which is the base class for my new JsonpLoader. I still need to get the copyright things communicated and will then make it available to qooxdoo.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9417</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-21 10:36:16 +0200</bug_when>
+            <thetext>Real JSONP support would be nice.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9423</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-04-21 11:23:09 +0200</bug_when>
+            <thetext>So I guess using events instead of callback is ok (Fabian?), even for low-level use cases of the script/part loading?
+
+Sebastian, please make sure to propose changes before committing anything, so that it can be reviewed and doesn&#39;t break existing apps that currently use this feature. Since you&#39;re working on this, I&#39;ll also assign this issue to you.
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9506</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-23 10:35:10 +0200</bug_when>
+            <thetext>In the part loader I used event internally but didn&#39;t use them to call the callback code. The reason is that the code, which requires the part to be loaded needs to be handled differently than normal event handler:
+
+qx.io2.PartLoader.require(&quot;rpc&quot;, function() {
+...
+});
+
+The semantics is:
+ 1. if the part is not yet loaded -&gt; load the part and run the code once it is loaded
+ 2. if the part is currently loading -&gt; wait until it is fully loaded and run the code
+ 3. if the part is already loaded -&gt; run the code immediately
+ 
+ This is basically the only end user API of the part loader system. It is not trivial to implement this only with events.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9507</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-23 10:39:26 +0200</bug_when>
+            <thetext>This bug covers two topics:
+
+1. Use events in the script loader. This doesn&#39;t make sense to me (see previous comment)
+2. Extract some script loading code and implement a JsonpRequest.
+
+I would suggest to mark this bug as invalid and open a fresh one for the second topic.
+
+
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9551</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-23 15:03:55 +0200</bug_when>
+            <thetext>assign to me... as I am already working on this one.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9568</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2009-04-23 21:53:22 +0200</bug_when>
+            <thetext>This bug is regarding ScriptLoader!
+
+Nobody said, at least in this bug, that PartLoader should do it the same way :)
+
+What are the problems when having events in ScriptLoader (like in HttpRequest BTW)? 
+
+I understand that regarding the semi-complex loading/execution handling in PartLoader callbacks might be the better choice. From the user perspective I now think it is even better there. Still, this should not mean any issues when ScriptLoader itself is event-based.
+
+Jsonp do not needed Script events. Do you know what Jsonp is? ;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>9574</commentid>
+            <who name="Fabian Jakobs">fabian.jakobs</who>
+            <bug_when>2009-04-24 08:57:01 +0200</bug_when>
+            <thetext>(In reply to comment #7)
+&gt; This bug is regarding ScriptLoader!
+&gt; 
+&gt; Nobody said, at least in this bug, that PartLoader should do it the same way :)
+
+Sorry I&#39;ve mixed it up with PartLoader. Forget my last comment. Of course it makes a lot 
+sense to do it this way. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11491</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-08-25 10:03:06 +0200</bug_when>
+            <thetext>.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11980</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-09-08 09:50:10 +0200</bug_when>
+            <thetext>not for 0.8.3, moved to 0.9</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>14763</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-11-24 20:26:15 +0100</bug_when>
+            <thetext>mass renaming of 0.9 target to 1.0 (for issues with status &quot;NEW&quot;)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>15758</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2009-12-11 17:44:18 +0100</bug_when>
+            <thetext>The class has been renamed to qx.io.ScriptLoader. Marked this issue as enhancement and untargeted.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16851</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-02-17 10:01:55 +0100</bug_when>
+            <thetext>As long as we need to use the scriptloader in the bootstrap, we can&#39;t use 
+events because we would get too much dependecies. So i guess we need to stay 
+with the callbacks, at least in one implementation.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

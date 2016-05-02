@@ -1,0 +1,159 @@
+<bug>
+          <bug_id>1439</bug_id>
+          
+          <creation_ts>2008-09-30 09:40:00 +0200</creation_ts>
+          <short_desc>The method &quot;scrollToY()&quot; in &quot;qx.ui.container.Scroll&quot; doesn&#39;t work correctly</short_desc>
+          <delta_ts>2014-03-03 15:26:53 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>0.8</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P1</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Christian Hagendorn">christian.hagendorn</reporter>
+          <assigned_to name="Christian Hagendorn">christian.hagendorn</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>5674</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-09-30 09:40:20 +0200</bug_when>
+            <thetext>The method has no effect for setting the scroll position. See the application code below, to see an example for the problem. 
+
+There are two problems by using the method:
+
+* The first problem is, that the maximum size for the slider must be set manual, because the &quot;re-size&quot; Event witch is used to calculate the sizes is fired after the usage of the method. Thus the &quot;scrollContainer._getChildControl(&quot;scrollbar-y&quot;).setMaximum(400);&quot; code is used to avoid the problem in the application code.
+
+* The second problem is, that the value for setting the scroll bar (the slider for the scroll bar) is called more then once. At the last time the value will be set to zero, because the &quot;getScrollMaxY()&quot; method in &quot;qx.ui.core.ScrollPane&quot; can&#39;t calculate the max size. The result is, that the slider is always set to zero.
+
+Application Code:
+===========
+qx.Class.define(&quot;custom.Application&quot;,
+{
+  extend : qx.application.Standalone,
+  members :
+  {
+    main: function()
+    {
+      this.base(arguments);
+
+      scrollContainer = new qx.ui.container.Scroll();
+      scrollContainer.set({
+        width: 300,
+        height: 400,
+        scrollbarX: &quot;off&quot;
+      });
+
+      var content = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+      content.add(this.generateBox(&quot;green&quot;));
+      content.add(this.generateBox(&quot;red&quot;));
+      scrollContainer.add(content);
+      
+      this.getRoot().add(scrollContainer, {left: 10, top: 10});
+      
+      scrollContainer._getChildControl(&quot;scrollbar-y&quot;).setMaximum(400);
+
+      scrollContainer.scrollToY(200);    
+    },
+
+    generateBox : function(color)
+    {
+      var box = new qx.ui.basic.Label(&quot;Content size: 300x400&quot;).set({
+        width: 300,
+        height: 400,
+        allowShrinkX: false,
+        allowShrinkY: false,
+        backgroundColor: color,
+        textColor: &quot;white&quot;,
+        padding: 10
+      });
+      return box;
+    }
+  }
+});</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5677</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-09-30 13:16:07 +0200</bug_when>
+            <thetext>Stack trace:
+
+&quot;custom.Application&quot;:
+  -&gt; scrollContainer.scrollToY(200);
+    -&gt; (qx.ui.core.AbstractScrollArea).scrolltoY(200)
+      -&gt; (qx.ui.core.ScrollBar).scrollTo(200)	
+        -&gt; (qx.ui.form.Slider).slideTo(200)
+           -&gt; (qx.ui.form.Slider).setValue(200)
+             -&gt; Fire &quot;changeValue&quot; Event
+
+&quot;Scroll&quot; Event:
+  -&gt; (qx.ui.core.AbstractScrollArea)._onScrollBarX
+    -&gt; (qx.ui.core.ScrollPane).scrollToY(200)
+      -&gt; (qx.ui.core.ScrollPane).getScrollMaxY() -&gt; returned 0, but it must be 400
+      -&gt; (qx.ui.core.ScrollPane).setScrollY(0) -&gt; this is the return value from getScrollMaxY(), but it must be 400
+        -&gt; (qx.ui.core.ScrollBar).scrollTo(0)	
+          -&gt; (qx.ui.form.Slider).slideTo(0)
+            -&gt; (qx.ui.form.Slider).setValue(0)
+              -&gt; Fire &quot;changeValue&quot; Event
+</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>5723</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-10-07 10:52:37 +0200</bug_when>
+            <thetext>to Fabian</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6522</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2008-11-27 11:08:18 +0100</bug_when>
+            <thetext>to Chris</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6523</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-11-27 11:17:10 +0100</bug_when>
+            <thetext>Accepted</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>6528</commentid>
+            <who name="Christian Hagendorn">christian.hagendorn</who>
+            <bug_when>2008-11-27 16:09:31 +0100</bug_when>
+            <thetext>Fixed in trunc (r16779).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>39267</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:26:53 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

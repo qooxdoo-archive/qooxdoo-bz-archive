@@ -1,0 +1,327 @@
+<bug>
+          <bug_id>5424</bug_id>
+          
+          <creation_ts>2011-07-20 12:59:00 +0200</creation_ts>
+          <short_desc>Pretty-print mutilates Block Comments</short_desc>
+          <delta_ts>2014-03-03 15:20:13 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.5.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Thomas Herchenroeder">thron7</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>gianmarco.gherardi</cc>
+    
+    <cc>marcputs</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26126</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-07-20 12:59:39 +0200</bug_when>
+            <thetext>Running pretty indents follow-up lines of block comments with spurious amounts 
+of spaces (roughly 200).  Look at a vanilla gui skeleton after &#39;pretty&#39;, e.g. 
+Application.js and DemoTest.js:
+
+/**                                                                             
+       /**
+  * This is the main application class ...        ==&gt;                           
+                                                  ... * This is the main 
+application class...
+  */                                                                            
+                                                                             
+... */
+
+
+/**                                                                             
+                    /**
+  * This class demonstrates how to define ...                                   
+                                              ... * This class demonstrates how 
+to define ...
+  *                                                                             
+       ==&gt;                                                           ... *
+  * Execute &lt;code&gt;generate.py test&lt;/code&gt; to ...                                
+                                       ... * Exectue &lt;code&gt;generate.py 
+test&lt;/code&gt; to ...
+
+
+JSDoc comments seem not to be affected.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26128</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-07-20 13:07:36 +0200</bug_when>
+            <thetext>From Gian Marco from the ML.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26134</commentid>
+            <who name="Marc Puts">marcputs</who>
+            <bug_when>2011-07-20 14:23:34 +0200</bug_when>
+            <thetext>I noticed this behaviour too and attached a skeleton app to demonstrate it. The config exports two jobs:
+
+- pretty (the default pretty job)
+- pretty-nodoc (uses pretty-print/comments/block/add:false to suppress docblocks)
+
+Both jobs behave weirdly on the code.
+
+
+
+Running &#39;pretty&#39; ONCE changes this:
+
+    orange : function(freshness)
+    {
+      //this method has no docblock before pretty-printing
+    },
+
+into this:
+
+    //this method has a docblock before pretty-printing
+    /**
+     * TODOC
+     *
+     * @param freshness {var} TODOC
+     * @return {void} 
+     */
+    orange : function(freshness) {},
+
+
+Running &#39;pretty-nodoc&#39; messes up the entire file; you have to see it for yourself.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26135</commentid>
+              <attachid>1032</attachid>
+            <who name="Marc Puts">marcputs</who>
+            <bug_when>2011-07-20 14:24:18 +0200</bug_when>
+            <thetext>Created attachment 1032
+Skeleton app to demonstrate</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26142</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-07-20 18:07:52 +0200</bug_when>
+            <thetext>The bug was actually not in the pretty-printer, but in the JS parser. When 
+switching from searching *slices* of the source string to *positioned* searches 
+of the entire source string (s. bug#5225), I forgot that the semantics of 
+mo.start() and mo.end() changed: mo.end() was no longer automatically identical 
+with the length of the matched string. With the change, the end position was 
+passed as the last element of the token, rather than its length. That resulted 
+in increasingly &quot;large&quot; tokens, which totally messed up the calculation of the 
+current token column in the parser (which uses the current start-of-line 
+position, which in turn uses the token lenth of CR in its update). 
+
+Fixed in trunk and branch,
+
+with r28233.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26143</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2011-07-20 18:13:25 +0200</bug_when>
+            <thetext>(In reply to comment #2)
+&gt;     //this method has a docblock before pretty-printing
+&gt;     /**
+&gt;      * TODOC
+&gt;      *
+&gt;      * @param freshness {var} TODOC
+&gt;      * @return {void} 
+&gt;      */
+&gt;     orange : function(freshness) {},
+
+Marc, thanks. This is actually &quot;another bug&quot; (TM ;). The issue is known, I 
+can&#39;t remember off the top of my head if there is actually a bug in the system. 
+The thing is that it&#39;s a corner case where you have  a block only consisting of 
+a comment, or a block ending in a comment. If you avoid these (which should be 
+easy), you won&#39;t get bitten :).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36804</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:20:13 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>1032</attachid>
+            <date>2011-07-20 14:24:00 +0200</date>
+            <delta_ts>2011-07-20 14:24:18 +0200</delta_ts>
+            <desc>Skeleton app to demonstrate</desc>
+            <filename>bug5424-skeleton.zip</filename>
+            <type>application/zip</type>
+            <size>8090</size>
+            <attacher>marcputs</attacher>
+            
+              <data encoding="base64">UEsDBAoAAAAAANSM7j4AAAAAAAAAAAAAAAAVABwAcHJldHR5LXByaW50LXByb2JsZW0vVVQJAAOA
+DR9OvMEmTnV4CwABBOgDAAAE6AMAAFBLAwQKAAAAAADUjO4+AAAAAAAAAAAAAAAAHwAcAHByZXR0
+eS1wcmludC1wcm9ibGVtLy5zZXR0aW5ncy9VVAkAA4ANH04+xSZOdXgLAAEE6AMAAAToAwAAUEsD
+BAoAAAAAAIOO7j4AAAAAAAAAAAAAAAAcABwAcHJldHR5LXByaW50LXByb2JsZW0vc291cmNlL1VU
+CQADpRAfTr7BJk51eAsAAQToAwAABOgDAABQSwMECgAAAAAAyIzuPgAAAAAAAAAAAAAAACMAHABw
+cmV0dHktcHJpbnQtcHJvYmxlbS9zb3VyY2Uvc2NyaXB0L1VUCQADZw0fTtfBJk51eAsAAQToAwAA
+BOgDAABQSwMECgAAAAAAyIzuPgAAAAAAAAAAAAAAACIAHABwcmV0dHktcHJpbnQtcHJvYmxlbS9z
+b3VyY2UvY2xhc3MvVVQJAANnDR9O18EmTnV4CwABBOgDAAAE6AMAAFBLAwQKAAAAAADIjO4+AAAA
+AAAAAAAAAAAAJQAcAHByZXR0eS1wcmludC1wcm9ibGVtL3NvdXJjZS9yZXNvdXJjZS9VVAkAA2cN
+H07XwSZOdXgLAAEE6AMAAAToAwAAUEsDBAoAAAAAAIVi7T4AAAAAAAAAAAAAAAAoABwAcHJldHR5
+LXByaW50LXByb2JsZW0vc291cmNlL3RyYW5zbGF0aW9uL1VUCQADWnEdTtfBJk51eAsAAQToAwAA
+BOgDAABQSwMECgAAAAAAj3D0PgAAAAAAAAAAAAAAACoAHABwcmV0dHktcHJpbnQtcHJvYmxlbS9z
+b3VyY2UvY2xhc3MvZXhhbXBsZS9VVAkAA07EJk5PxCZOdXgLAAEE6AMAAAToAwAAUEsDBAoAAAAA
+AIaO7j4AAAAAAAAAAAAAAAAtABwAcHJldHR5LXByaW50LXByb2JsZW0vc291cmNlL3Jlc291cmNl
+L2V4YW1wbGUvVVQJAAOsEB9OFsImTnV4CwABBOgDAAAE6AMAAFBLAwQUAAAACADIjO4+RH0bXswD
+AABbCAAAIAAcAHByZXR0eS1wcmludC1wcm9ibGVtL2dlbmVyYXRlLnB5VVQJAANnDR9OvsEmTnV4
+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
+DR9OdXgLAAEE6AMAAAToAwAApZFNawIxEIbP+itC7k3qrYddRcSCPSiIPZcwO2g0m4TMxG7BH99s
+P9CDSIu3DMnzzLyZatK1ThwxkQ2+liP1KAV6CI3121q+bp4fnuRkPKzAGaJoeDceDs4Fek4fAjtw
++RtgJNanctGiPpFtszNcxFqKg/VNLSmBFD1ZjiEnQP3l0tiZNjqU+or+T6Q+N7tD0o9/D97n/hdP
+kGy81RJKnh8kpK1CcDYSqnditaeGlTPZw678vXpZz99mq+VmuljO1zeMIXPM/CvtH1b6YrufUEsD
+BAoAAAAAANSM7j5U4G8eLAAAACwAAABKABwAcHJldHR5LXByaW50LXByb2JsZW0vLnNldHRpbmdz
+L29yZy5lY2xpcHNlLndzdC5qc2R0LnVpLnN1cGVyVHlwZS5jb250YWluZXJVVAkAA4ANH06ADR9O
+dXgLAAEE6AMAAAToAwAAb3JnLmVjbGlwc2Uud3N0LmpzZHQubGF1bmNoaW5nLkpSRV9DT05UQUlO
+RVJQSwMECgAAAAAA1IzuPrWOqe8GAAAABgAAAEUAHABwcmV0dHktcHJpbnQtcHJvYmxlbS8uc2V0
+dGluZ3Mvb3JnLmVjbGlwc2Uud3N0LmpzZHQudWkuc3VwZXJUeXBlLm5hbWVVVAkAA4ANH06ADR9O
+dXgLAAEE6AMAAAToAwAAR2xvYmFsUEsDBBQAAAAIAMiM7j7+fbxQywAAACABAAAmABwAcHJldHR5
+LXByaW50LXByb2JsZW0vc291cmNlL2luZGV4Lmh0bWxVVAkAA2cNH07XwSZOdXgLAAEE6AMAAATo
+AwAALZCxbsMwDET3fAXL3SaKLnUqeUkzt0OWjorDxg4kWZGY2P77WlYngse7hwPVy+fX4fTzfYRe
+nG13Kg+YnfVJYy8S9kTTNNXTWz3GK702TUNz9mA27a3xV43sMSfZXNodgHIsBnK24vtjeGo8jF7Y
+S3VaAiN0ZdMoPAtl1gd0vYmJRT/kt3pHoI0jg1huQ2SRpQpxWAkhjmfLTlG5ZVfq4hAEZGX/I2/m
+aYqKkGKnsSzEs3HBcn1L2Coq4tqbSnF1Hi/Lqm8jq9s//gBQSwMEFAAAAAgAzYuNPEDk9jBkAQAA
+UQIAAC0AHABwcmV0dHktcHJpbnQtcHJvYmxlbS9zb3VyY2Uvc2NyaXB0L2V4YW1wbGUuanNVVAkA
+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
+AAAAACgAGAAAAAAAAAAQAO1BFgIAAHByZXR0eS1wcmludC1wcm9ibGVtL3NvdXJjZS90cmFuc2xh
+dGlvbi9VVAUAA1pxHU51eAsAAQToAwAABOgDAABQSwECHgMKAAAAAACPcPQ+AAAAAAAAAAAAAAAA
+KgAYAAAAAAAAABAA7UF4AgAAcHJldHR5LXByaW50LXByb2JsZW0vc291cmNlL2NsYXNzL2V4YW1w
+bGUvVVQFAANOxCZOdXgLAAEE6AMAAAToAwAAUEsBAh4DCgAAAAAAho7uPgAAAAAAAAAAAAAAAC0A
+GAAAAAAAAAAQAO1B3AIAAHByZXR0eS1wcmludC1wcm9ibGVtL3NvdXJjZS9yZXNvdXJjZS9leGFt
+cGxlL1VUBQADrBAfTnV4CwABBOgDAAAE6AMAAFBLAQIeAxQAAAAIAMiM7j5EfRtezAMAAFsIAAAg
+ABgAAAAAAAEAAADtgUMDAABwcmV0dHktcHJpbnQtcHJvYmxlbS9nZW5lcmF0ZS5weVVUBQADZw0f
+TnV4CwABBOgDAAAE6AMAAFBLAQIeAxQAAAAIANSM7j6DbPTO0QAAAIsBAAAdABgAAAAAAAEAAACk
+gWkHAABwcmV0dHktcHJpbnQtcHJvYmxlbS8ucHJvamVjdFVUBQADgA0fTnV4CwABBOgDAAAE6AMA
+AFBLAQIeAxQAAAAIABqkgT5mMy5Z8wAAANkBAAAfABgAAAAAAAEAAACkgZEIAABwcmV0dHktcHJp
+bnQtcHJvYmxlbS9yZWFkbWUudHh0VVQFAANUGpZNdXgLAAEE6AMAAAToAwAAUEsBAh4DFAAAAAgA
+7JDuPtRSZLwIAgAA4wMAACAAGAAAAAAAAQAAAKSB3QkAAHByZXR0eS1wcmludC1wcm9ibGVtL2Nv
+bmZpZy5qc29uVVQFAAM7FB9OdXgLAAEE6AMAAAToAwAAUEsBAh4DFAAAAAgAyIzuPmIQjGNUAQAA
+tAIAACIAGAAAAAAAAQAAAKSBPwwAAHByZXR0eS1wcmludC1wcm9ibGVtL01hbmlmZXN0Lmpzb25V
+VAUAA2cNH051eAsAAQToAwAABOgDAABQSwECHgMUAAAACADUjO4+wWChfM8AAAARAgAAKQAYAAAA
+AAABAAAApIHvDQAAcHJldHR5LXByaW50LXByb2JsZW0vLnNldHRpbmdzLy5qc2R0c2NvcGVVVAUA
+A4ANH051eAsAAQToAwAABOgDAABQSwECHgMKAAAAAADUjO4+VOBvHiwAAAAsAAAASgAYAAAAAAAB
+AAAApIEhDwAAcHJldHR5LXByaW50LXByb2JsZW0vLnNldHRpbmdzL29yZy5lY2xpcHNlLndzdC5q
+c2R0LnVpLnN1cGVyVHlwZS5jb250YWluZXJVVAUAA4ANH051eAsAAQToAwAABOgDAABQSwECHgMK
+AAAAAADUjO4+tY6p7wYAAAAGAAAARQAYAAAAAAABAAAApIHRDwAAcHJldHR5LXByaW50LXByb2Js
+ZW0vLnNldHRpbmdzL29yZy5lY2xpcHNlLndzdC5qc2R0LnVpLnN1cGVyVHlwZS5uYW1lVVQFAAOA
+DR9OdXgLAAEE6AMAAAToAwAAUEsBAh4DFAAAAAgAyIzuPv59vFDLAAAAIAEAACYAGAAAAAAAAQAA
+AKSBVhAAAHByZXR0eS1wcmludC1wcm9ibGVtL3NvdXJjZS9pbmRleC5odG1sVVQFAANnDR9OdXgL
+AAEE6AMAAAToAwAAUEsBAh4DFAAAAAgAzYuNPEDk9jBkAQAAUQIAAC0AGAAAAAAAAQAAAKSBgREA
+AHByZXR0eS1wcmludC1wcm9ibGVtL3NvdXJjZS9zY3JpcHQvZXhhbXBsZS5qc1VUBQADEY7ES3V4
+CwABBOgDAAAE6AMAAFBLAQIeAxQAAAAIAJKNGTmRe/NkVQAAAGkAAAAyABgAAAAAAAEAAACkgUwT
+AABwcmV0dHktcHJpbnQtcHJvYmxlbS9zb3VyY2UvdHJhbnNsYXRpb24vcmVhZG1lLnR4dFVUBQAD
+ZNOySHV4CwABBOgDAAAE6AMAAFBLAQIeAxQAAAAIAEOR7j7XC+8u+wEAAMEEAAA4ABgAAAAAAAEA
+AACkgQ0UAABwcmV0dHktcHJpbnQtcHJvYmxlbS9zb3VyY2UvY2xhc3MvZXhhbXBsZS9BcHBsaWNh
+dGlvbi5qc1VUBQAD3hQfTnV4CwABBOgDAAAE6AMAAFBLBQYAAAAAFQAVAAoJAAB6FgAAAAA=
+</data>
+
+          </attachment>
+      
+
+    </bug>

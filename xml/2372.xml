@@ -1,0 +1,218 @@
+<bug>
+          <bug_id>2372</bug_id>
+          
+          <creation_ts>2009-05-12 11:36:00 +0200</creation_ts>
+          <short_desc>Switch to turn off generation of part-crossing packages</short_desc>
+          <delta_ts>2014-03-03 15:19:58 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>unspecified</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>1.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Carsten Lergenmüller">carsten.lergenmueller</reporter>
+          <assigned_to name="Thomas Herchenroeder">thron7</assigned_to>
+          <cc>christian.schuff</cc>
+    
+    <cc>fabian.jakobs</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>9922</commentid>
+            <who name="Carsten Lergenmüller">carsten.lergenmueller</who>
+            <bug_when>2009-05-12 11:36:00 +0200</bug_when>
+            <thetext>The part generator currently tries to identify code which is shared between parts. If the amount of code is larger than a certain threshold, a new package is generated for it. 
+
+This is often undesirable (because a part now needs two requests to be loaded), especially if the overlapping code is in parts of which the application nows that one will always be present before the second one can be loaded.
+
+We&#39;d like a switch to turn this behaviour off, i. e. one package per part only.
+
+Currently we lift the generation threshold to a high-enough-value (&quot;size&quot; : 60), but a boolean would be much cleaner.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10613</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-06-26 18:27:34 +0200</bug_when>
+            <thetext>Here are more thoughts about this, mainly from a discussion between Fabian and 
+Carsten:
+
+We could implement an additional config parameter for a part definition:
+
+ 
+  &quot;packages&quot; : {
+    
+    &quot;parts&quot; : {
+        
+        &quot;somePart&quot; : {
+ 
+             &quot;include&quot;   : [ &quot;class1&quot;, &quot;class2&quot;, &quot;class3.*&quot; ],
+
+             &quot;expected-load-order&quot;  : 1             // an int &gt; 0
+        }
+  ...
+
+The semantics for &quot;expected-load-order&quot; would be as follows:
+
+- the application developer indicates in which order parts will be loaded by 
+the application
+- the parameter is optional
+- if no part has this parameter, no load order will be assumed
+- if *some* parts have this parameter and others don&#39;t, the others will be 
+assumed to have &quot;1&quot; as expected-load-order (i.e. 1 is the default)
+- the generator can take advantage of this when creating packages (more below)
+
+This is how the generator would take advantage of the load order setting:
+- when organizing packages for a certain part the generator can collapse 
+multiple packages into a single one
+- it does this also for packages that are shared with other parts *iff* the 
+expected-load-order of the part is given and is lower than that of the sharing 
+part (this plays nicely if the other part only has the default value 1, which 
+cannot be undercut by explicit parameter settings)
+- the dependency of the sharing part is now not on the original shared package, 
+but on the bigger, collapsed one of the current part
+- sharing parts with the default load order of 1 will never allow shared 
+packages to be merged by the current part
+
+The benefit would be that in the case where the load order of parts is clear, 
+shared packages can be collapsed for the part that is loaded earlier, resulting 
+in less HTTP requests being necessary to retrieve all class code.
+
+Further thoughts:
+
+- the explicit load order defines a single subset of ordered parts of an 
+application
+
+- this might supersede the &quot;init&quot; setting of the &quot;packages&quot; config key ?!
+- this might infer with the &quot;collapse&quot; setting of the &quot;packages&quot; config key ?!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10807</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-08 14:59:54 +0200</bug_when>
+            <thetext>Load Groups
+
+We probably need the idea of &quot;load groups&quot; since we don&#39;t want to impose a 
+global loading order over all possible parts. For the sake of part collapsing 
+it would suffice if the load order was clear among a relevant sub-set of parts. 
+This sub-set would be the load group, among which load order matters.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10872</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-13 18:08:48 +0200</bug_when>
+            <thetext>A current work-around to obtain some of the desired behaviour is to raise 
+config size settings to a high value, e.g.:
+
+      &quot;packages&quot; :
+      {
+        &quot;sizes&quot; :
+        {
+          &quot;min-package&quot;          : 60 ,         // Setting min-size to 60 to 
+disable sub-packages
+          &quot;min-package-unshared&quot; : 10
+        },
+        ...
+
+The deliberate high value of 60 (KB) as a minimum package size triggers the 
+merging behaviour of the generator that tries to avoid packages considered too 
+small. Less used packages are merged into more often used packages, in parts 
+where they both show up.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>10998</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-07-22 13:58:59 +0200</bug_when>
+            <thetext>I have commited an initial version of a collapsePartsByOrder() method, which is 
+invoked during parts processing. It will go through the parts in the order of 
+their &#39;expected-load-order&#39; setting from the config. For all parts with the 
+same expected-load-order (a &quot;load group&quot;), it will try to collapse packages in 
+the following ways:
+- first, in each part collapse packages that are unique to this part in the 
+context of the load group
+- then, collapse packages that are common to all parts in the load group
+A common case where a load group consists of just one part is covered as a 
+corner case and should produce an optimally collapsed part.
+
+After each round of merging one package into another, the target package is 
+added to a global set of &quot;seen&quot; targets. In the next round those packages are 
+not used as targets anymore. This is to prevent the merging of all packages 
+into one last &quot;monster&quot; package which includes all classes of all parts. 
+
+The process should provide satisfactory results in most cases. Ideally, for 
+each part in the load order the loader at run time will have to load a single 
+additional package (because the other prerequisite packages will have been 
+loaded already).
+
+A property of the implementation is that it will never break parts, meaning 
+that after the procedure every part will still contain its necessary classes, 
+and maybe some. Among other things this means that the load order from the 
+config can be abandoned during runtime, and everything should still work. You 
+might load some unnecessary classes, but each part will continue to function. I 
+think, that&#39;s a good one.
+
+With r19657.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>11209</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2009-08-06 11:06:59 +0200</bug_when>
+            <thetext>Use of the &#39;expected-load-order&#39; and the collapsePartsByOrder() method has been 
+established in the MailClient, and initial results look good. Use of the old 
+&#39;collapse&#39; config key and the corresponding _collapseParts() method have been 
+removed or disabled, respectively. Collapsing by size remains untouched, as it 
+is an independent means of collapsing packages of a part.
+
+The next step is to monitor package generation in the MailClient and discuss 
+these results with regards to deployment, particularly with Carsten.
+
+I want to re-org the part-related code in the generator, to make heavier use of 
+dedicated classes like Part, Package and Script, to represent the various 
+elements when generating code for output, so there is a better code structure 
+and the intermediate data better reflects the mental model.
+
+A (rather independent) open issue is the auto-calculation of the &#39;boot&#39; part. 
+But this can be addressed separately.
+
+With r19773.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17721</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2010-04-12 17:14:09 +0200</bug_when>
+            <thetext>The implementation made it into the 1.0 release.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>36703</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:19:58 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,195 @@
+<bug>
+          <bug_id>4289</bug_id>
+          
+          <creation_ts>2010-11-05 14:28:00 +0100</creation_ts>
+          <short_desc>Doubtful implementation of qx.ui.table.cellrenderer.AbstractImage#_getImageInfos</short_desc>
+          <delta_ts>2011-01-11 07:52:31 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.2.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Tristan Koch">tristan.koch</reporter>
+          <assigned_to name="Tristan Koch">tristan.koch</assigned_to>
+          <cc>carsten.lergenmueller</cc>
+    
+    <cc>derrell.lipman</cc>
+    
+    <cc>rspierenburg</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>21117</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2010-11-05 14:28:53 +0100</bug_when>
+            <thetext>#_getImageInfos from qx.ui.table.cellrenderer.AbstractImage#_getImageInfos queries #_identifyImage for a map. According to the API docs, this map must contain the keys &quot;imageWidth&quot; and &quot;imageHeight&quot;. 
+
+var imageData = this._identifyImage(cellInfo);
+
+However, those keys are never used in the calling method. Instead, height and width is set based on the dimensions of the cellInfo or size hints retrieved from resource manager or image loader.
+
+There are two especially questionable code fragments (some comments added, listed in order):
+
+// If subclass refuses to give map, construct it
+if (imageData == null || typeof cellInfo == &quot;string&quot;)
+{
+  imageData =
+  {
+    url : imageData, // ?!
+    tooltip : null
+  };
+}
+
+Provided cellInfo is a string, the property url would be a reference to imageData. This does not make much sense to me.
+
+if (cellInfo.width &amp;&amp; cellInfo.height) {
+  // ?! .imageWidth oder .width
+  sizes = {width : cellInfo.imageWidth, height : cellInfo.imageHeight};
+} else {
+  sizes = this.__getImageSize(imageData.url);
+}
+imageData.width = sizes.width;
+imageData.height = sizes.height;
+return imageData;
+
+Its curious that imageData defined above (with much effort) is not read at all.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21119</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-11-05 14:43:03 +0100</bug_when>
+            <thetext>(In reply to comment #0)
+&gt; 
+&gt; // If subclass refuses to give map, construct it
+&gt; if (imageData == null || typeof cellInfo == &quot;string&quot;)
+
+That line looks like it is supposed to be:
+
+if (imageData == null || typeof imageData == &quot;string&quot;)
+
+cellInfo is never a string. What this code appears to be doing is ensuring that if imageData is provided as a string, it is converted to be a map which contains both that string and the tooltip.
+
+&gt; {
+&gt;   imageData =
+&gt;   {
+&gt;     url : imageData, // ?!
+&gt;     tooltip : null
+&gt;   };
+&gt; }
+&gt; 
+&gt; Provided cellInfo is a string, the property url would be a reference to
+&gt; imageData. This does not make much sense to me.
+
+Right. cellInfo is never a string.
+
+&gt; 
+&gt; if (cellInfo.width &amp;&amp; cellInfo.height) {
+&gt;   // ?! .imageWidth oder .width
+&gt;   sizes = {width : cellInfo.imageWidth, height : cellInfo.imageHeight};
+&gt; } else {
+&gt;   sizes = this.__getImageSize(imageData.url);
+&gt; }
+&gt; imageData.width = sizes.width;
+&gt; imageData.height = sizes.height;
+&gt; return imageData;
+&gt; 
+&gt; Its curious that imageData defined above (with much effort) is not read at all.
+
+We had a recent discussion / enhancement request regarding treevirtual icons, which required that imageData be set IIRC. It&#39;s apparently used someplace...
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21150</commentid>
+            <who name="Carsten Lergenmüller">carsten.lergenmueller</who>
+            <bug_when>2010-11-08 10:33:48 +0100</bug_when>
+            <thetext>(In reply to comment #0)
+ 
+&gt; // If subclass refuses to give map, construct it
+&gt; if (imageData == null || typeof cellInfo == &quot;string&quot;)
+&gt; {
+&gt;   imageData =
+&gt;   {
+&gt;     url : imageData, // ?!
+&gt;     tooltip : null
+&gt;   };
+&gt; }
+&gt; 
+&gt; Provided cellInfo is a string, the property url would be a reference to
+&gt; imageData. This does not make much sense to me.
+
+This seems to be buggy fallback code to me. The bug was not detected because nobody uses the fallback, all descendents I found feed in a map, not a string.
+
+&gt; if (cellInfo.width &amp;&amp; cellInfo.height) {
+&gt;   // ?! .imageWidth oder .width
+&gt;   sizes = {width : cellInfo.imageWidth, height : cellInfo.imageHeight};
+&gt; } else {
+&gt;   sizes = this.__getImageSize(imageData.url);
+&gt; }
+&gt; imageData.width = sizes.width;
+&gt; imageData.height = sizes.height;
+&gt; return imageData;
+&gt; 
+&gt; Its curious that imageData defined above (with much effort) is not read at all.
+
+Indeed, I found descendents giving in hard-coded image sizes, so they seem to be unaware of them being ignored. 
+
+I don&#39;t really have an opinion how to resolve this... Querying the ImageLoader could be a problem in cases when the image has not been loaded yet. So if a descendent knows for sure the dimensions of the image and gives them in, I guess this should not be ignored.
+
+How about this? :
+
+      var sizes = null;
+      //Calc img dimensions if not given in by descendent
+      if ((!imageData.width) || (!imageData.height)){ 
+        if (cellInfo.width &amp;&amp; cellInfo.height) {
+          sizes = {width : cellInfo.imageWidth, height : cellInfo.imageHeight};
+        } else {
+          sizes = this.__getImageSize(imageData.url);
+        }
+        imageData.width = sizes.width;
+        imageData.height = sizes.height;
+      }
+
+Should be slightly faster and safer in case the base class knows the image dimensions.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>21184</commentid>
+            <who name="Tristan Koch">tristan.koch</who>
+            <bug_when>2010-11-09 13:28:21 +0100</bug_when>
+            <thetext>- Changed fall-back as suggested by Derell. This makes much more sense. Thanks!
+- Ignored cellInfo.[imageWidth|imageHeight]. Turns out, this property is never set anyway.
+- Made sure image hints returned from _identifyImage are evaluated.
+- Ported &quot;alias&quot; properties image[Width|Height] &lt;-&gt; [width|height] to ensure compatibility.
+
+Fixed with r23714 on trunk.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

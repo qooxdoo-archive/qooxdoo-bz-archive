@@ -1,0 +1,189 @@
+<bug>
+          <bug_id>508</bug_id>
+          
+          <creation_ts>2007-06-26 13:20:00 +0200</creation_ts>
+          <short_desc>Custom color on GroupBox is not applied to legend object</short_desc>
+          <delta_ts>2014-03-03 15:24:13 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop</component>
+          <version>0.7</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>0.8-alpha2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Ralf Sternberg">rsternberg</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>1629</commentid>
+            <who name="Ralf Sternberg">rsternberg</who>
+            <bug_when>2007-06-26 13:20:31 +0200</bug_when>
+            <thetext>When a user-defined background color is set on a qx.ui.groupbox.Groupbox, the background color of the legend object does not adapt to this color.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1630</commentid>
+              <attachid>196</attachid>
+            <who name="Ralf Sternberg">rsternberg</who>
+            <bug_when>2007-06-26 13:21:25 +0200</bug_when>
+            <thetext>Created attachment 196
+Screenshot that shows the problem</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1631</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-06-26 13:29:28 +0200</bug_when>
+            <thetext>I&#39;am not sure if this should really be handled inside the groupbox implementation as the widget itself does know nothing about the appearance which is applied. For example the included Ext-Theme applies a different background color to the legend object then to the GroupBox itself. So this would not work in this case.
+
+You can apply the legend color yourself doing:
+
+groupBox.getLegendObject().setBackgroundColor(...);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1636</commentid>
+            <who name="Ralf Sternberg">rsternberg</who>
+            <bug_when>2007-06-26 13:52:09 +0200</bug_when>
+            <thetext>The point is that I need a group box that renders a user-defined background color as depicted in the screenshot I attached. I am convinced that this is a legal demand, as other widget toolkits behave exactly the same. Can you provide a theme setting to achieve this result? The color of the legend can not be set to transparent, since this would remove the gap between the legend text and the frame line.
+
+Applying the color in a change listener does also not work for me, since I cannot access the themed value programmatically (can I?) and thus could not set the default color for the legend. </thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1640</commentid>
+            <who name="Ralf Sternberg">rsternberg</who>
+            <bug_when>2007-06-26 15:14:34 +0200</bug_when>
+            <thetext>Sorry, I was wrong with my last statement. Applying the custom color in a listener changeBackgroundColor would work. I opened bug 509 for the missing event. However, I&#39;m not sure whether this is the ideal solution.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1649</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-06-26 17:13:41 +0200</bug_when>
+            <thetext>What other widget kits do is maybe wrong too. You can only sync the background color between the content and the legend if this should be done this way. And this depends on the thoughts of the author of the used appearance theme.
+
+I would say that the best solution is to add a new property legendBackgroundColor to the GroupBox and use this in the included appearance themes instead of a definition at legend-level (inside the appearance theme).
+
+Using an event is bad in my opinion. We should definitely come up with a better solution.
+
+Any better ideas?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1661</commentid>
+            <who name="Ralf Sternberg">rsternberg</who>
+            <bug_when>2007-06-26 18:12:29 +0200</bug_when>
+            <thetext>Ok, I see your point. The coupling between group box background color and legend background color should be defined by the theme author. I agree, but there is no way to reference the current color of another widget in the appearance theme.  Also an additional property &quot;legendBackgroundColor&quot; would not allow to keep both colors in sync when a custom bg color is set. For example, it is not possible to express: &quot;let the legend object always show the same background color as the group box&quot; in the theme. If you demand that the theme author should be able to design all aspects of the appearance, then this is a shortcoming of the themeing infrastructure, isn&#39;t it?
+
+I also tried to set backgroundColor to &quot;inherit&quot;, but this does not work in the theme. May be I got something wrong. However, this would not help in cases where the sub-widget in question is not included in the referenced widget. I guess that those cases might also exist.
+
+Yes, I hope we&#39;ll find a solution that everybody is happy with. The group is probably not the only case for this issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>1684</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2007-06-28 11:23:39 +0200</bug_when>
+            <thetext>I don&#39;t know if we really need to support dependencies at theme level for widgets. To make the legend background a dependency of the groupbox background may be useful for some users and not for others.
+
+I can perfectly life with the current solution which requires to setup both elements through the theme. However, as you mentioned, when someone controls the groupbox in the application code this may be different. I don&#39;t think that there will be solution which would make all people happy because each implicit automation would also mean to reduce the flexibility of the whole thing.
+
+And yes, this seems to be the case for other szearios too e.g. the popup background color of a combobox could be the same than the bg color of the combobox itself. But this also may to be different. To introduce keepFooInSync and keepBarInSync will dramatically increase the API size and don&#39;t improve the usability in my opinion.
+
+From many HTML coders I know that they hate the behavior to always keep things in sync - with is true for the typical HTML select field, too.
+
+At all this seems to be a topic for 0.8 where we will discuss such API changes / improvements at all.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>3780</commentid>
+            <who name="Sebastian Werner">info</who>
+            <bug_when>2008-07-11 14:18:51 +0200</bug_when>
+            <thetext>I think with sub control support this may be possible better. I will close this 
+bug for now as I would think the most re-coloring of GroupBoxes happen through 
+the appearance theme.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38305</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:13 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+          <attachment isobsolete="0" ispatch="0" isprivate="0" isurl="0">
+            <attachid>196</attachid>
+            <date>2007-06-26 13:21:00 +0200</date>
+            <delta_ts>2007-06-26 13:21:25 +0200</delta_ts>
+            <desc>Screenshot that shows the problem</desc>
+            <filename>group-bg.png</filename>
+            <type>image/png</type>
+            <size>2392</size>
+            <attacher>rsternberg</attacher>
+            
+              <data encoding="base64">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
+</data>
+
+          </attachment>
+      
+
+    </bug>

@@ -1,0 +1,150 @@
+<bug>
+          <bug_id>4078</bug_id>
+          
+          <creation_ts>2010-09-14 15:09:00 +0200</creation_ts>
+          <short_desc>There is no event handler for the event &#39;interval&#39; on target &#39;qx.event.Timer[0]&#39;!</short_desc>
+          <delta_ts>2010-10-13 07:54:12 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core</component>
+          <version>1.2</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>INVALID</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>1.2.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>20162</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2010-09-14 15:09:14 +0200</bug_when>
+            <thetext>Our application produces the following warning which makes no sense:
+
+There is no event handler for the event &#39;interval&#39; on target &#39;qx.event.Timer[0]&#39;!
+
+This warning does not make sense because the class qx.event.Timer has got an event called &#39;interval&#39;.
+
+We have reproduced this issue by creating a new stand-alone application with the following class:
+----------------------------------------------------
+
+/*
+#require(qx.event.Timer)
+*/
+
+qx.Class.define(&quot;timertest.GlobalTimerClass&quot;,
+{
+  extend : qx.core.Object,
+ 
+  statics: {
+    
+    __init : function()
+    {
+      var timer = new qx.event.Timer(2000);
+      timer.addListener(&quot;interval&quot;,
+        function() {
+          qx.log.Logger.debug(&quot;timer was called&quot;);
+        },
+        this);
+      timer.start();
+    }
+  },
+
+  defer : function(statics) {
+    timertest.GlobalTimerClass.__init();
+  }
+
+
+});
+----------------------------------------------------
+
+This application then produces the following output:
+000114 There is no event handler for the event &#39;interval&#39; on target &#39;qx.event.Timer[0]&#39;!
+000634 qx.core.Init: Load runtime: 634ms
+000650 qx.core.Init: Main runtime: 14ms
+000672 qx.core.Init: Finalize runtime: 21ms
+002115 timer was called
+004117 timer was called
+006119 timer was called
+008120 timer was called
+
+Where does this timer-warning show up although the timer works fine?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20171</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-09-15 09:37:24 +0200</bug_when>
+            <thetext>It is really interesting to see this, especially that the timer itself seems to be the first instanciated object at all. Maybe thats the problem. How soon do you need a fix?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20174</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2010-09-15 09:52:09 +0200</bug_when>
+            <thetext>We do not have a fix deadline for a bugfix.
+The consequence of this bug is that the console always shows the warning &quot;There is no event handler for the event &#39;interval&#39; on target &#39;qx.event.Timer[0]&#39;!&quot; which has to be ignored.
+We can ignore this warning for a while.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20178</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-09-15 10:21:29 +0200</bug_when>
+            <thetext>Thanks for the details.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20292</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-09-22 15:08:56 +0200</bug_when>
+            <thetext>After some investigation I know the reason why this warning appears. As expected, this has something to do with dependencies. You sure require that time class in your application class. So before even the application is initialized, your defer block of that timer will be executed. This creates the qx.event.Timer object which explains why it has the hashCode 0 because its the first object created. With the timer start, you start up the events to be thrown. But by the time the first event wil be fired, the event handler are not loaded, well the object event handler isn&#39;t loaded. So the warning seems to be right, there is no fitting handler for that event in that moment. The next event will be two seconds later which gives the browser enough time to load all the handler needed.
+
+To get rid of that warning, you have some choices:
+
+include the object event handler in the require:
+#require(qx.event.handler.Object)
+
+That solves the issue and removes the warning because the handler will there for sure if the event class is created. 
+
+But a much better solution would be to initialize the timer not in a defer block! Defer blocks should be used with caution and as in this case, i&#39;m quite sure you don&#39;t need the time before you have anything else ready like your application.
+
+Its up to you how you fix it. I guess that not a real bug in qooxdoo --&gt; resolved.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20293</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2010-09-22 15:10:54 +0200</bug_when>
+            <thetext>The timer is not started in a different way. This has solved this issue.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>20614</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-10-13 07:54:12 +0200</bug_when>
+            <thetext>mass retargeting to 1.2.2 due to intermediate 1.2.1 release</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

@@ -1,0 +1,146 @@
+<bug>
+          <bug_id>3336</bug_id>
+          
+          <creation_ts>2010-01-15 22:22:00 +0100</creation_ts>
+          <short_desc>addListener in qx.ui.table.Table doesn&#39;t return an Id</short_desc>
+          <delta_ts>2010-03-29 15:29:41 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>1.0.2</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Fritz Zaucker">fritz.zaucker</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>16250</commentid>
+            <who name="Fritz Zaucker">fritz.zaucker</who>
+            <bug_when>2010-01-15 22:22:18 +0100</bug_when>
+            <thetext>The following playground code returns an undefined listener id which makes
+removing the listener impossible:
+
+http://demo.qooxdoo.org/current/playground/#%7B%22code%22%3A%20%22%250Avar%2
+520tm%2520%253D%2520new%2520qx.ui.table.model.Simple%28%29%253B%250Avar%2520
+table%2520%253D%2520new%2520qx.ui.table.Table%28tm%29%253B%250Aid%2520%253D%
+2520table.addListener%28%27cellDblclick%27%252C%2520function%2520%28%29%2520
+%257B%257D%252C%2520this%29%253B%250Aalert%28%27id%253D%27%252Bid%29%253B%25
+0A%22%7D
+
+ Looking at the source this might be because addListener() is overridden
+and it only returns a value for the else {} clause in its definition.
+
+It also seems to me that (perhaps as a result of the above problem)
+addListenerOnce() doesn&#39;t work properly (e.g. the listener isn&#39;t removed
+after the first execution) for qx.ui.table.Table().
+
+This is actually even noticed by Emacs&#39; JavaScript syntax highlighter,
+saying &quot;function does not always return a value&quot;.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16252</commentid>
+            <who name="Fritz Zaucker">fritz.zaucker</who>
+            <bug_when>2010-01-15 22:25:32 +0100</bug_when>
+            <thetext>removeListener also doesn&#39;t return an Id, although it should according to the API docu (although its not really clear what one would want to do with that Id ...).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16259</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-18 08:36:38 +0100</bug_when>
+            <thetext>to Fabian</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>16469</commentid>
+            <who name="Andreas Ecker">qooxdoo</who>
+            <bug_when>2010-01-27 16:30:31 +0100</bug_when>
+            <thetext>moved to target 1.0.2</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17288</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-17 13:14:51 +0100</bug_when>
+            <thetext>to Martin</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17546</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-26 09:30:24 +0100</bug_when>
+            <thetext>Accept</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17547</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-26 10:35:52 +0100</bug_when>
+            <thetext>The table is somehow special in that case. For some event types, it redirects the adding to its scroller(s) which can be more than one. Thats why the ids for the cellClick event for example need to be concatenated from the events of every scroller (meta column). Did that with r21818.
+
+@Fritz could you please verify the bug?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17549</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-26 10:39:16 +0100</bug_when>
+            <thetext>Committed the fix also for the 1.0.x branch with r21819.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17579</commentid>
+            <who name="Fritz Zaucker">fritz.zaucker</who>
+            <bug_when>2010-03-29 14:57:24 +0200</bug_when>
+            <thetext>(In reply to comment #6)
+&gt; The table is somehow special in that case. For some event types, it redirects
+&gt; the adding to its scroller(s) which can be more than one. Thats why the ids for
+&gt; the cellClick event for example need to be concatenated from the events of
+&gt; every scroller (meta column). Did that with r21818.
+&gt; 
+&gt; @Fritz could you please verify the bug?
+
+Just tested with r21830 ... table.addListener(&quot;cellClick&quot;, function, this) is now returning 
+
+   cellClick&quot;cellClick|bubble|598
+
+I don&#39;t know if this is what the API means with &quot;Returns: An opaque id ...&quot;. If it does, then it&#39;s working.
+
+BTW, there is still no return value with http://demo.qooxdoo.org/devel/playground/, I guess that is not yet at the right revision.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17580</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-29 15:08:37 +0200</bug_when>
+            <thetext>cellClick&quot;cellClick|bubble|598 is exactly something I would expect. :)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>17584</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2010-03-29 15:29:41 +0200</bug_when>
+            <thetext>CLOSED</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

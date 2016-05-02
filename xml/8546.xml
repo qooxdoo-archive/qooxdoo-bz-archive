@@ -1,0 +1,175 @@
+<bug>
+          <bug_id>8546</bug_id>
+          
+          <creation_ts>2014-08-19 18:52:00 +0200</creation_ts>
+          <short_desc>Applying new table model does not refreshes paneModel</short_desc>
+          <delta_ts>2014-12-16 11:44:18 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.table</component>
+          <version>3.5.1</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>WORKSFORME</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>normal</bug_severity>
+          <target_milestone>4.1</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Cobets Sergey">cobets</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>derrell.lipman</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>41001</commentid>
+            <who name="Cobets Sergey">cobets</who>
+            <bug_when>2014-08-19 18:52:31 +0200</bug_when>
+            <thetext>Hello.
+
+Please take look at method _applyTableModel in qx.ui.table.Table
+
+Here is a call of 
+this.getTableColumnModel().init(value.getColumnCount(), this);
+
+But method getTableColumnModel itself updates paneModel only once.
+
+As a result, when I change table model and new model has fewer columns that old one, I have an error
+
+045125 Assertion error! Invalid argument &#39;col&#39;.: Expected value to be an integer but found &#39;undefined&#39;!
+Stack trace: 
+qx.core.AssertionError.constructor:44:38,
+qx.Class.constructor:1648:37,
+qx.core.Assert.__fail:71:19,
+qx.core.Assert.assertInteger:600:84,
+qx.type.BaseString.assertInteger:355:22,
+qx.ui.table.columnmodel.Basic.getColumnWidth:285:14,
+qx.ui.table.pane.Model.getTotalWidth:286:47,
+qx.ui.table.pane.Pane._updateAllRows:700:32,
+qx.ui.table.pane.Pane.updateContent:394:14,
+qx.ui.table.pane.Pane.prototype.onTableModelDataChanged(),
+qx.ui.table.pane.Scroller.prototype.onTableModelDataChanged(),
+qx.ui.table.Table.prototype._updateTableData(),
+qx.ui.table.Table.prototype._applyTableModel()
+
+My temporary solution is to add 
+
+	// Reset the table column model in each table pane model
+	var scrollerArr = this._getPaneScrollerArr();
+
+	for (var i=0; i&lt;scrollerArr.length; i++)
+	{
+	  var paneScroller = scrollerArr[i];
+	  var paneModel = paneScroller.getTablePaneModel();
+	  paneModel.setTableColumnModel(this.getTableColumnModel());
+	}
+
+аfter
+       this.getTableColumnModel().init(value.getColumnCount(), this);
+
+in _applyTableModel</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41004</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-08-20 07:47:07 +0200</bug_when>
+            <thetext>Thanks for the report. Do you have a playground sample for us to reproduce? Or even better a pull request including a unit test?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41006</commentid>
+            <who name="Cobets Sergey">cobets</who>
+            <bug_when>2014-08-20 08:35:29 +0200</bug_when>
+            <thetext>Playground sample at http://tinyurl.com/mrpclkb
+I am new to open source development, so I can&#39;t supply pull request including a unit test now, sorry.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41007</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-08-20 09:15:04 +0200</bug_when>
+            <thetext>No problem, the playground sample also helps a lot!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41017</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2014-08-20 16:56:20 +0200</bug_when>
+            <thetext>This is a well-known issue. It is highly non-trivial to change the number of columns in a table, as that change would affect many, many objects that were previously created. See this note in qx.ui.table.model.Abstract, function setColumns():
+
+     * Note: You can not change the _number_ of columns this way.  The number
+     *       of columns is highly intertwined in the entire table operation,
+     *       and dynamically changing it would require as much work as just
+     *       recreating your table.  If you must change the number of columns
+     *       in a table then you should remove the table and add a new one.
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41018</commentid>
+            <who name="Cobets Sergey">cobets</who>
+            <bug_when>2014-08-20 17:41:06 +0200</bug_when>
+            <thetext>Derrell,
+
+Here no changes in existing table model in my sample http://tinyurl.com/mrpclkb
+
+What I am trying to do is to create new one, newTableModel, and &quot;bind&quot; it to existing qx.ui.table.Table</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41019</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2014-08-20 18:00:04 +0200</bug_when>
+            <thetext>(In reply to comment #5)
+&gt; Derrell,
+&gt; 
+&gt; Here no changes in existing table model in my sample http://tinyurl.com/mrpclkb
+&gt; 
+&gt; What I am trying to do is to create new one, newTableModel, and &quot;bind&quot; it to
+&gt; existing qx.ui.table.Table
+
+Yup, I understand what you&#39;re trying to do. You just can&#39;t do it. The inner workings of qx.ui.table.Table don&#39;t allow for replacing the table model, particularly with a different number of columns. A table has a single table model which is provided at table-creation time. If you want to change the table model, as your sample is doing, then you should instead remove the old table from the container, create your new model, create a new table with the new model, and add the new table to the container.
+
+Table has some wonderful qualities, but it&#39;s not perfect. It&#39;s a very, very old widget, and we&#39;ve learned a lot since then. Unfortunately, some of Table&#39;s capabilities don&#39;t yet exist in the newer widgets, so Table is still useful for many purposes. You just have to use it according to its capabilities and limitations.
+
+Here&#39;s a sample that shows doing what you were trying, the way it must be done with Table. 
+
+http://tinyurl.com/o3zrp8y
+
+Derrell</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41023</commentid>
+            <who name="Cobets Sergey">cobets</who>
+            <bug_when>2014-08-20 18:31:34 +0200</bug_when>
+            <thetext>Derrell,
+
+Thank you for your clarification. 
+
+I knew about qx.ui.table.model.Abstract restrictions of changing number of columns, but, unfortunately, nothing in _applyTableModel tells me that I cannot change number of columns this way.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>41029</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-08-21 07:59:41 +0200</bug_when>
+            <thetext>Thanks Derrell. :)</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

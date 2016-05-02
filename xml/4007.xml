@@ -1,0 +1,108 @@
+<bug>
+          <bug_id>4007</bug_id>
+          
+          <creation_ts>2010-08-18 14:26:00 +0200</creation_ts>
+          <short_desc>The method qx.dev.Debug.debugObjectToString also prints the indexOf-function of arrays</short_desc>
+          <delta_ts>2012-05-16 09:37:20 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>core.dev.logging</component>
+          <version>1.2</version>
+          <rep_platform>IE 8</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>RESOLVED</bug_status>
+          <resolution>WONTFIX</resolution>
+          
+          
+          
+          
+          
+          <priority>P4</priority>
+          <bug_severity>minor</bug_severity>
+          <target_milestone>unspecified</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Uwe Stahl">uwe.stahl</reporter>
+          <assigned_to name="Unassigned">none</assigned_to>
+          <cc>derrell.lipman</cc>
+          <qa_contact name="qooxdoo bugs mailing list">qooxdoo-bugs</qa_contact>
+          <cf_browser>Internet Explorer</cf_browser>
+          <cf_browser_version>8</cf_browser_version>
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>19894</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2010-08-18 14:26:02 +0200</bug_when>
+            <thetext>The debug output of qx.dev.Debug.debugObjectToString is very hard to read in the internet explorer.
+
+Lets assume we have defined the following array:
+  var myArray = [&quot;el1&quot;, &quot;el2&quot;];
+
+Then the following debug call
+  qx.dev.Debug.debugObject(myArray);        
+
+generated the following output in Firefox:
+   000987 qx.dev.Debug: Array, length=2: 
+   ------------------------------------------------------------ 
+   0: el1 
+   1: el2 
+   ============================================================ 
+
+and the following output in the internet explorer:
+   000547 qx.dev.Debug: Array, length=2: 
+   ------------------------------------------------------------ 
+   0: el1 
+   1: el2 
+   indexOf: function(searchElement,fromIndex){if(fromIndex==null){fromIndex=0 }else{if(fromIndex&lt;0){fromIndex=Math.max(0,this.length+fromIndex)}}for(var i=fromIndex;i&lt;this.length; i++){if(this[i]===searchElement){return i}}return -1} lastIndexOf: function(searchElement,fromIndex){if(fromIndex==null){fromIndex=this.length-1 }else{if(fromIndex&lt;0){fromIndex=Math.max(0,this.length+fromIndex)}}for(var i=fromIndex;i&gt;=0;i--){if(this[i]===searchElement){return i }}return -1} forEach: function(callback,obj){var l=this.length; for(var i=0;i&lt;l;i++){var value=this[i];if(value!==undefined){callback.call(obj||window,value,i,this)}}} filter: function(callback,obj){var res=[]; var l=this.length;for(var i=0;i&lt;l;i++){var value=this[i];if(value!==undefined){if(callback.call(obj||window,value,i,this)){res.push(this[i]) }}}return res} map: function(callback,obj){var res=[]; var l=this.length;for(var i=0;i&lt;l;i++){var value=this[i];if(value!==undefined){res[i]=callback.call(obj||window,value,i,this) }}return res} some: function(callback,obj){var l=this.length; for(var i=0;i&lt;l;i++){var value=this[i];if(value!==undefined){if(callback.call(obj||window,value,i,this)){return true }}}return false} every: function(callback,obj){var l=this.length; for(var i=0;i&lt;l;i++){var value=this[i];if(value!==undefined){if(!callback.call(obj||window,value,i,this)){return false }}}return true} 
+   ============================================================ 
+
+This output in the IE makes the debug output very hard to read.
+
+The reason for this browser incompatibility is the following code:
+qx.Class.define(&quot;qx.dev.Debug&quot;,
+{
+    debugObjectToString : function(obj, initialMessage, maxLevel, bHtml)
+    {
+        // We have an object  or array.  For each child...
+        for (var prop in obj)
+        {
+
+The iteration &quot;for (var prop in obj)&quot; will also iterate over the indexOf-function of the internet explorer.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19897</commentid>
+            <who name="Uwe Stahl">uwe.stahl</who>
+            <bug_when>2010-08-18 14:42:58 +0200</bug_when>
+            <thetext>When we try to debug a nested object, the output in the IE is even worse:
+For each nested element, the IE repeats the output of the complete indexOf function.
+This makes the debug output of nested objects absolutely unreadable.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>19898</commentid>
+            <who name="Derrell Lipman">derrell.lipman</who>
+            <bug_when>2010-08-18 15:10:01 +0200</bug_when>
+            <thetext>Actually, this debug function is doing exactly what it&#39;s supposed to. It&#39;s dumping all attributes of each object.
+
+The problem is that qooxdoo is broken. There is a long-standing bug someplace to fix it, although I haven&#39;t seen it get moved to later and later versions of qooxdoo so maybe it&#39;s been lost. The problem is that contrary to qooxdoo&#39;s claim that it doesn&#39;t modify the prototype of native types, it *does* modify the prototype of the Array type on IE. This was supposed to go away with the advent of the Data.Array types, but still hasn&#39;t.
+
+My suggestion is that you search for, or re-create, the bug that eliminates the Array prototype modification, and push for it to be fixed.
+
+&quot;Correcting&quot; this in qx.dev.Debug is the wrong place to do it. Those methods *should* print out everything in the object, so I&#39;m going to mark this as WONTFIX.
+
+Derrell</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

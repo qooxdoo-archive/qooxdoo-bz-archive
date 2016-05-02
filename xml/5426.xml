@@ -1,0 +1,199 @@
+<bug>
+          <bug_id>5426</bug_id>
+          
+          <creation_ts>2011-07-20 17:19:00 +0200</creation_ts>
+          <short_desc>Add support for JSON schema</short_desc>
+          <delta_ts>2014-03-03 15:24:24 +0100</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>tool.generator</component>
+          <version>1.5</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P3</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Alexander Steitz">alexander.steitz</reporter>
+          <assigned_to name="Richard Sternagel">richard.sternagel</assigned_to>
+          <cc>richard.sternagel</cc>
+    
+    <cc>tinobutz</cc>
+          <qa_contact name="Richard Sternagel">richard.sternagel</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>26140</commentid>
+            <who name="Alexander Steitz">alexander.steitz</who>
+            <bug_when>2011-07-20 17:19:33 +0200</bug_when>
+            <thetext>With JSON schema things like validating the &#39;config.json&#39; or response of a HTTP request can be done.
+
+Interesting links:
+
+Overview: http://json-schema.org/
+Available implementations: http://json-schema.org/implementations.html</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>26611</commentid>
+            <who name="Tino Butz">tinobutz</who>
+            <bug_when>2011-08-29 12:42:47 +0200</bug_when>
+            <thetext>+1
+
+I think this would be a great enhancement for:
+
+* The REST layer (in debug mode, the returned JSON could be validated)
+* For the server side / node.js: The data of the request could be validated</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32240</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2013-02-13 18:34:49 +0100</bug_when>
+            <thetext>The utilization of JSON Schema can be categorized like this:
+
+  a) within toolchain (from python)
+      * check JSON files (e.g. config.json, Manfest.json) upfront on first read
+      * generate uniform precise/error messages concerning misconfiguration
+      * ?
+
+  b) within framework (from JS)
+      * optional when receiving/sending JSON (see comment #1)
+        * JSON-RPC
+        * REST-Layer
+        * ?
+
+  c) Schemas for documentation/reference(s)/implementation (on top) purpose
+      * manual references section (e.g. config.json, Manifest.json)
+      * spec for API JSON files (or other data storage files used by us)
+      * as starting point for auto-completion for IDEs and the like
+      * ?
+
+--
+
+1) There are several bugs which are related to that:
+
+  * bug #4778
+  * bug #1440
+  * bug #5642
+
+2) Class member checking does also fit under the JSON Schema umbrella, though imho it&#39;s out of scope of *this* bug. However some relevant bugs regarding that are:
+
+  * bug #6073
+  * bug #3838</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32241</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2013-02-13 18:38:44 +0100</bug_when>
+            <thetext>ad a)
+
+I would recommend the py lib jsonschema [1]. I gained experience with this lib when developing the (pending) &quot;manifest-validation&quot; job and found it reliable.
+
+In regard to the formatting of err msgs I would use the syntax described by the JSONPath spec [2], which imho is easy-understandable and precise.
+
+As first task I&#39;m going to check the &quot;config.json&quot; against a JSON Schema within the Generator (when reading the &quot;config.json&quot; for the first time) cause this should have a good effort-benefit ratio. At &quot;./tool/data/config/config_schema.json&quot; resides already a starting-point.
+
+[1] https://github.com/Julian/jsonschema
+[2] http://goessner.net/articles/JsonPath/</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32470</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2013-03-18 15:45:03 +0100</bug_when>
+            <thetext>ad a)
+
+After some obstacles with JSON Schema itself (i.e. modeling a valid and useful schema for our &#39;config.json&#39;) I finally got it working. What have I done:
+
+- upgraded the third party py lib jsonschema [1] from v0.8.0 to v1.1.0 and switched to draft4 [2] of JSON Schema (which is the most current draft) for validation
+- added a JSON schema file for the &#39;config.json&#39; which covers approximately 85% of our config reference manual page use cases.
+- discovered some edge cases within our config, which I will address on the JSON Schema mailing list [3] (because I don&#39;t know how to model them). 
+- superseded JSONPath [4] with JSON Pointer [5] for showing error locations, because it seems more mature and is part of the &quot;JSON Schema family&quot;.
+- added a global let key VALIDATE_CONFIG (boolean), which switches the config check on/off.
+
+Currently the raw files (and their included raw config files) are checked. This works quite good, but sometimes this conflicts with (unexpanded) macros. If the macro is expanded into a string, everything is fine, but if it&#39;s expanded into an array, then you get an error (e.g. &quot;${LOCALES} not of type array&quot;). So expanding the macros before schema checking should be the next step. 
+
+master: 85a8894..ca9e1ff
+
+[1] https://github.com/Julian/jsonschema
+[2] http://tools.ietf.org/html/draft-zyp-json-schema-04
+[3] https://groups.google.com/forum/#!forum/json-schema
+[4] http://goessner.net/articles/JsonPath/
+[5] http://tools.ietf.org/html/draft-ietf-appsawg-json-pointer-09</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32500</commentid>
+            <who name="Thomas Herchenroeder">thron7</who>
+            <bug_when>2013-03-21 17:40:58 +0100</bug_when>
+            <thetext>Dedicate this bug to the tool chain realm (Richies&#39; &quot;a)&quot; category). This is 
+where the current work happens. In coord. with Martin we leave the framework 
+part open (Richies&#39; &quot;b)&quot; category) until a concrete use case arises and a 
+separate bug for this is created. The issue with schema information for the API 
+data files from section &quot;c)&quot; is covered by dedicated bug#5642. The other 
+application fields there can also be left open and should get their own 
+dedicated bug when the need arises.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32505</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2013-03-22 15:48:07 +0100</bug_when>
+            <thetext>ad a)
+
+&gt; - some edge cases [...] will address on the JSON Schema mailing list
+
+I could cover all remaining JSON Schema issues I had on the JSON Schema mailing list so our &#39;config.json&#39; schema satisfies now our needs exactly. 
+
+&gt; - [...] global let key VALIDATE_CONFIG (boolean) [...]
+
+There are now two dedicated validation jobs &quot;validate-manifest&quot; and &quot;validate-config&quot;. They are part of most apps/components and the skeletons.
+
+&gt; [...] So expanding the macros before schema checking should be the next step.
+
+I decided against that because it led only to complexity without justified gain. 
+
+We now check the raw &#39;config.json&#39; (and its included raw config files) with a raw json schema file (no dynamic processing around that). The only additional thing I&#39;m doing is to ignore type errors (e.g. &quot;got string expected array&quot;) because of unexpanded macros.
+
+master: 5a30285..d98f23d</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32516</commentid>
+            <who name="Richard Sternagel">richard.sternagel</who>
+            <bug_when>2013-03-25 14:06:45 +0100</bug_when>
+            <thetext>ad a)
+
+Added docs and adapted test plan.
+
+master: 03efaaef8c1d20dd115de009cf20641109f97c92
+
+ad b) and c):
+
+Revisit if needed and then reevaluate with the experience gained from a).</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>38375</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2014-03-03 15:24:24 +0100</bug_when>
+            <thetext>Closed all bugs already shipped with a release.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>

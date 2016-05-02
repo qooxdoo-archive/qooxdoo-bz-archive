@@ -1,0 +1,247 @@
+<bug>
+          <bug_id>7211</bug_id>
+          
+          <creation_ts>2013-02-06 14:10:00 +0100</creation_ts>
+          <short_desc>Provide the ability to control animated scrolling</short_desc>
+          <delta_ts>2013-07-09 09:03:05 +0200</delta_ts>
+          <reporter_accessible>1</reporter_accessible>
+          <cclist_accessible>1</cclist_accessible>
+          <classification_id>1</classification_id>
+          <classification>Unclassified</classification>
+          <product>framework</product>
+          <component>desktop.core</component>
+          <version>master</version>
+          <rep_platform>All</rep_platform>
+          <op_sys>All</op_sys>
+          <bug_status>CLOSED</bug_status>
+          <resolution>FIXED</resolution>
+          
+          
+          
+          
+          
+          <priority>P2</priority>
+          <bug_severity>enhancement</bug_severity>
+          <target_milestone>3.0</target_milestone>
+          
+          
+          
+          <everconfirmed>1</everconfirmed>
+          <reporter name="Mustafa Sak">mustafa.sak</reporter>
+          <assigned_to name="Martin Wittemann">martin.wittemann</assigned_to>
+          <cc>pollmeier</cc>
+    
+    <cc>qooxdoo</cc>
+          <qa_contact name="Martin Wittemann">martin.wittemann</qa_contact>
+          <cf_browser>---</cf_browser>
+          
+
+      
+
+      
+
+      
+
+          <long_desc isprivate="0">
+            <commentid>32150</commentid>
+            <who name="Mustafa Sak">mustafa.sak</who>
+            <bug_when>2013-02-06 14:10:59 +0100</bug_when>
+            <thetext>Wan&#39;t to stop or reinitialize currently running animated scroll process.
+Following uses cases should be thought about, if a currently a animated scroll is running:
+
+1. User wants to stop scrolling on current position, not the destinated position.
+2. User wants to run a new animated scrolling from current position to new destination.
+3. User wants to scroll without an animation to new destination.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32281</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-02-18 13:37:00 +0100</bug_when>
+            <thetext>So in the end, its all the same: stop at the current postion. Everything after that can be done with a new scrolling action.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32284</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-02-18 17:19:13 +0100</bug_when>
+            <thetext>Here is my test code:
+
+SlideBar:
+
+
+slideBar = new qx.ui.container.SlideBar(&quot;vertical&quot;);
+slideBar.set({height: 100});
+
+slideBar.setLayout(new qx.ui.layout.VBox(3));
+
+for (var i=0; i &lt; 20; i++) {
+  slideBar.add((new qx.ui.basic.Image(&quot;icon/48/devices/audio-card.png&quot;)).set({
+    decorator: &quot;main&quot;,
+    padding: 4
+  }));
+}
+
+this.getRoot().add(slideBar);
+
+qx.ui.core.queue.Manager.flush();
+
+slideBar.scrollTo(300, 2000);
+window.setTimeout(function() {
+  slideBar.scrollTo(0, 1000);
+  window.setTimeout(function() {
+    slideBar.scrollTo(300);
+  }, 500);
+}, 1000);
+
+
+
+
+List:
+
+
+var m = new qx.data.Array();
+for (var i = 0; i &lt; 100; i++) {
+  m.setItem(i, &quot;Item &quot; + i);
+}
+
+list = new qx.ui.form.List();
+this.getRoot().add(list, {left: 0, right: 0});
+
+var controller = new qx.data.controller.List(m, list);
+list.scrollToY(1000, 2000);
+
+window.setTimeout(function() {
+  list.scrollToY(0, 1000);
+  window.setTimeout(function() {
+    list.scrollToY(2000);
+  }, 500);
+}, 1000);
+
+
+
+Keep in mind that the list needs to tested with native and non native scrollbars!</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32285</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-02-18 17:40:36 +0100</bug_when>
+            <thetext>Added a method to the AbsctractScrollArea and the ScrollPane to stop the scroll animations. Also made it possible to change the scrolling while an animation is running.
+
+master: 892f42e7ce1e68346eff3c1f8e8af1a7bc7fdc35</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32298</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2013-02-20 10:26:41 +0100</bug_when>
+            <thetext>The latest commit seems to break the scrollToX() method I&#39;m using of qx.ui.container.Scroll. I told it to scroll to 250 and it scrolls to ~10. If I revert to qooxdoo of three days ago, everything is fine.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32305</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-02-20 14:46:40 +0100</bug_when>
+            <thetext>Well, then I need to check that again. Do you have a sample to demonstrate?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32315</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-02-21 09:09:39 +0100</bug_when>
+            <thetext>Tried to reproduce it in the (my local) playground with the following code:
+
+c = new qx.ui.container.Scroll().set({
+  width: 100
+});
+var value = &quot;&quot;;
+for (var i = 1; i &lt; 1000; i++) {
+  value += i + &quot; &quot;;
+}
+var w = new qx.ui.basic.Label().set({
+  minWidth: 1000,
+  backgroundColor: &quot;red&quot;,
+  value : value
+});
+c.add(w);
+
+this.getRoot().add(c);
+c.scrollToX(250);
+
+
+This seems to work as expected. Could you supply a sample showing the bug?</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32316</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2013-02-21 09:57:34 +0100</bug_when>
+            <thetext>Trying to boil down the code to fit in the playground. Will last some minutes. Maybe I&#39;ll find the reason for the changed behaviour on the way... ;-)</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32317</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2013-02-21 10:16:39 +0100</bug_when>
+            <thetext>Just copying parts of the code to the playground doesn&#39;t seem to produce the problem. What I&#39;ve found out until now is that the problem shows up in the target application when I set scrollbarX to &quot;off&quot;. Not showing up in the playground built from the same qx sources. Digging further...</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32318</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2013-02-21 11:48:44 +0100</bug_when>
+            <thetext>Please try this code:
+
+http://tinyurl.com/bgdaxre
+
+or
+
+8&lt;-----------------------------------------
+var scroller = new qx.ui.container.Scroll();
+scroller.setWidth(250);
+scroller.setScrollbarX(&quot;off&quot;);
+
+var container = new qx.ui.container.Composite(new qx.ui.layout.HBox());
+
+for (var i=0; i&lt;10; i++) {
+  container.add(new qx.ui.basic.Atom(i.toString()).set({
+    width: 250,
+    backgroundColor: [&quot;red&quot;, &quot;blue&quot;][i &amp; 1] 
+  }));
+}
+
+scroller.add(container);
+
+i = 0;
+scroller.addListener(&quot;click&quot;, function() {
+  scroller.scrollToX((++i &amp; 3) * 250, 200);
+});
+
+var doc = this.getRoot();
+doc.add(scroller,
+{
+  left : 0,
+  top  : 0
+});
+8&lt;-----------------------------------------
+
+Clicking in the container should go to the next &quot;page&quot;. If you enable the scroll bar, it works. If you disable the scrollbar, it doesn&#39;t.
+
+While it helps in the code above to use the &quot;pane&quot; child control for setting the position, it does not help in my application for reasons that I don&#39;t know. Interrestingly this workaround worked before the last commit.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32340</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-02-22 08:16:11 +0100</bug_when>
+            <thetext>Thanks for digging into that.</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32534</commentid>
+            <who name="Cajus Pollmeier">pollmeier</who>
+            <bug_when>2013-04-03 10:07:35 +0200</bug_when>
+            <thetext>As a workaround in current HEAD one can set the maximum height to zero:
+
+scrollcontainer.getChildControl(&quot;scrollbar-x&quot;).setMaxHeight(0);</thetext>
+          </long_desc>
+          <long_desc isprivate="0">
+            <commentid>32867</commentid>
+            <who name="Martin Wittemann">martin.wittemann</who>
+            <bug_when>2013-06-04 09:47:46 +0200</bug_when>
+            <thetext>Switching off the animation of the scrolling seems to have the same issue. Tried to check if that ever worked and seems like this did not work in any qooxdoo version I could test (down to 1.0). I opened up a follow up bug #7440.</thetext>
+          </long_desc>
+      
+      
+
+    </bug>
